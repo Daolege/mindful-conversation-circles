@@ -19,10 +19,17 @@ const PaymentSuccess = () => {
     amount: '¥399.00',
     paymentMethod: '支付宝',
     paymentStatus: '已完成',
-    courseId: '1'
+    courseId: '1',
+    isNewCourse: true  // Default to new course system
   };
 
-  const courseId = state?.orderDetails?.courseId || '1';
+  const courseId = orderDetails.courseId || '1';
+  const isNewCourse = orderDetails.isNewCourse !== false;  // Default to true unless explicitly set to false
+  
+  // Determine the correct learning route
+  const learningUrl = isNewCourse 
+    ? `/learn/${courseId}?source=new` 
+    : `/learn/${courseId}`;
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -37,7 +44,7 @@ const PaymentSuccess = () => {
               <h1 className="text-2xl font-bold mb-2">支付成功</h1>
               <p className="text-gray-500">您的订单已成功支付，感谢您的购买！</p>
               <Button className="mt-6 w-full bg-[#0f172a] hover:bg-[#1e293b] text-white h-12 text-base font-medium" asChild>
-                <Link to={`/courses/${courseId}/learn`}>前往学习 ›</Link>
+                <Link to={learningUrl}>前往学习 ›</Link>
               </Button>
               <p className="mt-2 text-sm text-gray-500">已报名的课程在个人中心查看</p>
             </div>

@@ -2,26 +2,41 @@
 import React from 'react';
 import { Card } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 interface CourseCardProps {
   title: string;
   description?: string;
   imageUrl?: string;
   courseId?: number | string;
+  isNewCourse?: boolean;
 }
 
 export const CourseCard: React.FC<CourseCardProps> = ({ 
   title, 
   description, 
   imageUrl, 
-  courseId 
+  courseId,
+  isNewCourse
 }) => {
+  const location = useLocation();
+  
+  // Determine if this is a new course from location state if not explicitly provided
+  const isNewCourseFromState = location.state?.isNewCourse;
+  const isFromNewSystem = isNewCourse !== undefined ? isNewCourse : isNewCourseFromState;
+  
+  // Determine the return URL based on course system
+  const returnUrl = courseId 
+    ? (isFromNewSystem 
+        ? `/courses-new/${courseId}` 
+        : `/course/${courseId}`)
+    : "/courses";
+
   return (
     <Card className="p-6 animate-in fade-in duration-500">
       <div className="mb-4">
         <Link 
-          to={courseId ? `/course/${courseId}` : "/courses"} 
+          to={returnUrl}
           className="text-sm text-gray-500 hover:text-gray-700 flex items-center"
         >
           <ArrowLeft className="h-4 w-4 mr-1" />

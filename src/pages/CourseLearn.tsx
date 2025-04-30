@@ -1,9 +1,10 @@
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery } from "@tanstack/react-query";
 import { VideoPlayer } from "@/components/course/VideoPlayer";
 import { getCourseById } from "@/lib/services/courseService";
+import { getCourseNewById, convertNewCourseToSyllabusFormat } from "@/lib/services/courseNewLearnService";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/authHooks";
 import Navbar from "@/components/Navbar";
@@ -19,10 +20,13 @@ import { CourseLoadingState } from "@/components/course/CourseLoadingState";
 import { CourseNotFound } from "@/components/course/CourseNotFound";
 import { CourseLearnHeader } from "@/components/course/CourseLearnHeader";
 import { CourseSyllabus } from "@/components/course/CourseSyllabus";
+import { CourseWithDetails } from "@/lib/types/course-new";
 
 const CourseLearn = () => {
   const { courseId } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const isNewCourse = searchParams.get('source') === 'new';
   const { user } = useAuth();
   const [selectedLecture, setSelectedLecture] = useState<{
     videoUrl?: string;
@@ -30,7 +34,7 @@ const CourseLearn = () => {
   } | null>(null);
   const [showExitWarning, setShowExitWarning] = useState(false);
 
-  console.log('CourseLearn component mounted, courseId:', courseId, 'selectedLecture:', selectedLecture);
+  console.log('CourseLearn component mounted, courseId:', courseId, 'isNewCourse:', isNewCourse);
 
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -46,10 +50,24 @@ const CourseLearn = () => {
     };
   }, []);
 
-  const { data: courseResponse, isLoading } = useQuery({
+  // Query for standard course
+  const { 
+    data: courseResponse, 
+    isLoading: isLoadingStandardCourse 
+  } = useQuery({
     queryKey: ['learn-course', courseId],
     queryFn: () => getCourseById(courseId ? parseInt(courseId) : 0),
-    enabled: !!courseId,
+    enabled: !!courseId && !isNewCourse,
+  });
+
+  // Query for new course format
+  const { 
+    data: newCourseResponse, 
+    isLoading: isLoadingNewCourse 
+  } = useQuery({
+    queryKey: ['learn-new-course', courseId],
+    queryFn: () => getCourseNewById(courseId || '0'),
+    enabled: !!courseId && isNewCourse,
   });
 
   const { data: completedLectures, refetch: refetchCompletedLectures } = useQuery({
@@ -68,17 +86,33 @@ const CourseLearn = () => {
     enabled: !!courseId && !!user?.id,
   });
 
-  const course = courseResponse?.data;
-  // Fix the type conversion for syllabus data
-  const syllabusData: CourseSyllabusSection[] = course?.syllabus 
-    ? (typeof course.syllabus === 'string'
-        ? JSON.parse(course.syllabus)
-        : course.syllabus as unknown as CourseSyllabusSection[])
-    : [];
+  // Determine course data based on source
+  const isLoading = isLoadingStandardCourse || isLoadingNewCourse;
+  const standardCourse = courseResponse?.data;
+  const newCourse = newCourseResponse?.data;
+  
+  // Process course data based on source
+  let course = isNewCourse ? newCourse : standardCourse;
+  let title = isNewCourse && newCourse ? newCourse.title : standardCourse?.title || '';
+  let videoUrl = isNewCourse && newCourse ? undefined : standardCourse?.video_url;
+  
+  // Transform syllabus data based on the course type
+  let syllabusData: CourseSyllabusSection[] = [];
+
+  if (isNewCourse && newCourse) {
+    // Convert new course format to syllabus format
+    syllabusData = convertNewCourseToSyllabusFormat(newCourse);
+  } else if (standardCourse?.syllabus) {
+    // Handle standard course syllabus
+    syllabusData = typeof standardCourse.syllabus === 'string'
+      ? JSON.parse(standardCourse.syllabus)
+      : standardCourse.syllabus as unknown as CourseSyllabusSection[];
+  }
   
   console.log('Course data loaded:', {
     courseId,
-    course: course ? { id: course.id, title: course.title } : null,
+    isNewCourse,
+    course: course ? { id: course.id, title: isNewCourse ? (course as CourseWithDetails).title : (course as any).title } : null,
     syllabusData: syllabusData.length
   });
 
@@ -200,15 +234,17 @@ const CourseLearn = () => {
     return <CourseNotFound />;
   }
 
-  // Remove the processCourseSyllabus function and related code since we're handling the type conversion above
-  const syllabus = syllabusData;
+  // Get materials based on course type
+  const materials = isNewCourse && newCourse ? 
+    newCourse.materials : 
+    standardCourse?.materials as CourseMaterial[] | null;
 
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
       <main className="flex-grow container mx-auto px-4 py-8">
         <CourseLearnHeader 
-          title={course?.title} 
+          title={title} 
           onBack={handleGoBack}
         />
 
@@ -216,8 +252,8 @@ const CourseLearn = () => {
           <div className="lg:col-span-2">
             <div className="bg-white rounded-lg shadow-sm overflow-hidden">
               <VideoPlayer 
-                videoUrl={selectedLecture?.videoUrl || course?.video_url || undefined}
-                title={course?.title || ""}
+                videoUrl={selectedLecture?.videoUrl || videoUrl || undefined}
+                title={title}
                 courseId={courseId || ""}
                 lessonId={selectedLecture?.title || "intro"}
               />
@@ -241,7 +277,7 @@ const CourseLearn = () => {
                 
                 <TabsContent value="syllabus" className="p-4">
                   <CourseSyllabus 
-                    syllabusData={syllabus}
+                    syllabusData={syllabusData}
                     selectedLecture={selectedLecture}
                     completedLectures={completedLectures || {}}
                     onLectureClick={handleLectureClick}
@@ -249,7 +285,7 @@ const CourseLearn = () => {
                 </TabsContent>
                 
                 <TabsContent value="materials" className="p-4">
-                  <CourseMaterials materials={course?.materials as CourseMaterial[] | null} />
+                  <CourseMaterials materials={materials} />
                 </TabsContent>
               </Tabs>
             </div>
