@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { CourseWithDetails } from '@/lib/types/course-new';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -71,7 +72,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
   return (
     <div className="space-y-8">
       {/* 课程介绍 */}
-      <Card className="hover:shadow-xl transition-shadow duration-300 shadow-lg animate-in fade-in duration-700 delay-[200ms]">
+      <Card className="hover:shadow-xl transition-shadow duration-300 shadow-lg animate-in fade-in duration-700 delay-200">
         <CardHeader className="pb-0">
           <CardTitle className="text-xl flex items-center gap-2">
             <File className="h-5 w-5" />
@@ -104,7 +105,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
 
           {course.sections && course.sections.length > 0 ? (
             <div className="space-y-4">
-              {course.sections.map((section) => (
+              {course.sections.map((section, index) => (
                 <AnimatedCollapsible
                   key={section.id}
                   isOpen={!!openSectionIds[section.id]}
@@ -123,7 +124,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
                     {section.lectures?.map((lecture) => (
                       <li
                         key={lecture.id}
-                        className="flex justify-between items-center p-4 border rounded-10 hover:bg-gray-100 transition-colors shadow-md hover:shadow-lg"
+                        className="flex justify-between items-center p-4 border rounded-lg hover:bg-gray-100 transition-all duration-300 ease-in-out shadow-md hover:shadow-lg"
                       >
                         <div className="flex items-center gap-2">
                           <span className="text-sm font-normal">{lecture.title}</span>
@@ -164,8 +165,12 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
         <CardContent className="pt-4">
           {courseMaterials && courseMaterials.length > 0 ? (
             <ul className="space-y-3">
-              {courseMaterials.map((material) => (
-                <li key={material.id} className="flex justify-between items-center p-4 border rounded-10 hover:bg-gray-100 transition-colors shadow-md hover:shadow-lg">
+              {courseMaterials.map((material, idx) => (
+                <li 
+                  key={material.id} 
+                  className="flex justify-between items-center p-4 border rounded-lg hover:bg-gray-100 transition-all duration-300 ease-in-out shadow-md hover:shadow-lg animate-in fade-in slide-in-from-bottom-3 duration-500"
+                  style={{ animationDelay: `${300 + idx * 100}ms` }}
+                >
                   <div className="flex items-center gap-2">
                     <File size={18} className="text-gray-600" />
                     <span className="font-semibold">{material.name}</span>
@@ -201,7 +206,11 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
             {learningObjectives && learningObjectives.length > 0 ? (
               <ul className="space-y-2">
                 {learningObjectives.map((objective, index) => (
-                  <li key={index} className="flex items-start gap-2">
+                  <li 
+                    key={index} 
+                    className="flex items-start gap-2 animate-in fade-in slide-in-from-bottom-3 duration-500"
+                    style={{ animationDelay: `${800 + index * 100}ms` }}
+                  >
                     <Target className="h-4 w-4 text-gray-800 mt-0.5 flex-shrink-0" />
                     <span className="text-sm font-medium text-gray-700">{objective}</span>
                   </li>
@@ -225,7 +234,11 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
             {requirements && requirements.length > 0 ? (
               <ul className="space-y-2">
                 {requirements.map((requirement, index) => (
-                  <li key={index} className="flex items-start gap-2">
+                  <li 
+                    key={index} 
+                    className="flex items-start gap-2 animate-in fade-in slide-in-from-bottom-3 duration-500"
+                    style={{ animationDelay: `${1000 + index * 100}ms` }}
+                  >
                     <Book className="h-4 w-4 text-gray-800 mt-0.5 flex-shrink-0" />
                     <span className="text-sm font-medium text-gray-700">{requirement}</span>
                   </li>
@@ -249,7 +262,11 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
             {targetAudience && targetAudience.length > 0 ? (
               <ul className="space-y-2">
                 {targetAudience.map((audience, index) => (
-                  <li key={index} className="flex items-start gap-2">
+                  <li 
+                    key={index} 
+                    className="flex items-start gap-2 animate-in fade-in slide-in-from-bottom-3 duration-500"
+                    style={{ animationDelay: `${1200 + index * 100}ms` }}
+                  >
                     <Users className="h-4 w-4 text-gray-800 mt-0.5 flex-shrink-0" />
                     <span className="text-sm font-medium text-gray-700">{audience}</span>
                   </li>
