@@ -20,7 +20,7 @@ export const CourseDetailHeaderNew: React.FC<CourseDetailHeaderNewProps> = ({ co
         {course.category && (
           <Badge 
             variant="courseTag"
-            className="text-sm flex items-center animate-in fade-in slide-in-from-bottom-3 duration-700 delay-[100ms]"
+            className="text-sm flex items-center animate-in fade-in slide-in-from-bottom-3 duration-700 delay-100"
           >
             <Book size={16} className="mr-1" />
             {course.category}
@@ -29,7 +29,7 @@ export const CourseDetailHeaderNew: React.FC<CourseDetailHeaderNewProps> = ({ co
         
         <Badge 
           variant="courseTag"
-          className="text-sm flex items-center animate-in fade-in slide-in-from-bottom-3 duration-700 delay-[200ms]"
+          className="text-sm flex items-center animate-in fade-in slide-in-from-bottom-3 duration-700 delay-200"
         >
           <Users size={16} className="mr-1" />
           {course.enrollment_count || 0} 名学员
@@ -37,7 +37,7 @@ export const CourseDetailHeaderNew: React.FC<CourseDetailHeaderNewProps> = ({ co
         
         <Badge 
           variant="courseTag"
-          className="text-sm flex items-center animate-in fade-in slide-in-from-bottom-3 duration-700 delay-[300ms]"
+          className="text-sm flex items-center animate-in fade-in slide-in-from-bottom-3 duration-700 delay-300"
         >
           <Book size={16} className="mr-1" />
           {course.sections?.length || 0} 章节
@@ -45,7 +45,7 @@ export const CourseDetailHeaderNew: React.FC<CourseDetailHeaderNewProps> = ({ co
         
         <Badge 
           variant="courseTag"
-          className="text-sm flex items-center animate-in fade-in slide-in-from-bottom-3 duration-700 delay-[400ms]"
+          className="text-sm flex items-center animate-in fade-in slide-in-from-bottom-3 duration-700 delay-400"
         >
           <Clock size={16} className="mr-1" />
           {course.lecture_count || 0} 课时
@@ -54,7 +54,7 @@ export const CourseDetailHeaderNew: React.FC<CourseDetailHeaderNewProps> = ({ co
         {course.language && (
           <Badge 
             variant="courseTag"
-            className="text-sm flex items-center animate-in fade-in slide-in-from-bottom-3 duration-700 delay-[500ms]"
+            className="text-sm flex items-center animate-in fade-in slide-in-from-bottom-3 duration-700 delay-500"
           >
             <Globe size={16} className="mr-1" />
             {course.language}
@@ -64,7 +64,7 @@ export const CourseDetailHeaderNew: React.FC<CourseDetailHeaderNewProps> = ({ co
         {course.published_at && (
           <Badge 
             variant="courseTag"
-            className="text-sm flex items-center animate-in fade-in slide-in-from-bottom-3 duration-700 delay-[600ms]"
+            className="text-sm flex items-center animate-in fade-in slide-in-from-bottom-3 duration-700 delay-600"
           >
             <Calendar size={16} className="mr-1" />
             {new Date(course.published_at).toLocaleDateString('zh-CN')} 发布
@@ -73,7 +73,7 @@ export const CourseDetailHeaderNew: React.FC<CourseDetailHeaderNewProps> = ({ co
         
         <Badge
           variant="courseTag"
-          className="text-sm animate-in fade-in slide-in-from-bottom-3 duration-700 delay-[700ms]"
+          className="text-sm animate-in fade-in slide-in-from-bottom-3 duration-700 delay-700"
         >
           {course.status === 'published' ? '已发布' : 
            course.status === 'draft' ? '草稿' : '已归档'}

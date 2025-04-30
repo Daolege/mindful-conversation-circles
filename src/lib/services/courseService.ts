@@ -68,8 +68,8 @@ const convertDbToCourse = (dbCourse: any): Course => {
     enrollment_count: dbCourse.enrollment_count,
     published_at: dbCourse.published_at,
     display_order: dbCourse.display_order,
-    requirements: dbCourse.requirements,
-    whatYouWillLearn: dbCourse.whatyouwilllearn,
+    requirements: dbCourse.requirements || [],
+    whatYouWillLearn: dbCourse.whatyouwilllearn || [],
     syllabus: dbCourse.syllabus,
     currency: dbCourse.currency,
   };
@@ -177,6 +177,10 @@ export const saveCourse = async (course: CourseDbFields) => {
     // Make a copy of the course object to avoid modifying the original
     const courseToSave = { ...course };
     
+    // Adding default values for required fields that might be missing
+    if (!courseToSave.requirements) courseToSave.requirements = [];
+    if (!courseToSave.whatyouwilllearn) courseToSave.whatyouwilllearn = [];
+    
     // Determine if it's an update or insert
     const isUpdate = !!courseToSave.id;
     
@@ -251,4 +255,55 @@ export const getCoursesByCategory = async (category: string) => {
     category,
     includeUnpublished: false,
   });
+};
+
+// Add the missing updateCourseOrder function
+export const updateCourseOrder = async (courses: { id: number; display_order: number }[]): Promise<boolean> => {
+  try {
+    const updates = courses.map(course => ({
+      id: course.id,
+      display_order: course.display_order
+    }));
+
+    // Update each course one by one to avoid potential batch update issues
+    for (const update of updates) {
+      const { error } = await supabase
+        .from('courses')
+        .update({ display_order: update.display_order })
+        .eq('id', update.id);
+      
+      if (error) {
+        console.error('Error updating course order:', error);
+        return false;
+      }
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error updating course order:', error);
+    return false;
+  }
+};
+
+// Add the missing getCoursesByInstructorId function
+export const getCoursesByInstructorId = async (instructorId: number) => {
+  try {
+    const { data, error } = await supabase
+      .from('courses')
+      .select('*')
+      .eq('instructor_id', instructorId)
+      .order('display_order', { ascending: true });
+    
+    if (error) {
+      throw error;
+    }
+    
+    return {
+      data: data.map(convertDbToCourse),
+      count: data.length,
+    };
+  } catch (error) {
+    console.error(`Error fetching courses for instructor ${instructorId}:`, error);
+    throw error;
+  }
 };
