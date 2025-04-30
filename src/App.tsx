@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Home from './pages/Home';
 import Courses from './pages/Courses';
 import CourseDetail from './pages/CourseDetail';
+import CourseDetailNew from './pages/CourseDetailNew';
 import Auth from './pages/Auth';
 import MyCourses from './pages/MyCourses';
 import Checkout from './pages/Checkout';
@@ -40,6 +41,7 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/courses" element={<Courses />} />
             <Route path="/courses/:courseId" element={<CourseDetail />} />
+            <Route path="/courses-new/:courseId" element={<CourseDetailNew />} />
             <Route path="/courses/:courseId/learn" element={<CourseLearn />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/my-courses" element={<MyCourses />} />

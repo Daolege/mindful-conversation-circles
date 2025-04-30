@@ -23,7 +23,7 @@ export function toast(props: ToastProps | string) {
   const { title, description, variant, action, ...rest } = props;
   
   // 将 shadcn variant 映射到 sonner 类型
-  let type: ToastT = 'default';
+  let type: keyof typeof sonnerToast = 'default';
   if (variant === 'destructive') type = 'error';
   else if (variant === 'success') type = 'success'; 
   else if (variant === 'warning') type = 'warning';

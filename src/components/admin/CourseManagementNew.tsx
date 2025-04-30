@@ -100,7 +100,7 @@ const CourseManagementNew = () => {
   };
 
   const handleViewCourse = (courseId: number) => {
-    window.open(`/courses/${courseId}`, '_blank');
+    window.open(`/courses-new/${courseId}`, '_blank');
   };
 
   const handleViewHomework = (courseId: number) => {
