@@ -8,30 +8,30 @@ interface CourseDbFields {
   title: string;
   description: string;
   price: number;
-  originalprice?: number;
-  imageurl?: string;
-  instructor?: string;
-  instructor_id?: number;
-  category?: string;
-  status?: string;
-  rating?: number;
-  ratingcount?: number;
-  studentcount?: number;
-  duration?: string;
-  lectures?: number;
-  language?: string;
-  level?: string;
-  lastUpdated?: string;
+  originalprice?: number | null;
+  imageurl?: string | null;
+  instructor?: string | null;
+  instructor_id?: number | null;
+  category?: string | null;
+  status?: string | null;
+  rating?: number | null;
+  ratingcount?: number | null;
+  studentcount?: number | null;
+  duration?: string | null;
+  lectures?: number | null;
+  language?: string | null;
+  level?: string | null;
+  lastUpdated?: string | null;
   featured?: boolean;
-  enrollment_count?: number;
-  published_at?: string;
+  enrollment_count?: number | null;
+  published_at?: string | null;
   display_order: number;
-  requirements?: string[];
-  whatyouwilllearn?: string[];
-  highlights?: string[];
-  curriculum?: string[];
+  requirements?: string[] | null;
+  whatyouwilllearn?: string[] | null;
+  highlights?: string[] | null;
+  curriculum?: string[] | null;
   syllabus?: any;
-  currency?: string;
+  currency?: string | null;
 }
 
 export type CourseFetchOptions = {
@@ -177,12 +177,15 @@ export const saveCourse = async (course: CourseDbFields) => {
     // Make a copy of the course object to avoid modifying the original
     const courseToSave = { ...course };
     
-    // Adding default values for required fields that might be missing
+    // Ensure all required fields have default values
     if (!courseToSave.requirements) courseToSave.requirements = [];
     if (!courseToSave.whatyouwilllearn) courseToSave.whatyouwilllearn = [];
+    if (courseToSave.display_order === undefined) courseToSave.display_order = 0;
     
     // Determine if it's an update or insert
     const isUpdate = !!courseToSave.id;
+    
+    let result;
     
     if (isUpdate) {
       // Update existing course
@@ -192,13 +195,8 @@ export const saveCourse = async (course: CourseDbFields) => {
         .eq('id', courseToSave.id)
         .select();
       
-      if (error) {
-        throw error;
-      }
-      
-      return {
-        data: data[0] ? convertDbToCourse(data[0]) : null,
-      };
+      if (error) throw error;
+      result = { data: data[0] ? convertDbToCourse(data[0]) : null };
     } else {
       // Create new course
       const { data, error } = await supabase
@@ -206,14 +204,11 @@ export const saveCourse = async (course: CourseDbFields) => {
         .insert(courseToSave)
         .select();
       
-      if (error) {
-        throw error;
-      }
-      
-      return {
-        data: data[0] ? convertDbToCourse(data[0]) : null,
-      };
+      if (error) throw error;
+      result = { data: data[0] ? convertDbToCourse(data[0]) : null };
     }
+    
+    return result;
   } catch (error) {
     console.error('Error saving course:', error);
     throw error;

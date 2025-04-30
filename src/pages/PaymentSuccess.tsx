@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -19,15 +19,22 @@ const PaymentSuccess = () => {
     amount: '¥399.00',
     paymentMethod: '支付宝',
     paymentStatus: '已完成',
-    courseId: '1',
+    courseId: '80',  // Updated to a valid course ID
     isNewCourse: true  // Default to new course system
   };
 
-  const courseId = orderDetails.courseId || '1';
+  const courseId = orderDetails.courseId || '80';  // Default to course 80 if none provided
   const isNewCourse = orderDetails.isNewCourse !== false;  // Default to true unless explicitly set to false
   
   // Determine the correct learning route
   const learningUrl = `/learn/${courseId}${isNewCourse ? '?source=new' : ''}`;
+
+  // Log the course ID and learning URL for debugging
+  useEffect(() => {
+    console.log('[PaymentSuccess] Course ID:', courseId);
+    console.log('[PaymentSuccess] Is new course:', isNewCourse);
+    console.log('[PaymentSuccess] Learning URL:', learningUrl);
+  }, [courseId, isNewCourse, learningUrl]);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -84,6 +91,10 @@ const PaymentSuccess = () => {
                 <div className="flex justify-between py-2">
                   <span className="text-gray-600">支付状态</span>
                   <span className="text-green-500">{orderDetails.paymentStatus}</span>
+                </div>
+                <div className="flex justify-between py-2">
+                  <span className="text-gray-600">课程 ID</span>
+                  <span>{courseId}</span>
                 </div>
               </div>
 

@@ -34,7 +34,11 @@ const CourseLearn = () => {
   } | null>(null);
   const [showExitWarning, setShowExitWarning] = useState(false);
 
-  console.log('CourseLearn component mounted, courseId:', courseId, 'isNewCourse:', isNewCourse);
+  console.log('CourseLearn component mounted:', {
+    courseId,
+    isNewCourse,
+    currentRoute: window.location.pathname + window.location.search
+  });
 
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -53,7 +57,8 @@ const CourseLearn = () => {
   // Query for standard course
   const { 
     data: courseResponse, 
-    isLoading: isLoadingStandardCourse 
+    isLoading: isLoadingStandardCourse,
+    error: standardCourseError
   } = useQuery({
     queryKey: ['learn-course', courseId],
     queryFn: () => getCourseById(courseId ? parseInt(courseId) : 0),
@@ -63,21 +68,51 @@ const CourseLearn = () => {
   // Query for new course format
   const { 
     data: newCourseResponse, 
-    isLoading: isLoadingNewCourse 
+    isLoading: isLoadingNewCourse,
+    error: newCourseError
   } = useQuery({
     queryKey: ['learn-new-course', courseId],
     queryFn: () => getCourseNewById(courseId || '0'),
     enabled: !!courseId && isNewCourse,
   });
 
+  // Log query results for debugging
+  useEffect(() => {
+    if (isNewCourse) {
+      console.log('New course query result:', {
+        data: newCourseResponse?.data ? 
+          { id: newCourseResponse.data.id, title: newCourseResponse.data.title } : 
+          null,
+        error: newCourseError,
+        isLoading: isLoadingNewCourse
+      });
+    } else {
+      console.log('Standard course query result:', {
+        data: courseResponse?.data ? 
+          { id: courseResponse.data.id, title: courseResponse.data.title } : 
+          null,
+        error: standardCourseError,
+        isLoading: isLoadingStandardCourse
+      });
+    }
+  }, [newCourseResponse, courseResponse, isLoadingNewCourse, isLoadingStandardCourse, newCourseError, standardCourseError, isNewCourse]);
+
   const { data: completedLectures, refetch: refetchCompletedLectures } = useQuery({
     queryKey: ['completed-lectures', courseId, user?.id],
     queryFn: async () => {
-      const { data } = await supabase
+      if (!courseId || !user?.id) return {};
+      
+      const { data, error } = await supabase
         .from('course_progress')
         .select('lecture_id, completed')
         .eq('course_id', parseInt(courseId || '0'))
         .eq('user_id', user?.id);
+      
+      if (error) {
+        console.error('Error fetching completed lectures:', error);
+        return {};
+      }
+      
       return data?.reduce((acc: Record<string, boolean>, curr) => {
         acc[curr.lecture_id] = curr.completed;
         return acc;
@@ -102,6 +137,10 @@ const CourseLearn = () => {
   if (isNewCourse && newCourse) {
     // Convert new course format to syllabus format
     syllabusData = convertNewCourseToSyllabusFormat(newCourse);
+    console.log('Converted syllabus data:', {
+      sections: syllabusData.length,
+      firstSectionTitle: syllabusData[0]?.title || 'No sections'
+    });
   } else if (standardCourse?.syllabus) {
     // Handle standard course syllabus
     syllabusData = typeof standardCourse.syllabus === 'string'
@@ -109,10 +148,11 @@ const CourseLearn = () => {
       : standardCourse.syllabus as unknown as CourseSyllabusSection[];
   }
   
-  console.log('Course data loaded:', {
+  console.log('Course data processed:', {
     courseId,
     isNewCourse,
-    course: course ? { id: course.id, title: isNewCourse ? (course as CourseWithDetails).title : (course as any).title } : null,
+    hasCourse: !!course,
+    title,
     syllabusData: syllabusData.length
   });
 
@@ -121,6 +161,9 @@ const CourseLearn = () => {
       if (!user?.id || !courseId || !syllabusData.length) return;
       
       try {
+        console.log('Initializing course progress for lectures:', 
+          syllabusData.flatMap(s => s.lectures || []).length);
+          
         for (const section of syllabusData) {
           if (section.lectures && Array.isArray(section.lectures)) {
             for (const lecture of section.lectures) {
@@ -218,7 +261,7 @@ const CourseLearn = () => {
   useEffect(() => {
     if (!selectedLecture && syllabusData.length > 0) {
       const firstSection = syllabusData[0];
-      if (firstSection.lectures?.length > 0) {
+      if (firstSection?.lectures?.length > 0) {
         const firstLecture = firstSection.lectures[0];
         console.log('Auto-selecting first lecture:', firstLecture);
         handleLectureClick(firstLecture);
@@ -230,7 +273,20 @@ const CourseLearn = () => {
     return <CourseLoadingState />;
   }
 
+  // Check if the course was not found
   if (!course) {
+    console.error('Course not found:', {
+      courseId,
+      isNewCourse,
+      newCourseError,
+      standardCourseError
+    });
+    
+    // Show toast error
+    useEffect(() => {
+      toast.error(`未找到课程 (ID: ${courseId})`);
+    }, [courseId]);
+    
     return <CourseNotFound />;
   }
 

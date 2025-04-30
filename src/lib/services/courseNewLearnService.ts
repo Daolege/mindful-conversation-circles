@@ -9,16 +9,18 @@ import { toast } from 'sonner';
  */
 export const getCourseNewById = async (id: number | string): Promise<{ data: CourseWithDetails | null; error?: any }> => {
   try {
+    console.log(`[getCourseNewById] Fetching course with ID: ${id}`);
+    
     // First get the basic course information
     const { data: courseData, error: courseError } = await supabase
       .from('courses_new')
       .select(`
         *,
-        sections (
+        course_sections (
           *,
-          lectures (*)
+          course_lectures (*)
         ),
-        materials (*)
+        course_materials (*)
       `)
       .eq('id', typeof id === 'string' ? parseInt(id, 10) : id)
       .single();
@@ -29,12 +31,29 @@ export const getCourseNewById = async (id: number | string): Promise<{ data: Cou
     }
     
     if (!courseData) {
+      console.error(`Course with ID ${id} not found`);
       return { data: null, error: 'Course not found' };
     }
 
+    console.log(`[getCourseNewById] Successfully fetched course: ${courseData.title} (ID: ${courseData.id})`);
+    console.log(`[getCourseNewById] Sections count: ${courseData.course_sections?.length || 0}`);
+    
+    // Handle the response structure - map the database field names to our CourseWithDetails structure
+    const transformedData: CourseWithDetails = {
+      ...courseData,
+      sections: courseData.course_sections?.map(section => ({
+        ...section,
+        lectures: section.course_lectures?.map(lecture => ({
+          ...lecture,
+          video_url: lecture.video_url
+        })) || []
+      })) || [],
+      materials: courseData.course_materials || []
+    };
+
     // Ensure we're returning a proper CourseWithDetails object
     return { 
-      data: courseData as unknown as CourseWithDetails
+      data: transformedData
     };
   } catch (error) {
     console.error(`Error fetching new course with ID ${id}:`, error);
@@ -47,6 +66,7 @@ export const getCourseNewById = async (id: number | string): Promise<{ data: Cou
  */
 export const convertNewCourseToSyllabusFormat = (course: CourseWithDetails): CourseSyllabusSection[] => {
   if (!course.sections || !Array.isArray(course.sections)) {
+    console.warn('[convertNewCourseToSyllabusFormat] Course has no sections or sections is not an array');
     return [];
   }
 
@@ -72,6 +92,8 @@ export const trackCourseProgress = async (
   completed: boolean = false
 ): Promise<boolean> => {
   try {
+    console.log(`[trackCourseProgress] Updating progress - Course: ${courseId}, Lecture: ${lectureId}, User: ${userId}, Completed: ${completed}`);
+    
     const { error } = await supabase
       .from('course_progress')
       .upsert([{
@@ -104,6 +126,8 @@ export const getCourseProgress = async (
   userId: string
 ): Promise<Record<string, boolean>> => {
   try {
+    console.log(`[getCourseProgress] Fetching progress - Course: ${courseId}, User: ${userId}`);
+    
     const { data, error } = await supabase
       .from('course_progress')
       .select('lecture_id, completed')
