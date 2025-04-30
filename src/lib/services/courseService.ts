@@ -100,26 +100,52 @@ export const getCoursesByInstructorId = async (instructorId: number): Promise<Co
   return { data, error };
 };
 
-// Fixed type for course data to avoid recursion issues
-interface CourseDataForDB {
+// Define a type that matches exactly what the courses table expects
+interface CourseInsertData {
   id?: number;
-  title?: string;
-  description?: string;
-  price?: number;
-  display_order?: number;
-  [key: string]: any; // Use an index signature for additional properties
+  title: string;
+  description: string;
+  display_order: number;
+  price: number;
+  requirements: string[];
+  whatyouwilllearn: string[];
+  category?: string | null;
+  language?: string;
+  level?: string | null;
+  featured?: boolean | null;
+  enrollment_count?: number;
+  duration?: string | null;
+  imageurl?: string | null;
+  instructor?: string | null;
+  originalprice?: number | null;
+  syllabus?: any;
 }
 
 // Save course data with explicit types to avoid recursion
-export const saveCourse = async (courseData: CourseDataForDB, courseId?: number) => {
+export const saveCourse = async (courseData: any, courseId?: number) => {
   try {
     // Extract materials to handle separately
     const materials = courseData.materials;
     
     // Remove complex nested structures before saving to DB
-    const dbCourseData: Record<string, any> = { ...courseData };
-    delete dbCourseData.materials;
-    delete dbCourseData.sections;
+    const dbCourseData: Partial<CourseInsertData> = { 
+      title: courseData.title,
+      description: courseData.description || '',
+      price: courseData.price || 0,
+      display_order: courseData.display_order || 0,
+      requirements: courseData.requirements || [],
+      whatyouwilllearn: courseData.whatyouwilllearn || [],
+      category: courseData.category || '',
+      language: courseData.language || 'zh',
+      level: courseData.level || 'beginner',
+      featured: courseData.featured || false,
+      enrollment_count: courseData.enrollment_count || 0,
+      duration: courseData.duration || '',
+      imageurl: courseData.imageurl || null,
+      instructor: courseData.instructor || null,
+      originalprice: courseData.originalprice || null,
+      syllabus: courseData.syllabus || []
+    };
     
     let result;
     if (courseId) {
@@ -137,10 +163,10 @@ export const saveCourse = async (courseData: CourseDataForDB, courseId?: number)
       
       result = { success: true, data };
     } else {
-      // Create new course
+      // Create new course - ensure all required fields are present
       const { data, error } = await supabase
         .from('courses')
-        .insert(dbCourseData)
+        .insert(dbCourseData as CourseInsertData)  // Cast to ensure all required fields are present
         .select('*')
         .single();
         
