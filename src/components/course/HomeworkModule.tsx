@@ -140,11 +140,17 @@ export const HomeworkModule = ({ courseId, lectureId, onHomeworkSubmit }: Homewo
       if (!migrationExecuted) {
         console.log('Migration not yet executed, attempting now...');
         try {
-          await executeHomeworkMigration();
-          localStorage.setItem('homework_migration_executed', 'true');
-        } catch (err) {
+          const result = await executeHomeworkMigration();
+          if (result.success) {
+            localStorage.setItem('homework_migration_executed', 'true');
+            console.log('Auto-migration succeeded');
+          } else {
+            console.error('Auto-migration failed:', result.message);
+            throw new Error(`数据库迁移失败: ${result.message}`);
+          }
+        } catch (err: any) {
           console.error('Auto-migration failed:', err);
-          // Continue anyway, the query might still work
+          throw new Error(`数据库迁移出错: ${err.message || '未知错误'}`);
         }
       }
       

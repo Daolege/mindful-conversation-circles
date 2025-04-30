@@ -1,4 +1,3 @@
-
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
@@ -24,7 +23,12 @@ type DbFunctionNames =
   | 'user_has_course_access'
   | 'enroll_user_in_course'
   | 'update_course_progress'
-  | 'admin_add_course_item'; // Add the new function name here
+  | 'admin_add_course_item'
+  | 'create_migrations_temp_table'
+  | 'execute_sql'
+  | 'drop_homework_foreign_key'
+  | 'add_homework_foreign_key'
+  | 'get_foreign_keys';
 
 // 改进Supabase客户端配置以提高稳定性
 export const supabase = createClient<Database>(
@@ -357,7 +361,7 @@ export async function createMockHomeworkSubmissions() {
               user_id: userId,
               course_id: course.id,
               lecture_id: lecture.id,
-              answer: '这是我的作业提交内容，希望老师能给予指导。' + Math.random().toString(36).substring(7),
+              answer: '这是我的作业提交内容，希望老师能给予���导。' + Math.random().toString(36).substring(7),
               submitted_at: new Date().toISOString(),
               score: 90,
               teacher_comment: '做得不错，继续加油！',
