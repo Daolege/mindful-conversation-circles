@@ -97,7 +97,7 @@ const CourseCard = ({
 
   const gradientColors = getGradientColors();
   
-  // Use consistent URL format for course navigation
+  // Use consistent URL format for course navigation - courses-new for all cards
   const courseUrl = `/courses-new/${id}`;
 
   return (

@@ -1,8 +1,8 @@
-
 import React, { useState, useMemo, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { cn } from "@/lib/utils";
-import { Course, transformCourseData } from '@/lib/types/course';
+import { Course } from '@/lib/types/course';
+import { transformCourseData } from '@/lib/types/course';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -10,9 +10,10 @@ import { Input } from '@/components/ui/input';
 import { ChevronDown, Search, Sliders } from 'lucide-react';
 import CourseGrid from '@/components/courses/CourseGrid';
 import LoadingState from '@/components/courses/LoadingState';
-import { getAllCourses } from '@/lib/services/courseService';
+import { getAllCoursesNew } from '@/lib/services/courseNewService';
+import { transformCourseNewToOld } from '@/lib/utils/courseTransformers';
 
-// Replace with actual API call
+// The mockCourses data will be used as a fallback if the API fails
 const mockCourses: Course[] = [
   {
     id: 1,
@@ -308,18 +309,19 @@ const Courses = () => {
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('all');
   const [sort, setSort] = useState('relevance');
-  const [visibleCount, setVisibleCount] = useState(12); // Added for pagination
+  const [visibleCount, setVisibleCount] = useState(12);
 
+  // Changed to use getAllCoursesNew instead of getAllCourses
   const { data: coursesResponse, isLoading } = useQuery({
-    queryKey: ['courses', search, category, sort],
-    queryFn: () => getAllCourses(),
+    queryKey: ['courses-new', search, category, sort],
+    queryFn: () => getAllCoursesNew(search),
     staleTime: 1000 * 60 * 5 // 5 minutes
   });
 
   const courses = useMemo(() => {
     if (coursesResponse?.data && coursesResponse.data.length > 0) {
-      // Transform the API data to consistent Course format
-      return coursesResponse.data.map(course => transformCourseData(course));
+      // Transform the new course format to the old format for compatibility
+      return coursesResponse.data.map(course => transformCourseNewToOld(course));
     }
     // Use mock data as fallback
     return mockCourses.map(course => transformCourseData(course));

@@ -15,9 +15,12 @@ export default function CourseGridItem({ course }: CourseGridItemProps) {
   const discount = originalPrice ? Math.round(((originalPrice - price) / originalPrice) * 100) : 0;
   const hasDiscount = originalPrice && originalPrice > price;
   
+  // Use consistent URL format for courses
+  const courseUrl = `/courses-new/${course.id}`;
+  
   return (
     <div className="group relative bg-white rounded-lg overflow-hidden shadow-sm border hover:shadow-md transition-all">
-      <Link to={`/courses-new/${course.id}`}>
+      <Link to={courseUrl}>
         <div className="relative h-44 w-full overflow-hidden">
           <img 
             src={course.imageurl || course.imageUrl || "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1471&q=80"} 
