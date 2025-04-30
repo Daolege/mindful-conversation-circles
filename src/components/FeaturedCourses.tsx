@@ -230,8 +230,8 @@ const FeaturedCourses = () => {
   const { toast } = useToast();
 
   const { data: coursesResponse, isLoading, isError, error } = useQuery({
-    queryKey: ['courses-new'], // Updated query key to avoid caching conflicts
-    queryFn: getAllCoursesNew,
+    queryKey: ['courses-new'], 
+    queryFn: async () => await getAllCoursesNew(),
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
     refetchOnMount: false,

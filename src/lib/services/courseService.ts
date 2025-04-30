@@ -100,7 +100,7 @@ export const getCoursesByInstructorId = async (instructorId: number): Promise<Co
   return { data, error };
 };
 
-// Type for course data to avoid recursion issues
+// Fixed type for course data to avoid recursion issues
 interface CourseDataForDB {
   id?: number;
   title?: string;
@@ -117,7 +117,7 @@ export const saveCourse = async (courseData: CourseDataForDB, courseId?: number)
     const materials = courseData.materials;
     
     // Remove complex nested structures before saving to DB
-    const dbCourseData = { ...courseData };
+    const dbCourseData: Record<string, any> = { ...courseData };
     delete dbCourseData.materials;
     delete dbCourseData.sections;
     
@@ -126,7 +126,7 @@ export const saveCourse = async (courseData: CourseDataForDB, courseId?: number)
       // Update existing course
       const { data, error } = await supabase
         .from('courses')
-        .update(dbCourseData)
+        .update(dbCourseData as any)
         .eq('id', courseId)
         .select('*')
         .single();
@@ -140,7 +140,7 @@ export const saveCourse = async (courseData: CourseDataForDB, courseId?: number)
       // Create new course
       const { data, error } = await supabase
         .from('courses')
-        .insert(dbCourseData)
+        .insert(dbCourseData as any)
         .select('*')
         .single();
         
