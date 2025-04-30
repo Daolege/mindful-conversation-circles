@@ -107,7 +107,7 @@ interface CourseDataForDB {
   description?: string;
   price?: number;
   display_order?: number;
-  [key: string]: any;
+  [key: string]: any; // Use an index signature for additional properties
 }
 
 // Save course data with explicit types to avoid recursion
@@ -126,7 +126,7 @@ export const saveCourse = async (courseData: CourseDataForDB, courseId?: number)
       // Update existing course
       const { data, error } = await supabase
         .from('courses')
-        .update(dbCourseData as any)
+        .update(dbCourseData)
         .eq('id', courseId)
         .select('*')
         .single();
@@ -140,7 +140,7 @@ export const saveCourse = async (courseData: CourseDataForDB, courseId?: number)
       // Create new course
       const { data, error } = await supabase
         .from('courses')
-        .insert(dbCourseData as any)
+        .insert(dbCourseData)
         .select('*')
         .single();
         
