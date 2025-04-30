@@ -18,11 +18,9 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
     // Default: first three sections are open
     const initial: {[key: string]: boolean} = {};
     if (course.sections && course.sections.length > 0) {
-      // Open the first three sections by default
-      for (let i = 0; i < Math.min(3, course.sections.length); i++) {
-        if (course.sections[i]) {
-          initial[course.sections[i].id] = true;
-        }
+      // Open the first section by default
+      if (course.sections[0]) {
+        initial[course.sections[0].id] = true;
       }
     }
     return initial;
@@ -72,7 +70,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
   return (
     <div className="space-y-8">
       {/* 课程介绍 */}
-      <Card className="hover:shadow-xl transition-shadow duration-300 shadow-lg animate-in fade-in duration-700 delay-200">
+      <Card className="hover:shadow-lg transition-shadow duration-500 shadow-sm animate-in fade-in duration-700 delay-200">
         <CardHeader className="pb-0">
           <CardTitle className="text-xl flex items-center gap-2">
             <File className="h-5 w-5" />
@@ -91,7 +89,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
       </Card>
 
       {/* 课程大纲 */}
-      <Card className="hover:shadow-xl transition-shadow duration-300 shadow-lg animate-in fade-in duration-700 delay-[400ms]">
+      <Card className="hover:shadow-lg transition-shadow duration-500 shadow-sm animate-in fade-in duration-700 delay-[400ms]">
         <CardHeader className="pb-0">
           <CardTitle className="text-xl flex items-center gap-2">
             <BookOpen className="h-5 w-5" />
@@ -118,13 +116,17 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
                     </div>
                   }
                   onToggle={() => toggleSection(section.id)}
-                  className="border-gray-200 hover:bg-gray-50 transition-colors shadow-md hover:shadow-lg"
+                  className="border-gray-200 hover:bg-gray-50 transition-colors shadow-sm hover:shadow-md"
                 >
                   <ul className="space-y-3">
-                    {section.lectures?.map((lecture) => (
+                    {section.lectures?.map((lecture, lectureIdx) => (
                       <li
                         key={lecture.id}
-                        className="flex justify-between items-center p-4 border rounded-lg hover:bg-gray-100 transition-all duration-300 ease-in-out shadow-md hover:shadow-lg"
+                        className="flex justify-between items-center p-4 border rounded-lg 
+                          bg-white
+                          transition-all duration-300 ease-in-out
+                          shadow-sm hover:shadow-md
+                          hover:bg-gray-50"
                       >
                         <div className="flex items-center gap-2">
                           <span className="text-sm font-normal">{lecture.title}</span>
@@ -155,7 +157,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
       </Card>
 
       {/* 课程附件 */}
-      <Card className="hover:shadow-xl transition-shadow duration-300 shadow-lg animate-in fade-in duration-700 delay-[600ms]">
+      <Card className="hover:shadow-lg transition-shadow duration-500 shadow-sm animate-in fade-in duration-700 delay-[600ms]">
         <CardHeader className="pb-0">
           <CardTitle className="text-xl flex items-center gap-2">
             <File className="h-5 w-5" />
@@ -168,7 +170,10 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
               {courseMaterials.map((material, idx) => (
                 <li 
                   key={material.id} 
-                  className="flex justify-between items-center p-4 border rounded-lg hover:bg-gray-100 transition-all duration-300 ease-in-out shadow-md hover:shadow-lg animate-in fade-in slide-in-from-bottom-3 duration-500"
+                  className="flex justify-between items-center p-4 border rounded-lg hover:bg-gray-50 
+                    transition-all duration-300 ease-in-out 
+                    shadow-sm hover:shadow-md 
+                    animate-in fade-in slide-in-from-bottom-3 duration-500"
                   style={{ animationDelay: `${300 + idx * 100}ms` }}
                 >
                   <div className="flex items-center gap-2">
@@ -195,7 +200,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
       {/* 学习信息栏 - 三栏布局 */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* 学习目标 */}
-        <Card className="hover:shadow-xl transition-shadow duration-300 shadow-lg animate-in fade-in duration-700 delay-[800ms]">
+        <Card className="hover:shadow-lg transition-shadow duration-500 shadow-sm animate-in fade-in duration-700 delay-[800ms]">
           <CardHeader className="pb-0">
             <CardTitle className="text-lg flex items-center gap-2">
               <Target className="h-5 w-5" />
@@ -223,7 +228,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
         </Card>
 
         {/* 课程要求 */}
-        <Card className="hover:shadow-xl transition-shadow duration-300 shadow-lg animate-in fade-in duration-700 delay-[1000ms]">
+        <Card className="hover:shadow-lg transition-shadow duration-500 shadow-sm animate-in fade-in duration-700 delay-[1000ms]">
           <CardHeader className="pb-0">
             <CardTitle className="text-lg flex items-center gap-2">
               <Book className="h-5 w-5" />
@@ -251,7 +256,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
         </Card>
 
         {/* 适合人群 */}
-        <Card className="hover:shadow-xl transition-shadow duration-300 shadow-lg animate-in fade-in duration-700 delay-[1200ms]">
+        <Card className="hover:shadow-lg transition-shadow duration-500 shadow-sm animate-in fade-in duration-700 delay-[1200ms]">
           <CardHeader className="pb-0">
             <CardTitle className="text-lg flex items-center gap-2">
               <Users className="h-5 w-5" />

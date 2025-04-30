@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { Suspense } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { getCourseNewById } from '@/lib/services/courseNewService';
@@ -7,7 +7,7 @@ import { CourseDetailHeaderNew } from '@/components/course-detail-new/CourseDeta
 import { CourseDetailContentNew } from '@/components/course-detail-new/CourseDetailContentNew';
 import { CourseEnrollCardNew } from '@/components/course-detail-new/CourseEnrollCardNew';
 import { CourseBreadcrumb } from '@/components/course-detail-new/CourseBreadcrumb';
-import { CourseLoadingState } from '@/components/course/CourseLoadingState';
+import { DetailPageSkeleton } from '@/components/course/DetailPageSkeleton';
 import { CourseNotFound } from '@/components/course/CourseNotFound';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -22,13 +22,16 @@ const CourseDetailNew = () => {
     queryKey: ['course-new', courseIdNum],
     queryFn: () => getCourseNewById(courseIdNum),
     enabled: !!courseIdNum && !isNaN(courseIdNum),
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
   if (isLoading) {
     return (
       <>
         <Navbar />
-        <CourseLoadingState />
+        <div className="container mx-auto px-4 py-8">
+          <DetailPageSkeleton />
+        </div>
         <Footer />
       </>
     );
@@ -54,7 +57,13 @@ const CourseDetailNew = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className={`${isMobile ? 'order-2' : 'order-1'} lg:col-span-2`}>
             <CourseDetailHeaderNew course={courseData} />
-            <CourseDetailContentNew course={courseData} />
+            <Suspense fallback={<div className="space-y-8">
+              {[1, 2, 3, 4].map(i => (
+                <div key={i} className="h-40 bg-gray-100 rounded-lg animate-pulse skeleton-wave"></div>
+              ))}
+            </div>}>
+              <CourseDetailContentNew course={courseData} />
+            </Suspense>
           </div>
           <div className={`${isMobile ? 'order-1 mb-6' : 'order-2'} lg:col-span-1`}>
             <CourseEnrollCardNew course={courseData} />

@@ -10,7 +10,7 @@ interface CourseBreadcrumbProps {
 
 export const CourseBreadcrumb: React.FC<CourseBreadcrumbProps> = ({ course }) => {
   return (
-    <div className="flex items-center py-4 animate-in fade-in duration-500 delay-[100ms]">
+    <div className="flex items-center py-4 animate-in fade-in duration-500">
       <Link 
         to="/" 
         className="text-gray-500 hover:text-gray-800 transition-colors duration-300"

@@ -39,7 +39,7 @@ export const CourseEnrollCardNew: React.FC<CourseEnrollCardNewProps> = ({ course
 
   return (
     <div className={`sticky transition-all duration-300 animate-in fade-in slide-in-from-right-5 duration-700 ${isScrolled ? "top-24" : "top-4"}`}>
-      <Card className="overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300">
+      <Card className="overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-500">
         <div className="p-6 space-y-6">
           {/* Price section */}
           <div className="flex items-baseline flex-wrap animate-in fade-in duration-700 delay-200">
@@ -57,29 +57,29 @@ export const CourseEnrollCardNew: React.FC<CourseEnrollCardNewProps> = ({ course
           </div>
 
           {/* Enrollment button */}
-          <Button className="w-full py-6 text-base h-14 animate-in fade-in duration-700 delay-[400ms]" variant="knowledge">
+          <Button className="w-full py-6 text-base h-14 animate-in fade-in duration-700 delay-400" variant="knowledge">
             立即报名学习
           </Button>
 
           {/* Course features */}
           <div className={`space-y-3 text-sm ${isMobile ? 'grid grid-cols-2 gap-2' : ''}`}>
-            <div className="flex items-center animate-in fade-in slide-in-from-bottom-3 duration-700 delay-[500ms]">
+            <div className="flex items-center animate-in fade-in slide-in-from-bottom-3 duration-700 delay-500">
               <Video className="h-4 w-4 text-gray-500 mr-2" />
               <span>高清视频课程</span>
             </div>
-            <div className="flex items-center animate-in fade-in slide-in-from-bottom-3 duration-700 delay-[600ms]">
+            <div className="flex items-center animate-in fade-in slide-in-from-bottom-3 duration-700 delay-600">
               <Clock className="h-4 w-4 text-gray-500 mr-2" />
               <span>随时随地学习</span>
             </div>
-            <div className="flex items-center animate-in fade-in slide-in-from-bottom-3 duration-700 delay-[700ms]">
+            <div className="flex items-center animate-in fade-in slide-in-from-bottom-3 duration-700 delay-700">
               <BookOpen className="h-4 w-4 text-gray-500 mr-2" />
               <span>0门槛学习</span>
             </div>
-            <div className="flex items-center animate-in fade-in slide-in-from-bottom-3 duration-700 delay-[800ms]">
+            <div className="flex items-center animate-in fade-in slide-in-from-bottom-3 duration-700 delay-800">
               <Globe className="h-4 w-4 text-gray-500 mr-2" />
               <span>课程语言：{course.language || '中文'}</span>
             </div>
-            <div className="flex items-center animate-in fade-in slide-in-from-bottom-3 duration-700 delay-[900ms]">
+            <div className="flex items-center animate-in fade-in slide-in-from-bottom-3 duration-700 delay-900">
               <Download className="h-4 w-4 text-gray-500 mr-2" />
               <span>可下载课件附件</span>
             </div>
