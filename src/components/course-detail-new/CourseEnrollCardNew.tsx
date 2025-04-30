@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CourseWithDetails } from '@/lib/types/course-new';
-import { Clock, Calendar, Globe, CheckCheck, Download, Users, MessageSquare } from 'lucide-react';
+import { Clock, Calendar, Globe, CheckCircle, Download, Users, MessageSquare, Video, BookOpen } from 'lucide-react';
 
 interface CourseEnrollCardNewProps {
   course: CourseWithDetails;
@@ -36,19 +36,19 @@ export const CourseEnrollCardNew: React.FC<CourseEnrollCardNewProps> = ({ course
   }, []);
 
   return (
-    <div className={`sticky transition-all duration-300 ${isScrolled ? "top-28" : "top-4"}`}>
+    <div className={`sticky transition-all duration-300 ${isScrolled ? "top-24" : "top-4"}`}>
       <Card className="overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300">
         <div className="p-6 space-y-6">
           {/* Price section */}
           <div className="flex items-baseline">
-            <div className="text-5xl font-bold">{formattedPrice}</div>
+            <div className="text-6xl font-bold">{formattedPrice}</div>
             {formattedOriginalPrice && (
-              <div className="ml-3 text-gray-500 line-through text-2xl">
+              <div className="ml-3 text-gray-500 line-through text-3xl">
                 {formattedOriginalPrice}
               </div>
             )}
             {discountPercentage && (
-              <div className="ml-3 bg-green-100 text-green-700 px-3 py-1 text-base rounded-full font-medium">
+              <div className="ml-3 bg-green-100 text-green-700 px-3 py-1 text-lg rounded-full font-medium">
                 省{discountPercentage}%
               </div>
             )}
@@ -62,16 +62,16 @@ export const CourseEnrollCardNew: React.FC<CourseEnrollCardNewProps> = ({ course
           {/* Course features */}
           <div className="space-y-3 text-sm">
             <div className="flex items-center">
-              <CheckCheck className="h-4 w-4 text-gray-500 mr-2" />
+              <Video className="h-4 w-4 text-gray-500 mr-2" />
               <span>高清视频课程</span>
             </div>
             <div className="flex items-center">
-              <CheckCheck className="h-4 w-4 text-gray-500 mr-2" />
+              <Clock className="h-4 w-4 text-gray-500 mr-2" />
               <span>随时随地学习</span>
             </div>
             <div className="flex items-center">
-              <CheckCheck className="h-4 w-4 text-gray-500 mr-2" />
-              <span>0门前置课程</span>
+              <BookOpen className="h-4 w-4 text-gray-500 mr-2" />
+              <span>0门槛学习</span>
             </div>
             <div className="flex items-center">
               <Globe className="h-4 w-4 text-gray-500 mr-2" />
@@ -79,11 +79,11 @@ export const CourseEnrollCardNew: React.FC<CourseEnrollCardNewProps> = ({ course
             </div>
             <div className="flex items-center">
               <Download className="h-4 w-4 text-gray-500 mr-2" />
-              <span>可下载课件</span>
+              <span>可下载课件附件</span>
             </div>
             <div className="flex items-center">
               <Calendar className="h-4 w-4 text-gray-500 mr-2" />
-              <span>永久观看权限</span>
+              <span>长期观看权益</span>
             </div>
             <div className="flex items-center">
               <MessageSquare className="h-4 w-4 text-gray-500 mr-2" />

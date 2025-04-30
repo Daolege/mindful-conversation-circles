@@ -61,9 +61,9 @@ export function AnimatedCollapsible({
         {showIcons && (
           <div className="flex items-center">
             {isOpen ? (
-              <ChevronUp className="h-5 w-5 text-gray-500 transition-transform duration-300" />
+              <ChevronUp className="h-5 w-5 text-gray-500 transition-transform duration-500 transform rotate-0" />
             ) : (
-              <ChevronDown className="h-5 w-5 text-gray-500 transition-transform duration-300" />
+              <ChevronDown className="h-5 w-5 text-gray-500 transition-transform duration-500 transform rotate-0" />
             )}
           </div>
         )}
@@ -73,7 +73,7 @@ export function AnimatedCollapsible({
         ref={contentRef}
         style={{ height: height !== undefined ? `${height}px` : 'auto' }}
         className={cn(
-          "transition-all duration-300 ease-in-out overflow-hidden bg-white",
+          "transition-all duration-500 ease-in-out overflow-hidden bg-white",
           contentClassName
         )}
       >

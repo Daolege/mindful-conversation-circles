@@ -1,113 +1,137 @@
-import { db } from "@/lib/db";
-import { HomeworkSubmission } from "@prisma/client";
 
-export const getHomeworkSubmissionById = async (id: string) => {
-  try {
-    const homeworkSubmission = await db.homeworkSubmission.findUnique({
-      where: {
-        id,
-      },
-    });
+import { supabase } from '@/integrations/supabase/client';
+import type { Database } from '@/integrations/supabase/types';
+import { HomeworkSubmission } from '@/lib/types/course';
 
-    return homeworkSubmission;
-  } catch (error) {
-    console.error("Error getting homework submission by id:", error);
-    return null;
-  }
-};
+// Types
+export interface SubmissionWithUserDetails extends HomeworkSubmission {
+  user_name?: string;
+  user_avatar?: string;
+  user_email?: string;
+}
 
-export const getHomeworkSubmissionsByCourseId = async (courseId: string) => {
-  try {
-    const homeworkSubmissions = await db.homeworkSubmission.findMany({
-      where: {
-        courseId,
-      },
-    });
+// Get homework submissions for a specific course
+export async function getHomeworkSubmissionsByCourseId(courseId: number) {
+  const { data, error } = await supabase
+    .from('homework_submissions')
+    .select('*, users:user_id(name, email, avatar_url)')
+    .eq('course_id', courseId)
+    .order('created_at', { ascending: false });
 
-    return homeworkSubmissions;
-  } catch (error) {
-    console.error("Error getting homework submissions by course id:", error);
-    return null;
-  }
-};
-
-export const getHomeworkSubmissionsByUserId = async (userId: string) => {
-  try {
-    const homeworkSubmissions = await db.homeworkSubmission.findMany({
-      where: {
-        userId,
-      },
-    });
-
-    return homeworkSubmissions;
-  } catch (error) {
-    console.error("Error getting homework submissions by user id:", error);
-    return null;
-  }
-};
-
-export const getHomeworkSubmissionsByHomeworkId = async (homeworkId: string) => {
-  try {
-    const homeworkSubmissions = await db.homeworkSubmission.findMany({
-      where: {
-        homeworkId,
-      },
-    });
-
-    return homeworkSubmissions;
-  } catch (error) {
-    console.error("Error getting homework submissions by homework id:", error);
-    return null;
-  }
-};
-
-export const createHomeworkSubmission = async (
-  homeworkSubmission: Omit<HomeworkSubmission, "id" | "createdAt" | "updatedAt">
-) => {
-  try {
-    const newHomeworkSubmission = await db.homeworkSubmission.create({
-      data: homeworkSubmission,
-    });
-
-    return newHomeworkSubmission;
-  } catch (error) {
-    console.error("Error creating homework submission:", error);
-    return null;
-  }
-};
-
-export const updateHomeworkSubmissionById = async (id: string, data: any) => {
-  const validData = { ...data };
-  if (validData.score !== undefined) {
-    delete validData.score;
+  if (error) {
+    console.error('Error fetching homework submissions:', error);
+    throw error;
   }
 
-  try {
-    const updatedHomeworkSubmission = await db.homeworkSubmission.update({
-      where: {
-        id,
-      },
-      data: validData,
-    });
+  // Transform data to include user details
+  const submissions = data.map(submission => {
+    const user = submission.users as any;
+    return {
+      ...submission,
+      user_name: user?.name || 'Unknown User',
+      user_email: user?.email || '',
+      user_avatar: user?.avatar_url || ''
+    };
+  });
 
-    return updatedHomeworkSubmission;
-  } catch (error) {
-    console.error("Error updating homework submission by id:", error);
-    return null;
+  return submissions;
+}
+
+// Get homework submissions by lecture ID
+export async function getHomeworkSubmissionsByLectureId(lectureId: string) {
+  const { data, error } = await supabase
+    .from('homework_submissions')
+    .select('*, users:user_id(name, email, avatar_url)')
+    .eq('lecture_id', lectureId)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching homework submissions for lecture:', error);
+    throw error;
   }
-};
 
-export const deleteHomeworkSubmissionById = async (id: string) => {
-  try {
-    await db.homeworkSubmission.delete({
-      where: {
-        id,
-      },
-    });
+  // Transform data to include user details
+  const submissions = data.map(submission => {
+    const user = submission.users as any;
+    return {
+      ...submission,
+      user_name: user?.name || 'Unknown User',
+      user_email: user?.email || '',
+      user_avatar: user?.avatar_url || ''
+    };
+  });
 
-    return true;
-  } catch (error) {
-    console.error("Error deleting homework submission by id:", error);
-    return false;
+  return submissions;
+}
+
+// Get detailed information for a single homework submission
+export async function getHomeworkSubmissionById(submissionId: string) {
+  const { data, error } = await supabase
+    .from('homework_submissions')
+    .select('*, users:user_id(name, email, avatar_url)')
+    .eq('id', submissionId)
+    .single();
+
+  if (error) {
+    console.error('Error fetching homework submission:', error);
+    throw error;
   }
-};
+
+  const user = data.users as any;
+  const submission: SubmissionWithUserDetails = {
+    ...data,
+    user_name: user?.name || 'Unknown User',
+    user_email: user?.email || '',
+    user_avatar: user?.avatar_url || ''
+  };
+
+  return submission;
+}
+
+// Update homework feedback and status
+export async function updateHomeworkFeedback(
+  submissionId: string, 
+  feedback: string, 
+  status: 'pending' | 'reviewed' | 'rejected'
+) {
+  const { data, error } = await supabase
+    .from('homework_submissions')
+    .update({
+      feedback,
+      status,
+      reviewed_at: new Date().toISOString()
+    })
+    .eq('id', submissionId);
+
+  if (error) {
+    console.error('Error updating homework feedback:', error);
+    throw error;
+  }
+
+  return data;
+}
+
+// Get course structure for homework navigation
+export async function getCourseStructureForHomework(courseId: number) {
+  const { data: sections, error: sectionsError } = await supabase
+    .from('course_sections')
+    .select('id, title, position, lectures!course_section_id(id, title, position, requires_homework_completion)')
+    .eq('course_id', courseId)
+    .order('position');
+
+  if (sectionsError) {
+    console.error('Error fetching course sections for homework:', sectionsError);
+    throw sectionsError;
+  }
+
+  // Sort lectures by position
+  sections.forEach((section: any) => {
+    if (section.lectures) {
+      section.lectures = section.lectures
+        .filter((lecture: any) => lecture.requires_homework_completion)
+        .sort((a: any, b: any) => a.position - b.position);
+    }
+  });
+
+  return sections;
+}
