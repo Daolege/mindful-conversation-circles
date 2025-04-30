@@ -27,9 +27,7 @@ const PaymentSuccess = () => {
   const isNewCourse = orderDetails.isNewCourse !== false;  // Default to true unless explicitly set to false
   
   // Determine the correct learning route
-  const learningUrl = isNewCourse 
-    ? `/learn/${courseId}?source=new` 
-    : `/learn/${courseId}`;
+  const learningUrl = `/learn/${courseId}${isNewCourse ? '?source=new' : ''}`;
 
   return (
     <div className="min-h-screen flex flex-col">

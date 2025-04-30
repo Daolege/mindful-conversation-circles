@@ -42,7 +42,11 @@ export const CourseEnrollCardNew: React.FC<CourseEnrollCardNewProps> = ({ course
   const handleEnrollClick = () => {
     navigate(`/checkout?courseId=${course.id}`, { 
       state: { 
-        isNewCourse: true // Flag to identify this is from the new course system
+        isNewCourse: true, // Flag to identify this is from the new course system
+        courseId: course.id,
+        courseTitle: course.title,
+        courseDescription: course.description,
+        coursePrice: course.price
       }
     });
   };

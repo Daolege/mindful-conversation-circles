@@ -20,7 +20,7 @@ export const getCourseNewById = async (id: number | string): Promise<{ data: Cou
         ),
         materials (*)
       `)
-      .eq('id', id)
+      .eq('id', typeof id === 'string' ? parseInt(id, 10) : id)
       .single();
     
     if (courseError) {
@@ -32,8 +32,9 @@ export const getCourseNewById = async (id: number | string): Promise<{ data: Cou
       return { data: null, error: 'Course not found' };
     }
 
+    // Ensure we're returning a proper CourseWithDetails object
     return { 
-      data: courseData as CourseWithDetails
+      data: courseData as unknown as CourseWithDetails
     };
   } catch (error) {
     console.error(`Error fetching new course with ID ${id}:`, error);
@@ -74,7 +75,7 @@ export const trackCourseProgress = async (
     const { error } = await supabase
       .from('course_progress')
       .upsert([{
-        course_id: typeof courseId === 'string' ? parseInt(courseId) : courseId,
+        course_id: typeof courseId === 'string' ? parseInt(courseId, 10) : courseId,
         lecture_id: lectureId,
         user_id: userId,
         completed,
@@ -106,7 +107,7 @@ export const getCourseProgress = async (
     const { data, error } = await supabase
       .from('course_progress')
       .select('lecture_id, completed')
-      .eq('course_id', typeof courseId === 'string' ? parseInt(courseId) : courseId)
+      .eq('course_id', typeof courseId === 'string' ? parseInt(courseId, 10) : courseId)
       .eq('user_id', userId);
 
     if (error) {
