@@ -11,9 +11,9 @@ interface CourseDetailHeaderNewProps {
 export const CourseDetailHeaderNew: React.FC<CourseDetailHeaderNewProps> = ({ course }) => {
   return (
     <div className="mb-10 animate-in fade-in duration-500">
-      <h1 className="text-3xl md:text-4xl font-bold mb-6">{course.title}</h1>
+      <h1 className="text-3xl md:text-4xl font-bold mb-8">{course.title}</h1>
       
-      <div className="flex flex-wrap gap-3 mb-8">
+      <div className="flex flex-wrap gap-4 mb-8">
         {course.category && (
           <Badge 
             variant="course" 

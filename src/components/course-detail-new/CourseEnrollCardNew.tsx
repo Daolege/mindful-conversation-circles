@@ -36,19 +36,19 @@ export const CourseEnrollCardNew: React.FC<CourseEnrollCardNewProps> = ({ course
   }, []);
 
   return (
-    <div className={`sticky transition-all duration-300 ${isScrolled ? "top-24" : "top-4"}`}>
-      <Card className="overflow-hidden shadow-md hover:shadow-lg transition-all duration-300">
+    <div className={`sticky transition-all duration-300 ${isScrolled ? "top-28" : "top-4"}`}>
+      <Card className="overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300">
         <div className="p-6 space-y-6">
           {/* Price section */}
           <div className="flex items-baseline">
-            <div className="text-4xl font-bold">{formattedPrice}</div>
+            <div className="text-5xl font-bold">{formattedPrice}</div>
             {formattedOriginalPrice && (
-              <div className="ml-2 text-gray-500 line-through text-xl">
+              <div className="ml-3 text-gray-500 line-through text-2xl">
                 {formattedOriginalPrice}
               </div>
             )}
             {discountPercentage && (
-              <div className="ml-2 bg-green-100 text-green-700 px-3 py-1 text-base rounded-full font-medium">
+              <div className="ml-3 bg-green-100 text-green-700 px-3 py-1 text-base rounded-full font-medium">
                 省{discountPercentage}%
               </div>
             )}

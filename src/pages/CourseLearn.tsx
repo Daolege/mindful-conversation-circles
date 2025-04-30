@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from "@tanstack/react-query";
@@ -195,6 +194,19 @@ const CourseLearn = () => {
     return <CourseNotFound />;
   }
 
+  const processCourseSyllabus = (data: any) => {
+    if (Array.isArray(data)) {
+      return data.map(section => ({
+        title: section.title || 'Unnamed Section',
+        lectures: Array.isArray(section.lectures) ? section.lectures : []
+        // Add other required properties of CourseSyllabusSection
+      }));
+    }
+    return []; // Return empty array as fallback
+  };
+
+  const syllabus = processCourseSyllabus(data.syllabus);
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -233,7 +245,7 @@ const CourseLearn = () => {
                 
                 <TabsContent value="syllabus" className="p-4">
                   <CourseSyllabus 
-                    syllabusData={syllabusData}
+                    syllabusData={syllabus}
                     selectedLecture={selectedLecture}
                     completedLectures={completedLectures || {}}
                     onLectureClick={handleLectureClick}

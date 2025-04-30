@@ -5,8 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AnimatedCollapsible } from '@/components/ui/animated-collapsible';
 import { Button } from '@/components/ui/button';
 import { 
-  Lock, CheckCircle, FileText, Target, Users, BookOpen, 
-  Download, File, Lightbulb, GraduationCap, Award
+  Lock, GraduationCap, BookOpen, 
+  Download, File, Target, Award, Users
 } from 'lucide-react';
 
 interface CourseDetailContentNewProps {
@@ -67,10 +67,10 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
   return (
     <div className="space-y-8">
       {/* 课程介绍 */}
-      <Card className="hover:shadow-lg transition-shadow duration-300">
+      <Card className="hover:shadow-xl transition-shadow duration-300">
         <CardHeader className="pb-0">
           <CardTitle className="text-xl flex items-center gap-2">
-            <FileText className="h-5 w-5" />
+            <File className="h-5 w-5" />
             课程介绍
           </CardTitle>
         </CardHeader>
@@ -86,7 +86,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
       </Card>
 
       {/* 课程大纲 */}
-      <Card className="hover:shadow-lg transition-shadow duration-300">
+      <Card className="hover:shadow-xl transition-shadow duration-300">
         <CardHeader className="pb-0">
           <CardTitle className="text-xl flex items-center gap-2">
             <BookOpen className="h-5 w-5" />
@@ -113,13 +113,13 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
                     </div>
                   }
                   onToggle={() => toggleSection(section.id)}
-                  className="border-gray-200 hover:bg-gray-50 transition-colors"
+                  className="border-gray-200 hover:bg-gray-50 transition-colors shadow-md hover:shadow-lg"
                 >
                   <ul className="space-y-3">
                     {section.lectures?.map((lecture) => (
                       <li
                         key={lecture.id}
-                        className="p-3 hover:bg-gray-100 rounded-10 transition-colors border border-gray-200 flex justify-between items-center shadow-sm hover:shadow-md"
+                        className="p-3 hover:bg-gray-100 rounded-10 transition-colors border border-gray-200 flex justify-between items-center shadow-md hover:shadow-lg"
                       >
                         <div className="flex items-center gap-2">
                           <span className="text-sm">{lecture.title}</span>
@@ -150,7 +150,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
       </Card>
 
       {/* 课程附件 */}
-      <Card className="hover:shadow-lg transition-shadow duration-300">
+      <Card className="hover:shadow-xl transition-shadow duration-300">
         <CardHeader className="pb-0">
           <CardTitle className="text-xl flex items-center gap-2">
             <File className="h-5 w-5" />
@@ -161,9 +161,9 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
           {courseMaterials && courseMaterials.length > 0 ? (
             <ul className="space-y-3">
               {courseMaterials.map((material) => (
-                <li key={material.id} className="flex justify-between items-center p-3 border rounded-10 hover:bg-gray-100 transition-colors shadow-sm hover:shadow-md">
+                <li key={material.id} className="flex justify-between items-center p-3 border rounded-10 hover:bg-gray-100 transition-colors shadow-md hover:shadow-lg">
                   <div className="flex items-center gap-2">
-                    <FileText size={18} className="text-gray-600" />
+                    <File size={18} className="text-gray-600" />
                     <span>{material.name}</span>
                   </div>
                   <Button
@@ -186,7 +186,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
       {/* 学习信息栏 - 三栏布局 */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* 学习目标 */}
-        <Card className="hover:shadow-lg transition-shadow duration-300">
+        <Card className="hover:shadow-xl transition-shadow duration-300">
           <CardHeader className="pb-0">
             <CardTitle className="text-lg flex items-center gap-2">
               <Target className="h-5 w-5" />
@@ -198,7 +198,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
               <ul className="space-y-2">
                 {learningObjectives.map((objective, index) => (
                   <li key={index} className="flex items-start gap-2">
-                    <Lightbulb className="h-4 w-4 text-gray-800 mt-0.5 flex-shrink-0" />
+                    <Target className="h-4 w-4 text-gray-800 mt-0.5 flex-shrink-0" />
                     <span className="text-sm text-gray-700">{objective}</span>
                   </li>
                 ))}
@@ -210,10 +210,10 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
         </Card>
 
         {/* 课程要求 */}
-        <Card className="hover:shadow-lg transition-shadow duration-300">
+        <Card className="hover:shadow-xl transition-shadow duration-300">
           <CardHeader className="pb-0">
             <CardTitle className="text-lg flex items-center gap-2">
-              <FileText className="h-5 w-5" />
+              <GraduationCap className="h-5 w-5" />
               课程要求
             </CardTitle>
           </CardHeader>
@@ -234,7 +234,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
         </Card>
 
         {/* 适合人群 */}
-        <Card className="hover:shadow-lg transition-shadow duration-300">
+        <Card className="hover:shadow-xl transition-shadow duration-300">
           <CardHeader className="pb-0">
             <CardTitle className="text-lg flex items-center gap-2">
               <Users className="h-5 w-5" />

@@ -1,6 +1,13 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Course, CourseMaterial, CourseDbData, prepareCourseForDb } from '@/lib/types/course';
+
+// Export any existing types you need to reference with proper typing rather than recursive references
+export interface CourseTypeWithStringifiedProps {
+  id: number;
+  title: string;
+  // Add other base properties that don't cause circular references
+  // Use more specific types or break circular dependencies
+}
 
 // Get all active courses
 export const getAllCourses = async () => {
