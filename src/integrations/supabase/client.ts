@@ -1,3 +1,4 @@
+
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
@@ -28,7 +29,10 @@ type DbFunctionNames =
   | 'execute_sql'
   | 'drop_homework_foreign_key'
   | 'add_homework_foreign_key'
-  | 'get_foreign_keys';
+  | 'get_foreign_keys'
+  | 'get_dashboard_stats'
+  | 'get_financial_stats'
+  | 'get_payment_method_stats';
 
 // 改进Supabase客户端配置以提高稳定性
 export const supabase = createClient<Database>(

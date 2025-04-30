@@ -191,21 +191,29 @@ export const saveCourse = async (course: CourseDbFields) => {
       // Update existing course
       const { data, error } = await supabase
         .from('courses')
-        .update(courseToSave)
-        .eq('id', courseToSave.id)
+        .update({
+          ...courseToSave,
+          requirements: courseToSave.requirements,
+          whatyouwilllearn: courseToSave.whatyouwilllearn
+        })
+        .eq('id', courseToSave.id || 0)
         .select();
       
       if (error) throw error;
-      result = { data: data[0] ? convertDbToCourse(data[0]) : null };
+      result = { data: data?.[0] ? convertDbToCourse(data[0]) : null };
     } else {
       // Create new course
       const { data, error } = await supabase
         .from('courses')
-        .insert(courseToSave)
+        .insert({
+          ...courseToSave,
+          requirements: courseToSave.requirements,
+          whatyouwilllearn: courseToSave.whatyouwilllearn
+        })
         .select();
       
       if (error) throw error;
-      result = { data: data[0] ? convertDbToCourse(data[0]) : null };
+      result = { data: data?.[0] ? convertDbToCourse(data[0]) : null };
     }
     
     return result;

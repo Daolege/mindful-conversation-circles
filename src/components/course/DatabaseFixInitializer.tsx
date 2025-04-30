@@ -18,9 +18,7 @@ export const DatabaseFixInitializer: React.FC = () => {
     const setupTemporaryTable = async () => {
       try {
         // Create a temporary table for migration operations if it doesn't exist
-        const { data, error } = await supabase.rpc('execute_sql', { 
-          sql_query: 'CREATE TABLE IF NOT EXISTS _migrations_temp (id serial primary key, name text, executed_at timestamptz default now())' 
-        });
+        const { data, error } = await supabase.rpc('create_migrations_temp_table');
         
         if (error) {
           console.log('[DatabaseFixInitializer] Error creating temporary table:', error);
