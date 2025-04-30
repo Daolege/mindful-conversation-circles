@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { CourseWithDetails } from '@/lib/types/course-new';
 import { Clock, Calendar, Globe, CheckCircle, Download, Users, MessageSquare, Video, BookOpen } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useNavigate } from 'react-router-dom';
 
 interface CourseEnrollCardNewProps {
   course: CourseWithDetails;
@@ -24,6 +25,7 @@ export const CourseEnrollCardNew: React.FC<CourseEnrollCardNewProps> = ({ course
     
   const [isScrolled, setIsScrolled] = useState(false);
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
   
   useEffect(() => {
     const handleScroll = () => {
@@ -36,6 +38,10 @@ export const CourseEnrollCardNew: React.FC<CourseEnrollCardNewProps> = ({ course
       window.removeEventListener('scroll', handleScroll);
     };
   }, []);
+
+  const handleEnrollClick = () => {
+    navigate(`/checkout?courseId=${course.id}`);
+  };
 
   return (
     <div className={`sticky transition-all duration-300 animate-in fade-in slide-in-from-right-5 duration-700 ${isScrolled ? "top-24" : "top-4"}`}>
@@ -57,7 +63,11 @@ export const CourseEnrollCardNew: React.FC<CourseEnrollCardNewProps> = ({ course
           </div>
 
           {/* Enrollment button */}
-          <Button className="w-full py-6 text-base h-14 animate-in fade-in duration-700 delay-400" variant="knowledge">
+          <Button 
+            className="w-full py-6 text-base h-14 animate-in fade-in duration-700 delay-400" 
+            variant="knowledge"
+            onClick={handleEnrollClick}
+          >
             立即报名学习
           </Button>
 
