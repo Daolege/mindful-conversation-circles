@@ -15,7 +15,7 @@ if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KE
   );
 }
 
-// Define our database function types
+// Define our database function types - UPDATED to include ALL functions
 type DbFunctionNames = 
   | 'create_test_subscription'
   | 'has_role'

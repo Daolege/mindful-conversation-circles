@@ -10,57 +10,83 @@ import { toast } from 'sonner';
  */
 export const DatabaseFixInitializer: React.FC = () => {
   const [migrationExecuted, setMigrationExecuted] = useState(false);
+  const [migrationSuccess, setMigrationSuccess] = useState(false);
   const storageKey = 'homework_migration_executed';
   
   useEffect(() => {
-    const hasExecuted = localStorage.getItem(storageKey);
-    
-    const setupTemporaryTable = async () => {
-      try {
-        // Create a temporary table for migration operations if it doesn't exist
-        const { data, error } = await supabase.rpc('create_migrations_temp_table');
-        
-        if (error) {
-          console.log('[DatabaseFixInitializer] Error creating temporary table:', error);
-        } else {
-          console.log('[DatabaseFixInitializer] Temporary table created or already exists');
-        }
-      } catch (err) {
-        console.error('[DatabaseFixInitializer] Error creating temp table:', err);
-        // We'll continue with the migration anyway
-      }
-    };
+    const hasExecuted = localStorage.getItem(storageKey) === 'true';
     
     const runMigration = async () => {
-      if (hasExecuted === 'true') {
+      if (hasExecuted === true) {
         console.log('[DatabaseFixInitializer] Migration already executed, skipping');
+        setMigrationExecuted(true);
+        setMigrationSuccess(true);
         return;
       }
-      
-      // Setup temporary table first
-      await setupTemporaryTable();
       
       console.log('[DatabaseFixInitializer] Executing database migration');
       
       try {
+        // Initialize temp table for tracking migrations
+        try {
+          const { error } = await supabase.rpc('create_migrations_temp_table');
+          if (error) {
+            console.log('[DatabaseFixInitializer] Warning: Could not create temp table:', error);
+            // Continue anyway - this is not critical
+          }
+        } catch (err) {
+          console.error('[DatabaseFixInitializer] Error creating temp table:', err);
+          // Continue with migration anyway
+        }
+        
+        // Execute the actual migration
+        console.log('[DatabaseFixInitializer] Calling executeHomeworkMigration()');
         const result = await executeHomeworkMigration();
+        
+        setMigrationExecuted(true);
         
         if (result.success) {
           console.log('[DatabaseFixInitializer] Migration successful:', result.message);
           localStorage.setItem(storageKey, 'true');
-          setMigrationExecuted(true);
-          toast.success('数据库关系已自动修复，作业功能现可正常使用');
+          setMigrationSuccess(true);
+          
+          // Show success toast only once
+          if (hasExecuted !== 'true') {
+            toast.success('数据库关系已自动修复，作业功能现可正常使用');
+          }
         } else {
           console.error('[DatabaseFixInitializer] Migration failed:', result.message);
-          // Don't show error toast here as it might confuse users - let the HomeworkModule handle errors
+          // Only show error toast for non-already-executed migrations
+          if (hasExecuted !== 'true') {
+            toast.error('数据库关系修复失败，部分功能可能无法正常工作');
+          }
+          // Don't set localStorage flag when migration fails
         }
       } catch (error: any) {
         console.error('[DatabaseFixInitializer] Migration error:', error);
+        setMigrationExecuted(true);
+        setMigrationSuccess(false);
+        
+        if (hasExecuted !== 'true') {
+          toast.error('数据库关系修复过程中出错，请刷新页面重试');
+        }
       }
     };
     
-    runMigration();
+    // Run migration with a slight delay to ensure page loads first
+    const timer = setTimeout(() => {
+      runMigration();
+    }, 1000);
+    
+    return () => clearTimeout(timer);
   }, []);
+  
+  // Log migration status for debugging
+  useEffect(() => {
+    if (migrationExecuted) {
+      console.log('[DatabaseFixInitializer] Migration status:', migrationSuccess ? 'SUCCESS' : 'FAILED');
+    }
+  }, [migrationExecuted, migrationSuccess]);
   
   // This component doesn't render anything
   return null;

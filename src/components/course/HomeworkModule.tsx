@@ -35,8 +35,15 @@ export const HomeworkModule = ({ courseId, lectureId, onHomeworkSubmit }: Homewo
   // 用于跟踪toast IDs - 统一管理且确保ID总是字符串
   const [activeToastIds, setActiveToastIds] = useState<Record<string, string>>({});
 
-  // 获取课程ID - 确保是数值类型
+  // 获取课程ID - 确保是数值类型并记录详细的转换过程
   const numericCourseId = parseInt(courseId);
+  console.log('[HomeworkModule] Course ID conversion:', {
+    original: courseId,
+    type: typeof courseId,
+    parsed: numericCourseId,
+    parsedType: typeof numericCourseId,
+    isValid: !isNaN(numericCourseId)
+  });
   
   // 显示toast的辅助函数，确保ID总是字符串类型
   const showToast = (key: string, toastFn: () => string | number) => {
@@ -73,12 +80,33 @@ export const HomeworkModule = ({ courseId, lectureId, onHomeworkSubmit }: Homewo
     setActiveToastIds({});
   };
   
-  // 执行数据库迁移
+  // 执行数据库迁移 - 增强错误处理和调试信息
   const handleExecuteMigration = async () => {
     showToast('migration', () => toast.loading('正在修复数据库关系...'));
     try {
+      console.log('[HomeworkModule] Starting database migration for course ID:', numericCourseId);
+      
+      // 执行迁移前先验证课程存在
+      try {
+        const { count, error } = await supabase
+          .from('courses_new')
+          .select('*', { count: 'exact', head: true })
+          .eq('id', numericCourseId);
+          
+        console.log('[HomeworkModule] Course existence check:', { count, error });
+        
+        if (error || count === 0) {
+          throw new Error(`课程ID ${numericCourseId} 不存在于新课程系统`);
+        }
+      } catch (err: any) {
+        console.error('[HomeworkModule] Course validation error:', err);
+        throw new Error(`验证课程失败: ${err.message}`);
+      }
+      
       const result = await executeHomeworkMigration();
       clearToast('migration');
+      
+      console.log('[HomeworkModule] Migration result:', result);
       
       setMigrationStatus({
         executed: true,
@@ -88,9 +116,8 @@ export const HomeworkModule = ({ courseId, lectureId, onHomeworkSubmit }: Homewo
       
       if (result.success) {
         showToast('migration', () => toast.success('数据库关系修复成功'));
-        // 修复成功后，刷新作业列表
+        // 修复成功后，刷新作业列表并设置本地存储标记
         await refetchHomework();
-        // 修复成功时，设置本地存储标记
         localStorage.setItem('homework_migration_executed', 'true');
       } else {
         showToast('migration', () => toast.error(`数据库关系修复失败: ${result.message}`));
@@ -127,42 +154,44 @@ export const HomeworkModule = ({ courseId, lectureId, onHomeworkSubmit }: Homewo
     }
   };
 
-  // 作业查询 - 确保使用数字类型的课程ID，并改进错误处理
+  // 作业查询 - 确保先执行迁移并增强错误处理
   const { data: homework, isLoading: isLoadingHomework, error: homeworkError, refetch: refetchHomework } = useQuery({
     queryKey: ['homework', numericCourseId, lectureId],
     queryFn: async () => {
-      console.log('Fetching homework for lecture ID:', lectureId);
-      console.log('Current courseId:', courseId, 'type:', typeof courseId);
-      console.log('Converted numericCourseId:', numericCourseId, 'type:', typeof numericCourseId);
+      console.log('[HomeworkModule] Fetching homework for lecture ID:', lectureId);
+      console.log('[HomeworkModule] Current courseId:', courseId, 'type:', typeof courseId);
+      console.log('[HomeworkModule] Converted numericCourseId:', numericCourseId, 'type:', typeof numericCourseId);
       
-      // 1. 先检查迁移是否已执行
-      const migrationExecuted = localStorage.getItem('homework_migration_executed') === 'true';
-      if (!migrationExecuted) {
-        console.log('Migration not yet executed, attempting now...');
-        try {
-          const result = await executeHomeworkMigration();
-          if (result.success) {
-            localStorage.setItem('homework_migration_executed', 'true');
-            console.log('Auto-migration succeeded');
-          } else {
-            console.error('Auto-migration failed:', result.message);
-            throw new Error(`数据库迁移失败: ${result.message}`);
-          }
-        } catch (err: any) {
-          console.error('Auto-migration failed:', err);
-          throw new Error(`数据库迁移出错: ${err.message || '未知错误'}`);
-        }
-      }
-      
-      // 2. 检查课程ID有效性
-      if (isNaN(numericCourseId)) {
-        const error = new Error('无效的课程ID，无法转换为数字');
-        console.error(error.message + ':', courseId);
+      // 检查课程ID是否有效
+      if (isNaN(numericCourseId) || numericCourseId <= 0) {
+        const error = new Error(`无效的课程ID: ${courseId}`);
+        console.error('[HomeworkModule]', error.message);
         setDatabaseError(error.message);
         throw error;
       }
       
-      // 3. 验证课程存在于courses_new表中
+      // 检查迁移是否已执行
+      const migrationExecuted = localStorage.getItem('homework_migration_executed') === 'true';
+      console.log('[HomeworkModule] Migration status check:', { migrationExecuted });
+      
+      if (!migrationExecuted) {
+        console.log('[HomeworkModule] Migration not yet executed, attempting now...');
+        try {
+          const result = await executeHomeworkMigration();
+          if (result.success) {
+            localStorage.setItem('homework_migration_executed', 'true');
+            console.log('[HomeworkModule] Auto-migration succeeded');
+          } else {
+            console.error('[HomeworkModule] Auto-migration failed:', result.message);
+            setDatabaseError(`数据库迁移失败: ${result.message}`);
+          }
+        } catch (err: any) {
+          console.error('[HomeworkModule] Auto-migration error:', err);
+          setDatabaseError(`数据库迁移出错: ${err.message || '未知错误'}`);
+        }
+      }
+      
+      // 验证课程存在于courses_new表中
       try {
         const { data: courseExists, error: courseError } = await supabase
           .from('courses_new')
@@ -170,49 +199,58 @@ export const HomeworkModule = ({ courseId, lectureId, onHomeworkSubmit }: Homewo
           .eq('id', numericCourseId)
           .single();
         
+        console.log('[HomeworkModule] Course validation result:', { courseExists, courseError });
+        
         if (courseError || !courseExists) {
-          const error = new Error(`课程ID ${numericCourseId} 在新课程系统中不存在`);
-          console.error(error.message, { courseError });
-          setDatabaseError(error.message);
-          throw error;
+          console.error('[HomeworkModule] Course does not exist:', courseError);
+          setDatabaseError(`课程ID ${numericCourseId} 在新课程系统中不存在`);
+          throw new Error(`课程不存在: ${courseError?.message || '未知错误'}`);
         }
-      } catch (error) {
-        console.error('验证课程存在性失败:', error);
+      } catch (error: any) {
+        console.error('[HomeworkModule] Course validation error:', error);
+        setDatabaseError(`验证课程失败: ${error.message || '未知错误'}`);
         throw error;
       }
       
-      // 4. 查询作业数据
+      // 查询作业数据
       try {
+        console.log('[HomeworkModule] Executing homework query for course_id:', numericCourseId);
         const { data, error } = await supabase
           .from('homework')
           .select('*')
           .eq('course_id', numericCourseId)
           .eq('lecture_id', lectureId);
         
-        console.log('查询结果:', { data, error });
+        console.log('[HomeworkModule] Query result:', { 
+          count: data?.length || 0,
+          error: error?.message || null,
+          firstItem: data && data.length > 0 ? data[0].id : null
+        });
         
         if (error) {
           if (error.code === '23503') {
             // 外键约束错误，需要修复数据库
+            console.error('[HomeworkModule] Foreign key constraint error:', error);
             setDatabaseError('数据库外键约束错误，需要修复数据库关系');
-            throw new Error('外键约束错误');
+            throw new Error('外键约束错误: ' + error.message);
           }
           
-          console.error('查询作业失败:', error);
+          console.error('[HomeworkModule] Error querying homework:', error);
           throw error;
         }
         
+        // 清除错误状态
         setDatabaseError(null);
         return data || [];
       } catch (error: any) {
-        console.error('获取作业时出错:', error);
+        console.error('[HomeworkModule] Error in homework query:', error);
         if (error.message !== '外键约束错误') {
           setDatabaseError(error.message || '未知数据库错误');
         }
         throw error;
       }
     },
-    enabled: !!courseId && !!lectureId && !isNaN(numericCourseId),
+    enabled: !!courseId && !!lectureId && !isNaN(numericCourseId) && numericCourseId > 0,
     retry: 1,
     refetchInterval: false,
   });
@@ -253,7 +291,7 @@ export const HomeworkModule = ({ courseId, lectureId, onHomeworkSubmit }: Homewo
     };
   }, []);
 
-  // 创建默认作业的逻辑，改进错误处理
+  // 创建默认作业的逻辑 - 增强课程ID检验
   useEffect(() => {
     const createDefaultHomework = async () => {
       // 检查是否需要创建默认作业
@@ -263,39 +301,43 @@ export const HomeworkModule = ({ courseId, lectureId, onHomeworkSubmit }: Homewo
       
       setIsCreatingDefaultHomework(true);
       try {
-        console.log('Creating default homework for lecture:', lectureId);
-        console.log('Using numericCourseId:', numericCourseId, 'type:', typeof numericCourseId);
+        console.log('[HomeworkModule] Creating default homework for lecture:', lectureId);
+        console.log('[HomeworkModule] Using numericCourseId:', numericCourseId, 'type:', typeof numericCourseId);
         
         // 检查课程ID是否有效
         if (numericCourseId <= 0) {
-          console.error('Invalid course ID for default homework creation:', numericCourseId);
+          console.error('[HomeworkModule] Invalid course ID for default homework creation:', numericCourseId);
           throw new Error('课程ID必须是有效数字');
         }
         
-        // 先检查此课程是否存在
+        // 先检查此课程是否存在于courses_new表
         const { data: courseCheck, error: courseError } = await supabase
           .from('courses_new')
           .select('id')
           .eq('id', numericCourseId)
           .maybeSingle();
           
+        console.log('[HomeworkModule] Course existence check:', { courseCheck, courseError });
+          
         if (courseError || !courseCheck) {
-          console.error('Course existence check failed:', {courseId: numericCourseId, error: courseError});
+          console.error('[HomeworkModule] Course existence check failed:', {courseId: numericCourseId, error: courseError});
           throw new Error(`课程ID ${numericCourseId} 不存在`);
         }
         
+        // 先删除可能存在的旧作业
         await supabase
           .from('homework')
           .delete()
           .eq('course_id', numericCourseId)
           .eq('lecture_id', lectureId);
         
+        // 创建新的默认作业
         const homeworkTypes = [
           {
             id: uuidv4(),
             course_id: numericCourseId,
             lecture_id: lectureId,
-            title: '单选题 - 知识掌握度评估',
+            title: '单选题 - 知识���握度评估',
             description: '请选择最适合的答案',
             type: 'single_choice',
             options: {
@@ -328,14 +370,26 @@ export const HomeworkModule = ({ courseId, lectureId, onHomeworkSubmit }: Homewo
           }
         ];
         
-        console.log('Creating homework with types:', homeworkTypes);
+        console.log('[HomeworkModule] Creating homework with types:', homeworkTypes.length);
         
-        const { error } = await supabase
+        // 在创建作业前检查外键约束是否正常
+        try {
+          const migrationResult = await executeHomeworkMigration();
+          console.log('[HomeworkModule] Migration check before homework creation:', migrationResult);
+        } catch (err) {
+          console.warn('[HomeworkModule] Migration check failed:', err);
+          // Continue anyway
+        }
+        
+        // 创建作业
+        const { data, error } = await supabase
           .from('homework')
           .insert(homeworkTypes);
           
+        console.log('[HomeworkModule] Homework creation result:', { success: !error, error: error?.message });
+          
         if (error) {
-          console.error('Error creating homework:', error);
+          console.error('[HomeworkModule] Error creating homework:', error);
           
           if (error.code === '23503') {
             // 外键约束错误
@@ -345,13 +399,13 @@ export const HomeworkModule = ({ courseId, lectureId, onHomeworkSubmit }: Homewo
             showToast('create', () => toast.error('创建作业失败: ' + error.message));
           }
         } else {
-          console.log('Successfully created homework for lecture:', lectureId);
+          console.log('[HomeworkModule] Successfully created homework for lecture:', lectureId);
           showToast('create', () => toast.success('已创建课后练习'));
           setDatabaseError(null);
           await refetchHomework();
         }
       } catch (error: any) {
-        console.error('Error in createDefaultHomework:', error);
+        console.error('[HomeworkModule] Error in createDefaultHomework:', error);
         showToast('error', () => toast.error('创建作业时出错: ' + (error.message || '未知错误')));
       } finally {
         setIsCreatingDefaultHomework(false);
