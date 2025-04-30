@@ -1,7 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
 import { executeHomeworkMigration } from '@/api/executeHomeworkMigration';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 /**
@@ -17,7 +16,7 @@ export const DatabaseFixInitializer: React.FC = () => {
     const hasExecuted = localStorage.getItem(storageKey) === 'true';
     
     const runMigration = async () => {
-      if (hasExecuted === true) {
+      if (hasExecuted) {
         console.log('[DatabaseFixInitializer] Migration already executed, skipping');
         setMigrationExecuted(true);
         setMigrationSuccess(true);
@@ -27,18 +26,6 @@ export const DatabaseFixInitializer: React.FC = () => {
       console.log('[DatabaseFixInitializer] Executing database migration');
       
       try {
-        // Initialize temp table for tracking migrations
-        try {
-          const { error } = await supabase.rpc('create_migrations_temp_table');
-          if (error) {
-            console.log('[DatabaseFixInitializer] Warning: Could not create temp table:', error);
-            // Continue anyway - this is not critical
-          }
-        } catch (err) {
-          console.error('[DatabaseFixInitializer] Error creating temp table:', err);
-          // Continue with migration anyway
-        }
-        
         // Execute the actual migration
         console.log('[DatabaseFixInitializer] Calling executeHomeworkMigration()');
         const result = await executeHomeworkMigration();
@@ -51,13 +38,13 @@ export const DatabaseFixInitializer: React.FC = () => {
           setMigrationSuccess(true);
           
           // Show success toast only once
-          if (hasExecuted !== 'true') {
+          if (!hasExecuted) {
             toast.success('数据库关系已自动修复，作业功能现可正常使用');
           }
         } else {
           console.error('[DatabaseFixInitializer] Migration failed:', result.message);
           // Only show error toast for non-already-executed migrations
-          if (hasExecuted !== 'true') {
+          if (!hasExecuted) {
             toast.error('数据库关系修复失败，部分功能可能无法正常工作');
           }
           // Don't set localStorage flag when migration fails
@@ -67,7 +54,7 @@ export const DatabaseFixInitializer: React.FC = () => {
         setMigrationExecuted(true);
         setMigrationSuccess(false);
         
-        if (hasExecuted !== 'true') {
+        if (!hasExecuted) {
           toast.error('数据库关系修复过程中出错，请刷新页面重试');
         }
       }

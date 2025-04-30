@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Course } from '@/lib/types/course';
 
@@ -139,7 +140,7 @@ export const getAllCourses = async (options?: CourseFetchOptions) => {
     }
     
     return {
-      data: data.map(convertDbToCourse),
+      data: data.map((item: any) => convertDbToCourse(item)),
       count: data.length,
     };
   } catch (error) {
@@ -190,7 +191,7 @@ export const saveCourse = async (course: CourseDbFields) => {
       // Update existing course - explicitly cast the object to avoid type issues
       const { data, error } = await supabase
         .from('courses')
-        .update(courseToSave as any)
+        .update(courseToSave)
         .eq('id', courseToSave.id || 0)
         .select();
       
@@ -200,7 +201,7 @@ export const saveCourse = async (course: CourseDbFields) => {
       // Create new course - explicitly cast the object to avoid type issues
       const { data, error } = await supabase
         .from('courses')
-        .insert(courseToSave as any)
+        .insert(courseToSave)
         .select();
       
       if (error) throw error;
@@ -293,7 +294,7 @@ export const getCoursesByInstructorId = async (instructorId: number) => {
     }
     
     return {
-      data: data.map(convertDbToCourse),
+      data: data.map((item: any) => convertDbToCourse(item)),
       count: data.length,
     };
   } catch (error) {
