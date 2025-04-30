@@ -1,3 +1,4 @@
+
 import * as React from "react"
 import * as LabelPrimitive from "@radix-ui/react-label"
 import { Slot } from "@radix-ui/react-slot"
@@ -42,22 +43,40 @@ const FormField = <
 const useFormField = () => {
   const fieldContext = React.useContext(FormFieldContext)
   const itemContext = React.useContext(FormItemContext)
-  const { getFieldState, formState } = useFormContext()
+  const formContext = useFormContext()
 
-  const fieldState = getFieldState(fieldContext.name, formState)
+  const { name } = fieldContext
 
   if (!fieldContext) {
     throw new Error("useFormField should be used within <FormField>")
   }
 
-  const { id } = itemContext
+  // Enhanced error handling to avoid null destructuring errors
+  if (!formContext) {
+    // If we're not inside a form context, return minimal data
+    // to prevent errors in components that use this hook
+    return {
+      id: itemContext?.id,
+      name,
+      formItemId: itemContext ? `${itemContext.id}-form-item` : undefined,
+      formDescriptionId: itemContext ? `${itemContext.id}-form-item-description` : undefined,
+      formMessageId: itemContext ? `${itemContext.id}-form-item-message` : undefined,
+      error: undefined,
+    }
+  }
+  
+  // If we do have form context, proceed with the full functionality
+  const { getFieldState, formState } = formContext
+  const fieldState = getFieldState(name, formState)
+
+  const { id } = itemContext || {}
 
   return {
     id,
-    name: fieldContext.name,
-    formItemId: `${id}-form-item`,
-    formDescriptionId: `${id}-form-item-description`,
-    formMessageId: `${id}-form-item-message`,
+    name,
+    formItemId: id ? `${id}-form-item` : undefined,
+    formDescriptionId: id ? `${id}-form-item-description` : undefined,
+    formMessageId: id ? `${id}-form-item-message` : undefined,
     ...fieldState,
   }
 }
@@ -66,9 +85,7 @@ type FormItemContextValue = {
   id: string
 }
 
-const FormItemContext = React.createContext<FormItemContextValue>(
-  {} as FormItemContextValue
-)
+const FormItemContext = React.createContext<FormItemContextValue | null>(null)
 
 const FormItem = React.forwardRef<
   HTMLDivElement,
@@ -155,7 +172,7 @@ const FormMessage = React.forwardRef<
     <p
       ref={ref}
       id={formMessageId}
-      className={cn("text-sm font-medium text-destructive", className)}
+      className={cn("text-sm font-medium text-red-500", className)}
       {...props}
     >
       {body}

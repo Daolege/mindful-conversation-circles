@@ -20,7 +20,7 @@ const PaginationContent = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <ul
     ref={ref}
-    className={cn("flex flex-row items-center gap-1", className)}
+    className={cn("flex flex-row items-center gap-2", className)}
     {...props}
   />
 ))
@@ -52,6 +52,10 @@ const PaginationLink = ({
         variant: isActive ? "outline" : "ghost",
         size,
       }),
+      isActive 
+        ? "bg-knowledge-primary border-knowledge-primary text-white hover:bg-knowledge-primary/90 hover:text-white ring-offset-background transition-all duration-200" 
+        : "text-gray-600 hover:bg-knowledge-primary hover:text-white transition-all duration-200",
+      "h-9 w-9 min-w-9 p-0 rounded-md font-medium",
       className
     )}
     {...props}
@@ -64,13 +68,16 @@ const PaginationPrevious = ({
   ...props
 }: React.ComponentProps<typeof PaginationLink>) => (
   <PaginationLink
-    aria-label="Go to previous page"
+    aria-label="转到上一页"
     size="default"
-    className={cn("gap-1 pl-2.5", className)}
+    className={cn(
+      "gap-1 pl-2.5 pr-2.5 h-9 rounded-md hover:bg-knowledge-primary hover:text-white transition-all duration-200 text-sm font-medium", 
+      className
+    )}
     {...props}
   >
     <ChevronLeft className="h-4 w-4" />
-    <span>Previous</span>
+    <span>上一页</span>
   </PaginationLink>
 )
 PaginationPrevious.displayName = "PaginationPrevious"
@@ -80,12 +87,15 @@ const PaginationNext = ({
   ...props
 }: React.ComponentProps<typeof PaginationLink>) => (
   <PaginationLink
-    aria-label="Go to next page"
+    aria-label="转到下一页"
     size="default"
-    className={cn("gap-1 pr-2.5", className)}
+    className={cn(
+      "gap-1 pl-2.5 pr-2.5 h-9 rounded-md hover:bg-knowledge-primary hover:text-white transition-all duration-200 text-sm font-medium", 
+      className
+    )}
     {...props}
   >
-    <span>Next</span>
+    <span>下一页</span>
     <ChevronRight className="h-4 w-4" />
   </PaginationLink>
 )
@@ -97,11 +107,14 @@ const PaginationEllipsis = ({
 }: React.ComponentProps<"span">) => (
   <span
     aria-hidden
-    className={cn("flex h-9 w-9 items-center justify-center", className)}
+    className={cn(
+      "flex h-9 w-9 items-center justify-center text-gray-400", 
+      className
+    )}
     {...props}
   >
     <MoreHorizontal className="h-4 w-4" />
-    <span className="sr-only">More pages</span>
+    <span className="sr-only">更多页面</span>
   </span>
 )
 PaginationEllipsis.displayName = "PaginationEllipsis"

@@ -1,27 +1,66 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
+import React from 'react';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import Home from './pages/Home';
+import Courses from './pages/Courses';
+import CourseDetail from './pages/CourseDetail';
+import Auth from './pages/Auth';
+import MyCourses from './pages/MyCourses';
+import Checkout from './pages/Checkout';
+import { Toaster } from "sonner";
+import PaymentSuccess from './pages/PaymentSuccess';
+import PaymentFailed from './pages/PaymentFailed';
+import { AuthProvider } from './contexts/AuthProvider';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import Admin from './pages/Admin';
+import Dashboard from './pages/Dashboard';
+import NotFound from './pages/NotFound';
+import CourseEditor from './pages/CourseEditor';
+import CourseNewEditor from './pages/CourseNewEditor';
+import CourseLearn from './pages/CourseLearn';
+import OrderDetail from './pages/OrderDetail';
+import HomeworkSubmissionsPage from './pages/HomeworkSubmissionsPage';
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5,
+      refetchOnWindowFocus: false,
+      retry: 1
+    }
+  }
+});
+
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <Router>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/courses" element={<Courses />} />
+            <Route path="/courses/:courseId" element={<CourseDetail />} />
+            <Route path="/courses/:courseId/learn" element={<CourseLearn />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/my-courses" element={<MyCourses />} />
+            <Route path="/checkout" element={<Checkout />} />
+            <Route path="/payment-success" element={<PaymentSuccess />} />
+            <Route path="/payment-failed" element={<PaymentFailed />} />
+            <Route path="/admin" element={<Admin />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/admin/courses/new" element={<CourseEditor />} />
+            <Route path="/admin/courses/:courseId" element={<CourseEditor />} />
+            <Route path="/admin/courses-new/new" element={<CourseNewEditor />} />
+            <Route path="/admin/courses-new/:courseId" element={<CourseNewEditor />} />
+            <Route path="/admin/courses-new/:courseId/homework" element={<HomeworkSubmissionsPage />} />
+            <Route path="/orders/:id" element={<OrderDetail />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+          <Toaster richColors position="top-right" />
+        </Router>
+      </AuthProvider>
+    </QueryClientProvider>
+  );
+}
 
 export default App;
