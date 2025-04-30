@@ -21,6 +21,7 @@ import { CourseNotFound } from "@/components/course/CourseNotFound";
 import { CourseLearnHeader } from "@/components/course/CourseLearnHeader";
 import { CourseSyllabus } from "@/components/course/CourseSyllabus";
 import { CourseWithDetails } from "@/lib/types/course-new";
+import { DatabaseFixInitializer } from "@/components/course/DatabaseFixInitializer";
 
 const CourseLearn = () => {
   const { courseId } = useParams();
@@ -298,6 +299,9 @@ const CourseLearn = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
+      {/* Database initialization component - no UI, runs migrations */}
+      <DatabaseFixInitializer />
+      
       <main className="flex-grow container mx-auto px-4 py-8">
         <CourseLearnHeader 
           title={title} 

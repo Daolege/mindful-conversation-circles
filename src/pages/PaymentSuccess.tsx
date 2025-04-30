@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { CheckCircle, Download } from "lucide-react";
+import { toast } from 'sonner';
 
 const PaymentSuccess = () => {
   const location = useLocation();
@@ -19,8 +20,8 @@ const PaymentSuccess = () => {
     amount: '¥399.00',
     paymentMethod: '支付宝',
     paymentStatus: '已完成',
-    courseId: '80',  // Updated to a valid course ID
-    isNewCourse: true  // Default to new course system
+    courseId: '80',
+    isNewCourse: true
   };
 
   const courseId = orderDetails.courseId || '80';  // Default to course 80 if none provided
@@ -34,6 +35,11 @@ const PaymentSuccess = () => {
     console.log('[PaymentSuccess] Course ID:', courseId);
     console.log('[PaymentSuccess] Is new course:', isNewCourse);
     console.log('[PaymentSuccess] Learning URL:', learningUrl);
+    
+    // Check if courseId is valid
+    if (!courseId) {
+      toast.error('课程ID无效，将使用默认课程');
+    }
   }, [courseId, isNewCourse, learningUrl]);
 
   return (
@@ -95,6 +101,10 @@ const PaymentSuccess = () => {
                 <div className="flex justify-between py-2">
                   <span className="text-gray-600">课程 ID</span>
                   <span>{courseId}</span>
+                </div>
+                <div className="flex justify-between py-2">
+                  <span className="text-gray-600">课程类型</span>
+                  <span>{isNewCourse ? '新课程系统' : '标准课程'}</span>
                 </div>
               </div>
 

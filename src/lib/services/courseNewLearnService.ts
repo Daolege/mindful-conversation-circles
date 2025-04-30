@@ -41,11 +41,14 @@ export const getCourseNewById = async (id: number | string): Promise<{ data: Cou
     // Handle the response structure - map the database field names to our CourseWithDetails structure
     const transformedData: CourseWithDetails = {
       ...courseData,
+      // Cast status to match the required type
+      status: courseData.status as 'published' | 'draft' | 'archived',
       sections: courseData.course_sections?.map(section => ({
         ...section,
         lectures: section.course_lectures?.map(lecture => ({
           ...lecture,
-          video_url: lecture.video_url
+          // Ensure explicit assignment of video_url field
+          video_url: lecture.video_url || null
         })) || []
       })) || [],
       materials: courseData.course_materials || []
@@ -77,7 +80,7 @@ export const convertNewCourseToSyllabusFormat = (course: CourseWithDetails): Cou
       id: lecture.id,
       title: lecture.title,
       duration: lecture.duration || '未知时长',
-      videoUrl: lecture.video_url
+      videoUrl: lecture.video_url || undefined
     })) || []
   }));
 };

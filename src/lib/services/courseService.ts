@@ -178,8 +178,8 @@ export const saveCourse = async (course: CourseDbFields) => {
     const courseToSave = { ...course };
     
     // Ensure all required fields have default values
-    if (!courseToSave.requirements) courseToSave.requirements = [];
-    if (!courseToSave.whatyouwilllearn) courseToSave.whatyouwilllearn = [];
+    courseToSave.requirements = courseToSave.requirements || [];
+    courseToSave.whatyouwilllearn = courseToSave.whatyouwilllearn || [];
     if (courseToSave.display_order === undefined) courseToSave.display_order = 0;
     
     // Determine if it's an update or insert
