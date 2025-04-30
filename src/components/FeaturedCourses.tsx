@@ -1,13 +1,13 @@
-
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { getAllCourses } from "@/lib/services/courseService";
 import type { Course } from "@/lib/types/course";
-import { transformCourseData } from "@/lib/types/course"; // Changed from import type to regular import
+import { transformCourseData } from "@/lib/types/course";
+import { getAllCoursesNew } from "@/lib/services/courseNewService";
 import CourseGrid from "./courses/CourseGrid";
 import LoadingState from "./courses/LoadingState";
+import { transformCourseNewToOld } from "@/lib/utils/courseTransformers";
 
 const mockCourses: Course[] = [
   {
@@ -98,7 +98,7 @@ const mockCourses: Course[] = [
     level: "中级到高级",
     lastUpdated: "2023-12-05",
     featured: true,
-    whatYouWillLearn: ["商业模式设计", "市场分析方法", "竞争战略", "增长策略"],
+    whatYouWillLearn: ["商业模式设计", "市��分析方法", "竞争战略", "增长策略"],
     requirements: ["基础商业知识", "一定的工作经验"],
     language: "zh",
     enrollment_count: 1560,
@@ -230,8 +230,8 @@ const FeaturedCourses = () => {
   const { toast } = useToast();
 
   const { data: coursesResponse, isLoading, isError, error } = useQuery({
-    queryKey: ['courses'],
-    queryFn: getAllCourses,
+    queryKey: ['courses-new'], // Updated query key to avoid caching conflicts
+    queryFn: getAllCoursesNew,
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
@@ -247,9 +247,9 @@ const FeaturedCourses = () => {
     const shouldUseMockData = isError || (coursesResponse?.data && coursesResponse.data.length === 0);
     
     if (shouldUseApiData) {
-      console.log('Using API data:', coursesResponse.data);
-      // Transform the courses data to ensure consistent format
-      const transformedCourses = coursesResponse.data.map((course) => transformCourseData(course));
+      console.log('Using API data from courses_new:', coursesResponse.data);
+      // Transform the courses data to ensure consistent format - convert CourseNew to Course
+      const transformedCourses = coursesResponse.data.map((course) => transformCourseNewToOld(course));
       // Sort courses by display_order
       const sortedCourses = [...transformedCourses].sort((a, b) => 
         (a.display_order || 999) - (b.display_order || 999)

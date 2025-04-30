@@ -100,8 +100,18 @@ export const getCoursesByInstructorId = async (instructorId: number): Promise<Co
   return { data, error };
 };
 
+// Type for course data to avoid recursion issues
+interface CourseDataForDB {
+  id?: number;
+  title?: string;
+  description?: string;
+  price?: number;
+  display_order?: number;
+  [key: string]: any;
+}
+
 // Save course data with explicit types to avoid recursion
-export const saveCourse = async (courseData: Record<string, any>, courseId?: number) => {
+export const saveCourse = async (courseData: CourseDataForDB, courseId?: number) => {
   try {
     // Extract materials to handle separately
     const materials = courseData.materials;

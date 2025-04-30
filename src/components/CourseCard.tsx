@@ -1,4 +1,3 @@
-
 import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -102,7 +101,7 @@ const CourseCard = ({
   console.log(`[CourseCard] Rendering card ID: ${id}, title: "${title}"`);
 
   return (
-    <Link to={`/courses/${id}`} className="block transform transition-all duration-700 hover:translate-y-[-8px]">
+    <Link to={`/courses-new/${id}`} className="block transform transition-all duration-700 hover:translate-y-[-8px]">
       <Card className="relative h-[250px] overflow-hidden bg-gradient-to-br from-gray-200/90 to-gray-300/90 backdrop-blur-sm border-0 shadow-lg group cursor-pointer hover:shadow-2xl transition-all duration-1000">
         <div className="absolute inset-0 w-full h-full overflow-hidden">
           <div className="absolute inset-0">
