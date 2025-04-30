@@ -15,6 +15,7 @@ export interface CourseNew {
   created_at?: string;
   updated_at?: string;
   published_at?: string | null;
+  language?: string;
   sections?: CourseSection[];
 }
 
@@ -43,8 +44,22 @@ export interface CourseLecture {
   submission_count?: number;
 }
 
+export interface CourseMaterial {
+  id: string;
+  course_id: number;
+  name: string;
+  url: string;
+  position: number;
+  is_visible: boolean;
+  created_at?: string;
+}
+
 export interface CourseWithDetails extends CourseNew {
   sections?: CourseSection[];
+  materials?: CourseMaterial[];
+  learning_objectives?: string[];
+  requirements?: string[];
+  target_audience?: string[];
 }
 
 export interface CourseFormValues {

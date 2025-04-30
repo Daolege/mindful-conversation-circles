@@ -1,5 +1,6 @@
+
 import { supabase } from '@/integrations/supabase/client';
-import { CourseNew, CourseSection } from '@/lib/types/course-new';
+import { CourseNew, CourseSection, CourseMaterial } from '@/lib/types/course-new';
 
 // Get all courses
 export const getAllCoursesNew = async (searchTerm?: string) => {
@@ -106,6 +107,50 @@ export const getCourseNewById = async (courseId: number) => {
       return { data: { ...course, sections: [] }, error: null };
     }
     
+    // 获取课程附件
+    const { data: materials, error: materialsError } = await supabase
+      .from('course_materials')
+      .select('*')
+      .eq('course_id', courseId)
+      .order('position', { ascending: true });
+      
+    if (materialsError) {
+      console.error('[courseNewService] 获取课程附件出错:', materialsError);
+    }
+    
+    // 获取学习目标
+    const { data: learningObjectives, error: objectivesError } = await supabase
+      .from('course_learning_objectives')
+      .select('content')
+      .eq('course_id', courseId)
+      .order('position', { ascending: true });
+      
+    if (objectivesError) {
+      console.error('[courseNewService] 获取学习目标出错:', objectivesError);
+    }
+    
+    // 获取课程要求
+    const { data: requirements, error: requirementsError } = await supabase
+      .from('course_requirements')
+      .select('content')
+      .eq('course_id', courseId)
+      .order('position', { ascending: true });
+      
+    if (requirementsError) {
+      console.error('[courseNewService] 获取课程要求出错:', requirementsError);
+    }
+    
+    // 获取适合人群
+    const { data: targetAudience, error: audienceError } = await supabase
+      .from('course_target_audience')
+      .select('content')
+      .eq('course_id', courseId)
+      .order('position', { ascending: true });
+      
+    if (audienceError) {
+      console.error('[courseNewService] 获取适合人群出错:', audienceError);
+    }
+    
     if (sections && sections.length > 0) {
       // 获取所有章节下的课时
       const { data: lectures, error: lectureError } = await supabase
@@ -128,14 +173,40 @@ export const getCourseNewById = async (courseId: number) => {
       });
       
       console.log(`[courseNewService] 找到 ${sections.length} 个章节，共 ${lectures?.length || 0} 个课时`);
+      
+      // 转换学习目标、要求和适合人群为字符串数组
+      const learningObjectivesArray = learningObjectives ? learningObjectives.map(item => item.content) : [];
+      const requirementsArray = requirements ? requirements.map(item => item.content) : [];
+      const targetAudienceArray = targetAudience ? targetAudience.map(item => item.content) : [];
+      
       return { 
-        data: { ...course, sections: sectionsWithLectures }, 
+        data: { 
+          ...course, 
+          sections: sectionsWithLectures,
+          materials: materials,
+          learning_objectives: learningObjectivesArray,
+          requirements: requirementsArray,
+          target_audience: targetAudienceArray
+        }, 
         error: null 
       };
     } else {
       console.log('[courseNewService] 未找到章节');
+      
+      // 转换学习目标、要求和适合人群为字符串数组
+      const learningObjectivesArray = learningObjectives ? learningObjectives.map(item => item.content) : [];
+      const requirementsArray = requirements ? requirements.map(item => item.content) : [];
+      const targetAudienceArray = targetAudience ? targetAudience.map(item => item.content) : [];
+      
       return { 
-        data: { ...course, sections: [] }, 
+        data: { 
+          ...course, 
+          sections: [],
+          materials: materials,
+          learning_objectives: learningObjectivesArray,
+          requirements: requirementsArray,
+          target_audience: targetAudienceArray
+        }, 
         error: null 
       };
     }
