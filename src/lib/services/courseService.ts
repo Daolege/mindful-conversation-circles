@@ -100,8 +100,8 @@ export const getCoursesByInstructorId = async (instructorId: number): Promise<Co
   return { data, error };
 };
 
-// Define a type that matches exactly what the courses table expects
-interface CourseInsertData {
+// Define a simpler interface for DB operations to avoid TS2589 error
+interface CourseDbFields {
   id?: number;
   title: string;
   description: string;
@@ -119,6 +119,7 @@ interface CourseInsertData {
   instructor?: string | null;
   originalprice?: number | null;
   syllabus?: any;
+  [key: string]: any; // Allow other fields
 }
 
 // Save course data with explicit types to avoid recursion
@@ -127,24 +128,24 @@ export const saveCourse = async (courseData: any, courseId?: number) => {
     // Extract materials to handle separately
     const materials = courseData.materials;
     
-    // Remove complex nested structures before saving to DB
-    const dbCourseData: Partial<CourseInsertData> = { 
-      title: courseData.title,
+    // Prepare data for DB with specific fields to prevent type issues
+    const dbCourseData: CourseDbFields = {
+      title: courseData.title || '',
       description: courseData.description || '',
       price: courseData.price || 0,
       display_order: courseData.display_order || 0,
       requirements: courseData.requirements || [],
       whatyouwilllearn: courseData.whatyouwilllearn || [],
-      category: courseData.category || '',
+      category: courseData.category || null,
       language: courseData.language || 'zh',
       level: courseData.level || 'beginner',
       featured: courseData.featured || false,
       enrollment_count: courseData.enrollment_count || 0,
-      duration: courseData.duration || '',
+      duration: courseData.duration || null,
       imageurl: courseData.imageurl || null,
       instructor: courseData.instructor || null,
       originalprice: courseData.originalprice || null,
-      syllabus: courseData.syllabus || []
+      syllabus: courseData.syllabus || null
     };
     
     let result;
@@ -163,10 +164,10 @@ export const saveCourse = async (courseData: any, courseId?: number) => {
       
       result = { success: true, data };
     } else {
-      // Create new course - ensure all required fields are present
+      // Create new course
       const { data, error } = await supabase
         .from('courses')
-        .insert(dbCourseData as CourseInsertData)  // Cast to ensure all required fields are present
+        .insert(dbCourseData)
         .select('*')
         .single();
         
