@@ -1,5 +1,5 @@
 
-// 正确从hooks目录导入toast函数
+// 从hooks目录导入toast函数
 import { useToast as originalUseToast, toast as originalToast } from "@/hooks/use-toast";
 
 // 重新导出这些函数，保持一致性

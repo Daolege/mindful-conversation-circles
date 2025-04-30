@@ -1,5 +1,5 @@
 
-import React, { createContext, useState, useEffect, useCallback, useRef } from 'react';
+import React, { createContext, useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { Session } from '@supabase/supabase-js';
@@ -11,11 +11,11 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 // 使用带有稳定性优化的提供者
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   // 避免状态冲突的ref
-  const userRef = useRef<User | null>(null);
-  const sessionRef = useRef<Session | null>(null);
-  const initializedRef = useRef(false);
-  const authListenerRef = useRef<{ data: { subscription: { unsubscribe: () => void } } } | null>(null);
-  const updatingStateRef = useRef(false);
+  const userRef = React.useRef<User | null>(null);
+  const sessionRef = React.useRef<Session | null>(null);
+  const initializedRef = React.useRef(false);
+  const authListenerRef = React.useRef<{ data: { subscription: { unsubscribe: () => void } } } | null>(null);
+  const updatingStateRef = React.useRef(false);
   
   // 最小化UI状态，仅用于必要渲染
   const [user, setUser] = useState<User | null>(null);
