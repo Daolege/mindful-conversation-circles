@@ -103,6 +103,26 @@
   .animate-scale:hover {
     transform: scale(1.05);
   }
+  
+  /* Skeleton wave animation */
+  .skeleton-wave {
+    background: linear-gradient(90deg, 
+      rgba(0, 0, 0, 0.06) 25%, 
+      rgba(0, 0, 0, 0.12) 37%, 
+      rgba(0, 0, 0, 0.06) 63%
+    );
+    background-size: 400% 100%;
+    animation: skeleton-wave 1.4s ease infinite;
+  }
+  
+  @keyframes skeleton-wave {
+    0% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0 50%;
+    }
+  }
 }
 
 /* 身份认证页面样式 */

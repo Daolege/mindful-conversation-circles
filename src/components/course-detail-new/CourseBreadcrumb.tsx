@@ -27,7 +27,7 @@ export const CourseBreadcrumb: React.FC<CourseBreadcrumbProps> = ({ course }) =>
   };
 
   return (
-    <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4 animate-in fade-in slide-in-from-left-3 duration-500">
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
@@ -47,7 +47,7 @@ export const CourseBreadcrumb: React.FC<CourseBreadcrumbProps> = ({ course }) =>
       <Button
         variant="ghost"
         size="sm"
-        className="group hover:bg-transparent transition-all duration-200 flex items-center gap-2"
+        className="group hover:bg-transparent transition-all duration-200 flex items-center gap-2 animate-in fade-in slide-in-from-right-3 duration-500"
         onClick={handleGoBack}
       >
         <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />

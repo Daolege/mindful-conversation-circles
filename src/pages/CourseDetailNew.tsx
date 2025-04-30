@@ -49,7 +49,7 @@ const CourseDetailNew = () => {
   return (
     <>
       <Navbar />
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8 animate-in fade-in duration-500">
         <CourseBreadcrumb course={courseData} />
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className={`${isMobile ? 'order-2' : 'order-1'} lg:col-span-2`}>

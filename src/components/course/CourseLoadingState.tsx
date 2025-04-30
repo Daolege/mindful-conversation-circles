@@ -1,10 +1,10 @@
 
-import { Loader2 } from "lucide-react";
+import { DetailPageSkeleton } from "./DetailPageSkeleton";
 
 export const CourseLoadingState = () => {
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <Loader2 className="h-8 w-8 animate-spin" />
+    <div className="container mx-auto px-4 py-8 min-h-screen">
+      <DetailPageSkeleton />
     </div>
   );
 };
