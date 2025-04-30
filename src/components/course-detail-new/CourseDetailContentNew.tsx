@@ -111,7 +111,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
                   isOpen={!!openSectionIds[section.id]}
                   headerContent={
                     <div className="flex justify-between w-full items-center">
-                      <span className="font-bold text-xl">{section.title}</span>
+                      <span className="text-lg">{section.title}</span>
                       <span className="text-xs text-gray-500">
                         {section.lectures?.length || 0} 课时
                       </span>
@@ -127,14 +127,14 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
                         className="flex justify-between items-center p-4 border rounded-10 hover:bg-gray-100 transition-colors shadow-md hover:shadow-lg"
                       >
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-semibold">{lecture.title}</span>
+                          <span className="text-sm font-normal">{lecture.title}</span>
                         </div>
                         <div className="flex items-center gap-2">
                           {lecture.is_free ? (
                             <Button 
                               size="sm" 
                               variant="knowledge" 
-                              className="text-xs py-1 px-3 h-auto flex items-center gap-1"
+                              className="text-xs py-2 px-3 h-8 flex items-center gap-1"
                             >
                               免费学习
                             </Button>
@@ -174,7 +174,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
                   <Button
                     size="sm"
                     variant="knowledge"
-                    className="text-xs py-1 px-3 h-auto flex items-center gap-1"
+                    className="text-xs py-2 px-3 h-8 flex items-center gap-1"
                   >
                     <Download size={14} />
                     下载

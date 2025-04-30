@@ -4,6 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CourseWithDetails } from '@/lib/types/course-new';
 import { Clock, Calendar, Globe, CheckCircle, Download, Users, MessageSquare, Video, BookOpen } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface CourseEnrollCardNewProps {
   course: CourseWithDetails;
@@ -22,6 +23,7 @@ export const CourseEnrollCardNew: React.FC<CourseEnrollCardNewProps> = ({ course
     : null;
     
   const [isScrolled, setIsScrolled] = useState(false);
+  const isMobile = useIsMobile();
   
   useEffect(() => {
     const handleScroll = () => {
@@ -40,10 +42,10 @@ export const CourseEnrollCardNew: React.FC<CourseEnrollCardNewProps> = ({ course
       <Card className="overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300">
         <div className="p-6 space-y-6">
           {/* Price section */}
-          <div className="flex items-baseline">
-            <div className="text-4xl font-bold">{formattedPrice}</div>
+          <div className="flex items-baseline flex-wrap">
+            <div className="text-3xl font-bold">{formattedPrice}</div>
             {formattedOriginalPrice && (
-              <div className="ml-3 text-gray-500 line-through text-xl">
+              <div className="ml-3 text-gray-500 line-through text-lg">
                 {formattedOriginalPrice}
               </div>
             )}
@@ -55,12 +57,12 @@ export const CourseEnrollCardNew: React.FC<CourseEnrollCardNewProps> = ({ course
           </div>
 
           {/* Enrollment button */}
-          <Button className="w-full py-6 text-base" variant="knowledge">
+          <Button className="w-full py-6 text-base h-14" variant="knowledge">
             立即报名学习
           </Button>
 
           {/* Course features */}
-          <div className="space-y-3 text-sm">
+          <div className={`space-y-3 text-sm ${isMobile ? 'grid grid-cols-2 gap-2' : ''}`}>
             <div className="flex items-center">
               <Video className="h-4 w-4 text-gray-500 mr-2" />
               <span>高清视频课程</span>

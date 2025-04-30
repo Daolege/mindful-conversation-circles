@@ -10,10 +10,12 @@ import { CourseLoadingState } from '@/components/course/CourseLoadingState';
 import { CourseNotFound } from '@/components/course/CourseNotFound';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const CourseDetailNew = () => {
   const { courseId } = useParams<{ courseId: string }>();
   const courseIdNum = parseInt(courseId || '0', 10);
+  const isMobile = useIsMobile();
 
   const { data: course, isLoading, error } = useQuery({
     queryKey: ['course-new', courseIdNum],
@@ -48,11 +50,11 @@ const CourseDetailNew = () => {
       <Navbar />
       <div className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2">
+          <div className={`${isMobile ? 'order-2' : 'order-1'} lg:col-span-2`}>
             <CourseDetailHeaderNew course={courseData} />
             <CourseDetailContentNew course={courseData} />
           </div>
-          <div className="lg:col-span-1">
+          <div className={`${isMobile ? 'order-1 mb-6' : 'order-2'} lg:col-span-1`}>
             <CourseEnrollCardNew course={courseData} />
           </div>
         </div>

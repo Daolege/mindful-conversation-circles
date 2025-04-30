@@ -3,21 +3,24 @@ import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { CourseWithDetails } from '@/lib/types/course-new';
 import { Book, Users, Clock, Globe, Calendar } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface CourseDetailHeaderNewProps {
   course: CourseWithDetails;
 }
 
 export const CourseDetailHeaderNew: React.FC<CourseDetailHeaderNewProps> = ({ course }) => {
+  const isMobile = useIsMobile();
+  
   return (
     <div className="mb-10 animate-in fade-in duration-500">
-      <h1 className="text-3xl md:text-4xl font-bold mb-12">{course.title}</h1>
+      <h1 className={`${isMobile ? 'text-2xl' : 'text-3xl md:text-4xl'} font-bold mb-12`}>{course.title}</h1>
       
       <div className="flex flex-wrap gap-4 mb-8">
         {course.category && (
           <Badge 
             variant="courseTag"
-            className="text-sm"
+            className="text-sm flex items-center"
           >
             <Book size={16} className="mr-1" />
             {course.category}
@@ -26,7 +29,7 @@ export const CourseDetailHeaderNew: React.FC<CourseDetailHeaderNewProps> = ({ co
         
         <Badge 
           variant="courseTag"
-          className="text-sm"
+          className="text-sm flex items-center"
         >
           <Users size={16} className="mr-1" />
           {course.enrollment_count || 0} 名学员
@@ -34,7 +37,7 @@ export const CourseDetailHeaderNew: React.FC<CourseDetailHeaderNewProps> = ({ co
         
         <Badge 
           variant="courseTag"
-          className="text-sm"
+          className="text-sm flex items-center"
         >
           <Book size={16} className="mr-1" />
           {course.sections?.length || 0} 章节
@@ -42,7 +45,7 @@ export const CourseDetailHeaderNew: React.FC<CourseDetailHeaderNewProps> = ({ co
         
         <Badge 
           variant="courseTag"
-          className="text-sm"
+          className="text-sm flex items-center"
         >
           <Clock size={16} className="mr-1" />
           {course.lecture_count || 0} 课时
@@ -51,7 +54,7 @@ export const CourseDetailHeaderNew: React.FC<CourseDetailHeaderNewProps> = ({ co
         {course.language && (
           <Badge 
             variant="courseTag"
-            className="text-sm"
+            className="text-sm flex items-center"
           >
             <Globe size={16} className="mr-1" />
             {course.language}
@@ -61,7 +64,7 @@ export const CourseDetailHeaderNew: React.FC<CourseDetailHeaderNewProps> = ({ co
         {course.published_at && (
           <Badge 
             variant="courseTag"
-            className="text-sm"
+            className="text-sm flex items-center"
           >
             <Calendar size={16} className="mr-1" />
             {new Date(course.published_at).toLocaleDateString('zh-CN')} 发布

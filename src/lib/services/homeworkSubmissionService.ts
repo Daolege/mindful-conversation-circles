@@ -28,8 +28,26 @@ export interface HomeworkSubmission {
     title: string;
     type: string;
   };
-  // Add any missing fields that might be in the database response
   answer?: string;
+}
+
+// Types for raw data from Supabase
+interface RawSubmissionData {
+  answer?: string;
+  course_id: number;
+  file_url: string;
+  homework_id: string;
+  id: string;
+  lecture_id: string;
+  submitted_at: string;
+  user_id: string;
+  users: any;
+  feedback?: string;
+  reviewed_at?: string;
+  score?: number;
+  status?: 'pending' | 'reviewed' | 'rejected';
+  created_at?: string;
+  [key: string]: any;
 }
 
 // Types
@@ -53,7 +71,7 @@ export async function getHomeworkSubmissionsByCourseId(courseId: number) {
   }
 
   // Transform data to include user details
-  const submissions = data.map(submission => {
+  const submissions = (data as RawSubmissionData[]).map(submission => {
     const user = submission.users as any;
     return {
       ...submission,
@@ -82,7 +100,7 @@ export async function getHomeworkSubmissionsByLectureId(lectureId: string) {
   }
 
   // Transform data to include user details
-  const submissions = data.map(submission => {
+  const submissions = (data as RawSubmissionData[]).map(submission => {
     const user = submission.users as any;
     return {
       ...submission,
@@ -112,12 +130,12 @@ export async function getHomeworkSubmissionById(submissionId: string) {
 
   const user = data.users as any;
   const submission: SubmissionWithUserDetails = {
-    ...data,
+    ...data as RawSubmissionData,
     user_name: user?.name || 'Unknown User',
     user_email: user?.email || '',
     user_avatar: user?.avatar_url || '',
-    status: data.status || 'pending',
-    created_at: data.created_at || data.submitted_at || new Date().toISOString()
+    status: (data as any).status || 'pending',
+    created_at: (data as any).created_at || data.submitted_at || new Date().toISOString()
   };
 
   return submission;
@@ -129,13 +147,15 @@ export async function updateHomeworkFeedback(
   feedback: string, 
   status: 'pending' | 'reviewed' | 'rejected'
 ) {
+  const updateData: Record<string, any> = {
+    feedback,
+    status,
+    reviewed_at: new Date().toISOString()
+  };
+
   const { data, error } = await supabase
     .from('homework_submissions')
-    .update({
-      feedback,
-      status,
-      reviewed_at: new Date().toISOString()
-    })
+    .update(updateData)
     .eq('id', submissionId);
 
   if (error) {
