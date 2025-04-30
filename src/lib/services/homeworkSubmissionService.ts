@@ -1,7 +1,30 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import type { Database } from '@/integrations/supabase/types';
-import { HomeworkSubmission } from '@/lib/types/course';
+
+// Define HomeworkSubmission type since it's not in course.ts
+export interface HomeworkSubmission {
+  id: string;
+  user_id: string;
+  course_id: number;
+  lecture_id: string;
+  homework_id: string;
+  content?: string;
+  file_url?: string;
+  submitted_at: string;
+  status: 'pending' | 'reviewed' | 'rejected';
+  feedback?: string;
+  created_at: string;
+  reviewed_at?: string;
+  profiles?: {
+    full_name?: string;
+    email?: string;
+  };
+  homework?: {
+    id: string;
+    title: string;
+    type: string;
+  };
+}
 
 // Types
 export interface SubmissionWithUserDetails extends HomeworkSubmission {

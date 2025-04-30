@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from "@tanstack/react-query";
@@ -68,7 +69,12 @@ const CourseLearn = () => {
   });
 
   const course = courseResponse?.data;
-  const syllabusData = course?.syllabus as CourseSyllabusSection[] || [];
+  // Fix the type conversion for syllabus data
+  const syllabusData: CourseSyllabusSection[] = course?.syllabus 
+    ? (typeof course.syllabus === 'string'
+        ? JSON.parse(course.syllabus)
+        : course.syllabus as unknown as CourseSyllabusSection[])
+    : [];
   
   console.log('Course data loaded:', {
     courseId,
@@ -194,18 +200,8 @@ const CourseLearn = () => {
     return <CourseNotFound />;
   }
 
-  const processCourseSyllabus = (data: any) => {
-    if (Array.isArray(data)) {
-      return data.map(section => ({
-        title: section.title || 'Unnamed Section',
-        lectures: Array.isArray(section.lectures) ? section.lectures : []
-        // Add other required properties of CourseSyllabusSection
-      }));
-    }
-    return []; // Return empty array as fallback
-  };
-
-  const syllabus = processCourseSyllabus(data.syllabus);
+  // Remove the processCourseSyllabus function and related code since we're handling the type conversion above
+  const syllabus = syllabusData;
 
   return (
     <div className="min-h-screen flex flex-col">

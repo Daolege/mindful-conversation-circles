@@ -19,45 +19,29 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
-
-interface HomeworkSubmission {
-  id: string;
-  submitted_at: string;
-  user_id: string;
-  homework_id: string;
-  lecture_id: string;
-  answer?: string;
-  file_url?: string;
-  score?: number;
-  status?: string;
-  profiles: {
-    full_name?: string;
-    email?: string;
-  };
-  homework: {
-    id: string;
-    title: string;
-    type: string;
-  };
-}
+import { HomeworkSubmission } from "@/lib/services/homeworkSubmissionService";
 
 interface HomeworkSubmissionListProps {
   submissions: HomeworkSubmission[];
-  onViewSubmission: (id: string) => void;
-  currentPage: number;
-  totalSubmissions: number;
-  onPageChange: (page: number) => void;
+  onViewSubmission?: (id: string) => void;
+  currentPage?: number;
+  totalSubmissions?: number;
+  onPageChange?: (page: number) => void;
+  isLoading?: boolean;
+  filter?: string;
 }
 
 export function HomeworkSubmissionList({
-  submissions,
-  onViewSubmission,
-  currentPage,
-  totalSubmissions,
-  onPageChange,
+  submissions = [],
+  onViewSubmission = () => {},
+  currentPage = 1,
+  totalSubmissions = 0,
+  onPageChange = () => {},
+  isLoading = false,
+  filter = 'all',
 }: HomeworkSubmissionListProps) {
   const pageSize = 10;
-  const totalPages = Math.ceil(totalSubmissions / pageSize);
+  const totalPages = Math.ceil(totalSubmissions / pageSize) || 1;
   
   const formatSubmissionDate = (dateString: string) => {
     try {
@@ -100,9 +84,18 @@ export function HomeworkSubmissionList({
     }
   };
   
+  // Filter submissions based on the selected tab
+  const filteredSubmissions = filter === 'all' 
+    ? submissions 
+    : submissions.filter(submission => submission.status === filter);
+  
+  if (isLoading) {
+    return <div className="py-8 text-center">加载中...</div>;
+  }
+  
   return (
     <div className="space-y-4">
-      {submissions.length > 0 ? (
+      {filteredSubmissions.length > 0 ? (
         <>
           <Table>
             <TableHeader>
@@ -116,20 +109,21 @@ export function HomeworkSubmissionList({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {submissions.map((submission) => (
+              {filteredSubmissions.map((submission) => (
                 <TableRow key={submission.id}>
                   <TableCell className="align-top">
                     <div>
-                      <div>{submission.profiles?.full_name || '未命名用户'}</div>
-                      <div className="text-sm text-gray-500">{submission.profiles?.email}</div>
+                      <div>{submission.user_name || '未命名用户'}</div>
+                      <div className="text-sm text-gray-500">{submission.user_email}</div>
                     </div>
                   </TableCell>
                   <TableCell>
-                    <div className="font-medium">{submission.homework?.title}</div>
+                    <div className="font-medium">{submission.homework?.title || '未命名作业'}</div>
                     <div className="text-sm text-gray-500">
                       {submission.homework?.type === 'single_choice' && '单选题'}
                       {submission.homework?.type === 'multiple_choice' && '多选题'}
                       {submission.homework?.type === 'fill_blank' && '填空题'}
+                      {!submission.homework?.type && '其他类型'}
                     </div>
                     {submission.file_url && (
                       <div className="mt-1">
@@ -141,7 +135,7 @@ export function HomeworkSubmissionList({
                     )}
                   </TableCell>
                   <TableCell>
-                    {formatSubmissionDate(submission.submitted_at)}
+                    {formatSubmissionDate(submission.submitted_at || submission.created_at)}
                   </TableCell>
                   <TableCell>
                     {renderStatusBadge(submission.status)}
