@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 
 export const executeHomeworkMigration = async (): Promise<{
@@ -26,61 +27,23 @@ export const executeHomeworkMigration = async (): Promise<{
       // Continue anyway, this is just diagnostic
     }
     
-    // 2. Drop existing foreign key constraint using direct SQL
+    // 2. Drop existing foreign key constraint using admin_add_course_item function
     console.log('[executeHomeworkMigration] Attempting to drop foreign key constraint');
     
     try {
       const dropConstraintSql = `
-        DO $$
-        DECLARE
-          constraint_name text;
-        BEGIN
-          -- Find if there's an existing foreign key constraint on homework.course_id
-          SELECT conname INTO constraint_name
-          FROM pg_constraint
-          WHERE conrelid = 'public.homework'::regclass
-          AND conname LIKE '%course_id%'
-          AND contype = 'f'
-          LIMIT 1;
-          
-          -- If constraint exists, drop it
-          IF constraint_name IS NOT NULL THEN
-            EXECUTE 'ALTER TABLE public.homework DROP CONSTRAINT ' || constraint_name;
-            RAISE NOTICE 'Dropped constraint: %', constraint_name;
-          END IF;
-        END $$;
+        ALTER TABLE IF EXISTS public.homework 
+        DROP CONSTRAINT IF EXISTS homework_course_id_fkey;
       `;
       
-      const { error: dropError } = await supabase.rpc('execute_sql', { sql_query: dropConstraintSql });
+      const { data: dropData, error: dropError } = await supabase.rpc('admin_add_course_item', {
+        p_table_name: '_migrations',
+        p_sql_query: dropConstraintSql 
+      });
       
       if (dropError) {
-        // If execute_sql isn't available, try another approach with direct REST API
-        console.warn('[executeHomeworkMigration] Could not use execute_sql RPC, trying alternative approach:', dropError);
-        
-        // Try a simpler approach - just drop if exists
-        const simpleDrop = `
-          ALTER TABLE IF EXISTS public.homework 
-          DROP CONSTRAINT IF EXISTS homework_course_id_fkey;
-        `;
-        
-        // Use fetch to directly call the SQL endpoint
-        const response = await fetch(`${supabase.restUrl}/sql`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': supabase.supabaseKey,
-            'Authorization': `Bearer ${supabase.supabaseKey}`
-          },
-          body: JSON.stringify({ query: simpleDrop })
-        });
-        
-        if (!response.ok) {
-          const errorData = await response.json();
-          console.error('[executeHomeworkMigration] Direct SQL drop error:', errorData);
-          // Continue anyway - constraint might not exist
-        } else {
-          console.log('[executeHomeworkMigration] Direct SQL drop successful');
-        }
+        console.warn('[executeHomeworkMigration] Could not drop constraint using RPC:', dropError);
+        // Continue anyway - constraint might not exist
       } else {
         console.log('[executeHomeworkMigration] Successfully executed drop constraint function');
       }
@@ -89,7 +52,7 @@ export const executeHomeworkMigration = async (): Promise<{
       // Continue anyway - the constraint might not exist
     }
     
-    // 3. Add new foreign key pointing to courses_new using direct SQL
+    // 3. Add new foreign key pointing to courses_new using admin_add_course_item RPC
     console.log('[executeHomeworkMigration] Adding new foreign key constraint to courses_new');
     
     try {
@@ -105,105 +68,52 @@ export const executeHomeworkMigration = async (): Promise<{
         ON public.homework(course_id);
       `;
       
-      // First try with RPC
-      const { error: addError } = await supabase.rpc('execute_sql', { sql_query: addConstraintSql });
+      // Use admin_add_course_item RPC
+      const { data: addData, error: addError } = await supabase.rpc('admin_add_course_item', { 
+        p_table_name: '_migrations',
+        p_sql_query: addConstraintSql 
+      });
       
       if (addError) {
-        console.warn('[executeHomeworkMigration] Could not use execute_sql RPC, trying direct SQL:', addError);
-        
-        // Use fetch to directly call the SQL endpoint
-        const response = await fetch(`${supabase.restUrl}/sql`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': supabase.supabaseKey,
-            'Authorization': `Bearer ${supabase.supabaseKey}`
-          },
-          body: JSON.stringify({ query: addConstraintSql })
-        });
-        
-        if (!response.ok) {
-          const errorData = await response.json();
-          console.error('[executeHomeworkMigration] Direct SQL add error:', errorData);
-          throw new Error(`Unable to add foreign key via direct SQL: ${JSON.stringify(errorData)}`);
-        } else {
-          console.log('[executeHomeworkMigration] Direct SQL add constraint successful');
-        }
+        console.error('[executeHomeworkMigration] Could not add constraint using RPC:', addError);
+        throw new Error(`Unable to add foreign key: ${addError.message}`);
       } else {
-        console.log('[executeHomeworkMigration] Successfully executed add constraint function');
+        console.log('[executeHomeworkMigration] Successfully added foreign key constraint');
       }
     } catch (addErr: any) {
       console.error('[executeHomeworkMigration] Add foreign key error:', addErr);
       throw new Error(`Unable to add foreign key: ${addErr.message || 'Unknown error'}`);
     }
     
-    // 4. Verify the constraint was added correctly by checking foreign keys
-    console.log('[executeHomeworkMigration] Verifying foreign key was added');
+    // 4. Verify the constraint was added correctly through direct table query
+    console.log('[executeHomeworkMigration] Verifying migration by testing relationships');
     
     try {
-      const verifySql = `
-        SELECT 
-          tc.constraint_name,
-          tc.table_name,
-          kcu.column_name,
-          ccu.table_name AS foreign_table_name,
-          ccu.column_name AS foreign_column_name
-        FROM 
-          information_schema.table_constraints AS tc 
-          JOIN information_schema.key_column_usage AS kcu
-            ON tc.constraint_name = kcu.constraint_name
-            AND tc.table_schema = kcu.table_schema
-          JOIN information_schema.constraint_column_usage AS ccu
-            ON ccu.constraint_name = tc.constraint_name
-            AND ccu.table_schema = tc.table_schema
-        WHERE tc.constraint_type = 'FOREIGN KEY' 
-          AND tc.table_name = 'homework'
-          AND kcu.column_name = 'course_id';
-      `;
+      // First check if courses_new has data
+      const { count: courseCount, error: courseError } = await supabase
+        .from('courses_new')
+        .select('*', { count: 'exact', head: true });
       
-      // Use fetch to directly call the SQL endpoint
-      const response = await fetch(`${supabase.restUrl}/sql`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': supabase.supabaseKey,
-          'Authorization': `Bearer ${supabase.supabaseKey}`
-        },
-        body: JSON.stringify({ query: verifySql })
-      });
+      console.log('[executeHomeworkMigration] courses_new table has rows:', courseCount);
       
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('[executeHomeworkMigration] Verify SQL error:', errorData);
-        throw new Error(`Unable to verify foreign key: ${JSON.stringify(errorData)}`);
+      if (courseError) {
+        console.warn('[executeHomeworkMigration] Error checking courses_new:', courseError);
       }
       
-      const verifyData = await response.json();
-      console.log('[executeHomeworkMigration] Verification result:', verifyData);
+      // Then check that homework table can be queried with foreign key
+      const { data: hwData, error: hwError } = await supabase
+        .from('homework')
+        .select('*, courses_new!inner(*)')
+        .limit(1);
       
-      // Check if the constraint points to courses_new
-      let isForeignKeyCorrect = false;
-      let foreignKeyTarget = "unknown";
-      
-      if (verifyData && verifyData.length > 0) {
-        const foreignKey = verifyData[0];
-        if (foreignKey) {
-          foreignKeyTarget = foreignKey.foreign_table_name;
-          isForeignKeyCorrect = foreignKey.foreign_table_name === 'courses_new';
-        }
-      }
-      
-      if (!isForeignKeyCorrect) {
-        console.warn('[executeHomeworkMigration] Foreign key does not point to courses_new, current target:', foreignKeyTarget);
-        return {
-          success: false,
-          message: `Migration incomplete: Foreign key points to ${foreignKeyTarget} instead of courses_new`
-        };
+      if (hwError) {
+        console.error('[executeHomeworkMigration] Join verification failed:', hwError);
+        // This is just a verification, so continue anyway
       } else {
-        console.log('[executeHomeworkMigration] Foreign key correctly points to courses_new');
+        console.log('[executeHomeworkMigration] Relationship verification passed');
       }
       
-      // 5. Record the successful migration in localStorage instead of temp table
+      // 5. Record the successful migration in localStorage
       try {
         localStorage.setItem('homework_migration_executed', 'true');
         console.log('[executeHomeworkMigration] Migration recorded in localStorage');

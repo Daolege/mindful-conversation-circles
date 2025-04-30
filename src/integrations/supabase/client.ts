@@ -57,26 +57,24 @@ export const supabase = createClient<Database>(
 // Create the migrations table if it doesn't exist
 export async function ensureMigrationsTable() {
   try {
-    // Check if _migrations table exists
-    const { error } = await supabase
-      .from('_migrations')
-      .select('id', { count: 'exact', head: true });
+    // Use admin_add_course_item to create the _migrations table if needed
+    const { error } = await supabase.rpc('admin_add_course_item', {
+      p_table_name: '_migrations',
+      p_sql_query: `
+        CREATE TABLE IF NOT EXISTS public._migrations (
+          id SERIAL PRIMARY KEY,
+          name TEXT NOT NULL,
+          sql TEXT,
+          executed_at TIMESTAMPTZ DEFAULT NOW(),
+          success BOOLEAN DEFAULT TRUE
+        );
+      `
+    });
 
-    // If we get a "relation does not exist" error, create the table
-    if (error && error.code === '42P01') {
-      await supabase.rpc('admin_add_course_item', {
-        table_name: '_migrations',
-        sql_query: `
-          CREATE TABLE IF NOT EXISTS public._migrations (
-            id SERIAL PRIMARY KEY,
-            name TEXT NOT NULL,
-            sql TEXT,
-            executed_at TIMESTAMPTZ DEFAULT NOW(),
-            success BOOLEAN DEFAULT TRUE
-          );
-        `
-      });
-      console.log('Created _migrations table');
+    if (error) {
+      console.error('Error creating migrations table:', error);
+    } else {
+      console.log('Created or verified _migrations table');
     }
   } catch (err) {
     console.error('Error ensuring migrations table exists:', err);
@@ -111,7 +109,7 @@ export async function loadMockCourses() {
           studentcount: 1250,
           ratingcount: 320,
           lectures: 48,
-          whatyouwilllearn: ["人工智能基础理论", "机器学习算法", "神经网络基础", "AI实际应用案例"],
+          whatyouwilllearn: ["人工智能基础理论", "机器学习算���", "神经网络基础", "AI实际应用案例"],
           requirements: ["基础编程知识", "高中数学水平"],
           category: "技术",
           level: "初级到中级",

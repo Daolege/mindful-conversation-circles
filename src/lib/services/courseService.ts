@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Course } from '@/lib/types/course';
 
@@ -30,7 +29,7 @@ interface CourseDbFields {
   whatyouwilllearn?: string[] | null;
   highlights?: string[] | null;
   curriculum?: string[] | null;
-  syllabus?: any | null; // Allow syllabus to be null to fix type errors
+  syllabus?: any;
   currency?: string | null;
 }
 
@@ -175,12 +174,13 @@ export const getCourseById = async (id: number) => {
 export const saveCourse = async (course: CourseDbFields) => {
   try {
     // Make a copy of the course object to avoid modifying the original
-    const courseToSave = { ...course };
+    const courseToSave: any = { ...course };
     
     // Ensure all required fields have default values
     courseToSave.requirements = courseToSave.requirements || [];
     courseToSave.whatyouwilllearn = courseToSave.whatyouwilllearn || [];
     courseToSave.highlights = courseToSave.highlights || [];
+    courseToSave.syllabus = courseToSave.syllabus || [];
     if (courseToSave.display_order === undefined) courseToSave.display_order = 0;
     
     // Determine if it's an update or insert
@@ -192,12 +192,7 @@ export const saveCourse = async (course: CourseDbFields) => {
       // Update existing course
       const { data, error } = await supabase
         .from('courses')
-        .update({
-          ...courseToSave,
-          requirements: courseToSave.requirements || [],
-          whatyouwilllearn: courseToSave.whatyouwilllearn || [],
-          highlights: courseToSave.highlights || []
-        })
+        .update(courseToSave)
         .eq('id', courseToSave.id || 0)
         .select();
       
@@ -207,12 +202,7 @@ export const saveCourse = async (course: CourseDbFields) => {
       // Create new course
       const { data, error } = await supabase
         .from('courses')
-        .insert({
-          ...courseToSave,
-          requirements: courseToSave.requirements || [],
-          whatyouwilllearn: courseToSave.whatyouwilllearn || [],
-          highlights: courseToSave.highlights || []
-        })
+        .insert(courseToSave)
         .select();
       
       if (error) throw error;

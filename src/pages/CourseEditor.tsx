@@ -1,15 +1,26 @@
+
 import React from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useCourseEditor } from '@/hooks/useCourseEditor';
+import { Loader2, X, Plus } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Separator } from "@/components/ui/separator";
 
 const CourseEditor = () => {
   const { courseId } = useParams<{ courseId: string }>();
   const numericCourseId = courseId ? parseInt(courseId) : undefined;
+  const navigate = useNavigate();
   
-  // Fix: Passing only one argument to useCourseEditor instead of two
-  const courseEditor = useCourseEditor(numericCourseId);
+  // Fix: Passing no arguments to useCourseEditor since it now handles courseId within the context
+  const courseEditor = useCourseEditor();
   
-  if (courseEditor.loading) {
+  if (courseEditor.isLoading) {
     return (
       <div className="container mx-auto p-4 flex justify-center items-center min-h-[50vh]">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -23,7 +34,7 @@ const CourseEditor = () => {
         {courseId ? "编辑课程" : "创建新课程"}
       </h1>
 
-      <form onSubmit={courseEditor.handleSubmit}>
+      <form onSubmit={courseEditor.handleFormSubmit}>
         <Tabs value={courseEditor.activeTab} onValueChange={courseEditor.setActiveTab} className="w-full">
           <TabsList className="mb-6">
             <TabsTrigger value="basic">基本信息</TabsTrigger>
@@ -699,9 +710,9 @@ const CourseEditor = () => {
           >
             取消
           </Button>
-          <Button type="submit" disabled={courseEditor.saving}>
-            {courseEditor.saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {courseEditor.saving ? "保存中..." : "保存课程"}
+          <Button type="submit" disabled={courseEditor.isSaving}>
+            {courseEditor.isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {courseEditor.isSaving ? "保存中..." : "保存课程"}
           </Button>
         </div>
       </form>

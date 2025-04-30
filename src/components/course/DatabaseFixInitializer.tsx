@@ -29,26 +29,24 @@ export const DatabaseFixInitializer: React.FC = () => {
       try {
         // First ensure we have the migrations table
         try {
-          await supabase
-            .from('_migrations')
-            .select('id', { count: 'exact', head: true })
-            .then(({ error }) => {
-              if (error && error.code === '42P01') {
-                console.log('[DatabaseFixInitializer] Creating migrations table');
-                return supabase.rpc('admin_add_course_item', {
-                  table_name: '_migrations',
-                  sql_query: `
-                    CREATE TABLE IF NOT EXISTS public._migrations (
-                      id SERIAL PRIMARY KEY,
-                      name TEXT NOT NULL,
-                      sql TEXT,
-                      executed_at TIMESTAMPTZ DEFAULT NOW(),
-                      success BOOLEAN DEFAULT TRUE
-                    );
-                  `
-                });
-              }
-            });
+          // Check if _migrations table exists with direct query approach
+          const { error: checkError } = await supabase.rpc('admin_add_course_item', {
+            p_table_name: '_migrations',
+            p_sql_query: `
+              CREATE TABLE IF NOT EXISTS public._migrations (
+                id SERIAL PRIMARY KEY,
+                name TEXT NOT NULL,
+                sql TEXT,
+                executed_at TIMESTAMPTZ DEFAULT NOW(),
+                success BOOLEAN DEFAULT TRUE
+              );
+            `
+          });
+          
+          if (checkError) {
+            console.warn('[DatabaseFixInitializer] Error with migrations table setup:', checkError);
+            // Continue anyway
+          }
         } catch (err) {
           console.warn('[DatabaseFixInitializer] Error with migrations table setup:', err);
           // Continue anyway
