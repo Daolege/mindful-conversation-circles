@@ -130,8 +130,8 @@ export async function updateHomeworkFeedback(
   const { data, error } = await supabase
     .from('homework_submissions')
     .update({
-      feedback,
-      status,
+      feedback: feedback,
+      status: status,
       reviewed_at: new Date().toISOString()
     })
     .eq('id', submissionId);

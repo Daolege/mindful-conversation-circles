@@ -1,13 +1,14 @@
 import { supabase } from '@/integrations/supabase/client';
-import { Course, CourseMaterial, CourseDbData, prepareCourseForDb } from '@/lib/types/course';
 
-// Export any existing types you need to reference with proper typing rather than recursive references
-export interface CourseTypeWithStringifiedProps {
+// Basic types without circular references
+export type CourseSimple = {
   id: number;
   title: string;
-  // Add other base properties that don't cause circular references
-  // Use more specific types or break circular dependencies
-}
+  description?: string;
+  price: number;
+  display_order?: number;
+  // Other basic fields as needed
+};
 
 // Get all active courses
 export const getAllCourses = async () => {
@@ -98,8 +99,10 @@ export const saveCourse = async (courseData: any, courseId?: number) => {
     // Extract materials to handle separately
     const materials = courseData.materials;
     
-    // Create database object with standardized fields
-    const dbCourseData = prepareCourseForDb(courseData);
+    // Remove complex nested structures before saving to DB
+    const dbCourseData = { ...courseData };
+    delete dbCourseData.materials;
+    delete dbCourseData.sections;
     
     let result;
     if (courseId) {

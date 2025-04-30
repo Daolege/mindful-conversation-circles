@@ -111,7 +111,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
                   isOpen={!!openSectionIds[section.id]}
                   headerContent={
                     <div className="flex justify-between w-full items-center">
-                      <span className="font-medium">{section.title}</span>
+                      <span className="font-bold text-lg">{section.title}</span>
                       <span className="text-xs text-gray-500">
                         {section.lectures?.length || 0} 课时
                       </span>
@@ -127,7 +127,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
                         className="flex justify-between items-center p-4 border rounded-10 hover:bg-gray-100 transition-colors shadow-md hover:shadow-lg"
                       >
                         <div className="flex items-center gap-2">
-                          <span className="text-sm">{lecture.title}</span>
+                          <span className="text-sm font-semibold">{lecture.title}</span>
                         </div>
                         <div className="flex items-center gap-2">
                           {lecture.is_free ? (
@@ -169,7 +169,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
                 <li key={material.id} className="flex justify-between items-center p-4 border rounded-10 hover:bg-gray-100 transition-colors shadow-md hover:shadow-lg">
                   <div className="flex items-center gap-2">
                     <File size={18} className="text-gray-600" />
-                    <span>{material.name}</span>
+                    <span className="font-semibold">{material.name}</span>
                   </div>
                   <Button
                     size="sm"
@@ -204,7 +204,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
                 {learningObjectives.map((objective, index) => (
                   <li key={index} className="flex items-start gap-2">
                     <Target className="h-4 w-4 text-gray-800 mt-0.5 flex-shrink-0" />
-                    <span className="text-sm text-gray-700">{objective}</span>
+                    <span className="text-sm font-medium text-gray-700">{objective}</span>
                   </li>
                 ))}
               </ul>
@@ -228,7 +228,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
                 {requirements.map((requirement, index) => (
                   <li key={index} className="flex items-start gap-2">
                     <Book className="h-4 w-4 text-gray-800 mt-0.5 flex-shrink-0" />
-                    <span className="text-sm text-gray-700">{requirement}</span>
+                    <span className="text-sm font-medium text-gray-700">{requirement}</span>
                   </li>
                 ))}
               </ul>
@@ -252,7 +252,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
                 {targetAudience.map((audience, index) => (
                   <li key={index} className="flex items-start gap-2">
                     <Users className="h-4 w-4 text-gray-800 mt-0.5 flex-shrink-0" />
-                    <span className="text-sm text-gray-700">{audience}</span>
+                    <span className="text-sm font-medium text-gray-700">{audience}</span>
                   </li>
                 ))}
               </ul>

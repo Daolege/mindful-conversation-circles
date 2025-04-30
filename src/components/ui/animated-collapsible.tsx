@@ -61,9 +61,9 @@ export function AnimatedCollapsible({
         {showIcons && (
           <div className="flex items-center">
             {isOpen ? (
-              <ChevronUp className="h-5 w-5 text-gray-500 transition-transform duration-500 transform rotate-0" />
+              <ChevronUp className="h-5 w-5 text-gray-700 transition-transform duration-500 transform rotate-0" />
             ) : (
-              <ChevronDown className="h-5 w-5 text-gray-500 transition-transform duration-500 transform rotate-0" />
+              <ChevronDown className="h-5 w-5 text-gray-700 transition-transform duration-500 transform rotate-0" />
             )}
           </div>
         )}
