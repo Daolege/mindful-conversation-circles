@@ -1,6 +1,40 @@
 
 -- Create functions to manage the homework foreign key constraints
 
+-- Function to create a temporary table for migrations
+CREATE OR REPLACE FUNCTION public.create_migrations_temp_table()
+RETURNS text
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  CREATE TABLE IF NOT EXISTS public._migrations_temp (
+    id serial primary key,
+    name text,
+    executed_at timestamptz default now()
+  );
+  
+  RETURN 'Created temporary migrations table';
+END;
+$$;
+
+-- Function to execute arbitrary SQL (with proper permissions check)
+CREATE OR REPLACE FUNCTION public.execute_sql(sql_query text)
+RETURNS text
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  -- Only allow certain queries for security
+  IF sql_query LIKE 'CREATE TABLE IF NOT EXISTS _migrations_temp%' THEN
+    EXECUTE sql_query;
+    RETURN 'SQL executed successfully';
+  ELSE
+    RETURN 'Unauthorized SQL query';
+  END IF;
+END;
+$$;
+
 -- Function to drop the existing foreign key on homework table if it exists
 CREATE OR REPLACE FUNCTION public.drop_homework_foreign_key()
 RETURNS text

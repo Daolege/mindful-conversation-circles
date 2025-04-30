@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useQuery } from "@tanstack/react-query";
 import { Loader2, AlertCircle } from "lucide-react";
@@ -91,6 +90,8 @@ export const HomeworkModule = ({ courseId, lectureId, onHomeworkSubmit }: Homewo
         showToast('migration', () => toast.success('数据库关系修复成功'));
         // 修复成功后，刷新作业列表
         await refetchHomework();
+        // 修复成功时，设置本地存储标记
+        localStorage.setItem('homework_migration_executed', 'true');
       } else {
         showToast('migration', () => toast.error(`数据库关系修复失败: ${result.message}`));
       }
@@ -134,12 +135,17 @@ export const HomeworkModule = ({ courseId, lectureId, onHomeworkSubmit }: Homewo
       console.log('Current courseId:', courseId, 'type:', typeof courseId);
       console.log('Converted numericCourseId:', numericCourseId, 'type:', typeof numericCourseId);
       
-      // 1. 先诊断数据库表状态
-      try {
-        const debugResult = await debugHomeworkTable();
-        console.log('调试结果:', debugResult);
-      } catch (error) {
-        console.error('调试表失败:', error);
+      // 1. 先检查迁移是否已执行
+      const migrationExecuted = localStorage.getItem('homework_migration_executed') === 'true';
+      if (!migrationExecuted) {
+        console.log('Migration not yet executed, attempting now...');
+        try {
+          await executeHomeworkMigration();
+          localStorage.setItem('homework_migration_executed', 'true');
+        } catch (err) {
+          console.error('Auto-migration failed:', err);
+          // Continue anyway, the query might still work
+        }
       }
       
       // 2. 检查课程ID有效性

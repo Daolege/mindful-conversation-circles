@@ -47,8 +47,8 @@ export const getCourseNewById = async (id: number | string): Promise<{ data: Cou
         ...section,
         lectures: section.course_lectures?.map(lecture => ({
           ...lecture,
-          // Ensure explicit assignment of video_url field
-          video_url: lecture.video_url || null
+          // Handle the video_url field - might not exist in all lecture objects
+          video_url: (lecture as any).video_url || null
         })) || []
       })) || [],
       materials: courseData.course_materials || []
