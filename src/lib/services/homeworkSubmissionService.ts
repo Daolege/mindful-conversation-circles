@@ -1,7 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 
-// Define HomeworkSubmission type since it's not in course.ts
+// Define HomeworkSubmission type
 export interface HomeworkSubmission {
   id: string;
   user_id: string;
@@ -15,6 +15,10 @@ export interface HomeworkSubmission {
   feedback?: string;
   created_at: string;
   reviewed_at?: string;
+  score?: number;
+  user_name?: string;
+  user_email?: string;
+  user_avatar?: string;
   profiles?: {
     full_name?: string;
     email?: string;
@@ -29,8 +33,8 @@ export interface HomeworkSubmission {
 // Types
 export interface SubmissionWithUserDetails extends HomeworkSubmission {
   user_name?: string;
-  user_avatar?: string;
   user_email?: string;
+  user_avatar?: string;
 }
 
 // Get homework submissions for a specific course
@@ -53,8 +57,10 @@ export async function getHomeworkSubmissionsByCourseId(courseId: number) {
       ...submission,
       user_name: user?.name || 'Unknown User',
       user_email: user?.email || '',
-      user_avatar: user?.avatar_url || ''
-    };
+      user_avatar: user?.avatar_url || '',
+      status: submission.status || 'pending',
+      created_at: submission.created_at || submission.submitted_at || new Date().toISOString()
+    } as HomeworkSubmission;
   });
 
   return submissions;
@@ -80,8 +86,10 @@ export async function getHomeworkSubmissionsByLectureId(lectureId: string) {
       ...submission,
       user_name: user?.name || 'Unknown User',
       user_email: user?.email || '',
-      user_avatar: user?.avatar_url || ''
-    };
+      user_avatar: user?.avatar_url || '',
+      status: submission.status || 'pending',
+      created_at: submission.created_at || submission.submitted_at || new Date().toISOString()
+    } as HomeworkSubmission;
   });
 
   return submissions;
@@ -105,7 +113,9 @@ export async function getHomeworkSubmissionById(submissionId: string) {
     ...data,
     user_name: user?.name || 'Unknown User',
     user_email: user?.email || '',
-    user_avatar: user?.avatar_url || ''
+    user_avatar: user?.avatar_url || '',
+    status: data.status || 'pending',
+    created_at: data.created_at || data.submitted_at || new Date().toISOString()
   };
 
   return submission;

@@ -12,55 +12,6 @@ import {
   HomeworkSubmission
 } from '@/lib/services/homeworkSubmissionService';
 
-interface CourseStructureNavProps {
-  sections: any[];
-  isLoading: boolean;
-  selectedLectureId: string | null;
-  onSelectLecture: (lectureId: string) => void;
-}
-
-// Update CourseStructureNav component to match its expected props
-export const CourseStructureNav: React.FC<CourseStructureNavProps> = ({
-  sections,
-  isLoading,
-  selectedLectureId,
-  onSelectLecture
-}) => {
-  // Implementation stays the same
-  return (
-    <div className="bg-white rounded-lg shadow-sm p-4">
-      <h3 className="font-semibold mb-4">课程章节</h3>
-      {isLoading ? (
-        <div className="p-4 text-center">加载中...</div>
-      ) : (
-        <div className="space-y-4">
-          {sections.map((section) => (
-            <div key={section.id} className="space-y-2">
-              <div className="font-medium">{section.title}</div>
-              <ul className="space-y-1 pl-4">
-                {section.lectures?.map((lecture: any) => (
-                  <li key={lecture.id}>
-                    <button
-                      className={`text-left w-full px-2 py-1 rounded ${
-                        selectedLectureId === lecture.id
-                          ? 'bg-primary text-white'
-                          : 'hover:bg-gray-100'
-                      }`}
-                      onClick={() => onSelectLecture(lecture.id)}
-                    >
-                      {lecture.title}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
-
 export const HomeworkSubmissionsView = () => {
   const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
@@ -111,6 +62,12 @@ export const HomeworkSubmissionsView = () => {
     navigate(`/admin/homework/submission/${id}`);
   };
 
+  // Handle view all submissions
+  const handleViewAll = () => {
+    setSelectedLectureId(null);
+    setCurrentPage(1);
+  };
+
   // Calculate total submissions for pagination
   const currentSubmissions = selectedLectureId ? lectureSubmissions : allSubmissions;
   const totalSubmissions = currentSubmissions?.length || 0;
@@ -123,7 +80,8 @@ export const HomeworkSubmissionsView = () => {
           sections={sections || []}
           isLoading={isLoadingStructure}
           selectedLectureId={selectedLectureId}
-          onSelectLecture={handleLectureSelect}
+          onLectureSelect={handleLectureSelect}
+          onViewAll={handleViewAll}
         />
       </div>
       
@@ -139,7 +97,7 @@ export const HomeworkSubmissionsView = () => {
           
           <TabsContent value="all">
             <HomeworkSubmissionList 
-              submissions={currentSubmissions as HomeworkSubmission[] || []}
+              submissions={currentSubmissions || []}
               isLoading={selectedLectureId ? isLoadingLecture : isLoadingAll}
               filter="all"
               currentPage={currentPage}
@@ -151,7 +109,7 @@ export const HomeworkSubmissionsView = () => {
           
           <TabsContent value="pending">
             <HomeworkSubmissionList 
-              submissions={currentSubmissions as HomeworkSubmission[] || []}
+              submissions={currentSubmissions || []}
               isLoading={selectedLectureId ? isLoadingLecture : isLoadingAll}
               filter="pending"
               currentPage={currentPage}
@@ -163,7 +121,7 @@ export const HomeworkSubmissionsView = () => {
           
           <TabsContent value="reviewed">
             <HomeworkSubmissionList 
-              submissions={currentSubmissions as HomeworkSubmission[] || []}
+              submissions={currentSubmissions || []}
               isLoading={selectedLectureId ? isLoadingLecture : isLoadingAll}
               filter="reviewed"
               currentPage={currentPage}
@@ -175,7 +133,7 @@ export const HomeworkSubmissionsView = () => {
           
           <TabsContent value="rejected">
             <HomeworkSubmissionList 
-              submissions={currentSubmissions as HomeworkSubmission[] || []}
+              submissions={currentSubmissions || []}
               isLoading={selectedLectureId ? isLoadingLecture : isLoadingAll}
               filter="rejected"
               currentPage={currentPage}
