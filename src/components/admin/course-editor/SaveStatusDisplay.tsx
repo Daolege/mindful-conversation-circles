@@ -9,19 +9,22 @@ interface SaveStatusDisplayProps {
   error?: string | null;
   autoHideSuccess?: boolean;
   hideDelay?: number;
+  saving?: boolean; // Add the missing saving prop
 }
 
 const SaveStatusDisplay: React.FC<SaveStatusDisplayProps> = ({ 
   success, 
   error, 
   autoHideSuccess = true,
-  hideDelay = 3000
+  hideDelay = 3000,
+  saving
 }) => {
   const [visible, setVisible] = useState(false);
   const courseEditor = useCourseEditor();
   
   // Use either props or context values
-  const showSuccess = success !== undefined ? success : !courseEditor.isSaving && !courseEditor.saveError;
+  const isSaving = saving !== undefined ? saving : courseEditor.isSaving;
+  const showSuccess = success !== undefined ? success : !isSaving && !courseEditor.saveError;
   const showError = error !== undefined ? error : courseEditor.saveError;
   
   // Control display state, success message automatically disappears after delay

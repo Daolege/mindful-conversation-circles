@@ -391,3 +391,31 @@ export const updateCourseStatus = async (courseId: number, status: 'draft' | 'pu
     return { error };
   }
 };
+
+// Add the missing updateCourseOrder function
+export const updateCourseOrder = async (courses: { id: number; display_order: number }[]) => {
+  console.log('Updating course order:', courses);
+  
+  try {
+    // Create an array of updates to perform
+    const updates = courses.map(({ id, display_order }) => ({
+      id,
+      display_order
+    }));
+    
+    // Using upsert to update multiple records
+    const { error } = await supabase
+      .from('courses')
+      .upsert(updates, { onConflict: 'id' });
+    
+    if (error) {
+      console.error('Error updating course order:', error);
+      return false;
+    }
+    
+    return true;
+  } catch (error: any) {
+    console.error('Unexpected error in updateCourseOrder:', error);
+    return false;
+  }
+};
