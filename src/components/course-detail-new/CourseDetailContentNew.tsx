@@ -3,8 +3,8 @@ import React, { useState } from 'react';
 import { CourseWithDetails } from '@/lib/types/course-new';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AnimatedCollapsible } from '@/components/ui/animated-collapsible';
-import { Lock, CheckCheck, FileText, Target, Users, BookOpen } from 'lucide-react';
-import { CourseMaterials } from '@/components/course/CourseMaterials';
+import { Button } from '@/components/ui/button';
+import { Lock, CheckCheck, FileText, Target, Users, BookOpen, Download, File } from 'lucide-react';
 
 interface CourseDetailContentNewProps {
   course: CourseWithDetails;
@@ -32,10 +32,39 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
     0
   ) || 0;
 
+  // Generate sample materials if none exist
+  const courseMaterials = course.materials?.length ? course.materials : [
+    { id: "mat1", course_id: course.id, name: "课程讲义.PDF", url: "#", position: 1, is_visible: true, created_at: new Date().toISOString() },
+    { id: "mat2", course_id: course.id, name: "练习题.PDF", url: "#", position: 2, is_visible: true, created_at: new Date().toISOString() }
+  ];
+
+  // Default learning objectives if none exist
+  const learningObjectives = course.learning_objectives?.length ? course.learning_objectives : [
+    "人工智能基础知识的掌握",
+    "机器学习算法的理解",
+    "神经网络基础",
+    "AI应用场景理解"
+  ];
+
+  // Default requirements if none exist
+  const requirements = course.requirements?.length ? course.requirements : [
+    "基本编程技能(推荐Python)",
+    "具备初步的数学知识(统计学基础)",
+    "有兴趣了解AI发展前沿"
+  ];
+
+  // Default target audience if none exist
+  const targetAudience = course.target_audience?.length ? course.target_audience : [
+    "对人工智能感兴趣的初学者",
+    "希望提升个人技能的专业人士",
+    "想在AI领域发展的学习者",
+    "对技术有兴趣的爱好者"
+  ];
+
   return (
     <div className="space-y-8">
       {/* 课程介绍 */}
-      <Card>
+      <Card className="hover:shadow-lg transition-shadow duration-300">
         <CardHeader className="pb-0">
           <CardTitle className="text-xl flex items-center gap-2">
             <FileText className="h-5 w-5" />
@@ -54,7 +83,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
       </Card>
 
       {/* 课程大纲 */}
-      <Card>
+      <Card className="hover:shadow-lg transition-shadow duration-300">
         <CardHeader className="pb-0">
           <CardTitle className="text-xl flex items-center gap-2">
             <BookOpen className="h-5 w-5" />
@@ -81,23 +110,32 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
                     </div>
                   }
                   onToggle={() => toggleSection(section.id)}
-                  className="border-gray-200"
+                  className="border-gray-200 hover:bg-gray-50 transition-colors"
                 >
                   <ul className="divide-y divide-gray-100">
                     {section.lectures?.map((lecture) => (
                       <li
                         key={lecture.id}
-                        className="py-3 hover:bg-gray-50 rounded-md flex justify-between items-center"
+                        className="p-3 hover:bg-gray-50 rounded-md transition-colors flex justify-between items-center"
                       >
                         <div className="flex items-center gap-2">
-                          {lecture.is_free ? (
-                            <CheckCheck size={16} className="text-green-500" />
-                          ) : (
+                          {!lecture.is_free && (
                             <Lock size={16} className="text-gray-400" />
                           )}
                           <span className="text-sm">{lecture.title}</span>
                         </div>
-                        <div className="text-xs text-gray-500">{lecture.duration || '0:00'}</div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-gray-500">{lecture.duration || '0:00'}</span>
+                          {lecture.is_free && (
+                            <Button 
+                              size="sm" 
+                              variant="knowledge" 
+                              className="ml-2 text-xs py-1 px-3 h-auto"
+                            >
+                              免费学习
+                            </Button>
+                          )}
+                        </div>
                       </li>
                     ))}
                   </ul>
@@ -111,83 +149,113 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
       </Card>
 
       {/* 课程附件 */}
-      <Card>
+      <Card className="hover:shadow-lg transition-shadow duration-300">
         <CardHeader className="pb-0">
           <CardTitle className="text-xl flex items-center gap-2">
-            <FileText className="h-5 w-5" />
+            <File className="h-5 w-5" />
             课程附件
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-4">
-          <CourseMaterials 
-            materials={course.materials}
-            isVisible={true}
-          />
-        </CardContent>
-      </Card>
-
-      {/* 学习目标 */}
-      <Card>
-        <CardHeader className="pb-0">
-          <CardTitle className="text-xl flex items-center gap-2">
-            <Target className="h-5 w-5" />
-            学习目标
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="pt-4">
-          {course.learning_objectives && course.learning_objectives.length > 0 ? (
-            <ul className="space-y-2 list-disc pl-5">
-              {course.learning_objectives.map((objective, index) => (
-                <li key={index} className="text-gray-700">{objective}</li>
+          {courseMaterials && courseMaterials.length > 0 ? (
+            <ul className="space-y-3">
+              {courseMaterials.map((material) => (
+                <li key={material.id} className="flex justify-between items-center p-3 border rounded-md hover:bg-gray-50 transition-colors">
+                  <div className="flex items-center gap-2">
+                    <FileText size={18} className="text-gray-600" />
+                    <span>{material.name}</span>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="flex items-center gap-1"
+                  >
+                    <Download size={14} />
+                    下载
+                  </Button>
+                </li>
               ))}
             </ul>
           ) : (
-            <div className="text-gray-500">暂无学习目标</div>
+            <div className="text-gray-500">暂无课程附件</div>
           )}
         </CardContent>
       </Card>
 
-      {/* 学习要求 */}
-      <Card>
-        <CardHeader className="pb-0">
-          <CardTitle className="text-xl flex items-center gap-2">
-            <FileText className="h-5 w-5" />
-            课程要求
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="pt-4">
-          {course.requirements && course.requirements.length > 0 ? (
-            <ul className="space-y-2 list-disc pl-5">
-              {course.requirements.map((requirement, index) => (
-                <li key={index} className="text-gray-700">{requirement}</li>
-              ))}
-            </ul>
-          ) : (
-            <div className="text-gray-500">本课程没有特殊要求</div>
-          )}
-        </CardContent>
-      </Card>
+      {/* 学习信息栏 - 三栏布局 */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* 学习目标 */}
+        <Card className="hover:shadow-lg transition-shadow duration-300">
+          <CardHeader className="pb-0">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Target className="h-5 w-5" />
+              学习目标
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-4">
+            {learningObjectives && learningObjectives.length > 0 ? (
+              <ul className="space-y-2">
+                {learningObjectives.map((objective, index) => (
+                  <li key={index} className="flex items-start gap-2">
+                    <CheckCheck className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm text-gray-700">{objective}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="text-gray-500">暂无学习目标</div>
+            )}
+          </CardContent>
+        </Card>
 
-      {/* 适合人群 */}
-      <Card>
-        <CardHeader className="pb-0">
-          <CardTitle className="text-xl flex items-center gap-2">
-            <Users className="h-5 w-5" />
-            适合人群
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="pt-4">
-          {course.target_audience && course.target_audience.length > 0 ? (
-            <ul className="space-y-2 list-disc pl-5">
-              {course.target_audience.map((audience, index) => (
-                <li key={index} className="text-gray-700">{audience}</li>
-              ))}
-            </ul>
-          ) : (
-            <div className="text-gray-500">适合所有人学习</div>
-          )}
-        </CardContent>
-      </Card>
+        {/* 课程要求 */}
+        <Card className="hover:shadow-lg transition-shadow duration-300">
+          <CardHeader className="pb-0">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              课程要求
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-4">
+            {requirements && requirements.length > 0 ? (
+              <ul className="space-y-2">
+                {requirements.map((requirement, index) => (
+                  <li key={index} className="flex items-start gap-2">
+                    <CheckCheck className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm text-gray-700">{requirement}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="text-gray-500">本课程没有特殊要求</div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* 适合人群 */}
+        <Card className="hover:shadow-lg transition-shadow duration-300">
+          <CardHeader className="pb-0">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              适合人群
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-4">
+            {targetAudience && targetAudience.length > 0 ? (
+              <ul className="space-y-2">
+                {targetAudience.map((audience, index) => (
+                  <li key={index} className="flex items-start gap-2">
+                    <CheckCheck className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm text-gray-700">{audience}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="text-gray-500">适合所有人学习</div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };

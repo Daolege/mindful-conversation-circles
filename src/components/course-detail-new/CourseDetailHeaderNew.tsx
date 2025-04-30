@@ -15,37 +15,55 @@ export const CourseDetailHeaderNew: React.FC<CourseDetailHeaderNewProps> = ({ co
       
       <div className="flex flex-wrap gap-3 mb-6">
         {course.category && (
-          <Badge variant="outline" className="flex items-center gap-1 px-3 py-1">
-            <Book size={14} />
+          <Badge 
+            variant="course" 
+            className="transition-transform hover:scale-105"
+          >
+            <Book size={16} className="mr-1" />
             {course.category}
           </Badge>
         )}
         
-        <Badge variant="outline" className="flex items-center gap-1 px-3 py-1">
-          <Users size={14} />
+        <Badge 
+          variant="course" 
+          className="transition-transform hover:scale-105"
+        >
+          <Users size={16} className="mr-1" />
           {course.enrollment_count || 0} 名学员
         </Badge>
         
-        <Badge variant="outline" className="flex items-center gap-1 px-3 py-1">
-          <Book size={14} />
+        <Badge 
+          variant="course" 
+          className="transition-transform hover:scale-105"
+        >
+          <Book size={16} className="mr-1" />
           {course.sections?.length || 0} 章节
         </Badge>
         
-        <Badge variant="outline" className="flex items-center gap-1 px-3 py-1">
-          <Clock size={14} />
+        <Badge 
+          variant="course" 
+          className="transition-transform hover:scale-105"
+        >
+          <Clock size={16} className="mr-1" />
           {course.lecture_count || 0} 课时
         </Badge>
         
         {course.language && (
-          <Badge variant="outline" className="flex items-center gap-1 px-3 py-1">
-            <Globe size={14} />
+          <Badge 
+            variant="course" 
+            className="transition-transform hover:scale-105"
+          >
+            <Globe size={16} className="mr-1" />
             {course.language}
           </Badge>
         )}
         
         {course.published_at && (
-          <Badge variant="outline" className="flex items-center gap-1 px-3 py-1">
-            <Calendar size={14} />
+          <Badge 
+            variant="course" 
+            className="transition-transform hover:scale-105"
+          >
+            <Calendar size={16} className="mr-1" />
             {new Date(course.published_at).toLocaleDateString('zh-CN')} 发布
           </Badge>
         )}
@@ -58,7 +76,7 @@ export const CourseDetailHeaderNew: React.FC<CourseDetailHeaderNewProps> = ({ co
               ? 'outline'
               : 'secondary'
           }
-          className="capitalize px-3 py-1"
+          className="capitalize px-3 py-1 transition-transform hover:scale-105"
         >
           {course.status === 'published' ? '已发布' : 
            course.status === 'draft' ? '草稿' : '已归档'}

@@ -52,18 +52,18 @@ export function AnimatedCollapsible({
   }, [isOpen]);
 
   return (
-    <div className={cn("border rounded-lg overflow-hidden", className)}>
+    <div className={cn("border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-300", className)}>
       <div 
-        className="p-4 bg-gray-50 flex items-center justify-between cursor-pointer hover:bg-gray-100 transition-colors"
+        className="p-4 bg-gray-50 flex items-center justify-between cursor-pointer hover:bg-gray-100 transition-all duration-200"
         onClick={onToggle}
       >
         {headerContent}
         {showIcons && (
           <div className="flex items-center">
             {isOpen ? (
-              <ChevronUp className="h-5 w-5 text-gray-500" />
+              <ChevronUp className="h-5 w-5 text-gray-500 transition-transform duration-300" />
             ) : (
-              <ChevronDown className="h-5 w-5 text-gray-500" />
+              <ChevronDown className="h-5 w-5 text-gray-500 transition-transform duration-300" />
             )}
           </div>
         )}
@@ -73,7 +73,7 @@ export function AnimatedCollapsible({
         ref={contentRef}
         style={{ height: height !== undefined ? `${height}px` : 'auto' }}
         className={cn(
-          "transition-all duration-300 ease-in-out overflow-hidden",
+          "transition-all duration-300 ease-in-out overflow-hidden bg-white",
           contentClassName
         )}
       >

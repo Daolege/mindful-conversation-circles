@@ -74,7 +74,6 @@ export interface CourseFormValues {
   is_featured: boolean;
 }
 
-// 添加拖拽排序相关类型
 export interface DragEndResult {
   active: {
     id: string;

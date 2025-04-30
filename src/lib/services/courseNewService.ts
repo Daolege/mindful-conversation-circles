@@ -141,8 +141,9 @@ export const getCourseNewById = async (courseId: number) => {
     }
     
     // 获取适合人群
+    // 这里使用course_audiences表作为target_audience数据的来源
     const { data: targetAudience, error: audienceError } = await supabase
-      .from('course_target_audience')
+      .from('course_audiences')
       .select('content')
       .eq('course_id', courseId)
       .order('position', { ascending: true });
@@ -175,9 +176,17 @@ export const getCourseNewById = async (courseId: number) => {
       console.log(`[courseNewService] 找到 ${sections.length} 个章节，共 ${lectures?.length || 0} 个课时`);
       
       // 转换学习目标、要求和适合人群为字符串数组
-      const learningObjectivesArray = learningObjectives ? learningObjectives.map(item => item.content) : [];
-      const requirementsArray = requirements ? requirements.map(item => item.content) : [];
-      const targetAudienceArray = targetAudience ? targetAudience.map(item => item.content) : [];
+      const learningObjectivesArray = learningObjectives 
+        ? learningObjectives.map((item: any) => item.content) 
+        : [];
+      
+      const requirementsArray = requirements 
+        ? requirements.map((item: any) => item.content) 
+        : [];
+      
+      const targetAudienceArray = targetAudience 
+        ? targetAudience.map((item: any) => item.content) 
+        : [];
       
       return { 
         data: { 
@@ -194,9 +203,17 @@ export const getCourseNewById = async (courseId: number) => {
       console.log('[courseNewService] 未找到章节');
       
       // 转换学习目标、要求和适合人群为字符串数组
-      const learningObjectivesArray = learningObjectives ? learningObjectives.map(item => item.content) : [];
-      const requirementsArray = requirements ? requirements.map(item => item.content) : [];
-      const targetAudienceArray = targetAudience ? targetAudience.map(item => item.content) : [];
+      const learningObjectivesArray = learningObjectives 
+        ? learningObjectives.map((item: any) => item.content) 
+        : [];
+      
+      const requirementsArray = requirements 
+        ? requirements.map((item: any) => item.content) 
+        : [];
+      
+      const targetAudienceArray = targetAudience 
+        ? targetAudience.map((item: any) => item.content) 
+        : [];
       
       return { 
         data: { 
