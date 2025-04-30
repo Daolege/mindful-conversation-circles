@@ -10,10 +10,10 @@ interface CourseDetailHeaderNewProps {
 
 export const CourseDetailHeaderNew: React.FC<CourseDetailHeaderNewProps> = ({ course }) => {
   return (
-    <div className="mb-8 animate-in fade-in duration-500">
-      <h1 className="text-3xl md:text-4xl font-bold mb-4">{course.title}</h1>
+    <div className="mb-10 animate-in fade-in duration-500">
+      <h1 className="text-3xl md:text-4xl font-bold mb-6">{course.title}</h1>
       
-      <div className="flex flex-wrap gap-3 mb-6">
+      <div className="flex flex-wrap gap-3 mb-8">
         {course.category && (
           <Badge 
             variant="course" 
@@ -69,14 +69,8 @@ export const CourseDetailHeaderNew: React.FC<CourseDetailHeaderNewProps> = ({ co
         )}
         
         <Badge
-          variant={
-            course.status === 'published'
-              ? 'success'
-              : course.status === 'draft'
-              ? 'outline'
-              : 'secondary'
-          }
-          className="capitalize px-3 py-1 text-sm"
+          variant="course"
+          className="text-sm"
         >
           {course.status === 'published' ? '已发布' : 
            course.status === 'draft' ? '草稿' : '已归档'}

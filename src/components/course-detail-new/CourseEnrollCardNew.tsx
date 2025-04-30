@@ -36,14 +36,14 @@ export const CourseEnrollCardNew: React.FC<CourseEnrollCardNewProps> = ({ course
   }, []);
 
   return (
-    <div className={`sticky transition-all duration-300 ${isScrolled ? "top-20" : "top-4"}`}>
+    <div className={`sticky transition-all duration-300 ${isScrolled ? "top-24" : "top-4"}`}>
       <Card className="overflow-hidden shadow-md hover:shadow-lg transition-all duration-300">
         <div className="p-6 space-y-6">
           {/* Price section */}
           <div className="flex items-baseline">
-            <div className="text-3xl font-bold">{formattedPrice}</div>
+            <div className="text-4xl font-bold">{formattedPrice}</div>
             {formattedOriginalPrice && (
-              <div className="ml-2 text-gray-500 line-through text-lg">
+              <div className="ml-2 text-gray-500 line-through text-xl">
                 {formattedOriginalPrice}
               </div>
             )}

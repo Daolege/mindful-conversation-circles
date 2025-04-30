@@ -52,7 +52,7 @@ export function AnimatedCollapsible({
   }, [isOpen]);
 
   return (
-    <div className={cn("border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-300", className)}>
+    <div className={cn("border rounded-10 overflow-hidden shadow-md hover:shadow-lg transition-all duration-300", className)}>
       <div 
         className="p-4 bg-gray-50 flex items-center justify-between cursor-pointer hover:bg-gray-100 transition-all duration-200"
         onClick={onToggle}
