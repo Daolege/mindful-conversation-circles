@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { executeHomeworkMigration } from '@/api/executeHomeworkMigration';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 /**
  * This component automatically fixes database foreign key relationships
@@ -26,6 +27,33 @@ export const DatabaseFixInitializer: React.FC = () => {
       console.log('[DatabaseFixInitializer] Executing database migration');
       
       try {
+        // First ensure we have the migrations table
+        try {
+          await supabase
+            .from('_migrations')
+            .select('id', { count: 'exact', head: true })
+            .then(({ error }) => {
+              if (error && error.code === '42P01') {
+                console.log('[DatabaseFixInitializer] Creating migrations table');
+                return supabase.rpc('admin_add_course_item', {
+                  table_name: '_migrations',
+                  sql_query: `
+                    CREATE TABLE IF NOT EXISTS public._migrations (
+                      id SERIAL PRIMARY KEY,
+                      name TEXT NOT NULL,
+                      sql TEXT,
+                      executed_at TIMESTAMPTZ DEFAULT NOW(),
+                      success BOOLEAN DEFAULT TRUE
+                    );
+                  `
+                });
+              }
+            });
+        } catch (err) {
+          console.warn('[DatabaseFixInitializer] Error with migrations table setup:', err);
+          // Continue anyway
+        }
+        
         // Execute the actual migration
         console.log('[DatabaseFixInitializer] Calling executeHomeworkMigration()');
         const result = await executeHomeworkMigration();

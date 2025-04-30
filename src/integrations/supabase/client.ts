@@ -1,4 +1,3 @@
-
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
@@ -15,7 +14,7 @@ if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KE
   );
 }
 
-// Define our database function types - UPDATED to include ALL functions
+// Define our database function types - including only those that actually exist
 type DbFunctionNames = 
   | 'create_test_subscription'
   | 'has_role'
@@ -25,11 +24,6 @@ type DbFunctionNames =
   | 'enroll_user_in_course'
   | 'update_course_progress'
   | 'admin_add_course_item'
-  | 'create_migrations_temp_table'
-  | 'execute_sql'
-  | 'drop_homework_foreign_key'
-  | 'add_homework_foreign_key'
-  | 'get_foreign_keys'
   | 'get_dashboard_stats'
   | 'get_financial_stats'
   | 'get_payment_method_stats';
@@ -59,6 +53,38 @@ export const supabase = createClient<Database>(
     }
   }
 );
+
+// Create the migrations table if it doesn't exist
+export async function ensureMigrationsTable() {
+  try {
+    // Check if _migrations table exists
+    const { error } = await supabase
+      .from('_migrations')
+      .select('id', { count: 'exact', head: true });
+
+    // If we get a "relation does not exist" error, create the table
+    if (error && error.code === '42P01') {
+      await supabase.rpc('admin_add_course_item', {
+        table_name: '_migrations',
+        sql_query: `
+          CREATE TABLE IF NOT EXISTS public._migrations (
+            id SERIAL PRIMARY KEY,
+            name TEXT NOT NULL,
+            sql TEXT,
+            executed_at TIMESTAMPTZ DEFAULT NOW(),
+            success BOOLEAN DEFAULT TRUE
+          );
+        `
+      });
+      console.log('Created _migrations table');
+    }
+  } catch (err) {
+    console.error('Error ensuring migrations table exists:', err);
+  }
+}
+
+// Call this when app initializes
+ensureMigrationsTable();
 
 // Load mock courses data (only used in development)
 export async function loadMockCourses() {
@@ -108,7 +134,7 @@ export async function loadMockCourses() {
         },
         {
           title: "现代设计方法与案例分析",
-          description: "掌握现代设计方法，提升设计技巧",
+          description: "掌���现代设计方法，提升设计技巧",
           instructor: "王晓设计师",
           instructorid: 2,
           price: 199,

@@ -180,6 +180,7 @@ export const saveCourse = async (course: CourseDbFields) => {
     // Ensure all required fields have default values
     courseToSave.requirements = courseToSave.requirements || [];
     courseToSave.whatyouwilllearn = courseToSave.whatyouwilllearn || [];
+    courseToSave.highlights = courseToSave.highlights || [];
     if (courseToSave.display_order === undefined) courseToSave.display_order = 0;
     
     // Determine if it's an update or insert
@@ -188,20 +189,30 @@ export const saveCourse = async (course: CourseDbFields) => {
     let result;
     
     if (isUpdate) {
-      // Update existing course - explicitly cast the object to avoid type issues
+      // Update existing course
       const { data, error } = await supabase
         .from('courses')
-        .update(courseToSave)
+        .update({
+          ...courseToSave,
+          requirements: courseToSave.requirements || [],
+          whatyouwilllearn: courseToSave.whatyouwilllearn || [],
+          highlights: courseToSave.highlights || []
+        })
         .eq('id', courseToSave.id || 0)
         .select();
       
       if (error) throw error;
       result = { data: data?.[0] ? convertDbToCourse(data[0]) : null };
     } else {
-      // Create new course - explicitly cast the object to avoid type issues
+      // Create new course
       const { data, error } = await supabase
         .from('courses')
-        .insert(courseToSave)
+        .insert({
+          ...courseToSave,
+          requirements: courseToSave.requirements || [],
+          whatyouwilllearn: courseToSave.whatyouwilllearn || [],
+          highlights: courseToSave.highlights || []
+        })
         .select();
       
       if (error) throw error;

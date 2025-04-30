@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 export const executeHomeworkMigration = async (): Promise<{
