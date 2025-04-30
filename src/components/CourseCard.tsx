@@ -1,3 +1,4 @@
+
 import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -96,9 +97,6 @@ const CourseCard = ({
   };
 
   const gradientColors = getGradientColors();
-  
-  // Debug logging for each card rendering
-  console.log(`[CourseCard] Rendering card ID: ${id}, title: "${title}"`);
 
   return (
     <Link to={`/courses-new/${id}`} className="block transform transition-all duration-700 hover:translate-y-[-8px]">
