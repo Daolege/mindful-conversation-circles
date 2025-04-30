@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -45,37 +46,6 @@ export const debugHomeworkTable = async () => {
     } else {
       console.log('homeworkService: Course check error:', courseError);
     }
-    
-    // 添加: 检查课程ID 72是否存在
-    const { data: specificCourse, error: specificError } = await supabase
-      .from('courses_new')
-      .select('id, title')
-      .eq('id', 72)
-      .single();
-    
-    if (!specificError && specificCourse) {
-      console.log('homeworkService: Course ID 72 exists:', specificCourse);
-    } else {
-      console.log('homeworkService: Course ID 72 check result:', specificError || 'not found');
-    }
-    
-    // 检查课程72是否已有作业
-    const { data: homeworkForCourse72, error: hw72Error } = await supabase
-      .from('homework')
-      .select('*')
-      .eq('course_id', 72);
-      
-    if (!hw72Error) {
-      console.log(`homeworkService: Course 72 has ${homeworkForCourse72?.length || 0} homework items`);
-      if (homeworkForCourse72 && homeworkForCourse72.length > 0) {
-        console.log('homeworkService: Sample homework for course 72:', homeworkForCourse72[0]);
-      }
-    } else {
-      console.log('homeworkService: Error checking homework for course 72:', hw72Error);
-    }
-    
-    // 删除尝试查询pg_constraint系统表的代码，因为它不能通过客户端API访问
-    console.log('homeworkService: Foreign key constraints can only be checked via SQL migrations');
     
     return { success: true, count };
   } catch (err: any) {
@@ -192,15 +162,6 @@ export const saveHomework = async (homeworkData: {
         error: courseCheckResult.error
       });
       
-      // 获取可用课程列表以帮助调试
-      const { data: allCourses } = await supabase
-        .from('courses_new')
-        .select('id, title')
-        .order('id', { ascending: true })
-        .limit(20);
-      
-      console.log('homeworkService: Available courses:', allCourses);
-      
       return { 
         data: null, 
         error: new Error(`验证课程时出错: ${courseCheckResult.error.message}`) 
@@ -247,7 +208,7 @@ export const saveHomework = async (homeworkData: {
     try {
       if (homeworkData.id) {
         // 更新现有作业
-        const { id, ...updateData } = {...dataToSave, id: homeworkData.id};
+        const { id, ...updateData } = { ...dataToSave, id: homeworkData.id };
         console.log('homeworkService: Updating existing homework:', id);
         
         result = await supabase
@@ -270,18 +231,6 @@ export const saveHomework = async (homeworkData: {
         
         // 检查外键错误
         if (result.error.code === '23503') {
-          // 添加更多调试信息
-          console.error('Foreign key constraint error. Checking both tables:');
-          
-          // 查询courses_new表验证
-          const { data: courseNewCheck } = await supabase
-            .from('courses_new')
-            .select('id, title')
-            .eq('id', courseId)
-            .single();
-            
-          console.log('courses_new check:', courseNewCheck);
-          
           return { 
             data: null, 
             error: new Error(`外键约束错误: 课程ID ${courseId} 在courses_new表中不存在，请确认course_id是否正确`) 
@@ -316,18 +265,6 @@ export const getHomeworksByLectureId = async (lectureId: string) => {
     if (!lectureId) {
       console.error('homeworkService: Invalid lecture ID provided');
       throw new Error('课时ID不能为空');
-    }
-    
-    // 首先，尝试获取计数以查看是否有记录
-    const { count, error: countError } = await supabase
-      .from('homework')
-      .select('*', { count: 'exact', head: true })
-      .eq('lecture_id', lectureId);
-      
-    if (countError) {
-      console.error('homeworkService: Error counting homeworks:', countError);
-    } else {
-      console.log(`homeworkService: Found ${count} homeworks for lecture ${lectureId}`);
     }
     
     // 获取实际数据

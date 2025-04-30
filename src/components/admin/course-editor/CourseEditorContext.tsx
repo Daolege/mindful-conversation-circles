@@ -173,6 +173,28 @@ export const CourseEditorProvider: React.FC<{
   const [saveError, setSaveError] = useState<string | null>(null);
   const [activeSaveSection, setActiveSaveSection] = useState<string | null>(null);
   
+  // State for section visibility and saved status
+  const [savedSections, setSavedSections] = useState({
+    objectives: false,
+    requirements: false,
+    audiences: false
+  });
+  
+  const [sectionVisibility, setSectionVisibility] = useState({
+    objectives: true,
+    requirements: true,
+    audiences: true,
+    materials: true
+  });
+  
+  // Function to update saved sections
+  const setSavedSection = (section: string, value: boolean) => {
+    setSavedSections(prev => ({
+      ...prev,
+      [section]: value
+    }));
+  };
+  
   // Load course data if editing
   useEffect(() => {
     const loadCourse = async () => {
@@ -182,15 +204,16 @@ export const CourseEditorProvider: React.FC<{
       }
       
       try {
-        const { data, error } = await getCourseById(numericCourseId);
+        const response = await getCourseById(numericCourseId);
         
-        if (error) {
-          console.error('Error loading course with ID', numericCourseId, ':', error);
+        if (response && response.error) {
+          console.error('Error loading course with ID', numericCourseId, ':', response.error);
           toast.error('加载课程数据失败');
           setIsLoading(false);
           return;
         }
         
+        const data = response?.data;
         if (data) {
           // Initialize syllabus if it doesn't exist or isn't an array
           let syllabus = data.syllabus || [];
@@ -451,9 +474,7 @@ export const CourseEditorProvider: React.FC<{
     
     if (success && activeSaveSection) {
       // If a save section is tracked, mark it as saved
-      if (value?.setSavedSection) {
-        value.setSavedSection(activeSaveSection, true);
-      }
+      setSavedSection(activeSaveSection, true);
     }
     
     // Reset active save section
@@ -516,6 +537,12 @@ export const CourseEditorProvider: React.FC<{
     handleSaveComplete,
     // Add handleChange function
     handleChange,
+    // Add saved sections and section visibility
+    savedSections,
+    sectionVisibility,
+    setSectionVisibility,
+    setSavedSection,
+    setHasChanges,
     data: {
       id: numericCourseId,
       title: formData.title,

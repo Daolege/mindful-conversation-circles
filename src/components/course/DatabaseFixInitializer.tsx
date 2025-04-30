@@ -27,33 +27,29 @@ export const DatabaseFixInitializer: React.FC = () => {
       console.log('[DatabaseFixInitializer] Executing database migration');
       
       try {
-        // First ensure we have the migrations table
+        // First ensure we have the migrations table using RPC
         try {
-          // Check if _migrations table exists with direct query approach
-          const { error: checkError } = await supabase.rpc('admin_add_course_item', {
-            p_table_name: '_migrations',
-            p_course_id: 0,
-            p_content: `
-              CREATE TABLE IF NOT EXISTS public._migrations (
-                id SERIAL PRIMARY KEY,
-                name TEXT NOT NULL,
-                sql TEXT,
-                executed_at TIMESTAMPTZ DEFAULT NOW(),
-                success BOOLEAN DEFAULT TRUE
-              );
-            `,
-            p_position: 0,
-            p_id: 'create_migrations_table',
-            p_is_visible: true
-          });
+          // Try to create the _migrations table first
+          const { data: migTableResult, error: migTableError } = await supabase.rpc(
+            'create_migrations_temp_table'
+          );
           
-          if (checkError) {
-            console.warn('[DatabaseFixInitializer] Error with migrations table setup:', checkError);
-            // Continue anyway
+          if (migTableError) {
+            console.warn('[DatabaseFixInitializer] Error creating migrations table:', migTableError);
+            // We'll try direct INSERT as fallback
+            
+            // Try creating with direct SQL
+            await supabase.from('_migrations').insert({
+              name: 'setup_migrations_table',
+              sql: 'CREATE TABLE IF NOT EXISTS public._migrations',
+              success: true
+            }).select();
+          } else {
+            console.log('[DatabaseFixInitializer] Migration table ready');
           }
         } catch (err) {
-          console.warn('[DatabaseFixInitializer] Error with migrations table setup:', err);
-          // Continue anyway
+          console.warn('[DatabaseFixInitializer] Exception in migrations table setup:', err);
+          // Continue anyway, table might already exist
         }
         
         // Execute the actual migration

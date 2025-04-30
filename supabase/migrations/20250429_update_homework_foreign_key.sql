@@ -11,7 +11,9 @@ BEGIN
   CREATE TABLE IF NOT EXISTS public._migrations (
     id serial primary key,
     name text,
-    executed_at timestamptz default now()
+    executed_at timestamptz default now(),
+    sql text,
+    success boolean default true
   );
   
   RETURN 'Created temporary migrations table';
@@ -94,6 +96,9 @@ BEGIN
 END;
 $$;
 
+-- Check if _migrations table exists and create it if not
+SELECT create_migrations_temp_table();
+
 -- Update any existing invalid references in homework table
 DO $$
 DECLARE
@@ -117,5 +122,9 @@ SELECT drop_homework_foreign_key();
 SELECT add_homework_foreign_key();
 
 -- Record this migration
-INSERT INTO public._migrations (name, success) 
-VALUES ('homework_foreign_key_migration_' || now()::text, true);
+INSERT INTO public._migrations (name, sql, success) 
+VALUES (
+  'homework_foreign_key_migration_' || now()::text, 
+  'DROP and ADD homework_course_id_fkey constraint referencing courses_new', 
+  true
+);

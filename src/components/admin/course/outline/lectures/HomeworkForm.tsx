@@ -25,6 +25,8 @@ export const HomeworkForm = ({
   onCancel,
   isSubmitting
 }: HomeworkFormProps) => {
+  console.log('[HomeworkForm] Initializing with courseId:', courseId, 'type:', typeof courseId);
+  
   // 表单状态
   const [title, setTitle] = useState(initialData?.title || '');
   const [description, setDescription] = useState(initialData?.description || '');
@@ -34,6 +36,17 @@ export const HomeworkForm = ({
   const [formError, setFormError] = useState<string | null>(null);
   const [validationErrors, setValidationErrors] = useState<{[key: string]: string}>({});
   const [saveSuccess, setSaveSuccess] = useState(false);
+
+  // 确认课程ID有效 - 这是修复的关键
+  useEffect(() => {
+    if (!courseId || isNaN(Number(courseId))) {
+      console.warn('[HomeworkForm] Invalid courseId provided:', courseId);
+      setFormError('无法获取有效的课程ID，请确保课程已保存');
+    } else {
+      console.log('[HomeworkForm] Valid courseId:', courseId);
+      setFormError(null);
+    }
+  }, [courseId]);
 
   // 验证单个字段
   const validateField = (field: string, value: any): string | null => {
@@ -114,6 +127,13 @@ export const HomeworkForm = ({
     setSaveSuccess(false);
     setFormError(null);
     
+    // 确保课程ID有效
+    if (!courseId || isNaN(Number(courseId))) {
+      setFormError('无效的课程ID，请确保课程已保存');
+      toast.error('无法提交作业：无效的课程ID');
+      return;
+    }
+    
     // 全面验证所有字段
     const errors: {[key: string]: string} = {};
     const titleError = validateField('title', title);
@@ -138,12 +158,17 @@ export const HomeworkForm = ({
       description: description || null,
       type: homeworkType,
       lecture_id: lectureId,
-      course_id: courseId,
+      course_id: Number(courseId), // 确保是数字类型
       options: {
         question,
         choices: homeworkType !== 'fill_blank' ? choices : undefined
       }
     };
+
+    // 如果是编辑模式，添加ID
+    if (initialData?.id) {
+      homeworkData.id = initialData.id;
+    }
 
     console.log('准备提交作业数据:', homeworkData);
     
