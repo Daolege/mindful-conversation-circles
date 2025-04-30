@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 
 // Basic types without circular references
@@ -57,7 +58,7 @@ export const getCourseById = async (id: number) => {
     console.error('Error reading materials visibility:', err);
   }
 
-  // Combine the data with simple object creation
+  // Combine the data with simple object creation - avoid using types that could cause recursion
   const courseWithDetails = {
     ...courseData,
     materials: materialsData || [],
@@ -100,7 +101,7 @@ export const getCoursesByInstructorId = async (instructorId: number): Promise<Co
 };
 
 // Save course data with explicit types to avoid recursion
-export const saveCourse = async (courseData: any, courseId?: number) => {
+export const saveCourse = async (courseData: Record<string, any>, courseId?: number) => {
   try {
     // Extract materials to handle separately
     const materials = courseData.materials;
