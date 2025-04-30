@@ -23,14 +23,14 @@ export function toast(props: ToastProps | string) {
   const { title, description, variant, action, ...rest } = props;
   
   // 将 shadcn variant 映射到 sonner 类型
-  let type: keyof typeof sonnerToast = 'default';
-  if (variant === 'destructive') type = 'error';
-  else if (variant === 'success') type = 'success'; 
-  else if (variant === 'warning') type = 'warning';
-  else if (variant === 'info') type = 'info';
+  let type: "success" | "info" | "warning" | "error" | "default" = "default";
+  if (variant === 'destructive') type = "error";
+  else if (variant === 'success') type = "success"; 
+  else if (variant === 'warning') type = "warning";
+  else if (variant === 'info') type = "info";
   
   // 组合消息内容
-  const message = title;
+  const message = title || "";
   const options: ExternalToast = {
     description: description,
     action: action,

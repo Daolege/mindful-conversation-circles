@@ -4,7 +4,7 @@ import { CourseWithDetails } from '@/lib/types/course-new';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Card, CardContent } from '@/components/ui/card';
-import { LockClosedIcon, CheckIcon } from 'lucide-react';
+import { Lock, CheckCheck } from 'lucide-react';
 
 interface CourseDetailContentNewProps {
   course: CourseWithDetails;
@@ -58,9 +58,9 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
                           >
                             <div className="flex items-center gap-2">
                               {lecture.is_free ? (
-                                <CheckIcon size={16} className="text-green-500" />
+                                <CheckCheck size={16} className="text-green-500" />
                               ) : (
-                                <LockClosedIcon size={16} className="text-gray-400" />
+                                <Lock size={16} className="text-gray-400" />
                               )}
                               <span className="text-sm">{lecture.title}</span>
                             </div>
