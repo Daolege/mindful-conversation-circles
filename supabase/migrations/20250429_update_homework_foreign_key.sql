@@ -8,30 +8,13 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 BEGIN
-  CREATE TABLE IF NOT EXISTS public._migrations_temp (
+  CREATE TABLE IF NOT EXISTS public._migrations (
     id serial primary key,
     name text,
     executed_at timestamptz default now()
   );
   
   RETURN 'Created temporary migrations table';
-END;
-$$;
-
--- Function to execute arbitrary SQL (with proper permissions check)
-CREATE OR REPLACE FUNCTION public.execute_sql(sql_query text)
-RETURNS text
-LANGUAGE plpgsql
-SECURITY DEFINER
-AS $$
-BEGIN
-  -- Only allow certain queries for security
-  IF sql_query LIKE 'CREATE TABLE IF NOT EXISTS _migrations_temp%' THEN
-    EXECUTE sql_query;
-    RETURN 'SQL executed successfully';
-  ELSE
-    RETURN 'Unauthorized SQL query';
-  END IF;
 END;
 $$;
 
@@ -128,3 +111,11 @@ BEGIN
   -- You could delete orphaned records here if needed
   -- But better to do it through the edge function for better control
 END $$;
+
+-- Direct execution of the migration
+SELECT drop_homework_foreign_key();
+SELECT add_homework_foreign_key();
+
+-- Record this migration
+INSERT INTO public._migrations (name, success) 
+VALUES ('homework_foreign_key_migration_' || now()::text, true);

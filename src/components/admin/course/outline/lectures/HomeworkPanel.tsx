@@ -194,9 +194,15 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
       setSaveStatus({ success: false, error: null });
       clearAllToasts();
       
-      // Safely call trackSaveAttempt if it exists
+      // 安全地调用trackSaveAttempt - 先检查函数是否存在
       if (courseEditor && typeof courseEditor.trackSaveAttempt === 'function') {
-        courseEditor.trackSaveAttempt('homework');
+        try {
+          courseEditor.trackSaveAttempt('homework');
+          console.log('[HomeworkPanel] Successfully called courseEditor.trackSaveAttempt');
+        } catch (err) {
+          console.warn('[HomeworkPanel] Error in courseEditor.trackSaveAttempt:', err);
+          // Continue anyway, this is just for UI state
+        }
       } else {
         console.log('[HomeworkPanel] courseEditor.trackSaveAttempt is not available');
       }
@@ -251,9 +257,15 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
       setEditingHomework(null);
       setSaveStatus({ success: true, error: null });
       
-      // Safely call handleSaveComplete if it exists
+      // 安全地调用handleSaveComplete - 先检查函数是否存在
       if (courseEditor && typeof courseEditor.handleSaveComplete === 'function') {
-        courseEditor.handleSaveComplete(true);
+        try {
+          courseEditor.handleSaveComplete(true);
+          console.log('[HomeworkPanel] Successfully called courseEditor.handleSaveComplete');
+        } catch (err) {
+          console.warn('[HomeworkPanel] Error in courseEditor.handleSaveComplete:', err);
+          // Continue anyway, this is just for UI state
+        }
       } else {
         console.log('[HomeworkPanel] courseEditor.handleSaveComplete is not available');
       }
@@ -276,9 +288,15 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
       const errorMessage = error.message || '保存作业失败';
       setSaveStatus({ success: false, error: errorMessage });
       
-      // Safely call handleSaveComplete if it exists
+      // 安全地调用handleSaveComplete - 先检查函数是否存在
       if (courseEditor && typeof courseEditor.handleSaveComplete === 'function') {
-        courseEditor.handleSaveComplete(false, errorMessage);
+        try {
+          courseEditor.handleSaveComplete(false, errorMessage);
+          console.log('[HomeworkPanel] Called handleSaveComplete with error');
+        } catch (err) {
+          console.warn('[HomeworkPanel] Error in courseEditor.handleSaveComplete with error:', err);
+          // Continue anyway
+        }
       } else {
         console.log('[HomeworkPanel] courseEditor.handleSaveComplete is not available for error handling');
       }

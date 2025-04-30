@@ -4,9 +4,41 @@ import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { getCourseById, saveCourse } from '@/lib/services/courseService';
 
+// Define CourseMaterial type to fix TypeScript errors
+interface CourseMaterial {
+  id: string;
+  course_id: number;
+  name: string;
+  url: string;
+  position: number;
+  is_visible: boolean;
+}
+
 // Type definitions for the context
 export interface CourseEditorContextType {
-  formData: any;
+  formData: {
+    title: string;
+    description: string;
+    price: number;
+    originalprice: number;
+    category: string;
+    instructor: string;
+    language: string;
+    level: string;
+    duration: string;
+    lectures: number;
+    enrollment_count: number;
+    display_order: number;
+    featured: boolean;
+    imageurl: string;
+    video_url?: string;
+    syllabus: any[];
+    materials: CourseMaterial[];
+    requirements: string[];
+    whatyouwilllearn: string[];
+    target_audience: string[];
+    highlights: any[];
+  };
   setFormData: React.Dispatch<React.SetStateAction<any>>;
   activeTab: string;
   setActiveTab: React.Dispatch<React.SetStateAction<string>>;
@@ -77,6 +109,8 @@ export interface CourseEditorContextType {
   setHasChanges?: (hasChanges: boolean) => void;
   trackSaveAttempt: (section: string) => void;
   handleSaveComplete: (success: boolean, errorMessage?: string) => void;
+  // Add missing handleChange function for CourseEditor.tsx
+  handleChange?: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
 }
 
 const CourseEditorContext = createContext<CourseEditorContextType>({} as CourseEditorContextType);
@@ -148,7 +182,14 @@ export const CourseEditorProvider: React.FC<{
       }
       
       try {
-        const { data } = await getCourseById(numericCourseId);
+        const { data, error } = await getCourseById(numericCourseId);
+        
+        if (error) {
+          console.error('Error loading course with ID', numericCourseId, ':', error);
+          toast.error('加载课程数据失败');
+          setIsLoading(false);
+          return;
+        }
         
         if (data) {
           // Initialize syllabus if it doesn't exist or isn't an array
@@ -162,16 +203,26 @@ export const CourseEditorProvider: React.FC<{
             }
           }
           
-          setFormData({
+          // Handle potential null values and ensure they're the right types
+          const formattedData = {
+            ...formData,
             ...data,
             description: data.description || '',
+            price: Number(data.price || 0),
+            originalprice: Number(data.originalprice || 0),
             syllabus: Array.isArray(syllabus) ? syllabus : [],
             materials: data.materials || [],
             requirements: data.requirements || [],
             whatyouwilllearn: data.whatYouWillLearn || data.whatyouwilllearn || [],
             target_audience: data.target_audience || [],
-            highlights: data.highlights || []
-          });
+            highlights: data.highlights || [],
+            lectures: Number(data.lectures || 0),
+            enrollment_count: Number(data.enrollment_count || 0),
+            display_order: Number(data.display_order || 0),
+            featured: Boolean(data.featured)
+          };
+          
+          setFormData(formattedData);
         }
       } catch (error) {
         console.error('Error loading course:', error);
@@ -183,6 +234,24 @@ export const CourseEditorProvider: React.FC<{
     
     loadCourse();
   }, [numericCourseId]);
+  
+  // Handle form input changes
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value, type } = e.target;
+    
+    // Convert numeric values
+    if (type === 'number') {
+      setFormData({
+        ...formData,
+        [name]: value === '' ? 0 : Number(value)
+      });
+    } else {
+      setFormData({
+        ...formData,
+        [name]: value
+      });
+    }
+  };
   
   // Form submission handler
   const handleFormSubmit = async (e: React.FormEvent) => {
@@ -364,6 +433,7 @@ export const CourseEditorProvider: React.FC<{
   
   // New handlers for homework support
   const trackSaveAttempt = (section: string) => {
+    console.log('[CourseEditorContext] Tracking save attempt for section:', section);
     setActiveSaveSection(section);
     setSaving(true);
     setHasChanges(true);
@@ -371,6 +441,7 @@ export const CourseEditorProvider: React.FC<{
   };
 
   const handleSaveComplete = (success: boolean, errorMessage?: string) => {
+    console.log('[CourseEditorContext] Save complete -', success ? 'SUCCESS' : 'FAILED', errorMessage || '');
     setSaving(false);
     if (!success && errorMessage) {
       setSaveError(errorMessage);
@@ -390,7 +461,7 @@ export const CourseEditorProvider: React.FC<{
   };
   
   // Combine context value with any provided external values
-  const contextValue = {
+  const contextValue: CourseEditorContextType = {
     formData,
     setFormData,
     activeTab,
@@ -443,6 +514,13 @@ export const CourseEditorProvider: React.FC<{
     saveError,
     trackSaveAttempt,
     handleSaveComplete,
+    // Add handleChange function
+    handleChange,
+    data: {
+      id: numericCourseId,
+      title: formData.title,
+      description: formData.description
+    },
     ...value // Merge with any provided values
   };
   
