@@ -111,7 +111,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
                   isOpen={!!openSectionIds[section.id]}
                   headerContent={
                     <div className="flex justify-between w-full items-center">
-                      <span className="font-bold text-lg">{section.title}</span>
+                      <span className="font-bold text-xl">{section.title}</span>
                       <span className="text-xs text-gray-500">
                         {section.lectures?.length || 0} 课时
                       </span>
@@ -174,7 +174,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
                   <Button
                     size="sm"
                     variant="knowledge"
-                    className="flex items-center gap-1"
+                    className="text-xs py-1 px-3 h-auto flex items-center gap-1"
                   >
                     <Download size={14} />
                     下载
@@ -264,4 +264,4 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
       </div>
     </div>
   );
-}
+};

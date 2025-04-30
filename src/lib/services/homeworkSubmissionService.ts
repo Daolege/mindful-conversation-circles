@@ -28,6 +28,8 @@ export interface HomeworkSubmission {
     title: string;
     type: string;
   };
+  // Add any missing fields that might be in the database response
+  answer?: string;
 }
 
 // Types
@@ -130,8 +132,8 @@ export async function updateHomeworkFeedback(
   const { data, error } = await supabase
     .from('homework_submissions')
     .update({
-      feedback: feedback,
-      status: status,
+      feedback,
+      status,
       reviewed_at: new Date().toISOString()
     })
     .eq('id', submissionId);

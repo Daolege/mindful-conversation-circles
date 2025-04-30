@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 
 // Basic types without circular references
@@ -82,8 +83,11 @@ export const updateCourseOrder = async (courses: { id: number; display_order: nu
   }
 };
 
-// Get courses by instructor ID - using more specific return type to avoid deep type instantiation
-export const getCoursesByInstructorId = async (instructorId: number) => {
+// Get courses by instructor ID - using explicit return type to avoid deep type instantiation
+export const getCoursesByInstructorId = async (instructorId: number): Promise<{ 
+  data: CourseSimple[] | null; 
+  error: any 
+}> => {
   const { data, error } = await supabase
     .from('courses')
     .select('*')

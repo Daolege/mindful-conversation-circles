@@ -16,8 +16,8 @@ export const CourseDetailHeaderNew: React.FC<CourseDetailHeaderNewProps> = ({ co
       <div className="flex flex-wrap gap-4 mb-8">
         {course.category && (
           <Badge 
-            variant="outline" 
-            className="text-sm bg-gray-50 text-gray-900 hover:bg-gray-100 border border-gray-200"
+            variant="courseTag"
+            className="text-sm"
           >
             <Book size={16} className="mr-1" />
             {course.category}
@@ -25,24 +25,24 @@ export const CourseDetailHeaderNew: React.FC<CourseDetailHeaderNewProps> = ({ co
         )}
         
         <Badge 
-          variant="outline" 
-          className="text-sm bg-gray-50 text-gray-900 hover:bg-gray-100 border border-gray-200"
+          variant="courseTag"
+          className="text-sm"
         >
           <Users size={16} className="mr-1" />
           {course.enrollment_count || 0} 名学员
         </Badge>
         
         <Badge 
-          variant="outline" 
-          className="text-sm bg-gray-50 text-gray-900 hover:bg-gray-100 border border-gray-200"
+          variant="courseTag"
+          className="text-sm"
         >
           <Book size={16} className="mr-1" />
           {course.sections?.length || 0} 章节
         </Badge>
         
         <Badge 
-          variant="outline" 
-          className="text-sm bg-gray-50 text-gray-900 hover:bg-gray-100 border border-gray-200"
+          variant="courseTag"
+          className="text-sm"
         >
           <Clock size={16} className="mr-1" />
           {course.lecture_count || 0} 课时
@@ -50,8 +50,8 @@ export const CourseDetailHeaderNew: React.FC<CourseDetailHeaderNewProps> = ({ co
         
         {course.language && (
           <Badge 
-            variant="outline" 
-            className="text-sm bg-gray-50 text-gray-900 hover:bg-gray-100 border border-gray-200"
+            variant="courseTag"
+            className="text-sm"
           >
             <Globe size={16} className="mr-1" />
             {course.language}
@@ -60,8 +60,8 @@ export const CourseDetailHeaderNew: React.FC<CourseDetailHeaderNewProps> = ({ co
         
         {course.published_at && (
           <Badge 
-            variant="outline" 
-            className="text-sm bg-gray-50 text-gray-900 hover:bg-gray-100 border border-gray-200"
+            variant="courseTag"
+            className="text-sm"
           >
             <Calendar size={16} className="mr-1" />
             {new Date(course.published_at).toLocaleDateString('zh-CN')} 发布
@@ -69,8 +69,8 @@ export const CourseDetailHeaderNew: React.FC<CourseDetailHeaderNewProps> = ({ co
         )}
         
         <Badge
-          variant="outline"
-          className="text-sm bg-gray-50 text-gray-900 hover:bg-gray-100 border border-gray-200"
+          variant="courseTag"
+          className="text-sm"
         >
           {course.status === 'published' ? '已发布' : 
            course.status === 'draft' ? '草稿' : '已归档'}

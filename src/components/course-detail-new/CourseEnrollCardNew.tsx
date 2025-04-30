@@ -41,14 +41,14 @@ export const CourseEnrollCardNew: React.FC<CourseEnrollCardNewProps> = ({ course
         <div className="p-6 space-y-6">
           {/* Price section */}
           <div className="flex items-baseline">
-            <div className="text-6xl font-bold">{formattedPrice}</div>
+            <div className="text-4xl font-bold">{formattedPrice}</div>
             {formattedOriginalPrice && (
-              <div className="ml-3 text-gray-500 line-through text-3xl">
+              <div className="ml-3 text-gray-500 line-through text-xl">
                 {formattedOriginalPrice}
               </div>
             )}
             {discountPercentage && (
-              <div className="ml-3 bg-green-100 text-green-700 px-3 py-1 text-lg rounded-full font-medium">
+              <div className="ml-3 bg-green-100 text-green-700 px-2 py-1 text-sm rounded-full font-medium">
                 省{discountPercentage}%
               </div>
             )}

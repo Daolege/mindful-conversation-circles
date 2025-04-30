@@ -54,7 +54,7 @@ export function AnimatedCollapsible({
   return (
     <div className={cn("border rounded-10 overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300", className)}>
       <div 
-        className="p-4 bg-gray-50 flex items-center justify-between cursor-pointer hover:bg-gray-100 transition-all duration-300"
+        className="p-5 bg-gray-50 flex items-center justify-between cursor-pointer hover:bg-gray-100 transition-all duration-300"
         onClick={onToggle}
       >
         {headerContent}
@@ -77,7 +77,7 @@ export function AnimatedCollapsible({
           contentClassName
         )}
       >
-        <div className="p-4">
+        <div className="p-5">
           {children}
         </div>
       </div>
