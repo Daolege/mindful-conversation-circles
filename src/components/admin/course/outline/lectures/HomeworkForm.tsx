@@ -87,7 +87,7 @@ export const HomeworkForm: React.FC<HomeworkFormProps> = ({
       };
 
       // If we're editing an existing homework, include its ID
-      if (initialData?.id) {
+      if (initialData && initialData.id) {
         homeworkData.id = initialData.id;
       }
 

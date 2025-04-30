@@ -1,272 +1,535 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableHead, TableHeader } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableFooter,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import {
+  getCourses,
+  createCourse,
+  updateCourse,
+  deleteCourse,
+  updateCourseOrder,
+} from "@/lib/services/courseService";
 import { toast } from "sonner";
-import { Loader2, Search, Plus } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
-import { useState, useRef } from "react";
-import { DraggableCourseRow } from "./course/DraggableCourseRow";
-import { transformCourseData } from "@/lib/types/course";
-import { updateCourseOrder } from "@/lib/services/courseService";
-import { CourseNew } from "@/lib/types/course-new";
+import { Loader2, Plus, Trash2, GripVertical } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  DragDropContext,
+  Droppable,
+  Draggable,
+  DropResult,
+} from "react-beautiful-dnd";
 
-// Helper function to convert Course to CourseNew type
-const convertToNewCourseFormat = (course: any): CourseNew => {
-  return {
-    id: course.id,
-    title: course.title,
-    description: course.description,
-    price: course.price,
-    original_price: course.originalPrice,
-    currency: "cny", // Default value
-    display_order: course.display_order || 0,
-    status: course.status || "draft", // Add default status
-    is_featured: course.featured || false, // Convert featured to is_featured
-    lecture_count: course.lectures,
-    enrollment_count: course.studentCount,
-    created_at: course.created_at || course.lastupdated,
-    updated_at: course.lastupdated,
-    published_at: course.published_at,
-    category: course.category
-  };
-};
+const courseSchema = z.object({
+  title: z.string().min(2, {
+    message: "标题必须至少包含 2 个字符",
+  }),
+  description: z.string().optional(),
+  price: z.coerce.number(),
+  category: z.string().optional(),
+  instructor: z.string().optional(),
+  language: z.string().optional(),
+  level: z.string().optional(),
+  duration: z.string().optional(),
+  lectures: z.coerce.number().optional(),
+  enrollment_count: z.coerce.number().optional(),
+  display_order: z.coerce.number().optional(),
+  featured: z.boolean().optional(),
+  imageurl: z.string().optional(),
+});
 
-export const CourseManagement = () => {
-  const navigate = useNavigate();
+const CourseManagement = () => {
+  const [open, setOpen] = useState(false);
+  const [editCourse, setEditCourse] = useState(null);
+  const [reorderLoading, setReorderLoading] = useState(false);
   const queryClient = useQueryClient();
-  const [searchTerm, setSearchTerm] = useState("");
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [courseToDelete, setCourseToDelete] = useState<number | null>(null);
-  
-  const [isDragging, setIsDragging] = useState(false);
-  const draggedItemIndex = useRef<number | null>(null);
-  const dragOverItemIndex = useRef<number | null>(null);
+
+  const form = useForm<z.infer<typeof courseSchema>>({
+    resolver: zodResolver(courseSchema),
+    defaultValues: {
+      title: "",
+      description: "",
+      price: 0,
+      category: "",
+      instructor: "",
+      language: "",
+      level: "",
+      duration: "",
+      lectures: 0,
+      enrollment_count: 0,
+      display_order: 0,
+      featured: false,
+      imageurl: "",
+    },
+  });
 
   const { data: courses, isLoading } = useQuery({
-    queryKey: ["admin-courses", searchTerm],
-    queryFn: async () => {
-      console.log("Fetching courses with search term:", searchTerm);
-      const { data, error } = await supabase
-        .from("courses")
-        .select("*")
-        .order('display_order', { ascending: true });
-      
-      if (error) {
-        console.error("Error fetching courses:", error);
-        throw error;
-      }
-      
-      const transformedData = data.map(course => transformCourseData(course));
-      
-      const filteredData = transformedData.filter(course => 
-        !searchTerm || 
-        course.title.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-      
-      return filteredData;
-    }
+    queryKey: ["courses"],
+    queryFn: getCourses,
   });
 
-  const { mutate: handleUpdateCourseOrder } = useMutation({
-    mutationFn: async ({ courses }: { courses: { id: number; display_order: number }[] }) => {
-      const success = await updateCourseOrder(courses);
-      if (!success) throw new Error("Failed to update course order");
-    },
+  const { mutate: addCourse, isLoading: isAdding } = useMutation({
+    mutationFn: createCourse,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-courses"] });
+      queryClient.invalidateQueries({ queryKey: ["courses"] });
+      toast.success("课程已成功创建");
+      setOpen(false);
+      form.reset();
     },
     onError: (error) => {
-      console.error("Error updating course order:", error);
-      toast.error("更新课程顺序失败");
-    }
+      toast.error("创建课程时出错");
+      console.error("Error creating course:", error);
+    },
   });
 
-  const { mutate: deleteCourse } = useMutation({
-    mutationFn: async (id: number) => {
-      const { error } = await supabase
-        .from("courses")
-        .delete()
-        .eq("id", id as any);
-      
-      if (error) throw error;
-      return id;
-    },
+  const { mutate: changeCourse, isLoading: isChanging } = useMutation({
+    mutationFn: updateCourse,
     onSuccess: () => {
-      toast.success("课程已删除");
-      queryClient.invalidateQueries({ queryKey: ["admin-courses"] });
-      setDeleteDialogOpen(false);
-      setCourseToDelete(null);
+      queryClient.invalidateQueries({ queryKey: ["courses"] });
+      toast.success("课程已成功更新");
+      setOpen(false);
+      setEditCourse(null);
+      form.reset();
     },
     onError: (error) => {
+      toast.error("更新课程时出错");
+      console.error("Error updating course:", error);
+    },
+  });
+
+  const { mutate: removeCourse, isLoading: isRemoving } = useMutation({
+    mutationFn: deleteCourse,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["courses"] });
+      toast.success("课程已成功删除");
+      setOpen(false);
+      setEditCourse(null);
+      form.reset();
+    },
+    onError: (error) => {
+      toast.error("删除课程时出错");
       console.error("Error deleting course:", error);
-      toast.error("删除课程失败");
-    }
+    },
   });
 
-  const handleDragStart = (index: number) => {
-    console.log("Drag started at index:", index);
-    draggedItemIndex.current = index;
-    setIsDragging(true);
+  useEffect(() => {
+    if (editCourse) {
+      setOpen(true);
+      form.setValue("title", editCourse.title);
+      form.setValue("description", editCourse.description || "");
+      form.setValue("price", editCourse.price);
+      form.setValue("category", editCourse.category || "");
+      form.setValue("instructor", editCourse.instructor || "");
+      form.setValue("language", editCourse.language || "");
+      form.setValue("level", editCourse.level || "");
+      form.setValue("duration", editCourse.duration || "");
+      form.setValue("lectures", editCourse.lectures || 0);
+      form.setValue("enrollment_count", editCourse.enrollment_count || 0);
+      form.setValue("display_order", editCourse.display_order || 0);
+      form.setValue("featured", editCourse.featured || false);
+      form.setValue("imageurl", editCourse.imageurl || "");
+    }
+  }, [editCourse, form]);
+
+  const onSubmit = (values: z.infer<typeof courseSchema>) => {
+    if (editCourse) {
+      changeCourse({ id: editCourse.id, ...values });
+    } else {
+      addCourse(values);
+    }
   };
 
-  const handleDragOver = (index: number) => {
-    if (draggedItemIndex.current === null || !isDragging) return;
-    
-    dragOverItemIndex.current = index;
-    console.log("Dragging over index:", index);
+  const handleDelete = () => {
+    if (editCourse) {
+      removeCourse(editCourse.id);
+    }
   };
 
-  const handleDragEnd = async () => {
-    console.log("Drag ended. Dragged from", draggedItemIndex.current, "to", dragOverItemIndex.current);
-    
-    if (
-      draggedItemIndex.current === null || 
-      dragOverItemIndex.current === null || 
-      draggedItemIndex.current === dragOverItemIndex.current ||
-      !courses
-    ) {
-      draggedItemIndex.current = null;
-      dragOverItemIndex.current = null;
-      setIsDragging(false);
+  const handleOpen = () => {
+    setEditCourse(null);
+    form.reset();
+    setOpen(true);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+    setEditCourse(null);
+    form.reset();
+  };
+
+  const onDragEnd = (result: DropResult) => {
+    if (!result.destination) {
       return;
     }
-    
-    const sourceIndex = draggedItemIndex.current;
-    const destinationIndex = dragOverItemIndex.current;
-    
-    // Create a copy of the courses array
-    const updatedCourses = [...courses];
-    
-    // Remove the dragged item
-    const [draggedCourse] = updatedCourses.splice(sourceIndex, 1);
-    
-    // Insert it at the new position
-    updatedCourses.splice(destinationIndex, 0, draggedCourse);
-    
-    // Visual update first (optimistic UI)
-    queryClient.setQueryData(["admin-courses", searchTerm], updatedCourses);
-    
-    // Update display_order for all affected courses
-    try {
-      console.log("Updating course orders...");
-      const coursesToUpdate = updatedCourses.map((course, index) => {
-        return { 
-          id: course.id, 
-          display_order: index + 1 
-        };
-      });
-      
-      await handleUpdateCourseOrder({ courses: coursesToUpdate });
-      toast.success("课程顺序已更新");
-    } catch (error) {
-      console.error("Error updating course order:", error);
-      toast.error("更新课程顺序失败");
-      // Revert the optimistic update
-      queryClient.invalidateQueries({ queryKey: ["admin-courses"] });
-    }
-    
-    // Reset drag state
-    draggedItemIndex.current = null;
-    dragOverItemIndex.current = null;
-    setIsDragging(false);
+
+    const items = reorder(
+      courses,
+      result.source.index,
+      result.destination.index
+    );
+
+    handleCoursesReorder(items);
   };
 
-  const handleAddCourse = () => navigate("/admin/courses/new");
-  const handleEditCourse = (courseId: number) => navigate(`/admin/courses/${courseId}`);
+  const reorder = (list: any[], startIndex: number, endIndex: number) => {
+    const result = Array.from(list);
+    const [removed] = result.splice(startIndex, 1);
+    result.splice(endIndex, 0, removed);
 
-  // Convert courses to CourseNew format before rendering
-  const formattedCourses = courses?.map(course => convertToNewCourseFormat(course));
+    return result;
+  };
+
+  const handleCoursesReorder = async (newCourses: any[]) => {
+    try {
+      setReorderLoading(true);
+      console.log("[CourseManagement] Reordering courses:", newCourses);
+      
+      // Extract just the course IDs for the updateCourseOrder function
+      const courseIds: number[] = newCourses.map(course => course.id);
+      
+      const result = await updateCourseOrder(courseIds);
+      
+      if (result.success) {
+        toast.success("课程顺序已更新");
+      } else {
+        toast.error("更新课程顺序失败");
+        console.error("[CourseManagement] Error updating course order:", result.error);
+      }
+      
+    } catch (error) {
+      console.error("[CourseManagement] Error in handleCoursesReorder:", error);
+      toast.error("更新课程顺序时出错");
+    } finally {
+      setReorderLoading(false);
+    }
+  };
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold">课程管理</h2>
-      
-      <div className="space-y-4">
-        <div className="flex justify-between items-center">
-          <div className="relative w-1/2">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-            <Input
-              type="text"
-              placeholder="搜索课程..."
-              className="pl-10"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          <Button 
-            onClick={handleAddCourse}
-            className="flex items-center gap-1"
-          >
-            <Plus size={16} />
-            添加课程
-          </Button>
-        </div>
-
-        {isLoading ? (
-          <div className="flex justify-center py-10">
-            <Loader2 className="h-8 w-8 animate-spin" />
-          </div>
-        ) : formattedCourses && formattedCourses.length > 0 ? (
-          <Table>
-            <TableHeader>
-              <tr>
-                <TableHead>ID</TableHead>
-                <TableHead>课程名称</TableHead>
-                <TableHead>价格</TableHead>
-                <TableHead>报名人数</TableHead>
-                <TableHead>发布时间</TableHead>
-                <TableHead>操作</TableHead>
-              </tr>
-            </TableHeader>
-            <TableBody>
-              {formattedCourses.map((course, index) => (
-                <DraggableCourseRow
-                  key={course.id}
-                  course={course}
-                  index={index}
-                  onEdit={handleEditCourse}
-                  onDelete={(courseId) => {
-                    setCourseToDelete(courseId);
-                    setDeleteDialogOpen(true);
-                  }}
-                  onDragStart={handleDragStart}
-                  onDragOver={handleDragOver}
-                  onDragEnd={handleDragEnd}
-                />
-              ))}
-            </TableBody>
-          </Table>
-        ) : (
-          <div className="text-center py-10">
-            <p className="text-gray-500">未找到课程</p>
-          </div>
-        )}
+    <div className="container mx-auto py-10">
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-2xl font-bold">课程管理</h1>
+        <Button onClick={handleOpen} disabled={isAdding}>
+          <Plus className="mr-2 h-4 w-4" />
+          添加课程
+        </Button>
       </div>
 
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>确认删除</AlertDialogTitle>
-            <AlertDialogDescription>
-              确定要删除此课程吗？此操作不可撤销。
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setDeleteDialogOpen(false)}>
-              取消
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => courseToDelete && deleteCourse(courseToDelete)}
-              className="bg-red-500 hover:bg-red-600"
-            >
-              删除
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>{editCourse ? "编辑课程" : "创建课程"}</DialogTitle>
+            <DialogDescription>
+              {editCourse
+                ? "编辑课程信息，完成后点击保存。"
+                : "创建一个新的课程，填写以下信息。"}
+            </DialogDescription>
+          </DialogHeader>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="title"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>标题</FormLabel>
+                    <FormControl>
+                      <Input placeholder="课程标题" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>描述</FormLabel>
+                    <FormControl>
+                      <Input placeholder="课程描述" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="price"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>价格</FormLabel>
+                    <FormControl>
+                      <Input type="number" placeholder="课程价格" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="category"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>分类</FormLabel>
+                    <FormControl>
+                      <Input placeholder="课程分类" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="instructor"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>讲师</FormLabel>
+                    <FormControl>
+                      <Input placeholder="讲师姓名" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="language"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>语言</FormLabel>
+                    <FormControl>
+                      <Input placeholder="课程语言" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="level"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>级别</FormLabel>
+                    <FormControl>
+                      <Input placeholder="课程级别" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="duration"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>持续时间</FormLabel>
+                    <FormControl>
+                      <Input placeholder="课程时长" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="lectures"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>讲座</FormLabel>
+                    <FormControl>
+                      <Input type="number" placeholder="课程讲座" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="enrollment_count"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>招生人数</FormLabel>
+                    <FormControl>
+                      <Input type="number" placeholder="课程招生" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="display_order"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>显示顺序</FormLabel>
+                    <FormControl>
+                      <Input type="number" placeholder="课程显示" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="featured"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>特色</FormLabel>
+                    <FormControl>
+                      <Input type="boolean" placeholder="特色课程" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="imageurl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>图片网址</FormLabel>
+                    <FormControl>
+                      <Input placeholder="课程图片" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <div className="flex justify-end">
+                {editCourse && (
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    className="mr-2"
+                    onClick={handleDelete}
+                    disabled={isRemoving}
+                  >
+                    {isRemoving ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="mr-2 h-4 w-4" />
+                    )}
+                    删除
+                  </Button>
+                )}
+                <Button
+                  type="submit"
+                  disabled={isAdding || isChanging}
+                >
+                  {isAdding || isChanging ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    "提交"
+                  )}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      {isLoading ? (
+        <div className="flex items-center justify-center">
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          加载课程中...
+        </div>
+      ) : courses && courses.length > 0 ? (
+        <DragDropContext onDragEnd={onDragEnd}>
+          <Table>
+            <TableCaption>课程列表</TableCaption>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[50px]">排序</TableHead>
+                <TableHead>标题</TableHead>
+                <TableHead>价格</TableHead>
+                <TableHead>类别</TableHead>
+                <TableHead>讲师</TableHead>
+                <TableHead>操作</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <Droppable droppableId="courses">
+                {(provided) => (
+                  <div {...provided.droppableProps} ref={provided.innerRef}>
+                    {courses.map((course, index) => (
+                      <Draggable
+                        key={course.id}
+                        draggableId={String(course.id)}
+                        index={index}
+                      >
+                        {(provided) => (
+                          <TableRow
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            {...provided.dragHandleProps}
+                          >
+                            <TableCell className="text-center">
+                              <GripVertical className="cursor-move" />
+                            </TableCell>
+                            <TableCell>{course.title}</TableCell>
+                            <TableCell>{course.price}</TableCell>
+                            <TableCell>{course.category}</TableCell>
+                            <TableCell>{course.instructor}</TableCell>
+                            <TableCell>
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={() => setEditCourse(course)}
+                              >
+                                编辑
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </Draggable>
+                    ))}
+                    {provided.placeholder}
+                  </div>
+                )}
+              </Droppable>
+            </TableBody>
+          </Table>
+        </DragDropContext>
+      ) : (
+        <p>没有找到课程。</p>
+      )}
     </div>
   );
 };
+
+export default CourseManagement;
