@@ -57,10 +57,11 @@ export const supabase = createClient<Database>(
 // Create the migrations table if it doesn't exist
 export async function ensureMigrationsTable() {
   try {
-    // Use admin_add_course_item to create the _migrations table if needed
-    const { error } = await supabase.rpc('admin_add_course_item', {
+    // Create migrations table using direct SQL - safely
+    const result = await supabase.rpc('admin_add_course_item', {
       p_table_name: '_migrations',
-      p_sql_query: `
+      p_course_id: 0, // Use 0 for system-level operations
+      p_content: `
         CREATE TABLE IF NOT EXISTS public._migrations (
           id SERIAL PRIMARY KEY,
           name TEXT NOT NULL,
@@ -68,11 +69,14 @@ export async function ensureMigrationsTable() {
           executed_at TIMESTAMPTZ DEFAULT NOW(),
           success BOOLEAN DEFAULT TRUE
         );
-      `
+      `,
+      p_position: 0,
+      p_id: 'create_migrations_table',
+      p_is_visible: true
     });
 
-    if (error) {
-      console.error('Error creating migrations table:', error);
+    if (result.error) {
+      console.error('Error creating migrations table:', result.error);
     } else {
       console.log('Created or verified _migrations table');
     }
@@ -110,7 +114,7 @@ export async function loadMockCourses() {
           ratingcount: 320,
           lectures: 48,
           whatyouwilllearn: ["人工智能基础理论", "机器学习算���", "神经网络基础", "AI实际应用案例"],
-          requirements: ["基础编程知识", "高中数学水平"],
+          requirements: ["基础编程知���", "高中数学水平"],
           category: "技术",
           level: "初级到中级",
           duration: "24小时",

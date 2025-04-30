@@ -21,7 +21,7 @@ const SaveStatusDisplay: React.FC<SaveStatusDisplayProps> = ({
   const courseEditor = useCourseEditor();
   
   // Use either props or context values
-  const showSuccess = success !== undefined ? success : !courseEditor.saving && !courseEditor.saveError;
+  const showSuccess = success !== undefined ? success : !courseEditor.isSaving && !courseEditor.saveError;
   const showError = error !== undefined ? error : courseEditor.saveError;
   
   // Control display state, success message automatically disappears after delay

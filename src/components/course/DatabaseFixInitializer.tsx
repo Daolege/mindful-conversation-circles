@@ -32,7 +32,8 @@ export const DatabaseFixInitializer: React.FC = () => {
           // Check if _migrations table exists with direct query approach
           const { error: checkError } = await supabase.rpc('admin_add_course_item', {
             p_table_name: '_migrations',
-            p_sql_query: `
+            p_course_id: 0,
+            p_content: `
               CREATE TABLE IF NOT EXISTS public._migrations (
                 id SERIAL PRIMARY KEY,
                 name TEXT NOT NULL,
@@ -40,7 +41,10 @@ export const DatabaseFixInitializer: React.FC = () => {
                 executed_at TIMESTAMPTZ DEFAULT NOW(),
                 success BOOLEAN DEFAULT TRUE
               );
-            `
+            `,
+            p_position: 0,
+            p_id: 'create_migrations_table',
+            p_is_visible: true
           });
           
           if (checkError) {

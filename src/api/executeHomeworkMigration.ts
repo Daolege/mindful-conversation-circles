@@ -38,7 +38,11 @@ export const executeHomeworkMigration = async (): Promise<{
       
       const { data: dropData, error: dropError } = await supabase.rpc('admin_add_course_item', {
         p_table_name: '_migrations',
-        p_sql_query: dropConstraintSql 
+        p_course_id: 0, // Use 0 as a placeholder for system-level operations
+        p_content: dropConstraintSql,
+        p_position: 0,
+        p_id: 'drop_fk_' + new Date().getTime(),
+        p_is_visible: true
       });
       
       if (dropError) {
@@ -71,7 +75,11 @@ export const executeHomeworkMigration = async (): Promise<{
       // Use admin_add_course_item RPC
       const { data: addData, error: addError } = await supabase.rpc('admin_add_course_item', { 
         p_table_name: '_migrations',
-        p_sql_query: addConstraintSql 
+        p_course_id: 0, // Use 0 as a placeholder for system-level operations
+        p_content: addConstraintSql,
+        p_position: 1,
+        p_id: 'add_fk_' + new Date().getTime(),
+        p_is_visible: true
       });
       
       if (addError) {

@@ -194,8 +194,11 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
       setSaveStatus({ success: false, error: null });
       clearAllToasts();
       
-      if (courseEditor) {
+      // Safely call trackSaveAttempt if it exists
+      if (courseEditor && typeof courseEditor.trackSaveAttempt === 'function') {
         courseEditor.trackSaveAttempt('homework');
+      } else {
+        console.log('[HomeworkPanel] courseEditor.trackSaveAttempt is not available');
       }
       
       // 确保有效的courseId - 这是关键修复
@@ -247,8 +250,12 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
       setShowAddForm(false);
       setEditingHomework(null);
       setSaveStatus({ success: true, error: null });
-      if (courseEditor) {
+      
+      // Safely call handleSaveComplete if it exists
+      if (courseEditor && typeof courseEditor.handleSaveComplete === 'function') {
         courseEditor.handleSaveComplete(true);
+      } else {
+        console.log('[HomeworkPanel] courseEditor.handleSaveComplete is not available');
       }
       
       // 延迟清除成功状态
@@ -268,9 +275,14 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
     onError: (error: any) => {
       const errorMessage = error.message || '保存作业失败';
       setSaveStatus({ success: false, error: errorMessage });
-      if (courseEditor) {
+      
+      // Safely call handleSaveComplete if it exists
+      if (courseEditor && typeof courseEditor.handleSaveComplete === 'function') {
         courseEditor.handleSaveComplete(false, errorMessage);
+      } else {
+        console.log('[HomeworkPanel] courseEditor.handleSaveComplete is not available for error handling');
       }
+      
       console.error('[HomeworkPanel] Save error:', error);
     }
   });

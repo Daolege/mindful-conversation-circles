@@ -52,11 +52,39 @@ export interface CourseEditorContextType {
   addHighlight: () => void;
   removeHighlight: (index: number) => void;
   handleFormSubmit: (e: React.FormEvent) => void;
+  // Add new properties for homework support
+  data?: {
+    id?: number;
+    title?: string;
+    description?: string;
+  };
+  saving: boolean;
+  hasChanges: boolean;
+  saveError: string | null;
+  savedSections?: {
+    objectives: boolean;
+    requirements: boolean;
+    audiences: boolean;
+  };
+  sectionVisibility?: {
+    objectives: boolean;
+    requirements: boolean;
+    audiences: boolean;
+    materials: boolean;
+  };
+  setSectionVisibility?: (visibility: any) => void;
+  setSavedSection?: (section: string, value: boolean) => void;
+  setHasChanges?: (hasChanges: boolean) => void;
+  trackSaveAttempt: (section: string) => void;
+  handleSaveComplete: (success: boolean, errorMessage?: string) => void;
 }
 
 const CourseEditorContext = createContext<CourseEditorContextType>({} as CourseEditorContextType);
 
-export const CourseEditorProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const CourseEditorProvider: React.FC<{ 
+  children: React.ReactNode;
+  value?: Partial<CourseEditorContextType>;
+}> = ({ children, value }) => {
   // Basic state setup
   const { courseId } = useParams<{ courseId: string }>();
   const numericCourseId = courseId ? parseInt(courseId) : undefined;
@@ -105,6 +133,12 @@ export const CourseEditorProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const [newAudienceItem, setNewAudienceItem] = useState('');
   const [newHighlight, setNewHighlight] = useState('');
   
+  // Add states for homework support
+  const [saving, setSaving] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [activeSaveSection, setActiveSaveSection] = useState<string | null>(null);
+  
   // Load course data if editing
   useEffect(() => {
     const loadCourse = async () => {
@@ -130,6 +164,7 @@ export const CourseEditorProvider: React.FC<{ children: React.ReactNode }> = ({ 
           
           setFormData({
             ...data,
+            description: data.description || '',
             syllabus: Array.isArray(syllabus) ? syllabus : [],
             materials: data.materials || [],
             requirements: data.requirements || [],
@@ -327,8 +362,35 @@ export const CourseEditorProvider: React.FC<{ children: React.ReactNode }> = ({ 
     setFormData({ ...formData, highlights: updatedHighlights });
   };
   
-  // Context value
-  const value = {
+  // New handlers for homework support
+  const trackSaveAttempt = (section: string) => {
+    setActiveSaveSection(section);
+    setSaving(true);
+    setHasChanges(true);
+    setSaveError(null);
+  };
+
+  const handleSaveComplete = (success: boolean, errorMessage?: string) => {
+    setSaving(false);
+    if (!success && errorMessage) {
+      setSaveError(errorMessage);
+    } else {
+      setSaveError(null);
+    }
+    
+    if (success && activeSaveSection) {
+      // If a save section is tracked, mark it as saved
+      if (value?.setSavedSection) {
+        value.setSavedSection(activeSaveSection, true);
+      }
+    }
+    
+    // Reset active save section
+    setActiveSaveSection(null);
+  };
+  
+  // Combine context value with any provided external values
+  const contextValue = {
     formData,
     setFormData,
     activeTab,
@@ -374,11 +436,18 @@ export const CourseEditorProvider: React.FC<{ children: React.ReactNode }> = ({ 
     removeAudienceItem,
     addHighlight,
     removeHighlight,
-    handleFormSubmit
+    handleFormSubmit,
+    // New properties for homework support
+    saving,
+    hasChanges,
+    saveError,
+    trackSaveAttempt,
+    handleSaveComplete,
+    ...value // Merge with any provided values
   };
   
   return (
-    <CourseEditorContext.Provider value={value}>
+    <CourseEditorContext.Provider value={contextValue}>
       {children}
     </CourseEditorContext.Provider>
   );
