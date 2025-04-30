@@ -17,7 +17,7 @@ export const CourseDetailHeaderNew: React.FC<CourseDetailHeaderNewProps> = ({ co
         {course.category && (
           <Badge 
             variant="course" 
-            className="transition-transform hover:scale-105"
+            className="text-sm"
           >
             <Book size={16} className="mr-1" />
             {course.category}
@@ -26,7 +26,7 @@ export const CourseDetailHeaderNew: React.FC<CourseDetailHeaderNewProps> = ({ co
         
         <Badge 
           variant="course" 
-          className="transition-transform hover:scale-105"
+          className="text-sm"
         >
           <Users size={16} className="mr-1" />
           {course.enrollment_count || 0} 名学员
@@ -34,7 +34,7 @@ export const CourseDetailHeaderNew: React.FC<CourseDetailHeaderNewProps> = ({ co
         
         <Badge 
           variant="course" 
-          className="transition-transform hover:scale-105"
+          className="text-sm"
         >
           <Book size={16} className="mr-1" />
           {course.sections?.length || 0} 章节
@@ -42,7 +42,7 @@ export const CourseDetailHeaderNew: React.FC<CourseDetailHeaderNewProps> = ({ co
         
         <Badge 
           variant="course" 
-          className="transition-transform hover:scale-105"
+          className="text-sm"
         >
           <Clock size={16} className="mr-1" />
           {course.lecture_count || 0} 课时
@@ -51,7 +51,7 @@ export const CourseDetailHeaderNew: React.FC<CourseDetailHeaderNewProps> = ({ co
         {course.language && (
           <Badge 
             variant="course" 
-            className="transition-transform hover:scale-105"
+            className="text-sm"
           >
             <Globe size={16} className="mr-1" />
             {course.language}
@@ -61,7 +61,7 @@ export const CourseDetailHeaderNew: React.FC<CourseDetailHeaderNewProps> = ({ co
         {course.published_at && (
           <Badge 
             variant="course" 
-            className="transition-transform hover:scale-105"
+            className="text-sm"
           >
             <Calendar size={16} className="mr-1" />
             {new Date(course.published_at).toLocaleDateString('zh-CN')} 发布
@@ -76,7 +76,7 @@ export const CourseDetailHeaderNew: React.FC<CourseDetailHeaderNewProps> = ({ co
               ? 'outline'
               : 'secondary'
           }
-          className="capitalize px-3 py-1 transition-transform hover:scale-105"
+          className="capitalize px-3 py-1 text-sm"
         >
           {course.status === 'published' ? '已发布' : 
            course.status === 'draft' ? '草稿' : '已归档'}

@@ -4,7 +4,7 @@ import { CourseWithDetails } from '@/lib/types/course-new';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AnimatedCollapsible } from '@/components/ui/animated-collapsible';
 import { Button } from '@/components/ui/button';
-import { Lock, CheckCheck, FileText, Target, Users, BookOpen, Download, File } from 'lucide-react';
+import { Lock, CheckCircle, FileText, Target, Users, BookOpen, Download, File } from 'lucide-react';
 
 interface CourseDetailContentNewProps {
   course: CourseWithDetails;
@@ -112,25 +112,24 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
                   onToggle={() => toggleSection(section.id)}
                   className="border-gray-200 hover:bg-gray-50 transition-colors"
                 >
-                  <ul className="divide-y divide-gray-100">
+                  <ul className="space-y-2">
                     {section.lectures?.map((lecture) => (
                       <li
                         key={lecture.id}
-                        className="p-3 hover:bg-gray-50 rounded-md transition-colors flex justify-between items-center"
+                        className="p-3 hover:bg-gray-50 rounded-md transition-colors border border-gray-100 flex justify-between items-center"
                       >
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm">{lecture.title}</span>
+                        </div>
                         <div className="flex items-center gap-2">
                           {!lecture.is_free && (
                             <Lock size={16} className="text-gray-400" />
                           )}
-                          <span className="text-sm">{lecture.title}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-gray-500">{lecture.duration || '0:00'}</span>
                           {lecture.is_free && (
                             <Button 
                               size="sm" 
                               variant="knowledge" 
-                              className="ml-2 text-xs py-1 px-3 h-auto"
+                              className="text-xs py-1 px-3 h-auto"
                             >
                               免费学习
                             </Button>
@@ -167,7 +166,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
                   </div>
                   <Button
                     size="sm"
-                    variant="outline"
+                    variant="knowledge"
                     className="flex items-center gap-1"
                   >
                     <Download size={14} />
@@ -197,7 +196,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
               <ul className="space-y-2">
                 {learningObjectives.map((objective, index) => (
                   <li key={index} className="flex items-start gap-2">
-                    <CheckCheck className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                    <CheckCircle className="h-4 w-4 text-gray-800 mt-0.5 flex-shrink-0" />
                     <span className="text-sm text-gray-700">{objective}</span>
                   </li>
                 ))}
@@ -221,7 +220,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
               <ul className="space-y-2">
                 {requirements.map((requirement, index) => (
                   <li key={index} className="flex items-start gap-2">
-                    <CheckCheck className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                    <CheckCircle className="h-4 w-4 text-gray-800 mt-0.5 flex-shrink-0" />
                     <span className="text-sm text-gray-700">{requirement}</span>
                   </li>
                 ))}
@@ -245,7 +244,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
               <ul className="space-y-2">
                 {targetAudience.map((audience, index) => (
                   <li key={index} className="flex items-start gap-2">
-                    <CheckCheck className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                    <CheckCircle className="h-4 w-4 text-gray-800 mt-0.5 flex-shrink-0" />
                     <span className="text-sm text-gray-700">{audience}</span>
                   </li>
                 ))}
@@ -258,4 +257,4 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
       </div>
     </div>
   );
-};
+}
