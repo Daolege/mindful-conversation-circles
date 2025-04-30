@@ -376,7 +376,7 @@ export const CourseOtherSettings = ({
   // Handler functions for objectives
   const handleAddObjective = async (content: string) => {
     try {
-      trackSaveAttempt('add-objective');
+      courseEditor.trackSaveAttempt('objectives');
       const position = objectives.length > 0 ? Math.max(...objectives.map(o => o.position)) + 1 : 0;
       const { data, error } = await addObjective(courseId, content, position);
       
@@ -402,7 +402,7 @@ export const CourseOtherSettings = ({
   
   const handleEditObjective = async (id: string, content: string) => {
     try {
-      trackSaveAttempt('edit-objective');
+      courseEditor.trackSaveAttempt('objectives');
       const { error } = await updateObjective(id, content);
       
       if (error) throw error;
@@ -424,7 +424,7 @@ export const CourseOtherSettings = ({
   
   const handleDeleteObjective = async (id: string) => {
     try {
-      trackSaveAttempt('delete-objective');
+      courseEditor.trackSaveAttempt('objectives');
       const { error } = await deleteObjective(id);
       
       if (error) throw error;
@@ -443,7 +443,7 @@ export const CourseOtherSettings = ({
   
   const handleObjectiveReorder = async (newItems: ListItem[]) => {
     try {
-      trackSaveAttempt('reorder-objectives');
+      courseEditor.trackSaveAttempt('objectives');
       const updates = newItems.map(item => ({
         id: item.id,
         position: item.position
@@ -471,7 +471,7 @@ export const CourseOtherSettings = ({
   const handleObjectivesVisibilityChange = async (isVisible: boolean) => {
     setObjectivesVisible(isVisible);
     try {
-      trackSaveAttempt('objectives-visibility');
+      courseEditor.trackSaveAttempt('objectives');
       const { error } = await updateObjectivesVisibility(courseId, isVisible);
       
       if (error) throw error;
@@ -494,7 +494,7 @@ export const CourseOtherSettings = ({
   // Handler functions for requirements
   const handleAddRequirement = async (content: string) => {
     try {
-      trackSaveAttempt('add-requirement');
+      courseEditor.trackSaveAttempt('requirements');
       const position = requirements.length > 0 ? Math.max(...requirements.map(r => r.position)) + 1 : 0;
       const { data, error } = await addRequirement(courseId, content, position);
       
@@ -520,7 +520,7 @@ export const CourseOtherSettings = ({
   
   const handleEditRequirement = async (id: string, content: string) => {
     try {
-      trackSaveAttempt('edit-requirement');
+      courseEditor.trackSaveAttempt('requirements');
       const { error } = await updateRequirement(id, content);
       
       if (error) throw error;
@@ -542,7 +542,7 @@ export const CourseOtherSettings = ({
   
   const handleDeleteRequirement = async (id: string) => {
     try {
-      trackSaveAttempt('delete-requirement');
+      courseEditor.trackSaveAttempt('requirements');
       const { error } = await deleteRequirement(id);
       
       if (error) throw error;
@@ -561,7 +561,7 @@ export const CourseOtherSettings = ({
   
   const handleRequirementReorder = async (newItems: ListItem[]) => {
     try {
-      trackSaveAttempt('reorder-requirements');
+      courseEditor.trackSaveAttempt('requirements');
       const updates = newItems.map(item => ({
         id: item.id,
         position: item.position
@@ -588,7 +588,7 @@ export const CourseOtherSettings = ({
   const handleRequirementsVisibilityChange = async (isVisible: boolean) => {
     setRequirementsVisible(isVisible);
     try {
-      trackSaveAttempt('requirements-visibility');
+      courseEditor.trackSaveAttempt('requirements');
       const { error } = await updateRequirementsVisibility(courseId, isVisible);
       
       if (error) throw error;
@@ -610,7 +610,7 @@ export const CourseOtherSettings = ({
   // Handler functions for audiences
   const handleAddAudience = async (content: string) => {
     try {
-      trackSaveAttempt('add-audience');
+      courseEditor.trackSaveAttempt('audiences');
       const position = audiences.length > 0 ? Math.max(...audiences.map(a => a.position)) + 1 : 0;
       const { data, error } = await addAudience(courseId, content, position);
       
@@ -636,7 +636,7 @@ export const CourseOtherSettings = ({
   
   const handleEditAudience = async (id: string, content: string) => {
     try {
-      trackSaveAttempt('edit-audience');
+      courseEditor.trackSaveAttempt('audiences');
       const { error } = await updateAudience(id, content);
       
       if (error) throw error;
@@ -658,7 +658,7 @@ export const CourseOtherSettings = ({
   
   const handleDeleteAudience = async (id: string) => {
     try {
-      trackSaveAttempt('delete-audience');
+      courseEditor.trackSaveAttempt('audiences');
       const { error } = await deleteAudience(id);
       
       if (error) throw error;
@@ -677,7 +677,7 @@ export const CourseOtherSettings = ({
   
   const handleAudienceReorder = async (newItems: ListItem[]) => {
     try {
-      trackSaveAttempt('reorder-audiences');
+      courseEditor.trackSaveAttempt('audiences');
       const updates = newItems.map(item => ({
         id: item.id,
         position: item.position
@@ -704,7 +704,7 @@ export const CourseOtherSettings = ({
   const handleAudiencesVisibilityChange = async (isVisible: boolean) => {
     setAudiencesVisible(isVisible);
     try {
-      trackSaveAttempt('audiences-visibility');
+      courseEditor.trackSaveAttempt('audiences');
       const { error } = await updateAudiencesVisibility(courseId, isVisible);
       
       if (error) throw error;

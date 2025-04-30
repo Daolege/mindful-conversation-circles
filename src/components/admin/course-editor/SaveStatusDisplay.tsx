@@ -9,7 +9,7 @@ interface SaveStatusDisplayProps {
   error?: string | null;
   autoHideSuccess?: boolean;
   hideDelay?: number;
-  saving?: boolean; // Now exists in the type
+  saving?: boolean; 
 }
 
 const SaveStatusDisplay: React.FC<SaveStatusDisplayProps> = ({ 

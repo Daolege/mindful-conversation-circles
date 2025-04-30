@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -222,7 +221,7 @@ export const CourseEditorProvider: React.FC<{
           let syllabus = [];
           try {
             // Try to get syllabus from stringified JSON - using safe property access
-            const syllabusData = data.syllabus || data.syllabus_json || '[]';
+            const syllabusData = data.syllabus_data || data.syllabus_json || '[]';
             if (typeof syllabusData === 'string') {
               syllabus = JSON.parse(syllabusData);
             } else if (syllabusData) {
@@ -257,14 +256,14 @@ export const CourseEditorProvider: React.FC<{
             syllabus: Array.isArray(syllabus) ? syllabus : [],
             materials: data.materials || [],
             // Handle collections that might be stored in JSON fields in courses_new
-            requirements: safeParseJson(data.requirements || data.requirements_json, []),
-            whatyouwilllearn: safeParseJson(data.whatyouwilllearn || data.learning_objectives_json || data.learning_objectives, []),
-            target_audience: safeParseJson(data.target_audience || data.audience_json || data.audience, []),
-            highlights: safeParseJson(data.highlights || data.highlights_json, []),
+            requirements: safeParseJson(data.requirements_data || data.requirements_json, []),
+            whatyouwilllearn: safeParseJson(data.learning_objectives || data.learning_objectives_json, []),
+            target_audience: safeParseJson(data.target_audience_data || data.audience_json || data.audience, []),
+            highlights: safeParseJson(data.highlights_data || data.highlights_json, []),
             lectures: Number(data.lectures || data.lecture_count || 0),
             enrollment_count: Number(data.enrollment_count || 0),
             display_order: Number(data.display_order || 0),
-            featured: Boolean(data.featured || data.is_featured || false) // Map from is_featured
+            featured: Boolean(data.is_featured || false) // Map from is_featured
           };
           
           setFormData(formattedData);

@@ -70,9 +70,6 @@ export const HomeworkForm: React.FC<HomeworkFormProps> = ({
   // Handle form submission
   const handleFormSubmit = async (values: z.infer<typeof homeworkSchema>) => {
     try {
-      // Extract ID if editing
-      const homeworkId = initialData?.id;
-      
       // Prepare options based on homework type
       const options = {
         question: values.question,
@@ -80,7 +77,7 @@ export const HomeworkForm: React.FC<HomeworkFormProps> = ({
       };
 
       // Prepare data for submission
-      const homeworkData = {
+      const homeworkData: any = {
         title: values.title,
         description: values.description || '',
         type: values.type,
@@ -90,9 +87,8 @@ export const HomeworkForm: React.FC<HomeworkFormProps> = ({
       };
 
       // If we're editing an existing homework, include its ID
-      if (homeworkId) {
-        // Only access id if it exists in initialData
-        homeworkData.id = homeworkId;
+      if (initialData?.id) {
+        homeworkData.id = initialData.id;
       }
 
       // Submit the data

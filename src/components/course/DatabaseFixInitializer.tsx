@@ -59,13 +59,17 @@ export const DatabaseFixInitializer: React.FC = () => {
           setMigrationSuccess(true);
           
           // Also store in site_settings for server-side checks
-          await supabase
+          const { error: settingsError } = await supabase
             .from('site_settings')
             .upsert({
               key: 'homework_migration_completed',
               value: 'true',
               updated_at: new Date().toISOString()
             });
+            
+          if (settingsError) {
+            console.warn('[DatabaseFixInitializer] Error recording migration status to site_settings:', settingsError);
+          }
           
           // Show success toast only once
           if (!hasExecuted) {
