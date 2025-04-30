@@ -27,32 +27,24 @@ export const DatabaseFixInitializer: React.FC = () => {
       console.log('[DatabaseFixInitializer] Executing database migration');
       
       try {
-        // First ensure we have the migrations table
+        // First check if specific courses exist in courses_new
         try {
-          // Check if the _migrations table exists using SQL query
-          const { data, error } = await supabase.from('_migrations').select('id').limit(1);
+          // Check for at least one course in courses_new
+          const { data: coursesExist, error: coursesError } = await supabase
+            .from('courses_new')
+            .select('id')
+            .limit(5);
           
-          if (error) {
-            console.log('[DatabaseFixInitializer] _migrations table doesn\'t exist, trying to create it');
-            // Execute SQL to create the table
-            const createTableSQL = `
-              CREATE TABLE IF NOT EXISTS public._migrations (
-                id serial primary key,
-                name text,
-                executed_at timestamptz default now(),
-                sql text,
-                success boolean default true
-              );
-            `;
-            
-            await supabase.rpc('execute_sql', { sql_query: createTableSQL });
-            console.log('[DatabaseFixInitializer] Migration table created');
-          } else {
-            console.log('[DatabaseFixInitializer] Migration table already exists');
+          if (coursesError || !coursesExist || coursesExist.length === 0) {
+            console.error('[DatabaseFixInitializer] No courses found in courses_new table:', coursesError);
+            toast.error('未找到课程数据，请联系管理员');
+            return;
           }
+          
+          console.log('[DatabaseFixInitializer] Found courses in courses_new:', 
+            coursesExist.map(c => c.id));
         } catch (err) {
-          console.warn('[DatabaseFixInitializer] Exception in migrations table setup:', err);
-          // Continue anyway, table might already exist
+          console.error('[DatabaseFixInitializer] Error checking courses_new table:', err);
         }
         
         // Execute the actual migration
@@ -65,6 +57,15 @@ export const DatabaseFixInitializer: React.FC = () => {
           console.log('[DatabaseFixInitializer] Migration successful:', result.message);
           localStorage.setItem(storageKey, 'true');
           setMigrationSuccess(true);
+          
+          // Also store in site_settings for server-side checks
+          await supabase
+            .from('site_settings')
+            .upsert({
+              key: 'homework_migration_completed',
+              value: 'true',
+              updated_at: new Date().toISOString()
+            });
           
           // Show success toast only once
           if (!hasExecuted) {

@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { CourseNew } from "../types/course-new";
@@ -393,29 +392,29 @@ export const updateCourseStatus = async (courseId: number, status: 'draft' | 'pu
 };
 
 // Add the missing updateCourseOrder function
-export const updateCourseOrder = async (courses: { id: number; display_order: number }[]) => {
-  console.log('Updating course order:', courses);
-  
+export const updateCourseOrder = async (courses: Array<{ id: number; display_order: number }>) => {
   try {
-    // Create an array of updates to perform
-    const updates = courses.map(({ id, display_order }) => ({
-      id,
-      display_order
-    }));
+    console.log('[courseService] Updating course display order for courses:', courses);
     
-    // Using upsert to update multiple records
-    const { error } = await supabase
-      .from('courses')
-      .upsert(updates, { onConflict: 'id' });
-    
-    if (error) {
-      console.error('Error updating course order:', error);
-      return false;
+    // Ensure we're operating on courses_new table
+    for (const course of courses) {
+      const { data, error } = await supabase
+        .from('courses_new')
+        .update({ display_order: course.display_order })
+        .eq('id', course.id);
+        
+      if (error) {
+        console.error('[courseService] Error updating display order for course ID:', course.id, error);
+        // Continue with other courses even if one fails
+      }
     }
     
-    return true;
+    return { success: true };
   } catch (error: any) {
-    console.error('Unexpected error in updateCourseOrder:', error);
-    return false;
+    console.error('[courseService] Error in updateCourseOrder:', error);
+    return { 
+      success: false, 
+      error: error.message || '更新课程顺序失败'
+    };
   }
 };

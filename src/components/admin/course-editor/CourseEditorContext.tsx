@@ -221,16 +221,30 @@ export const CourseEditorProvider: React.FC<{
           // For syllabus which may not exist in courses_new
           let syllabus = [];
           try {
-            // Try to get syllabus from stringified JSON if it exists
-            if (data.syllabus_json && typeof data.syllabus_json === 'string') {
-              syllabus = JSON.parse(data.syllabus_json);
-            } else if (data.syllabus_json) {
-              syllabus = data.syllabus_json;
+            // Try to get syllabus from stringified JSON - using safe property access
+            const syllabusData = data.syllabus || data.syllabus_json || '[]';
+            if (typeof syllabusData === 'string') {
+              syllabus = JSON.parse(syllabusData);
+            } else if (syllabusData) {
+              syllabus = syllabusData;
             }
           } catch (e) {
             console.error('Error parsing syllabus JSON:', e);
             syllabus = [];
           }
+          
+          // Helper function to safely parse JSON fields
+          const safeParseJson = (field: any, defaultValue: any[] = []) => {
+            if (!field) return defaultValue;
+            if (typeof field === 'string') {
+              try {
+                return JSON.parse(field);
+              } catch (e) {
+                return defaultValue;
+              }
+            }
+            return field;
+          };
           
           // Map for properties with different names in courses_new
           const formattedData = {
@@ -243,14 +257,14 @@ export const CourseEditorProvider: React.FC<{
             syllabus: Array.isArray(syllabus) ? syllabus : [],
             materials: data.materials || [],
             // Handle collections that might be stored in JSON fields in courses_new
-            requirements: data.requirements_json ? JSON.parse(data.requirements_json) : [],
-            whatyouwilllearn: data.learning_objectives_json ? JSON.parse(data.learning_objectives_json) : [],
-            target_audience: data.audience_json ? JSON.parse(data.audience_json) : [],
-            highlights: data.highlights_json ? JSON.parse(data.highlights_json) : [],
-            lectures: Number(data.lecture_count || 0),
+            requirements: safeParseJson(data.requirements || data.requirements_json, []),
+            whatyouwilllearn: safeParseJson(data.whatyouwilllearn || data.learning_objectives_json || data.learning_objectives, []),
+            target_audience: safeParseJson(data.target_audience || data.audience_json || data.audience, []),
+            highlights: safeParseJson(data.highlights || data.highlights_json, []),
+            lectures: Number(data.lectures || data.lecture_count || 0),
             enrollment_count: Number(data.enrollment_count || 0),
             display_order: Number(data.display_order || 0),
-            featured: Boolean(data.is_featured || false) // Map from is_featured
+            featured: Boolean(data.featured || data.is_featured || false) // Map from is_featured
           };
           
           setFormData(formattedData);
