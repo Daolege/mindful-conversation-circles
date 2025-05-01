@@ -55,29 +55,23 @@ export function DashboardNavigation() {
 
   return (
     <div className="mb-8">
-      {/* Simplified to two layers instead of three */}
-      <div className="relative">
-        {/* Outer layer with rounded corners, light shadow, and gray background */}
-        <div className="bg-gray-100/90 backdrop-blur-sm rounded-2xl border border-gray-200 shadow-sm p-3">
-          <Tabs 
-            value={activeTab} 
-            onValueChange={handleTabChange}
-            className="w-full"
-          >
-            <TabsList className="w-full flex flex-wrap justify-start gap-2">
-              {tabs.map((tab) => (
-                <TabsTrigger
-                  key={tab.value}
-                  value={tab.value}
-                  className="flex-1 px-6 py-3.5 text-sm font-medium min-w-[120px] relative overflow-hidden"
-                >
-                  {tab.label}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
-        </div>
-      </div>
+      <Tabs 
+        value={activeTab} 
+        onValueChange={handleTabChange}
+        className="w-full"
+      >
+        <TabsList className="w-full flex flex-wrap justify-start gap-2 bg-gray-50/90 p-3 border border-gray-200 rounded-2xl shadow-sm">
+          {tabs.map((tab) => (
+            <TabsTrigger
+              key={tab.value}
+              value={tab.value}
+              className="flex-1 px-6 py-3.5 text-sm font-medium min-w-[120px] relative overflow-hidden"
+            >
+              {tab.label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
     </div>
   );
 }
