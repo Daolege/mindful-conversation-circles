@@ -60,7 +60,7 @@ export const saveCourse = async (courseData: Partial<CourseData>): Promise<Cours
     // Fix the type issue with upsert by ensuring courseData is properly typed
     const { data, error } = await supabase
       .from('courses_new')
-      .upsert([courseData as any]) // Use array form to fix the typing issue
+      .upsert([courseData])
       .select()
       .single();
     

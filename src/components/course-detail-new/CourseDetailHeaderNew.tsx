@@ -35,7 +35,7 @@ export const CourseDetailHeaderNew: React.FC<CourseDetailHeaderNewProps> = ({ co
         
         <Badge 
           variant="courseTag"
-          className="text-sm flex items-center animate-in fade-in slide-in-from-bottom-3 duration-500"
+          className="text-sm flex items-center animate-in fade-in slide-in-from-bottom-3 duration-500 delay-[100ms]"
         >
           <Users size={16} className="mr-1" />
           {course.enrollment_count || 0} 名学员
@@ -43,7 +43,7 @@ export const CourseDetailHeaderNew: React.FC<CourseDetailHeaderNewProps> = ({ co
         
         <Badge 
           variant="courseTag"
-          className="text-sm flex items-center animate-in fade-in slide-in-from-bottom-3 duration-500"
+          className="text-sm flex items-center animate-in fade-in slide-in-from-bottom-3 duration-500 delay-[200ms]"
         >
           <BookOpen size={16} className="mr-1" />
           {course.sections?.length || 0} 章节 • {totalLectures} 课时
@@ -52,7 +52,7 @@ export const CourseDetailHeaderNew: React.FC<CourseDetailHeaderNewProps> = ({ co
         {course.language && (
           <Badge 
             variant="courseTag"
-            className="text-sm flex items-center animate-in fade-in slide-in-from-bottom-3 duration-500"
+            className="text-sm flex items-center animate-in fade-in slide-in-from-bottom-3 duration-500 delay-[300ms]"
           >
             <Globe size={16} className="mr-1" />
             {course.language}
@@ -62,7 +62,7 @@ export const CourseDetailHeaderNew: React.FC<CourseDetailHeaderNewProps> = ({ co
         {course.published_at && (
           <Badge 
             variant="courseTag"
-            className="text-sm flex items-center animate-in fade-in slide-in-from-bottom-3 duration-500"
+            className="text-sm flex items-center animate-in fade-in slide-in-from-bottom-3 duration-500 delay-[400ms]"
           >
             <Calendar size={16} className="mr-1" />
             {new Date(course.published_at).toLocaleDateString('zh-CN')} 发布
@@ -71,7 +71,7 @@ export const CourseDetailHeaderNew: React.FC<CourseDetailHeaderNewProps> = ({ co
         
         <Badge
           variant="courseTag"
-          className="text-sm animate-in fade-in slide-in-from-bottom-3 duration-500"
+          className="text-sm animate-in fade-in slide-in-from-bottom-3 duration-500 delay-[500ms]"
         >
           {course.status === 'published' ? '已发布' : 
            course.status === 'draft' ? '草稿' : '已归档'}

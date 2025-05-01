@@ -1,3 +1,4 @@
+
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
@@ -8,6 +9,7 @@ import { CourseDetailContent } from "@/components/course-detail/CourseDetailCont
 import { CourseEnrollCard } from "@/components/course-detail/CourseEnrollCard";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { CourseWithDetails } from "@/lib/types/course";
 
 const CourseDetail = () => {
   const { courseId } = useParams<{ courseId: string }>();
@@ -65,9 +67,9 @@ const CourseDetail = () => {
 
   // Fix the type conversion here
   const courseData = {
-    ...course.data!,
-    price: course.data!.price ?? 0  // Ensure price is always defined
-  } as Course;
+    ...course,
+    price: course.price ?? 0  // Ensure price is always defined
+  } as unknown as CourseWithDetails;
 
   return (
     <>

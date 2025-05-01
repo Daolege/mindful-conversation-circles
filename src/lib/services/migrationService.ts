@@ -9,24 +9,76 @@ interface TableExistsResponse {
 }
 
 /**
- * Check if a table exists in the database
+ * Record a migration in the database for tracking purposes
+ */
+export const recordMigration = async (
+  name: string,
+  description: string,
+  success: boolean
+): Promise<boolean> => {
+  try {
+    // Check if migrations table exists, create if not
+    const { error: createTableError } = await supabase.rpc('execute_system_sql', {
+      sql_query: `
+        CREATE TABLE IF NOT EXISTS public._migrations (
+          id SERIAL PRIMARY KEY,
+          name TEXT NOT NULL,
+          description TEXT,
+          executed_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+          success BOOLEAN DEFAULT true
+        );
+      `
+    });
+
+    if (createTableError) {
+      console.error('[migrationService] Error creating migrations table:', createTableError);
+      return false;
+    }
+
+    // Insert migration record
+    const { error } = await supabase
+      .from('_migrations')
+      .insert({
+        name,
+        description,
+        success,
+        executed_at: new Date().toISOString()
+      });
+
+    if (error) {
+      console.error('[migrationService] Error recording migration:', error);
+      return false;
+    }
+
+    return true;
+  } catch (err) {
+    console.error('[migrationService] Unexpected error recording migration:', err);
+    return false;
+  }
+};
+
+/**
+ * Check if a table exists in the database using a safer approach
  */
 export const tableExists = async (tableName: string): Promise<TableExistsResponse> => {
   try {
-    // Use a query that will return rows only if the table exists
-    const { data, error } = await supabase
-      .from('pg_tables')
-      .select('tablename')
-      .eq('tablename', tableName)
-      .eq('schemaname', 'public')
-      .single();
+    // Use system SQL to check if table exists
+    const { data, error } = await supabase.rpc('execute_system_sql', {
+      sql_query: `
+        SELECT EXISTS (
+          SELECT FROM information_schema.tables 
+          WHERE table_schema = 'public'
+          AND table_name = '${tableName}'
+        );
+      `
+    });
 
     if (error) {
       console.error(`[migrationService] Error checking if table ${tableName} exists:`, error);
       return { exists: false, error };
     }
 
-    return { exists: !!data, error: null };
+    return { exists: !!data?.[0]?.exists, error: null };
   } catch (err) {
     console.error(`[migrationService] Unexpected error checking if table ${tableName} exists:`, err);
     return { exists: false, error: err as Error };
@@ -73,7 +125,7 @@ export const migrateCourses = async (): Promise<{
 
     // Migrate each course
     let migratedCount = 0;
-    const migrationPromises = oldCourses.map(async (oldCourse) => {
+    const migrationPromises = oldCourses.map(async (oldCourse: any) => {
       // Map old course to new format
       const newCourse = {
         title: oldCourse.title,
@@ -85,8 +137,8 @@ export const migrateCourses = async (): Promise<{
         status: 'draft',
         is_featured: oldCourse.featured || false,
         display_order: oldCourse.display_order || 0,
-        enrollment_count: oldCourse.studentCount || 0,
-        instructor_id: oldCourse.instructor_id || null,
+        enrollment_count: oldCourse.studentcount || 0,
+        instructor_id: oldCourse.instructor || null,
         lecture_count: oldCourse.lectures || 0,
         published_at: oldCourse.published_at || null,
       };
@@ -146,7 +198,9 @@ export const fixDatabaseSchema = async (): Promise<{ success: boolean; error: Er
 
     // Run each fix query
     for (const query of fixes) {
-      const { error } = await supabase.rpc('execute_sql', { sql_query: query });
+      const { error } = await supabase.rpc('execute_system_sql', {
+        sql_query: query
+      });
       
       if (error) {
         console.error(`[migrationService] Error running fix query: ${query}`, error);

@@ -1,6 +1,39 @@
 
 -- Create functions to manage the homework foreign key constraints
 
+-- Function to create execute_system_sql if it doesn't exist
+CREATE OR REPLACE FUNCTION public.ensure_system_sql_function()
+RETURNS text
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  -- Create execute_system_sql function if it doesn't exist
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_proc
+    JOIN pg_namespace ON pg_proc.pronamespace = pg_namespace.oid
+    WHERE pg_proc.proname = 'execute_system_sql' AND pg_namespace.nspname = 'public'
+  ) THEN
+    CREATE OR REPLACE FUNCTION public.execute_system_sql(sql_query text)
+    RETURNS SETOF json
+    LANGUAGE plpgsql
+    SECURITY DEFINER
+    AS $func$
+    BEGIN
+      EXECUTE sql_query;
+      RETURN;
+    END;
+    $func$;
+    
+    RETURN 'Created execute_system_sql function';
+  END IF;
+
+  RETURN 'execute_system_sql function already exists';
+END;
+$$;
+
+SELECT ensure_system_sql_function();
+
 -- Function to create a temporary table for migrations
 CREATE OR REPLACE FUNCTION public.create_migrations_temp_table()
 RETURNS text
