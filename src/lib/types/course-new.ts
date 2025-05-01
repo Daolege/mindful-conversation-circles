@@ -130,7 +130,7 @@ export interface CourseResponse<T> {
   error: Error | null;
 }
 
-// Updated SiteSetting interface to fix type issues
+// Updated SiteSetting interface - consistent across the application
 export interface SiteSetting {
   id?: string;
   key: string;

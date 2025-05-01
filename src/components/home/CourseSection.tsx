@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import CourseCardNew from './CourseCardNew';
 import { motion } from 'framer-motion';
 import { CourseNew } from '@/lib/types/course-new';
+import { toast } from 'sonner';
 
 interface CourseSectionProps {
   title: string;
@@ -21,29 +22,41 @@ const CourseSection: React.FC<CourseSectionProps> = ({
   filterBy,
   filterValue,
 }) => {
-  const fetchCourses = async () => {
-    let query = supabase
-      .from('courses_new')
-      .select('*')
-      .eq('status', 'published')
-      .order('display_order', { ascending: true });
-    
-    if (filterBy && filterValue) {
-      query = query.eq(filterBy, filterValue);
-    }
-    
-    const { data, error } = await query.limit(limit);
-    
-    if (error) {
-      console.error('Error fetching courses:', error);
+  const fetchCourses = async (): Promise<CourseNew[]> => {
+    try {
+      let query = supabase
+        .from('courses_new')
+        .select('*')
+        .eq('status', 'published')
+        .order('display_order', { ascending: true });
+      
+      if (filterBy && filterValue) {
+        query = query.eq(filterBy, filterValue);
+      }
+      
+      const { data, error } = await query.limit(limit);
+      
+      if (error) {
+        console.error('Error fetching courses:', error);
+        toast.error('加载课程信息失败');
+        return [];
+      }
+      
+      if (!data || data.length === 0) {
+        console.log('No published courses found');
+        return [];
+      }
+      
+      return data as CourseNew[];
+    } catch (e) {
+      console.error('Exception in fetchCourses:', e);
+      toast.error('加载课程信息失败');
       return [];
     }
-    
-    return data as CourseNew[];
   };
 
-  // Use the query with a more straightforward type approach
-  const { data: courses = [], isLoading } = useQuery({
+  // Use the query with proper type annotations
+  const { data: courses = [], isLoading, isError } = useQuery<CourseNew[]>({
     queryKey: ['homepage-courses', filterBy, filterValue, limit],
     queryFn: fetchCourses
   });
@@ -80,9 +93,21 @@ const CourseSection: React.FC<CourseSectionProps> = ({
 
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {Array(4).fill(0).map((_, i) => (
-              <div key={i} className="h-[400px] bg-gray-200 animate-pulse rounded-lg"></div>
+            {Array(limit).fill(0).map((_, i) => (
+              <div key={i} className="h-[400px] bg-gray-200 animate-pulse rounded-lg">
+                <div className="h-48 bg-gray-300 animate-pulse rounded-t-lg"></div>
+                <div className="p-4 space-y-3">
+                  <div className="h-6 bg-gray-300 animate-pulse rounded w-3/4"></div>
+                  <div className="h-4 bg-gray-300 animate-pulse rounded w-1/2"></div>
+                  <div className="h-4 bg-gray-300 animate-pulse rounded w-2/3"></div>
+                  <div className="h-10 bg-gray-300 animate-pulse rounded mt-6"></div>
+                </div>
+              </div>
             ))}
+          </div>
+        ) : isError ? (
+          <div className="text-center py-12 bg-red-50 rounded-lg">
+            <p className="text-red-500">加载课程失败，请刷新页面重试</p>
           </div>
         ) : courses.length > 0 ? (
           <motion.div 

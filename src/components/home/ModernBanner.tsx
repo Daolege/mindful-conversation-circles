@@ -7,13 +7,12 @@ import {
   CarouselItem,
 } from '@/components/ui/carousel';
 import useEmblaCarousel from 'embla-carousel-react';
-import { useTheme } from '@/hooks/use-theme';
 
-// Banner images - feel free to replace with your own
+// Banner images - cross-border e-commerce focused images
 const bannerImages = [
-  'https://images.unsplash.com/photo-1581092160562-40aa08e78252?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1770&q=80',
-  'https://images.unsplash.com/photo-1557426272-fc759fdf7a8d?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2070&q=80',
-  'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1772&q=80',
+  'https://images.unsplash.com/photo-1612103198005-b238154f4590?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1770&q=80',
+  'https://images.unsplash.com/photo-1578575437130-527eed3abbec?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2070&q=80',
+  'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1772&q=80',
 ];
 
 const ModernBanner = () => {
@@ -83,11 +82,11 @@ const ModernBanner = () => {
       className="relative overflow-hidden w-full h-[400px]"
     >
       {/* Background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-knowledge-dark via-knowledge-primary to-gray-800"></div>
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-900"></div>
 
       {/* Animated shapes */}
       <motion.div
-        className="absolute top-20 left-1/4 w-64 h-64 rounded-full bg-knowledge-primary opacity-20 blur-3xl"
+        className="absolute top-20 left-1/4 w-64 h-64 rounded-full bg-blue-500 opacity-20 blur-3xl"
         style={{ x: shape1X, y: shape1Y }}
         animate={{
           scale: [1, 1.05, 1],
@@ -101,7 +100,7 @@ const ModernBanner = () => {
       />
       
       <motion.div
-        className="absolute bottom-10 right-1/4 w-48 h-48 rounded-full bg-blue-500 opacity-10 blur-3xl"
+        className="absolute bottom-10 right-1/4 w-48 h-48 rounded-full bg-indigo-500 opacity-10 blur-3xl"
         style={{ x: shape2X, y: shape2Y }}
         animate={{
           scale: [1, 1.1, 1],
@@ -126,28 +125,39 @@ const ModernBanner = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
             >
-              开启<span className="text-gray-300">跨境电商</span>
+              全球<span className="text-blue-200">商机</span>
               <br />
-              <span className="text-gray-300">全球</span>商机
+              <span className="text-blue-200">跨境</span>电商
             </motion.h1>
             
             <motion.p 
-              className="text-lg text-gray-300 max-w-md"
+              className="text-lg text-blue-100 max-w-md"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
             >
-              突破地域限制，接触全球买家，掌握跨境电商核心技能，拓展无限商机
+              突破地域限制，直接面向全球市场，享受跨境电商高速增长红利
             </motion.p>
 
-            <motion.p 
-              className="text-md text-gray-300 max-w-md"
+            <motion.div 
+              className="text-md text-blue-200 max-w-md space-y-2"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.4 }}
             >
-              我们的专业课程助您从零起步，轻松进入全球市场
-            </motion.p>
+              <p className="flex items-center">
+                <span className="h-1.5 w-1.5 bg-blue-300 rounded-full inline-block mr-2"></span>
+                低门槛进入国际市场，触达全球消费者
+              </p>
+              <p className="flex items-center">
+                <span className="h-1.5 w-1.5 bg-blue-300 rounded-full inline-block mr-2"></span>
+                利用全球供应链优势，提升利润空间
+              </p>
+              <p className="flex items-center">
+                <span className="h-1.5 w-1.5 bg-blue-300 rounded-full inline-block mr-2"></span>
+                专业课程助您避开风险，掌握成功秘诀
+              </p>
+            </motion.div>
           </div>
 
           {/* Image carousel - WITH mouse interaction effects */}
@@ -172,7 +182,7 @@ const ModernBanner = () => {
                     >
                       <img 
                         src={image} 
-                        alt={`Banner image ${index + 1}`}
+                        alt={`跨境电商场景 ${index + 1}`}
                         className="w-full h-full object-cover"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>

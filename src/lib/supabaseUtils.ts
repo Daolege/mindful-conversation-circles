@@ -1,3 +1,4 @@
+
 // User role types
 export type UserRole = 'admin' | 'user' | 'instructor';
 
@@ -65,7 +66,7 @@ export interface HomeworkData {
   updated_at?: string;
 }
 
-// Site settings type
+// Site settings type - consistent across the application
 export interface SiteSetting {
   id?: string;
   key: string;

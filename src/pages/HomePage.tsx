@@ -5,6 +5,7 @@ import Footer from "@/components/Footer";
 import ModernBanner from "@/components/home/ModernBanner";
 import CourseSection from "@/components/home/CourseSection";
 import { motion } from "framer-motion";
+import { DatabaseFixInitializer } from '@/components/course/DatabaseFixInitializer';
 
 const HomePage = () => {
   return (
@@ -12,6 +13,9 @@ const HomePage = () => {
       <Navbar />
       
       <main className="flex-grow">
+        {/* Database initialization for fixing homework issues */}
+        <DatabaseFixInitializer />
+        
         <ModernBanner />
         
         <motion.div

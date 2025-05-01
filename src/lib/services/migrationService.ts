@@ -1,5 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { SiteSetting } from "@/lib/types/course-new"; // Import the proper type
 
 // Define possible migration names
 export type MigrationName = 
@@ -7,15 +8,6 @@ export type MigrationName =
   | 'add_subscription_tables' 
   | 'add_course_materials'
   | 'homework_foreign_key_fix';
-
-// Updated SiteSetting interface to match the database schema
-export interface SiteSetting {
-  id?: string;
-  key: string;  
-  value: string;
-  updated_at?: string;
-  created_at?: string;
-}
 
 // Track migrations in the site settings table
 export const recordMigration = async (name: MigrationName, description: string, success: boolean = true) => {
@@ -64,13 +56,15 @@ export const getExchangeRate = async (): Promise<number> => {
       return 7; // Default exchange rate
     }
     
-    // Access value property from the data (which should be a SiteSetting)
-    const siteSettingData = data as SiteSetting;
-    if (siteSettingData && siteSettingData.value) {
-      return parseFloat(siteSettingData.value);
+    // Ensure the data is properly typed
+    if (data && typeof data === 'object' && 'value' in data) {
+      const value = (data as SiteSetting).value;
+      if (value) {
+        return parseFloat(value);
+      }
     }
     
-    return 7; // Default if no data
+    return 7; // Default if no data or missing value
   } catch (error) {
     console.error('Error getting exchange rate:', error);
     return 7;
@@ -97,7 +91,7 @@ export const updateExchangeRate = async (newRate: number): Promise<boolean> => {
       // Update existing setting
       const { error: updateError } = await supabase
         .from('site_settings')
-        .update({ value: newRate.toString() } as SiteSetting)
+        .update({ value: newRate.toString() } as Partial<SiteSetting>)
         .eq('key', 'exchange_rate');
         
       if (updateError) {
