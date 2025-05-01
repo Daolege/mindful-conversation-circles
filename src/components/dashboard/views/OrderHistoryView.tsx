@@ -23,11 +23,11 @@ export function OrderHistoryView() {
     refetch,
     isFetching
   } = useQuery({
-    queryKey: ['user-orders', user?.id, filterStatus],
+    queryKey: ['user-orders', user?.id, filterStatus, timeFilter],
     queryFn: async () => {
       if (!user?.id) return { data: [], error: null };
       try {
-        return await getUserOrders(user.id, filterStatus);
+        return await getUserOrders(user.id, filterStatus, timeFilter);
       } catch (err) {
         console.error("Error fetching orders:", err);
         return { data: [], error: err };
@@ -118,8 +118,10 @@ export function OrderHistoryView() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">所有时间</SelectItem>
-                  <SelectItem value="month">最近一个月</SelectItem>
-                  <SelectItem value="year">最近一年</SelectItem>
+                  <SelectItem value="3days">近三天</SelectItem>
+                  <SelectItem value="month">近一个月</SelectItem>
+                  <SelectItem value="halfyear">近半年</SelectItem>
+                  <SelectItem value="year">近一年</SelectItem>
                 </SelectContent>
               </Select>
               
@@ -145,21 +147,39 @@ export function OrderHistoryView() {
       ) : (
         <div className="space-y-4">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-            <Select
-              value={filterStatus}
-              onValueChange={setFilterStatus}
-            >
-              <SelectTrigger className="w-full sm:w-[200px]">
-                <SelectValue placeholder="筛选订单状态" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">全部状态</SelectItem>
-                <SelectItem value="completed">已完成</SelectItem>
-                <SelectItem value="processing">处理中</SelectItem>
-                <SelectItem value="refunded">已退款</SelectItem>
-                <SelectItem value="failed">失败</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
+              <Select
+                value={filterStatus}
+                onValueChange={setFilterStatus}
+              >
+                <SelectTrigger className="w-full sm:w-[200px]">
+                  <SelectValue placeholder="筛选订单状态" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">全部状态</SelectItem>
+                  <SelectItem value="completed">已完成</SelectItem>
+                  <SelectItem value="processing">处理中</SelectItem>
+                  <SelectItem value="refunded">已退款</SelectItem>
+                  <SelectItem value="failed">失败</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              <Select
+                value={timeFilter}
+                onValueChange={setTimeFilter}
+              >
+                <SelectTrigger className="w-full sm:w-[200px]">
+                  <SelectValue placeholder="时间范围" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">所有时间</SelectItem>
+                  <SelectItem value="3days">近三天</SelectItem>
+                  <SelectItem value="month">近一个月</SelectItem>
+                  <SelectItem value="halfyear">近半年</SelectItem>
+                  <SelectItem value="year">近一年</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             
             <div className="flex flex-row items-center gap-2">
               <Button 

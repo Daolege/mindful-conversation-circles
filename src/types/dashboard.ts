@@ -1,7 +1,6 @@
 
 import { Course } from "@/lib/types/course";
 
-// Update OrderItem to make it compatible with the orders table structure
 export interface OrderItem {
   id: string;
   user_id: string;
@@ -17,8 +16,8 @@ export interface OrderItem {
 }
 
 export interface OrderLineItem {
-  id: number;
-  order_id: string;
+  id?: number;
+  order_id?: string;
   course_id: number;
   price: number;
   currency: string;
@@ -43,7 +42,7 @@ export interface SubscriptionItem {
   subscription_plan?: {
     id: string;
     name: string;
-    description?: string;
+    description?: string | null;
     price?: number;
     interval?: string;
     features?: string[] | null; // Make features nullable to match DB

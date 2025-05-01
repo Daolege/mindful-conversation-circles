@@ -23,16 +23,19 @@ export interface OrderItem {
   payment_type?: string;
   status: string;
   created_at: string;
+  updated_at?: string;
   order_items?: {
+    id?: number;
+    order_id?: string;
     course_id: number;
     price: number;
     courses?: {
       id: number;
       title: string;
-      [key: string]: any;
+      description?: string;
+      thumbnail_url?: string;
     };
   }[];
-  [key: string]: any;
 }
 
 export interface SubscriptionItem {
@@ -58,9 +61,7 @@ export interface SubscriptionItem {
     features?: string[] | null;
     price?: number;
     interval?: string;
-    [key: string]: any;
   };
-  [key: string]: any;
 }
 
 export interface DashboardStatItem {

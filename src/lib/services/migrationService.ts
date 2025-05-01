@@ -26,7 +26,7 @@ export const recordMigration = async (name: MigrationName, description: string, 
             success
           }),
           updated_at: new Date().toISOString()
-        } as SiteSetting);
+        });
       
       if (error) {
         console.error('Error recording migration:', error);
@@ -58,7 +58,7 @@ export const getExchangeRate = async (): Promise<number> => {
       return 7; // Default exchange rate
     }
     
-    if (!data) {
+    if (!data || !data.setting_value) {
       return 7; // Default if no data
     }
     
@@ -79,7 +79,7 @@ export const updateExchangeRate = async (newRate: number): Promise<boolean> => {
       .eq('setting_key', 'exchange_rate')
       .single();
       
-    if (selectError && !selectError.message.includes('No rows found')) {
+    if (selectError && !selectError.message?.includes('No rows found')) {
       console.error('Error checking existing exchange rate setting:', selectError);
       return false;
     }
@@ -88,7 +88,7 @@ export const updateExchangeRate = async (newRate: number): Promise<boolean> => {
       // Update existing setting
       const { error: updateError } = await supabase
         .from('site_settings')
-        .update({ setting_value: newRate.toString() } as Partial<SiteSetting>)
+        .update({ setting_value: newRate.toString() })
         .eq('setting_key', 'exchange_rate');
         
       if (updateError) {
@@ -96,10 +96,13 @@ export const updateExchangeRate = async (newRate: number): Promise<boolean> => {
         return false;
       }
     } else {
-      // Insert new setting
+      // Create new setting
       const { error: insertError } = await supabase
         .from('site_settings')
-        .insert({ setting_key: 'exchange_rate', setting_value: newRate.toString() } as SiteSetting);
+        .insert({
+          setting_key: 'exchange_rate',
+          setting_value: newRate.toString()
+        });
         
       if (insertError) {
         console.error('Error inserting exchange rate:', insertError);
@@ -109,79 +112,7 @@ export const updateExchangeRate = async (newRate: number): Promise<boolean> => {
     
     return true;
   } catch (error) {
-    console.error('Error in updateExchangeRate:', error);
-    return false;
-  }
-};
-
-// Get site settings with updated column names
-export const getSiteSetting = async (settingKey: string, defaultValue: string = ''): Promise<string> => {
-  try {
-    const { data, error } = await supabase
-      .from('site_settings')
-      .select('setting_value')
-      .eq('setting_key', settingKey)
-      .single();
-    
-    if (error || !data) {
-      console.log(`Setting ${settingKey} not found, using default: ${defaultValue}`);
-      return defaultValue;
-    }
-    
-    return data.setting_value || defaultValue;
-  } catch (error) {
-    console.error('Error getting site setting:', error);
-    return defaultValue;
-  }
-};
-
-// Update site settings with corrected column names
-export const updateSiteSettings = async (settings: { [key: string]: string }): Promise<boolean> => {
-  try {
-    for (const key in settings) {
-      if (settings.hasOwnProperty(key)) {
-        const value = settings[key];
-        
-        // Check if the setting exists
-        const { data: existingSetting, error: selectError } = await supabase
-          .from('site_settings')
-          .select('id')
-          .eq('setting_key', key)
-          .single();
-          
-        if (selectError && !selectError.message.includes('No rows found')) {
-          console.error(`Error checking existing setting ${key}:`, selectError);
-          return false;
-        }
-        
-        if (existingSetting) {
-          // Update existing setting
-          const { error: updateError } = await supabase
-            .from('site_settings')
-            .update({ setting_value: value } as Partial<SiteSetting>)
-            .eq('setting_key', key);
-            
-          if (updateError) {
-            console.error(`Error updating setting ${key}:`, updateError);
-            return false;
-          }
-        } else {
-          // Insert new setting
-          const { error: insertError } = await supabase
-            .from('site_settings')
-            .insert({ setting_key: key, setting_value: value } as SiteSetting);
-            
-          if (insertError) {
-            console.error(`Error inserting setting ${key}:`, insertError);
-            return false;
-          }
-        }
-      }
-    }
-    
-    return true;
-  } catch (error) {
-    console.error('Error in updateSiteSettings:', error);
+    console.error('Error updating exchange rate:', error);
     return false;
   }
 };

@@ -1,12 +1,13 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { OrderItem } from '@/types/dashboard';
 import { Order, OrderListResponse } from "@/lib/types/order";
 import { buildOrderObject } from "@/lib/services/orderDataTransformService";
 import { toast } from 'sonner';
 
-export async function getUserOrders(userId: string, status: string = 'all'): Promise<{ data: OrderItem[], error: any }> {
+export async function getUserOrders(userId: string, status: string = 'all', timeRange: string = 'all'): Promise<{ data: OrderItem[], error: any }> {
   try {
-    console.log(`[orderService] Getting orders for user: ${userId}, status: ${status}`);
+    console.log(`[orderService] Getting orders for user: ${userId}, status: ${status}, timeRange: ${timeRange}`);
     
     let query = supabase
       .from('orders')
@@ -15,6 +16,35 @@ export async function getUserOrders(userId: string, status: string = 'all'): Pro
     // Add status filter if not 'all'
     if (status !== 'all') {
       query = query.eq('status', status);
+    }
+    
+    // Add time range filter
+    const now = new Date();
+    
+    if (timeRange !== 'all') {
+      let startDate = new Date();
+      
+      switch (timeRange) {
+        case '3days':
+          startDate.setDate(now.getDate() - 3);
+          break;
+        case 'month':
+          startDate.setMonth(now.getMonth() - 1);
+          break;
+        case 'halfyear':
+          startDate.setMonth(now.getMonth() - 6);
+          break;
+        case 'year':
+          startDate.setFullYear(now.getFullYear() - 1);
+          break;
+        default:
+          // Default case, do nothing
+          break;
+      }
+      
+      if (timeRange !== 'all') {
+        query = query.gte('created_at', startDate.toISOString());
+      }
     }
     
     // Add user filter and ordering
@@ -34,7 +64,6 @@ export async function getUserOrders(userId: string, status: string = 'all'): Pro
         id: order.id,
         user_id: order.user_id,
         amount: order.amount || 0, // Use amount as primary field
-        total_amount: order.total_amount || order.amount || 0, // For backward compatibility
         currency: order.currency || 'cny',
         payment_method: order.payment_method || order.payment_type || 'unknown', // Support both fields
         payment_type: order.payment_type,
@@ -47,35 +76,73 @@ export async function getUserOrders(userId: string, status: string = 'all'): Pro
       return orderItem;
     });
     
-    // Try to get order items for each order if possible
-    let ordersWithItems: OrderItem[] = processedOrders;
+    // Try to fetch order items for each order
     try {
-      // For each order, try to fetch its items
       for (const order of processedOrders) {
+        // Check if order_items table exists and contains entries for this order
         try {
-          const { data: items } = await supabase
-            .from('order_items')
-            .select(`
-              *,
-              courses: course_id (
-                id, title, description, thumbnail_url
-              )
-            `)
-            .eq('order_id', order.id);
-            
-          if (items && items.length > 0) {
-            order.order_items = items;
+          // Use RPC call to check if the table exists
+          const { data: tableExists } = await supabase.rpc(
+            'check_table_exists',
+            { table_name: 'order_items' }
+          );
+          
+          // If table exists, fetch items
+          if (tableExists) {
+            const { data: items } = await supabase
+              .from('order_items')
+              .select(`
+                id,
+                order_id,
+                course_id,
+                price,
+                currency,
+                courses:course_id (
+                  id, title, description, thumbnail_url
+                )
+              `)
+              .eq('order_id', order.id);
+              
+            if (items && items.length > 0) {
+              order.order_items = items;
+            }
+          } else {
+            console.warn(`[orderService] order_items table does not exist`);
           }
         } catch (itemError) {
-          console.warn(`[orderService] Could not fetch items for order ${order.id}:`, itemError);
+          // Handle case where the RPC function doesn't exist
+          console.warn(`[orderService] Could not check if order_items table exists:`, itemError);
+          
+          // Try to fetch items anyway, and catch error if table doesn't exist
+          try {
+            const { data: items } = await supabase
+              .from('order_items')
+              .select(`
+                id,
+                order_id,
+                course_id,
+                price,
+                currency,
+                courses:course_id (
+                  id, title, description, thumbnail_url
+                )
+              `)
+              .eq('order_id', order.id);
+              
+            if (items && items.length > 0) {
+              order.order_items = items;
+            }
+          } catch (err) {
+            console.warn(`[orderService] Could not fetch items for order ${order.id}:`, err);
+          }
         }
       }
     } catch (itemsError) {
       console.warn('[orderService] Error fetching order items:', itemsError);
     }
     
-    console.log(`[orderService] Found ${ordersWithItems.length || 0} orders`);
-    return { data: ordersWithItems, error: null };
+    console.log(`[orderService] Found ${processedOrders.length || 0} orders`);
+    return { data: processedOrders, error: null };
   } catch (err) {
     console.error('[orderService] getUserOrders error:', err);
     return { data: [], error: err };
@@ -106,7 +173,6 @@ export async function getOrderById(orderId: string): Promise<{ data: OrderItem |
       id: order.id,
       user_id: order.user_id,
       amount: order.amount || 0,
-      total_amount: order.total_amount || order.amount || 0,
       currency: order.currency || 'cny',
       payment_method: order.payment_method || order.payment_type || 'unknown',
       payment_type: order.payment_type,
@@ -118,18 +184,56 @@ export async function getOrderById(orderId: string): Promise<{ data: OrderItem |
     
     // Try to get order items
     try {
-      const { data: items } = await supabase
-        .from('order_items')
-        .select(`
-          *,
-          courses: course_id (
-            id, title, description, thumbnail_url
-          )
-        `)
-        .eq('order_id', orderId);
+      // Try with RPC first to check if table exists
+      try {
+        const { data: tableExists } = await supabase.rpc(
+          'check_table_exists',
+          { table_name: 'order_items' }
+        );
         
-      if (items && items.length > 0) {
-        orderItem.order_items = items;
+        if (tableExists) {
+          const { data: items } = await supabase
+            .from('order_items')
+            .select(`
+              id,
+              order_id,
+              course_id,
+              price,
+              currency,
+              courses:course_id (
+                id, title, description, thumbnail_url
+              )
+            `)
+            .eq('order_id', orderId);
+            
+          if (items && items.length > 0) {
+            orderItem.order_items = items;
+          }
+        }
+      } catch (rpcError) {
+        // If RPC fails, try direct query
+        console.warn(`[orderService] RPC check failed:`, rpcError);
+        
+        // Try a direct query to fetch items
+        const { data: items, error: itemsQueryError } = await supabase
+          .from('order_items')
+          .select(`
+            id,
+            order_id,
+            course_id,
+            price,
+            currency,
+            courses:course_id (
+              id, title, description, thumbnail_url
+            )
+          `)
+          .eq('order_id', orderId);
+        
+        if (!itemsQueryError && items && items.length > 0) {
+          orderItem.order_items = items;
+        } else if (itemsQueryError) {
+          console.warn(`[orderService] Direct query failed:`, itemsQueryError);
+        }
       }
     } catch (itemError) {
       console.warn(`[orderService] Could not fetch items for order ${orderId}:`, itemError);
@@ -201,25 +305,61 @@ export async function generateMockOrder(userId: string, status: string = 'comple
       return { success: false, error: orderError };
     }
     
-    // 3. Try to create order items if the table exists
+    // 3. Create order items table if it doesn't exist
     try {
-      for (const course of selectedCourses) {
-        const { error: itemError } = await supabase
-          .from('order_items')
-          .insert({
-            order_id: orderId,
-            course_id: course.id,
-            price: course.price || 99,
-            currency: 'cny',
-            created_at: orderDateString
-          });
+      // Check if table exists with RPC
+      const { data: tableExists, error: rpcError } = await supabase.rpc(
+        'check_table_exists', 
+        { table_name: 'order_items' }
+      );
+      
+      if (rpcError) {
+        console.error('[orderService] Error checking if order_items table exists:', rpcError);
         
-        if (itemError) {
-          console.error('[orderService] Error creating mock order item:', itemError);
+        // Try to create table using SQL directly
+        const { error: createTableError } = await supabase.rpc(
+          'execute_sql',
+          {
+            sql_statement: `
+              CREATE TABLE IF NOT EXISTS order_items (
+                id SERIAL PRIMARY KEY,
+                order_id TEXT REFERENCES orders(id),
+                course_id INTEGER REFERENCES courses_new(id),
+                price NUMERIC,
+                currency TEXT,
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+              );
+            `
+          }
+        );
+        
+        if (createTableError) {
+          console.error('[orderService] Error creating order_items table:', createTableError);
         }
       }
-    } catch (itemsError) {
-      console.warn('[orderService] Could not create order items, table may not exist:', itemsError);
+      
+      // If table exists or was created, insert items
+      for (const course of selectedCourses) {
+        try {
+          const { error: itemError } = await supabase
+            .from('order_items')
+            .insert({
+              order_id: orderId,
+              course_id: course.id,
+              price: course.price || 99,
+              currency: 'cny',
+              created_at: orderDateString
+            });
+          
+          if (itemError) {
+            console.error('[orderService] Error creating mock order item:', itemError);
+          }
+        } catch (itemError) {
+          console.warn('[orderService] Error inserting order item:', itemError);
+        }
+      }
+    } catch (tableError) {
+      console.warn('[orderService] Could not create or access order_items table:', tableError);
     }
     
     console.log(`[orderService] Successfully created mock order: ${orderId}`);
@@ -337,8 +477,8 @@ export async function getAllOrders(
         let courseData = null;
         if (order.course_id) {
           const { data: course, error: courseError } = await supabase
-            .from('courses')
-            .select('id, title, description, price, imageurl')
+            .from('courses_new')  // Use courses_new instead of courses
+            .select('id, title, description, price, thumbnail_url')
             .eq('id', order.course_id)
             .single();
           
@@ -382,7 +522,7 @@ export async function getAllOrders(
     }));
     
     // Filter out any null orders and return valid ones
-    const validOrders = processedOrders.filter(order => order !== null);
+    const validOrders = processedOrders.filter(order => order !== null) as Order[];
     console.log(`Returning ${validOrders.length} valid orders from getAllOrders`);
     
     return { 
@@ -417,7 +557,7 @@ export async function insertSampleOrders(count: number = 10): Promise<{ success:
     }
     
     const { data: courses, error: coursesError } = await supabase
-      .from('courses')
+      .from('courses_new')  // Use courses_new instead of courses
       .select('id, price')
       .limit(10);
     

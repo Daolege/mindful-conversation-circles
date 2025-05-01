@@ -1,117 +1,115 @@
-
 /**
- * Currency conversion and formatting services
+ * Currency Service
+ * Provides utility functions for working with currencies, formatting amounts, and exchange rates
  */
 
-// Define supported currencies
-export type SupportedCurrency = 'cny' | 'usd' | 'eur' | 'gbp' | 'jpy';
+import { Order } from '@/lib/types/order';
 
-// Currency formatting with symbols
-export function formatAmount(amount: number, currency: string): string {
-  const normalizedCurrency = currency.toLowerCase();
+/**
+ * Format a monetary amount with the appropriate currency symbol
+ */
+export const formatAmount = (amount: number | string | undefined, currency: string = 'cny'): string => {
+  if (amount === undefined || amount === null) {
+    return '0.00';
+  }
   
-  switch(normalizedCurrency) {
-    case 'cny':
-      return `¥${amount.toFixed(2)}`;
+  // Convert to number if string
+  const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
+  
+  // Format the number according to currency
+  const currencyLower = (currency || 'cny').toLowerCase();
+  
+  switch (currencyLower) {
     case 'usd':
-      return `$${amount.toFixed(2)}`;
+      return `$${numAmount.toFixed(2)}`;
     case 'eur':
-      return `€${amount.toFixed(2)}`;
+      return `€${numAmount.toFixed(2)}`;
     case 'gbp':
-      return `£${amount.toFixed(2)}`;
+      return `£${numAmount.toFixed(2)}`;
     case 'jpy':
-      return `¥${amount.toFixed(0)}`;
+      return `¥${Math.round(numAmount)}`;
+    case 'cny':
+    case 'rmb':
+      return `¥${numAmount.toFixed(2)}`;
     default:
-      // Default to USD if currency not recognized
-      return `$${amount.toFixed(2)}`;
+      return `${numAmount.toFixed(2)} ${currencyLower.toUpperCase()}`;
   }
-}
+};
 
-// Convert currency based on exchange rate
-export function convertCurrency(
-  amount: number, 
-  fromCurrency: SupportedCurrency, 
-  toCurrency: SupportedCurrency, 
-  exchangeRate: number
-): number {
-  if (fromCurrency === toCurrency) {
-    return amount;
-  }
-  
-  if (fromCurrency === 'usd' && toCurrency === 'cny') {
-    return amount * exchangeRate;
-  }
-  
-  if (fromCurrency === 'cny' && toCurrency === 'usd') {
-    return amount / exchangeRate;
-  }
-  
-  return amount;
-}
-
-// Get default exchange rate (can be updated with real-time rates)
-export function getDefaultExchangeRate(): number {
-  return 7.2; // Default USD to CNY rate, should be replaced with real-time data
-}
-
-// Format pre-payment amount with appropriate currency symbol
-export function formatPrePaymentAmount(amount: number, currency: string): string {
+/**
+ * Format pre-payment amount (for display before payment)
+ */
+export const formatPrePaymentAmount = (amount: number, currency: string = 'cny'): string => {
   return formatAmount(amount, currency);
-}
+};
 
-// Get payment method display name
-export function getPaymentMethodDisplay(paymentType?: string): string {
-  if (!paymentType) return '未知支付方式';
-  
-  if (paymentType.includes('subscription-')) {
-    return '订阅付款';
+/**
+ * Get display text for exchange rate
+ */
+export const getExchangeRateDisplay = (
+  originalCurrency?: string,
+  targetCurrency?: string,
+  rate?: number
+): string => {
+  if (!originalCurrency || !targetCurrency || !rate) {
+    return '';
   }
   
-  switch(paymentType.toLowerCase()) {
+  return `${originalCurrency.toUpperCase()} → ${targetCurrency.toUpperCase()} @ ${rate.toFixed(4)}`;
+};
+
+/**
+ * Get the payment method display text
+ */
+export const getPaymentMethodDisplay = (method?: string): string => {
+  if (!method) return '未知支付方式';
+  
+  const methodLower = method.toLowerCase();
+  
+  switch (methodLower) {
     case 'wechat':
+    case 'wechatpay':
       return '微信支付';
     case 'alipay':
       return '支付宝';
+    case 'creditcard':
+    case 'credit_card':
+    case 'credit-card':
+      return '信用卡';
     case 'paypal':
       return 'PayPal';
     case 'stripe':
       return 'Stripe';
-    case 'credit-card':
-      return '信用卡';
-    case 'google-pay':
-      return 'Google Pay';
-    case 'apple-pay':
-      return 'Apple Pay';
+    case 'bank_transfer':
+    case 'bank-transfer':
+      return '银行转账';
     default:
-      return paymentType;
+      if (methodLower.startsWith('subscription')) {
+        return '订阅';
+      }
+      return method;
   }
-}
+};
 
-// Get exchange rate display text
-export function getExchangeRateDisplay(
-  fromCurrency?: string,
-  toCurrency?: string,
-  exchangeRate?: number
-): string {
-  if (!fromCurrency || !toCurrency || !exchangeRate) {
-    return '';
-  }
-  
-  return `汇率: 1 ${fromCurrency.toUpperCase()} = ${exchangeRate} ${toCurrency.toUpperCase()}`;
-}
-
-// Get actual payment amount and currency based on order information
-export function getActualPaymentAmount(order: any): { amount: number; currency: string } {
+/**
+ * Get actual payment amount and currency from order
+ */
+export const getActualPaymentAmount = (order: Order): { amount: number; currency: string } => {
   if (!order) {
-    return { amount: 0, currency: 'usd' };
+    return { amount: 0, currency: 'cny' };
   }
   
-  // Use total_amount if available, otherwise fall back to amount
-  const amount = order.total_amount || order.amount || 0;
-  const currency = order.currency || 'usd';
+  // If there's an original amount and currency (pre-conversion), use that
+  if (order.original_amount !== undefined && order.original_currency) {
+    return { 
+      amount: order.original_amount, 
+      currency: order.original_currency 
+    };
+  }
   
+  // Otherwise use the order amount and currency
   return { 
-    amount,
-    currency
+    amount: order.amount || order.total_amount || 0, 
+    currency: order.currency || 'cny' 
   };
-}
+};

@@ -4,6 +4,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from ".
 import { Badge } from "../ui/badge";
 import { format } from "date-fns";
 import { OrderItem } from "@/types/dashboard";
+import { Button } from "../ui/button";
+import { Eye } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const orderStatusMap: Record<string, { label: string; className: string }> = {
   completed: { label: "已完成", className: "bg-green-500 hover:bg-green-600" },
@@ -26,6 +29,8 @@ export function OrderHistory({
   onStatusFilterChange,
   showAll = false,
 }: OrderHistoryProps) {
+  const navigate = useNavigate();
+  
   const getStatusBadge = useCallback((status: string) => {
     const statusInfo = orderStatusMap[status] || { label: status, className: "bg-gray-500 hover:bg-gray-600" };
     
@@ -64,6 +69,11 @@ export function OrderHistory({
     return order.payment_method || order.payment_type || '未知';
   };
 
+  // Handle view order details
+  const handleViewOrderDetails = (orderId: string) => {
+    navigate(`/orders/${orderId}`);
+  };
+
   return (
     <div>
       <div className="mb-6">
@@ -97,6 +107,7 @@ export function OrderHistory({
                 <TableHead className="w-[120px]">支付方式</TableHead>
                 <TableHead className="w-[100px]">状态</TableHead>
                 <TableHead className="w-[180px]">下单时间</TableHead>
+                <TableHead className="w-[100px]">操作</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -122,6 +133,17 @@ export function OrderHistory({
                   </TableCell>
                   <TableCell>
                     {getFormattedDate(order.created_at)}
+                  </TableCell>
+                  <TableCell>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="h-8 w-24" 
+                      onClick={() => handleViewOrderDetails(order.id)}
+                    >
+                      <Eye className="mr-2 h-4 w-4" />
+                      查看详情
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}
