@@ -2,6 +2,8 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
+import Backend from 'i18next-http-backend';
+import { supabase } from '@/integrations/supabase/client';
 
 // Import translations
 import enCommon from './locales/en/common.json';
@@ -24,45 +26,81 @@ import zhDashboard from './locales/zh/dashboard.json';
 import zhErrors from './locales/zh/errors.json';
 import zhOrders from './locales/zh/orders.json';
 
-// Configure i18next
-i18n
-  .use(LanguageDetector)
-  .use(initReactI18next)
-  .init({
-    resources: {
-      en: {
-        common: enCommon,
-        courses: enCourses,
-        navigation: enNavigation,
-        auth: enAuth,
-        admin: enAdmin,
-        checkout: enCheckout,
-        dashboard: enDashboard,
-        errors: enErrors,
-        orders: enOrders
-      },
-      zh: {
-        common: zhCommon,
-        courses: zhCourses,
-        navigation: zhNavigation,
-        auth: zhAuth,
-        admin: zhAdmin,
-        checkout: zhCheckout,
-        dashboard: zhDashboard,
-        errors: zhErrors,
-        orders: zhOrders
-      },
-    },
-    supportedLngs: ['en', 'zh'],
-    fallbackLng: 'zh',
-    defaultNS: 'common',
-    interpolation: {
-      escapeValue: false,
-    },
-    detection: {
-      order: ['localStorage', 'navigator'],
-      caches: ['localStorage'],
-    },
-  });
+// 动态加载翻译的 backend
+i18n.use(Backend);
+
+// 自定义后端，支持从数据库加载翻译
+i18n.use({
+  type: 'backend',
+  init: () => {},
+  read: async (language, namespace, callback) => {
+    try {
+      // 首先尝试从数据库加载翻译
+      const { data, error } = await supabase
+        .from('translations')
+        .select('key, value')
+        .eq('language_code', language)
+        .eq('namespace', namespace);
+      
+      if (!error && data && data.length > 0) {
+        // 转换为键值对
+        const translations = data.reduce((acc: Record<string, string>, item) => {
+          acc[item.key] = item.value;
+          return acc;
+        }, {});
+        
+        callback(null, translations);
+        return;
+      }
+      
+      // 如果数据库没有翻译，使用内置翻译
+      let translationsObj = {};
+      
+      if (language === 'en') {
+        switch (namespace) {
+          case 'common': translationsObj = enCommon; break;
+          case 'courses': translationsObj = enCourses; break;
+          case 'navigation': translationsObj = enNavigation; break;
+          case 'auth': translationsObj = enAuth; break;
+          case 'admin': translationsObj = enAdmin; break;
+          case 'checkout': translationsObj = enCheckout; break;
+          case 'dashboard': translationsObj = enDashboard; break;
+          case 'errors': translationsObj = enErrors; break;
+          case 'orders': translationsObj = enOrders; break;
+        }
+      } else if (language === 'zh') {
+        switch (namespace) {
+          case 'common': translationsObj = zhCommon; break;
+          case 'courses': translationsObj = zhCourses; break;
+          case 'navigation': translationsObj = zhNavigation; break;
+          case 'auth': translationsObj = zhAuth; break;
+          case 'admin': translationsObj = zhAdmin; break;
+          case 'checkout': translationsObj = zhCheckout; break;
+          case 'dashboard': translationsObj = zhDashboard; break;
+          case 'errors': translationsObj = zhErrors; break;
+          case 'orders': translationsObj = zhOrders; break;
+        }
+      }
+      
+      callback(null, translationsObj);
+    } catch (err) {
+      callback(err as Error, null);
+    }
+  }
+})
+.use(LanguageDetector)
+.use(initReactI18next)
+.init({
+  supportedLngs: ['en', 'zh'],
+  fallbackLng: 'zh',
+  defaultNS: 'common',
+  interpolation: {
+    escapeValue: false,
+  },
+  detection: {
+    order: ['localStorage', 'navigator'],
+    caches: ['localStorage'],
+  },
+});
 
 export default i18n;

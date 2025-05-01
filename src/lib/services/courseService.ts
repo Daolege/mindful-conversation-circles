@@ -220,99 +220,45 @@ export async function getCourseNewById(courseId: number): Promise<any> {
   }
 }
 
-// Simplified getCourseWithSections function to avoid type issues
-export const getCourseWithSections = async (courseId: number) => {
+// Simplified version of getCourseWithSections to avoid type issues
+export const getCourseWithSections = async (courseId: number): Promise<any> => {
   try {
-    // Query for the course
-    const { data: courseData, error: courseError } = await supabase
+    // Get basic course info
+    const { data: course } = await supabase
       .from('courses_new')
-      .select(`
-        id,
-        title,
-        description,
-        price,
-        currency,
-        category
-      `)
+      .select('id, title, description, price, currency, category')
       .eq('id', courseId)
       .single();
-
-    if (courseError) {
-      console.error('Error fetching course:', courseError);
-      return null;
-    }
-
-    // Make sure we have actual course data
-    if (!courseData) {
-      return null;
-    }
-
-    // Get sections separately
-    const { data: sectionsData, error: sectionsError } = await supabase
+    
+    if (!course) return null;
+    
+    // Get sections
+    const { data: sections } = await supabase
       .from('course_sections')
       .select('id, title, position')
       .eq('course_id', courseId)
       .order('position', { ascending: true });
-
-    if (sectionsError) {
-      console.error('Error fetching course sections:', sectionsError);
-      return null;
-    }
-
-    // Process sections and get lectures for each
-    const sections = [];
     
-    if (sectionsData && Array.isArray(sectionsData)) {
-      for (const section of sectionsData) {
-        // For each section, fetch lectures separately
-        const { data: lecturesData, error: lecturesError } = await supabase
-          .from('course_lectures')
-          .select('id, title, position')
-          .eq('section_id', section.id)
-          .order('position', { ascending: true });
-          
-        if (lecturesError) {
-          console.error(`Error fetching lectures for section ${section.id}:`, lecturesError);
-          continue;
-        }
-        
-        // Process lectures
-        const lectures = [];
-        
-        if (lecturesData && Array.isArray(lecturesData)) {
-          for (const lecture of lecturesData) {
-            // Store lecture info with default values for missing fields
-            lectures.push({
-              id: lecture.id,
-              title: lecture.title,
-              position: lecture.position,
-              description: null,
-              video_url: null,
-              duration: null
-            });
-          }
-        }
-        
-        sections.push({
-          id: section.id,
-          title: section.title,
-          position: section.position,
-          lectures: lectures
-        });
-      }
-    }
-
+    // Get lectures for each section
+    const sectionsWithLectures = await Promise.all((sections || []).map(async (section) => {
+      const { data: lectures } = await supabase
+        .from('course_lectures')
+        .select('id, title, position, description, video_url, duration')
+        .eq('section_id', section.id)
+        .order('position', { ascending: true });
+      
+      return {
+        ...section,
+        lectures: lectures || []
+      };
+    }));
+    
     return {
-      id: courseData.id,
-      title: courseData.title,
-      description: courseData.description,
-      price: courseData.price,
-      currency: courseData.currency,
-      category: courseData.category,
-      sections: sections
+      ...course,
+      sections: sectionsWithLectures || []
     };
   } catch (error) {
-    console.error('Exception fetching course with sections:', error);
+    console.error('Error in getCourseWithSections:', error);
     return null;
   }
 };

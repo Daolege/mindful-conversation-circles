@@ -1,0 +1,221 @@
+
+import { supabase } from "@/integrations/supabase/client";
+import i18n from "@/i18n";
+
+export interface Language {
+  id?: number;
+  code: string;
+  name: string;
+  nativeName: string;
+  enabled: boolean;
+  rtl?: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface TranslationItem {
+  id?: number;
+  language_code: string;
+  namespace: string;
+  key: string;
+  value: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+// 获取所有支持的语言
+export async function getAllLanguages(): Promise<Language[]> {
+  try {
+    const { data, error } = await supabase
+      .from('languages')
+      .select('*')
+      .order('name', { ascending: true });
+    
+    if (error) {
+      console.error('Error fetching languages:', error);
+      return [];
+    }
+    
+    return data || [];
+  } catch (error) {
+    console.error('Unexpected error in getAllLanguages:', error);
+    return [];
+  }
+}
+
+// 获取已启用的语言
+export async function getEnabledLanguages(): Promise<Language[]> {
+  try {
+    const { data, error } = await supabase
+      .from('languages')
+      .select('*')
+      .eq('enabled', true)
+      .order('name', { ascending: true });
+    
+    if (error) {
+      console.error('Error fetching enabled languages:', error);
+      return [];
+    }
+    
+    return data || [];
+  } catch (error) {
+    console.error('Unexpected error in getEnabledLanguages:', error);
+    return [];
+  }
+}
+
+// 添加新语言
+export async function addLanguage(language: Language): Promise<{ success: boolean; data?: Language; error?: Error }> {
+  try {
+    const { data, error } = await supabase
+      .from('languages')
+      .insert([language])
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('Error adding language:', error);
+      return { success: false, error };
+    }
+    
+    return { success: true, data };
+  } catch (error) {
+    console.error('Unexpected error in addLanguage:', error);
+    return { success: false, error: error as Error };
+  }
+}
+
+// 更新语言
+export async function updateLanguage(language: Language): Promise<{ success: boolean; error?: Error }> {
+  if (!language.id) {
+    return { success: false, error: new Error('Language ID is required for update') };
+  }
+  
+  try {
+    const { error } = await supabase
+      .from('languages')
+      .update({
+        name: language.name,
+        nativeName: language.nativeName,
+        enabled: language.enabled,
+        rtl: language.rtl,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', language.id);
+    
+    if (error) {
+      console.error('Error updating language:', error);
+      return { success: false, error };
+    }
+    
+    return { success: true };
+  } catch (error) {
+    console.error('Unexpected error in updateLanguage:', error);
+    return { success: false, error: error as Error };
+  }
+}
+
+// 切换语言状态（启用/禁用）
+export async function toggleLanguageStatus(languageId: number, enabled: boolean): Promise<{ success: boolean; error?: Error }> {
+  try {
+    const { error } = await supabase
+      .from('languages')
+      .update({ enabled, updated_at: new Date().toISOString() })
+      .eq('id', languageId);
+    
+    if (error) {
+      console.error('Error toggling language status:', error);
+      return { success: false, error };
+    }
+    
+    return { success: true };
+  } catch (error) {
+    console.error('Unexpected error in toggleLanguageStatus:', error);
+    return { success: false, error: error as Error };
+  }
+}
+
+// 删除语言
+export async function deleteLanguage(languageId: number): Promise<{ success: boolean; error?: Error }> {
+  try {
+    // First check if this is a default language that shouldn't be deleted
+    const { data: language } = await supabase
+      .from('languages')
+      .select('code')
+      .eq('id', languageId)
+      .single();
+    
+    if (language && (language.code === 'en' || language.code === 'zh')) {
+      return { 
+        success: false, 
+        error: new Error('Cannot delete default languages (English or Chinese)')
+      };
+    }
+    
+    // Delete the language
+    const { error } = await supabase
+      .from('languages')
+      .delete()
+      .eq('id', languageId);
+    
+    if (error) {
+      console.error('Error deleting language:', error);
+      return { success: false, error };
+    }
+    
+    return { success: true };
+  } catch (error) {
+    console.error('Unexpected error in deleteLanguage:', error);
+    return { success: false, error: error as Error };
+  }
+}
+
+// 导入翻译
+export async function importTranslations(translations: TranslationItem[]): Promise<{ success: boolean; error?: Error }> {
+  try {
+    const { error } = await supabase
+      .from('translations')
+      .upsert(translations);
+    
+    if (error) {
+      console.error('Error importing translations:', error);
+      return { success: false, error };
+    }
+    
+    return { success: true };
+  } catch (error) {
+    console.error('Unexpected error in importTranslations:', error);
+    return { success: false, error: error as Error };
+  }
+}
+
+// 导出翻译
+export async function getTranslationsByLanguage(languageCode: string): Promise<TranslationItem[]> {
+  try {
+    const { data, error } = await supabase
+      .from('translations')
+      .select('*')
+      .eq('language_code', languageCode);
+    
+    if (error) {
+      console.error('Error fetching translations:', error);
+      return [];
+    }
+    
+    return data || [];
+  } catch (error) {
+    console.error('Unexpected error in getTranslationsByLanguage:', error);
+    return [];
+  }
+}
+
+// 重新加载语言资源
+export function reloadLanguageResources(callback?: () => void): void {
+  try {
+    i18n.reloadResources().then(() => {
+      if (callback) callback();
+    });
+  } catch (error) {
+    console.error('Error reloading language resources:', error);
+  }
+}

@@ -1,13 +1,16 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { getSiteSettings, updateSiteSettings } from "@/lib/services/siteSettingsService";
 import { SiteSetting } from "@/lib/types/course-new";
 import { useTranslations } from '@/hooks/useTranslations';
 import { LanguageManagement } from './LanguageManagement';
+import { TranslationEditor } from './TranslationEditor';
 
 const ExchangeRateSettings = () => {
   const { t } = useTranslations();
@@ -131,19 +134,34 @@ const ContactMethodsSettings = () => {
 
 export const SystemSettings = () => {
   const { t } = useTranslations();
+  const [activeTab, setActiveTab] = useState("general");
 
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-gray-900">{t('admin:systemSettings')}</h2>
       
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <ExchangeRateSettings />
-        <ContactMethodsSettings />
-      </div>
-      
-      <div className="mt-6">
-        <LanguageManagement />
-      </div>
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="mb-6">
+          <TabsTrigger value="general">{t('admin:general')}</TabsTrigger>
+          <TabsTrigger value="languages">{t('admin:languages')}</TabsTrigger>
+          <TabsTrigger value="translations">{t('admin:translations')}</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="general">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <ExchangeRateSettings />
+            <ContactMethodsSettings />
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="languages">
+          <LanguageManagement />
+        </TabsContent>
+        
+        <TabsContent value="translations">
+          <TranslationEditor />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

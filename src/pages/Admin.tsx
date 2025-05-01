@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Navbar from "@/components/Navbar";
@@ -19,6 +18,7 @@ import { SystemSettings } from "@/components/admin/SystemSettings";
 import { SubscriptionPlanManagement } from "@/components/admin/SubscriptionPlanManagement";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTranslations } from '@/hooks/useTranslations';
 
 const Admin = () => {
   const { user, loading } = useAuth();
