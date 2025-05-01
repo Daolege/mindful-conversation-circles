@@ -4,6 +4,7 @@ import { Order } from "@/lib/types/order";
 
 export interface OrderItem extends Order {
   // Additional fields specific to the dashboard
+  order_number?: string;
   order_items?: Array<{
     id: number;
     order_id: string;

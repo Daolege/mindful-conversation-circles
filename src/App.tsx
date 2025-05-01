@@ -21,6 +21,7 @@ import CourseNewEditor from './pages/CourseNewEditor';
 import CourseLearn from './pages/CourseLearn';
 import OrderDetail from './pages/OrderDetail';
 import HomeworkSubmissionsPage from './pages/HomeworkSubmissionsPage';
+import HomePage from './pages/HomePage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -39,6 +40,7 @@ function App() {
         <Router>
           <Routes>
             <Route path="/" element={<Home />} />
+            <Route path="/home" element={<HomePage />} />
             <Route path="/courses" element={<Courses />} />
             <Route path="/courses/:courseId" element={<CourseDetail />} />
             <Route path="/courses-new/:courseId" element={<CourseDetailNew />} />

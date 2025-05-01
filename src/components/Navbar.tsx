@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useMemo } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -95,6 +94,18 @@ const Navbar = () => {
                 whileHover={{ width: "100%" }}
               />
             </Link>
+            
+            <Link 
+              to="/home" 
+              className="text-gray-600 hover:text-knowledge-primary transition-all duration-200 relative group"
+            >
+              全新主页
+              <motion.div
+                className="absolute -bottom-1 left-0 w-0 h-0.5 bg-knowledge-primary group-hover:w-full transition-all duration-200"
+                whileHover={{ width: "100%" }}
+              />
+            </Link>
+            
             <Link 
               to="/courses" 
               className="text-gray-600 hover:text-knowledge-primary transition-all duration-200 relative group"
@@ -105,6 +116,7 @@ const Navbar = () => {
                 whileHover={{ width: "100%" }}
               />
             </Link>
+            
             {showAboutLink && (
               <Link 
                 to="/about" 

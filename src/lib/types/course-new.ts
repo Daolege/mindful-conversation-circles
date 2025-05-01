@@ -1,4 +1,3 @@
-
 import { Course } from "./course";
 
 export interface CourseSection {
@@ -133,8 +132,8 @@ export interface CourseResponse<T> {
 // Add additional interfaces needed for the site_settings table
 export interface SiteSetting {
   id?: string;
-  setting_key: string;  
-  setting_value: string;
+  key: string;  
+  value: string;
   created_at?: string;
   updated_at?: string;
 }

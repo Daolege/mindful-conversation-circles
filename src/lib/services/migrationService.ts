@@ -1,5 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { SiteSetting } from "@/lib/types/course-new";
 
 // Define possible migration names
 export type MigrationName = 
