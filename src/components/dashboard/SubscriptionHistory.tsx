@@ -212,6 +212,7 @@ export function SubscriptionHistory() {
 
   // Safely check for features
   const hasFeatures = currentSubscription?.subscription_plans && 
+                     typeof currentSubscription.subscription_plans === 'object' && 
                      currentSubscription.subscription_plans.features && 
                      Array.isArray(currentSubscription.subscription_plans.features) && 
                      currentSubscription.subscription_plans.features.length > 0;
@@ -246,7 +247,7 @@ export function SubscriptionHistory() {
                 </div>
               </div>
               
-              {hasFeatures && currentSubscription.subscription_plans && (
+              {hasFeatures && (
                 <div className="mt-4">
                   <h5 className="text-sm font-medium mb-2">包含特权</h5>
                   <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">

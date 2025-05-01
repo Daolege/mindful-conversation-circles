@@ -115,10 +115,26 @@ export interface CourseData {
   display_order?: number;
   status?: 'draft' | 'published' | 'archived';
   is_featured?: boolean;
+  category?: string | null;
+  created_at?: string;
+  updated_at?: string;
+  enrollment_count?: number;
+  student_count?: number;
+  thumbnail_url?: string;
+  original_price?: number | null;
   [key: string]: any;
 }
 
 export interface CourseResponse<T> {
   data: T | null;
   error: Error | null;
+}
+
+// Add additional interfaces needed for the site_settings table
+export interface SiteSetting {
+  id?: string;
+  setting_key: string;  // Changed from 'key' to 'setting_key'
+  setting_value: string; // Changed from 'value' to 'setting_value'
+  created_at?: string;
+  updated_at?: string;
 }

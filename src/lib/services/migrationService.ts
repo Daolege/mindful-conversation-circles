@@ -1,5 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { SiteSetting } from "@/lib/types/course-new";
 
 // Define possible migration names
 export type MigrationName = 
@@ -8,16 +9,7 @@ export type MigrationName =
   | 'add_course_materials'
   | 'homework_foreign_key_fix';
 
-// Create a custom site settings interface to match the actual table structure
-interface SiteSetting {
-  id?: string;
-  key: string;
-  value: string;
-  created_at?: string;
-  updated_at?: string;
-}
-
-// Track migrations in a migrations table
+// Track migrations in the site settings table
 export const recordMigration = async (name: MigrationName, description: string, success: boolean = true) => {
   try {
     // Try using direct insert for migration recording
@@ -26,8 +18,8 @@ export const recordMigration = async (name: MigrationName, description: string, 
       const { error } = await supabase
         .from('site_settings')
         .upsert({
-          key: `migration_${name}`,
-          value: JSON.stringify({
+          setting_key: `migration_${name}`,
+          setting_value: JSON.stringify({
             name,
             description,
             executed_at: new Date().toISOString(),
@@ -57,8 +49,8 @@ export const getExchangeRate = async (): Promise<number> => {
   try {
     const { data, error } = await supabase
       .from('site_settings')
-      .select('value')
-      .eq('key', 'exchange_rate')
+      .select('setting_value') // Changed from value to setting_value
+      .eq('setting_key', 'exchange_rate') // Changed from key to setting_key
       .single();
       
     if (error) {
@@ -66,7 +58,7 @@ export const getExchangeRate = async (): Promise<number> => {
       return 7; // Default exchange rate
     }
     
-    return parseFloat(data.value || '7');
+    return parseFloat(data.setting_value || '7');
   } catch (error) {
     console.error('Error getting exchange rate:', error);
     return 7;
@@ -80,7 +72,7 @@ export const updateExchangeRate = async (newRate: number): Promise<boolean> => {
     const { data: existingSetting, error: selectError } = await supabase
       .from('site_settings')
       .select('id')
-      .eq('key', 'exchange_rate')
+      .eq('setting_key', 'exchange_rate') // Changed from key to setting_key
       .single();
       
     if (selectError && !selectError.message.includes('No rows found')) {
@@ -92,8 +84,8 @@ export const updateExchangeRate = async (newRate: number): Promise<boolean> => {
       // Update existing setting
       const { error: updateError } = await supabase
         .from('site_settings')
-        .update({ value: newRate.toString() } as Partial<SiteSetting>)
-        .eq('key', 'exchange_rate');
+        .update({ setting_value: newRate.toString() } as Partial<SiteSetting>)
+        .eq('setting_key', 'exchange_rate'); // Changed from key to setting_key
         
       if (updateError) {
         console.error('Error updating exchange rate:', updateError);
@@ -103,7 +95,7 @@ export const updateExchangeRate = async (newRate: number): Promise<boolean> => {
       // Insert new setting
       const { error: insertError } = await supabase
         .from('site_settings')
-        .insert({ key: 'exchange_rate', value: newRate.toString() } as SiteSetting);
+        .insert({ setting_key: 'exchange_rate', setting_value: newRate.toString() } as SiteSetting);
         
       if (insertError) {
         console.error('Error inserting exchange rate:', insertError);
@@ -118,28 +110,28 @@ export const updateExchangeRate = async (newRate: number): Promise<boolean> => {
   }
 };
 
-// Get site settings
-export const getSiteSetting = async (key: string, defaultValue: string = ''): Promise<string> => {
+// Get site settings with updated column names
+export const getSiteSetting = async (settingKey: string, defaultValue: string = ''): Promise<string> => {
   try {
     const { data, error } = await supabase
       .from('site_settings')
-      .select('value')
-      .eq('key', key)
+      .select('setting_value') // Changed from value to setting_value
+      .eq('setting_key', settingKey) // Changed from key to setting_key
       .single();
     
     if (error || !data) {
-      console.log(`Setting ${key} not found, using default: ${defaultValue}`);
+      console.log(`Setting ${settingKey} not found, using default: ${defaultValue}`);
       return defaultValue;
     }
     
-    return data.value || defaultValue;
+    return data.setting_value || defaultValue;
   } catch (error) {
     console.error('Error getting site setting:', error);
     return defaultValue;
   }
 };
 
-// Update site settings
+// Update site settings with corrected column names
 export const updateSiteSettings = async (settings: { [key: string]: string }): Promise<boolean> => {
   try {
     for (const key in settings) {
@@ -150,7 +142,7 @@ export const updateSiteSettings = async (settings: { [key: string]: string }): P
         const { data: existingSetting, error: selectError } = await supabase
           .from('site_settings')
           .select('id')
-          .eq('key', key)
+          .eq('setting_key', key) // Changed from key to setting_key
           .single();
           
         if (selectError && !selectError.message.includes('No rows found')) {
@@ -162,8 +154,8 @@ export const updateSiteSettings = async (settings: { [key: string]: string }): P
           // Update existing setting
           const { error: updateError } = await supabase
             .from('site_settings')
-            .update({ value: value } as Partial<SiteSetting>)
-            .eq('key', key);
+            .update({ setting_value: value } as Partial<SiteSetting>)
+            .eq('setting_key', key); // Changed from key to setting_key
             
           if (updateError) {
             console.error(`Error updating setting ${key}:`, updateError);
@@ -173,7 +165,7 @@ export const updateSiteSettings = async (settings: { [key: string]: string }): P
           // Insert new setting
           const { error: insertError } = await supabase
             .from('site_settings')
-            .insert({ key: key, value: value } as SiteSetting);
+            .insert({ setting_key: key, setting_value: value } as SiteSetting);
             
           if (insertError) {
             console.error(`Error inserting setting ${key}:`, insertError);
