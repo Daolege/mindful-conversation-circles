@@ -223,26 +223,11 @@ export async function getCourseNewById(courseId: number): Promise<any> {
   }
 }
 
-// Fix the problematic function with proper typing to avoid infinite type instantiation
-// Define explicit interface for the course sections to avoid deep type instantiation
-interface CourseSectionWithLectures {
-  id: string;
-  title: string;
-  position: number;
-  lectures?: {
-    id: string;
-    title: string;
-    position: number;
-    video_url?: string | null;
-    duration?: string | null;
-    description?: string | null;
-  }[];
-}
-
+// Completely rewritten getCourseWithSections function to avoid type issues
 export const getCourseWithSections = async (courseId: number): Promise<CourseWithSections | null> => {
   try {
     // Query for the course
-    const { data: courseData, error } = await supabase
+    const { data: courseData, error: courseError } = await supabase
       .from('courses_new')
       .select(`
         id,
@@ -250,54 +235,78 @@ export const getCourseWithSections = async (courseId: number): Promise<CourseWit
         description,
         price,
         currency,
-        category,
-        sections:course_sections(
-          id,
-          title,
-          position
-        )
+        category
       `)
       .eq('id', courseId)
       .single();
 
-    if (error) {
-      console.error('Error fetching course with sections:', error);
+    if (courseError) {
+      console.error('Error fetching course:', courseError);
       return null;
     }
 
-    // Make sure we have actual data
+    // Make sure we have actual course data
     if (!courseData) {
       return null;
     }
 
-    // Get lectures separately to avoid column not exists error
-    const sections: CourseSectionWithLectures[] = [];
+    // Get sections separately
+    const { data: sectionsData, error: sectionsError } = await supabase
+      .from('course_sections')
+      .select('id, title, position')
+      .eq('course_id', courseId)
+      .order('position', { ascending: true });
+
+    if (sectionsError) {
+      console.error('Error fetching course sections:', sectionsError);
+      return null;
+    }
+
+    // Process sections and get lectures for each
+    const sections = [];
     
-    if (Array.isArray(courseData.sections)) {
-      for (const section of courseData.sections) {
+    if (sectionsData && Array.isArray(sectionsData)) {
+      for (const section of sectionsData) {
         // For each section, fetch lectures separately
-        const { data: lecturesData } = await supabase
+        const { data: lecturesData, error: lecturesError } = await supabase
           .from('course_lectures')
-          .select('id, title, position, video_url, duration, description')
+          .select('id, title, position, description')
           .eq('section_id', section.id)
           .order('position', { ascending: true });
           
-        // Ensure we have valid lecture data that matches our expected interface
-        const typedLectures = lecturesData && Array.isArray(lecturesData) ? 
-          lecturesData.map(lecture => ({
-            id: lecture.id,
-            title: lecture.title,
-            position: lecture.position,
-            video_url: lecture.video_url || null,
-            duration: lecture.duration || null,
-            description: lecture.description || null
-          })) : [];
-          
+        if (lecturesError) {
+          console.error(`Error fetching lectures for section ${section.id}:`, lecturesError);
+          continue;
+        }
+        
+        // Process lectures
+        const lectures = [];
+        
+        if (lecturesData && Array.isArray(lecturesData)) {
+          for (const lecture of lecturesData) {
+            // Also get additional lecture info separately to avoid column not found errors
+            const { data: lectureDetails } = await supabase
+              .from('lecture_details')
+              .select('video_url, duration')
+              .eq('lecture_id', lecture.id)
+              .maybeSingle();
+            
+            lectures.push({
+              id: lecture.id,
+              title: lecture.title,
+              position: lecture.position,
+              description: lecture.description || null,
+              video_url: lectureDetails?.video_url || null,
+              duration: lectureDetails?.duration || null
+            });
+          }
+        }
+        
         sections.push({
           id: section.id,
           title: section.title,
           position: section.position,
-          lectures: typedLectures
+          lectures: lectures
         });
       }
     }

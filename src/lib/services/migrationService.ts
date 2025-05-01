@@ -17,16 +17,32 @@ interface OldHomeworkData {
   id: string;
   user_id: string;
   homework_id: string;
-  content: string;
-  status: string;
-  created_at: string;
-  updated_at: string;
+  content?: string;
   answer?: string;
+  status?: string;
   course_id?: number;
   lecture_id?: string;
+  created_at?: string;
+  updated_at?: string;
   submitted_at?: string;
   file_url?: string;
   [key: string]: any;
+}
+
+// Define homework_submissions table structure to match actual DB schema
+interface HomeworkSubmissionDB {
+  id?: string;
+  user_id: string;
+  homework_id: string;
+  answer?: string;
+  course_id: number;
+  lecture_id: string;
+  submitted_at?: string;
+  file_url?: string;
+  status?: string;
+  feedback?: string | null;
+  grade?: number | null;
+  version?: number;
 }
 
 interface MigrationResult {
@@ -88,18 +104,19 @@ export async function migrateHomeworkData(userId: string): Promise<MigrationResu
       return { success: true, count: 0 };
     }
     
-    // Ensure we transform the data correctly regardless of the schema
-    const transformedData = oldHomeworkData.map((submission: any) => {
-      // Handle various field formats
+    // Ensure we transform the data correctly to match the homework_submissions table structure
+    const transformedData: HomeworkSubmissionDB[] = oldHomeworkData.map((submission: OldHomeworkData) => {
       return {
         user_id: submission.user_id,
-        homework_id: submission.homework_id, 
-        content: submission.content || submission.answer || "", 
+        homework_id: submission.homework_id,
+        answer: submission.content || submission.answer || "", 
+        course_id: submission.course_id || 0, // Fallback value
+        lecture_id: submission.lecture_id || "", // Fallback value
         status: submission.status || "submitted",
-        created_at: submission.created_at || submission.submitted_at || new Date().toISOString(),
-        updated_at: submission.updated_at || new Date().toISOString(),
-        feedback: submission.feedback || submission.teacher_comment || null,
-        grade: submission.grade || submission.score || null,
+        submitted_at: submission.created_at || submission.submitted_at || new Date().toISOString(),
+        file_url: submission.file_url || null,
+        feedback: submission.feedback || null,
+        grade: submission.grade || null,
         version: 1
       };
     });
@@ -117,7 +134,7 @@ export async function migrateHomeworkData(userId: string): Promise<MigrationResu
       return { success: false, count: 0, error: insertError };
     }
     
-    // Step 4: Update migration tracking using site_settings instead of data_migrations
+    // Step 4: Update migration tracking using site_settings
     await recordMigration(
       `homework_${userId}`,
       `Migrated ${transformedData.length} homework records for user ${userId}`,
