@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -66,7 +65,12 @@ export const CourseManagement = () => {
 
   const handleSelectAllCourses = useCallback(() => {
     if (courses?.data) {
-      const allCourseIds = courses.data.map((course) => course.id);
+      // Ensure we're dealing with an array and each item has an id
+      const courseArray = Array.isArray(courses.data) ? courses.data : [];
+      const allCourseIds = courseArray
+        .filter(course => course && typeof course === 'object' && 'id' in course)
+        .map(course => (course as any).id);
+        
       if (selectedCourses.length === allCourseIds.length) {
         setSelectedCourses([]); // Unselect all if all are currently selected
       } else {
@@ -95,9 +99,17 @@ export const CourseManagement = () => {
   const filteredCourses = React.useMemo(() => {
     if (!courses?.data) return [];
 
-    return courses.data.filter((course) =>
-      course.title.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    // Ensure we're dealing with an array
+    const courseArray = Array.isArray(courses.data) ? courses.data : [];
+    
+    return courseArray.filter((course) => {
+      // Ensure course is an object with a title property
+      if (course && typeof course === 'object' && 'title' in course) {
+        const title = (course as any).title;
+        return typeof title === 'string' && title.toLowerCase().includes(searchTerm.toLowerCase());
+      }
+      return false;
+    });
   }, [courses, searchTerm]);
 
   const handleCreateCourse = () => {
@@ -122,7 +134,7 @@ export const CourseManagement = () => {
     reorderedCourses.splice(endIndex, 0, movedCourse);
 
     // Extract the IDs from the reordered courses
-    const courseIds = reorderedCourses.map((course) => course.id);
+    const courseIds = reorderedCourses.map((course) => (course as any).id);
 
     // Optimistically update the UI
     queryClient.setQueryData(['instructor-courses', user?.id], (old: any) => {
@@ -188,7 +200,7 @@ export const CourseManagement = () => {
                     className="h-4 w-4 text-indigo-600 rounded"
                     onChange={handleSelectAllCourses}
                     checked={
-                      courses?.data
+                      courses?.data && Array.isArray(courses.data)
                         ? selectedCourses.length === courses.data.length
                         : false
                     }
@@ -229,72 +241,78 @@ export const CourseManagement = () => {
                   {...provided.droppableProps}
                   ref={provided.innerRef}
                 >
-                  {filteredCourses.map((course, index) => (
-                    <Draggable
-                      key={course.id.toString()}
-                      draggableId={course.id.toString()}
-                      index={index}
-                    >
-                      {(provided) => (
-                        <tr
-                          ref={provided.innerRef}
-                          {...provided.draggableProps}
-                          {...provided.dragHandleProps}
-                          className="hover:bg-gray-50"
-                        >
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
-                              <input
-                                type="checkbox"
-                                className="h-4 w-4 text-indigo-600 rounded"
-                                checked={selectedCourses.includes(course.id)}
-                                onChange={() => toggleCourseSelection(course.id)}
-                              />
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="text-sm font-medium text-gray-900">
-                              {course.title}
-                            </div>
-                            <div className="text-sm text-gray-500">
-                              ID: {course.id}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                              {course.status || 'Draft'}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 text-sm text-gray-500">
-                            {course.instructor_name || 'Unknown Instructor'}
-                          </td>
-                          <td className="px-6 py-4 text-sm text-gray-500">
-                            {course.category || 'Uncategorized'}
-                          </td>
-                          <td className="px-6 py-4 text-sm text-gray-500">
-                            {formatDate(course.created_at)}
-                          </td>
-                          <td className="px-6 py-4 text-sm text-gray-500">
-                            {course.enrollment_count || 0}
-                          </td>
-                          <td className="px-6 py-4 text-right text-sm font-medium">
-                            <button
-                              onClick={() => navigate(`/course-editor/${course.id}`)}
-                              className="text-indigo-600 hover:text-indigo-900 mr-4"
-                            >
-                              编辑
-                            </button>
-                            <button
-                              onClick={() => handleDeleteCourse(course.id)}
-                              className="text-red-600 hover:text-red-900"
-                            >
-                              删除
-                            </button>
-                          </td>
-                        </tr>
-                      )}
-                    </Draggable>
-                  ))}
+                  {filteredCourses.map((course, index) => {
+                    // Ensure we have id as a string
+                    const courseId = (course as any).id?.toString();
+                    if (!courseId) return null;
+                    
+                    return (
+                      <Draggable
+                        key={courseId}
+                        draggableId={courseId}
+                        index={index}
+                      >
+                        {(provided) => (
+                          <tr
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            {...provided.dragHandleProps}
+                            className="hover:bg-gray-50"
+                          >
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="flex items-center">
+                                <input
+                                  type="checkbox"
+                                  className="h-4 w-4 text-indigo-600 rounded"
+                                  checked={selectedCourses.includes((course as any).id)}
+                                  onChange={() => toggleCourseSelection((course as any).id)}
+                                />
+                              </div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="text-sm font-medium text-gray-900">
+                                {(course as any).title}
+                              </div>
+                              <div className="text-sm text-gray-500">
+                                ID: {(course as any).id}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                {(course as any).status || 'Draft'}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 text-sm text-gray-500">
+                              {(course as any).instructor_name || 'Unknown Instructor'}
+                            </td>
+                            <td className="px-6 py-4 text-sm text-gray-500">
+                              {(course as any).category || 'Uncategorized'}
+                            </td>
+                            <td className="px-6 py-4 text-sm text-gray-500">
+                              {formatDate((course as any).created_at)}
+                            </td>
+                            <td className="px-6 py-4 text-sm text-gray-500">
+                              {(course as any).enrollment_count || 0}
+                            </td>
+                            <td className="px-6 py-4 text-right text-sm font-medium">
+                              <button
+                                onClick={() => navigate(`/course-editor/${(course as any).id}`)}
+                                className="text-indigo-600 hover:text-indigo-900 mr-4"
+                              >
+                                编辑
+                              </button>
+                              <button
+                                onClick={() => handleDeleteCourse((course as any).id)}
+                                className="text-red-600 hover:text-red-900"
+                              >
+                                删除
+                              </button>
+                            </td>
+                          </tr>
+                        )}
+                      </Draggable>
+                    );
+                  })}
                   {provided.placeholder}
                 </tbody>
               )}
