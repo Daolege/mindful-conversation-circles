@@ -83,6 +83,53 @@ export interface Database {
           updated_at?: string
         }
       },
+      orders: {
+        Row: {
+          id: string
+          user_id: string
+          amount: number
+          currency: string
+          payment_type: string
+          payment_method?: string
+          status: string
+          created_at: string
+          updated_at: string
+          order_number?: string
+          original_amount?: number
+          original_currency?: string
+          exchange_rate?: number
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          amount: number
+          currency: string
+          payment_type: string
+          payment_method?: string
+          status: string
+          created_at?: string
+          updated_at?: string
+          order_number?: string
+          original_amount?: number
+          original_currency?: string
+          exchange_rate?: number
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          amount?: number
+          currency?: string
+          payment_type?: string
+          payment_method?: string
+          status?: string
+          created_at?: string
+          updated_at?: string
+          order_number?: string
+          original_amount?: number
+          original_currency?: string
+          exchange_rate?: number
+        }
+      },
       courses: {
         Row: {
           id: number
@@ -362,23 +409,23 @@ export interface Database {
           updated_at?: string
         }
       }
-    }
+    },
     Views: {
       [_ in never]: never
-    }
+    },
     Functions: {
       check_table_exists: {
         Args: {
           table_name: string
         }
         Returns: boolean
-      }
+      },
       execute_sql: {
         Args: {
           sql_statement: string
         }
         Returns: unknown
-      }
+      },
       insert_order_item: {
         Args: {
           p_order_id: string
@@ -397,53 +444,56 @@ export interface Database {
       admin_add_course_item: {
         Args: Record<string, unknown>
         Returns: unknown
-      }
+      },
       create_test_subscription: {
         Args: Record<string, unknown>
         Returns: unknown
-      }
+      },
       enroll_user_in_course: {
         Args: Record<string, unknown>
         Returns: unknown
-      }
+      },
       get_dashboard_stats: {
         Args: Record<string, unknown>
         Returns: unknown
-      }
+      },
       get_financial_stats: {
         Args: Record<string, unknown>
         Returns: unknown
-      }
+      },
       get_payment_method_stats: {
         Args: Record<string, unknown>
         Returns: unknown
-      }
+      },
       has_role: {
         Args: Record<string, unknown>
         Returns: unknown
-      }
+      },
       update_course_progress: {
         Args: Record<string, unknown>
         Returns: unknown
-      }
+      },
       update_exchange_rate: {
         Args: Record<string, unknown>
         Returns: unknown
-      }
+      },
       update_site_settings: {
         Args: Record<string, unknown>
         Returns: unknown
-      }
+      },
       user_has_course_access: {
         Args: Record<string, unknown>
         Returns: unknown
       }
-    }
+    },
     Enums: {
       [_ in never]: never
-    }
+    },
     CompositeTypes: {
       [_ in never]: never
     }
   }
 }
+
+// Add shorter type aliases for common database function types
+export type DbFunctionNames = keyof Database['public']['Functions'];

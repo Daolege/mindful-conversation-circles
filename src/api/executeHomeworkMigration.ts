@@ -17,13 +17,14 @@ export const executeHomeworkMigration = async () => {
     const { data: settingsResult, error: settingsError } = await supabase
       .from('site_settings')
       .select('*')
-      .eq('key', 'homework_migration_completed');
+      .eq('site_name', 'homework_migration_completed')
+      .maybeSingle();
     
     if (settingsError) {
       console.error('[executeHomeworkMigration] Error checking migration status:', settingsError);
     }
     
-    if (Array.isArray(settingsResult) && settingsResult.length > 0) {
+    if (settingsResult) {
       console.log('[executeHomeworkMigration] Migration already executed successfully');
       return { 
         success: true, 
@@ -107,11 +108,14 @@ export const executeHomeworkMigration = async () => {
     );
     
     // 4. Update site settings to remember migration was completed
+    // Use properties that actually exist in the site_settings table
     await supabase
       .from('site_settings')
       .insert({
-        key: 'homework_migration_completed',
-        value: 'true'
+        site_name: 'homework_migration_completed',
+        site_description: 'true',
+        maintenance_mode: false,
+        updated_at: new Date().toISOString()
       });
     
     console.log('[executeHomeworkMigration] Migration completed successfully');

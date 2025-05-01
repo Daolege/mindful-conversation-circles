@@ -14,23 +14,6 @@ if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KE
   );
 }
 
-// Define our database function types - including all functions that we use
-type DbFunctionNames = 
-  | 'create_test_subscription'
-  | 'has_role'
-  | 'update_exchange_rate'
-  | 'update_site_settings'
-  | 'user_has_course_access'
-  | 'enroll_user_in_course'
-  | 'update_course_progress'
-  | 'admin_add_course_item'
-  | 'get_dashboard_stats'
-  | 'get_financial_stats'
-  | 'get_payment_method_stats'
-  | 'check_table_exists'
-  | 'execute_sql'
-  | 'insert_order_item';
-
 // 改进Supabase客户端配置以提高稳定性
 export const supabase = createClient<Database>(
   supabaseUrl,
@@ -60,7 +43,7 @@ export const supabase = createClient<Database>(
 // Create the migrations table if it doesn't exist
 export async function ensureMigrationsTable() {
   try {
-    // Create migrations table using direct SQL - safely
+    // Using the admin_add_course_item function which is known to work
     const result = await supabase.rpc('admin_add_course_item', {
       p_table_name: '_migrations',
       p_course_id: 0, // Use 0 for system-level operations

@@ -2,7 +2,6 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { SiteSetting } from '@/lib/types/course-new';
 
 /**
  * This component automatically fixes database foreign key relationships
@@ -53,11 +52,11 @@ export const DatabaseFixInitializer: React.FC = () => {
           const { data: settingsData } = await supabase
             .from('site_settings')
             .select('*')
-            .eq('key', 'homework_migration_completed')
+            .eq('site_name', 'homework_migration_completed')
             .maybeSingle();
           
           // 使用安全的可选链和条件检查
-          if (settingsData && typeof settingsData === 'object' && 'key' in settingsData) {
+          if (settingsData && typeof settingsData === 'object' && settingsData.site_name) {
             console.log('[DatabaseFixInitializer] Migration already recorded in site_settings');
             localStorage.setItem(storageKey, 'true');
             setMigrationExecuted(true);
@@ -72,9 +71,11 @@ export const DatabaseFixInitializer: React.FC = () => {
             console.log('[DatabaseFixInitializer] Simulating foreign key migration');
             
             // Record successful execution in site_settings
-            const migrationSetting: SiteSetting = {
-              key: 'homework_migration_completed',
-              value: 'true'
+            const migrationSetting = {
+              site_name: 'homework_migration_completed',
+              site_description: 'true',
+              maintenance_mode: false,
+              updated_at: new Date().toISOString()
             };
             
             await supabase
