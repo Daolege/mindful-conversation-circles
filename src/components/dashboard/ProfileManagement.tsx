@@ -8,7 +8,7 @@ import { PasswordChangeDialog } from "./security/PasswordChangeDialog";
 import { AccountDeactivationDialog } from "./security/AccountDeactivationDialog";
 import { useAuth } from "@/contexts/authHooks";
 import { useNavigate } from "react-router-dom";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import {
   AlertDialog,
@@ -25,24 +25,26 @@ export const ProfileManagement = () => {
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
   const [isDeactivateDialogOpen, setIsDeactivateDialogOpen] = useState(false);
   const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const { signOut } = useAuth();
   const navigate = useNavigate();
-  const { toast } = useToast();
 
   const handleLogout = async () => {
+    if (isLoggingOut) return;
+    
     try {
+      setIsLoggingOut(true);
       await signOut();
-      navigate("/auth");
-      toast({
-        title: "退出成功",
+      // 不要在这里直接导航，让AuthProvider处理登出后的导航
+      toast.success("退出成功", {
         description: "期待您的再次登录"
       });
     } catch (error) {
-      toast({
-        title: "退出失败",
-        description: "请稍后重试",
-        variant: "destructive"
+      console.error("Logout error:", error);
+      toast.error("退出失败", { 
+        description: "请稍后重试" 
       });
+      setIsLoggingOut(false);
     }
   };
 
@@ -86,10 +88,17 @@ export const ProfileManagement = () => {
                 <Button 
                   variant="outline"
                   onClick={() => setIsLogoutDialogOpen(true)}
+                  disabled={isLoggingOut}
                   className="w-28 shrink-0 hover:scale-105 hover:shadow-sm transition-all"
                 >
-                  <LogOut className="h-4 w-4 mr-2" />
-                  退出
+                  {isLoggingOut ? (
+                    <>处理中...</>
+                  ) : (
+                    <>
+                      <LogOut className="h-4 w-4 mr-2" />
+                      退出
+                    </>
+                  )}
                 </Button>
               </div>
 
@@ -137,8 +146,11 @@ export const ProfileManagement = () => {
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>取消</AlertDialogCancel>
-              <AlertDialogAction onClick={handleLogout}>
-                确认退出
+              <AlertDialogAction 
+                onClick={handleLogout}
+                disabled={isLoggingOut}
+              >
+                {isLoggingOut ? "处理中..." : "确认退出"}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

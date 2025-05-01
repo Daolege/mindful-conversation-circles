@@ -2,9 +2,9 @@
 import { supabase } from '@/integrations/supabase/client';
 import { OrderItem } from '@/types/dashboard';
 
-export const getUserOrders = async (userId: string, status?: string): Promise<{ data: OrderItem[], error: any }> => {
+export const getUserOrders = async (userId: string, status: string = 'all'): Promise<{ data: OrderItem[], error: any }> => {
   try {
-    console.log(`[orderService] Getting orders for user ${userId}${status ? `, status filter: ${status}` : ''}`);
+    console.log(`[orderService] Getting orders for user: ${userId}, status: ${status}`);
     
     let query = supabase
       .from('orders')
@@ -13,14 +13,15 @@ export const getUserOrders = async (userId: string, status?: string): Promise<{ 
         order_items (
           *,
           courses (
-            id, title
+            id, title, description, thumbnail_url
           )
         )
       `)
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
     
-    if (status && status !== 'all') {
+    // 添加状态筛选
+    if (status !== 'all') {
       query = query.eq('status', status);
     }
     
@@ -31,7 +32,7 @@ export const getUserOrders = async (userId: string, status?: string): Promise<{ 
       return { data: [], error };
     }
     
-    console.log(`[orderService] Found ${data?.length || 0} orders for user`);
+    console.log(`[orderService] Found ${data?.length || 0} orders`);
     return { data: data || [], error: null };
   } catch (err) {
     console.error('[orderService] getUserOrders error:', err);
@@ -39,9 +40,9 @@ export const getUserOrders = async (userId: string, status?: string): Promise<{ 
   }
 };
 
-export const getOrderDetails = async (orderId: string): Promise<{ data: OrderItem | null, error: any }> => {
+export const getOrderById = async (orderId: string): Promise<{ data: OrderItem | null, error: any }> => {
   try {
-    console.log(`[orderService] Getting order details for order ${orderId}`);
+    console.log(`[orderService] Getting order: ${orderId}`);
     
     const { data, error } = await supabase
       .from('orders')
@@ -58,70 +59,110 @@ export const getOrderDetails = async (orderId: string): Promise<{ data: OrderIte
       .single();
     
     if (error) {
-      console.error('[orderService] Error fetching order details:', error);
+      console.error('[orderService] Error fetching order:', error);
       return { data: null, error };
     }
     
-    console.log('[orderService] Order details fetched successfully');
     return { data, error: null };
   } catch (err) {
-    console.error('[orderService] getOrderDetails error:', err);
+    console.error('[orderService] getOrderById error:', err);
     return { data: null, error: err };
   }
 };
 
-// New functions for admin management
-export const getAllOrders = async (status?: string, limit: number = 100, page: number = 0): Promise<{ data: OrderItem[], count: number, error: any }> => {
+// 添加生成示例订单的功能
+export const generateMockOrder = async (userId: string, status: string = 'completed'): Promise<{ success: boolean, error: any }> => {
   try {
-    console.log(`[orderService] Getting all orders${status ? ` with status: ${status}` : ''}, limit: ${limit}, page: ${page}`);
+    console.log(`[orderService] Generating mock order for user: ${userId}, status: ${status}`);
     
-    // Calculate offset
-    const offset = page * limit;
+    // 1. 首先获取一个随机课程
+    const { data: courses, error: coursesError } = await supabase
+      .from('courses_new')
+      .select('id, title, price')
+      .limit(5);
     
-    // Build query
-    let query = supabase
+    if (coursesError || !courses?.length) {
+      console.error('[orderService] Error fetching courses:', coursesError);
+      return { success: false, error: coursesError || new Error('No courses available') };
+    }
+    
+    // 从可用课程中随机选择1-3个
+    const selectedCourses = [];
+    const courseCount = Math.floor(Math.random() * 3) + 1;
+    for (let i = 0; i < courseCount; i++) {
+      const randomIndex = Math.floor(Math.random() * courses.length);
+      selectedCourses.push(courses[randomIndex]);
+    }
+    
+    // 生成唯一订单号
+    const orderId = `order-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+    
+    // 计算总金额
+    const totalAmount = selectedCourses.reduce((sum, course) => sum + (course.price || 99), 0);
+    
+    // 随机支付方式
+    const paymentMethods = ['wechat', 'alipay', 'creditcard'];
+    const randomPaymentMethod = paymentMethods[Math.floor(Math.random() * paymentMethods.length)];
+    
+    // 创建订单日期 (在过去1-30天之间)
+    const daysAgo = Math.floor(Math.random() * 30) + 1;
+    const orderDate = new Date();
+    orderDate.setDate(orderDate.getDate() - daysAgo);
+    const orderDateString = orderDate.toISOString();
+    
+    // 2. 创建订单
+    const { error: orderError } = await supabase
       .from('orders')
-      .select(`
-        *,
-        order_items (
-          *,
-          courses (
-            id, title
-          )
-        )
-      `, { count: 'exact' })
-      .order('created_at', { ascending: false })
-      .range(offset, offset + limit - 1);
+      .insert({
+        id: orderId,
+        user_id: userId,
+        total_amount: totalAmount,
+        currency: 'cny',
+        payment_method: randomPaymentMethod,
+        status: status,
+        created_at: orderDateString,
+        updated_at: orderDateString
+      });
     
-    if (status && status !== 'all') {
-      query = query.eq('status', status);
+    if (orderError) {
+      console.error('[orderService] Error creating mock order:', orderError);
+      return { success: false, error: orderError };
     }
     
-    const { data, error, count } = await query;
-    
-    if (error) {
-      console.error('[orderService] Error fetching all orders:', error);
-      return { data: [], count: 0, error };
+    // 3. 为每个选中的课程创建订单项
+    for (const course of selectedCourses) {
+      const { error: itemError } = await supabase
+        .from('order_items')
+        .insert({
+          order_id: orderId,
+          course_id: course.id,
+          price: course.price || 99,
+          currency: 'cny',
+          created_at: orderDateString
+        });
+      
+      if (itemError) {
+        console.error('[orderService] Error creating mock order item:', itemError);
+        // 继续添加其他项，不中断整个流程
+      }
     }
     
-    console.log(`[orderService] Found ${data?.length || 0} orders, total count: ${count}`);
-    return { data: data || [], count: count || 0, error: null };
+    console.log(`[orderService] Successfully created mock order: ${orderId}`);
+    return { success: true, error: null };
   } catch (err) {
-    console.error('[orderService] getAllOrders error:', err);
-    return { data: [], count: 0, error: err };
+    console.error('[orderService] generateMockOrder error:', err);
+    return { success: false, error: err };
   }
 };
 
-export const updateOrderStatus = async (orderId: string, status: string): Promise<{ success: boolean, error: any }> => {
+// 更新订单状态
+export const updateOrderStatus = async (orderId: string, newStatus: string): Promise<{ success: boolean, error: any }> => {
   try {
-    console.log(`[orderService] Updating order ${orderId} status to ${status}`);
+    console.log(`[orderService] Updating order ${orderId} to status: ${newStatus}`);
     
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('orders')
-      .update({ 
-        status,
-        updated_at: new Date().toISOString()
-      })
+      .update({ status: newStatus, updated_at: new Date().toISOString() })
       .eq('id', orderId);
     
     if (error) {
@@ -129,68 +170,9 @@ export const updateOrderStatus = async (orderId: string, status: string): Promis
       return { success: false, error };
     }
     
-    console.log('[orderService] Order status updated successfully');
     return { success: true, error: null };
   } catch (err) {
     console.error('[orderService] updateOrderStatus error:', err);
-    return { success: false, error: err };
-  }
-};
-
-export const insertSampleOrders = async (userId: string): Promise<{ success: boolean, error: any }> => {
-  try {
-    console.log(`[orderService] Creating sample orders for user ${userId}`);
-    
-    // We're going to insert 5 sample orders with different statuses
-    const statuses = ['completed', 'processing', 'cancelled', 'failed', 'refunded'];
-    const today = new Date();
-    
-    for (let i = 0; i < 5; i++) {
-      const orderDate = new Date();
-      orderDate.setDate(today.getDate() - i * 5); // Each order is 5 days apart
-      
-      const orderId = `order-${Date.now()}-${i}`;
-      const status = statuses[i % statuses.length];
-      
-      // Insert the order
-      const { error: orderError } = await supabase
-        .from('orders')
-        .insert({
-          id: orderId,
-          user_id: userId,
-          total_amount: 100 + (i * 20),
-          currency: 'cny',
-          payment_method: i % 2 === 0 ? 'wechat' : 'alipay',
-          status: status,
-          created_at: orderDate.toISOString(),
-          updated_at: orderDate.toISOString()
-        });
-      
-      if (orderError) {
-        console.error('[orderService] Error creating sample order:', orderError);
-        continue;
-      }
-      
-      // Insert an order item for this order
-      const { error: itemError } = await supabase
-        .from('order_items')
-        .insert({
-          order_id: orderId,
-          course_id: 80 + (i % 2), // Use course IDs 80 and 81 alternately
-          price: 100 + (i * 20),
-          currency: 'cny',
-          created_at: orderDate.toISOString()
-        });
-      
-      if (itemError) {
-        console.error('[orderService] Error creating sample order item:', itemError);
-      }
-    }
-    
-    console.log('[orderService] Sample orders created successfully');
-    return { success: true, error: null };
-  } catch (err) {
-    console.error('[orderService] insertSampleOrders error:', err);
     return { success: false, error: err };
   }
 };

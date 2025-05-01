@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useLocation, Navigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { useAuth } from "@/contexts/authHooks";
@@ -20,13 +20,38 @@ const Dashboard = () => {
   const { user, loading } = useAuth();
   const [activeTab, setActiveTab] = useState(() => {
     const searchParams = new URLSearchParams(location.search);
-    return searchParams.get('tab') || 'courses';  // Changed default from 'overview' to 'courses'
+    return searchParams.get('tab') || 'courses';
   });
+  const authCheckAttempts = useRef(0);
+  const [sessionError, setSessionError] = useState(false);
 
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
-    setActiveTab(searchParams.get('tab') || 'courses');  // Changed default from 'overview' to 'courses'
+    setActiveTab(searchParams.get('tab') || 'courses');
   }, [location.search]);
+
+  // 添加会话恢复机制
+  useEffect(() => {
+    if (!user && !loading && authCheckAttempts.current < 2) {
+      // 如果没检测到用户但尚未超过尝试次数，尝试刷新会话
+      const refreshSession = async () => {
+        try {
+          const { data } = await supabase.auth.refreshSession();
+          if (!data.session) {
+            // 如果刷新后仍无会话，标记为会话错误
+            setSessionError(true);
+          }
+        } catch (error) {
+          console.error("Session refresh error:", error);
+          setSessionError(true);
+        } finally {
+          authCheckAttempts.current += 1;
+        }
+      };
+      
+      refreshSession();
+    }
+  }, [user, loading]);
 
   const { data: coursesWithProgress, isLoading: isLoadingCourses } = useQuery({
     queryKey: ['user-courses', user?.id],
@@ -66,8 +91,9 @@ const Dashboard = () => {
     );
   }
 
-  if (!user) {
-    return <Navigate to="/auth" replace />;
+  // 只有在确认无会话或尝试次数用尽后才重定向
+  if ((!user && sessionError) || (!user && authCheckAttempts.current >= 2)) {
+    return <Navigate to="/auth" state={{ loginRequired: true, from: location.pathname + location.search }} replace />;
   }
 
   // Main content based on active tab
@@ -109,7 +135,7 @@ const Dashboard = () => {
         >
           <h1 className="text-3xl font-bold">个人中心</h1>
           <p className="text-muted-foreground mt-2">
-            欢迎回来，{user.user_metadata?.name || user.email}
+            欢迎回来，{user?.user_metadata?.name || user?.email}
           </p>
         </motion.div>
         

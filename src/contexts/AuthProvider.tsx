@@ -16,14 +16,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const initializedRef = React.useRef(false);
   const authListenerRef = React.useRef<{ data: { subscription: { unsubscribe: () => void } } } | null>(null);
   const updatingStateRef = React.useRef(false);
+  const sessionCheckInProgressRef = React.useRef(false);
   
   // 最小化UI状态，仅用于必要渲染
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // 会话恢复机制
+  const recoverSession = useCallback(async () => {
+    if (sessionCheckInProgressRef.current) return null;
+    
+    try {
+      sessionCheckInProgressRef.current = true;
+      console.log("[AuthProvider] 尝试恢复会话...");
+      
+      const { data, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        console.error("[AuthProvider] 恢复会话错误:", error);
+        return null;
+      }
+      
+      if (data?.session) {
+        console.log("[AuthProvider] 会话恢复成功");
+        return data.session;
+      } else {
+        console.log("[AuthProvider] 无有效会话可恢复");
+        return null;
+      }
+    } catch (err) {
+      console.error("[AuthProvider] 会话恢复异常:", err);
+      return null;
+    } finally {
+      sessionCheckInProgressRef.current = false;
+    }
+  }, []);
+
   // 高性能的会话更新函数，使用稳定的引用避免闭包问题
-  const updateSessionState = useCallback((newSession: Session | null) => {
+  const updateSessionState = useCallback(async (newSession: Session | null) => {
     // 避免状态竞争
     if (updatingStateRef.current) return;
     updatingStateRef.current = true;
@@ -31,9 +62,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       // 用户登出情况
       if (!newSession || !newSession.user) {
+        // 尝试恢复会话，避免无效登出
+        if (userRef.current !== null) {
+          const recoveredSession = await recoverSession();
+          if (recoveredSession) {
+            console.log("[AuthProvider] 会话恢复成功，阻止无效登出");
+            updateSessionState(recoveredSession);
+            return;
+          }
+        }
+        
         if (userRef.current !== null || sessionRef.current !== null) {
+          console.log("[AuthProvider] 用户登出，清除状态");
           userRef.current = null;
           sessionRef.current = null;
+          
           // 异步更新UI状态减少渲染次数
           setTimeout(() => {
             setUser(null);
@@ -101,7 +144,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         updatingStateRef.current = false;
       }, 0);
     }
-  }, []);
+  }, [recoverSession]);
 
   // 登录方法，稳定的引用以避免不必要的重渲染
   const signIn = useCallback(async (email: string, password: string) => {
@@ -201,21 +244,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // 登出方法，优化状态更新
   const signOut = useCallback(async () => {
     try {
-      await supabase.auth.signOut();
-      // 立即更新内部状态
+      console.log("[AuthProvider] 执行登出流程");
+      // 先更新内部状态，避免状态不一致
       userRef.current = null;
       sessionRef.current = null;
-      // 异步更新UI状态
+      
+      // 异步更新UI状态，避免状态不同步
       setTimeout(() => {
         setUser(null);
         setSession(null);
-        toast.success('已退出登录');
       }, 0);
-      return Promise.resolve();
+      
+      // 执行实际的登出操作，但不依赖其完成
+      await supabase.auth.signOut();
+      
+      toast.success('已退出登录');
+      
+      // 导航到登录页，由调用方处理
+      return Promise.resolve(true);
     } catch (error: any) {
-      setTimeout(() => {
-        toast.error('退出登录失败', { description: error.message });
-      }, 0);
+      console.error("[AuthProvider] 登出失败:", error);
+      toast.error('退出登录失败', { description: error.message });
       return Promise.reject(error);
     }
   }, []);
@@ -264,8 +313,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signIn,
     signUp,
     signOut,
-    setAdmin
-  }), [user, session, loading, signIn, signUp, signOut, setAdmin]);
+    setAdmin,
+    recoverSession
+  }), [user, session, loading, signIn, signUp, signOut, setAdmin, recoverSession]);
 
   // 一次性初始化认证状态，特别优化为异步模式避免阻塞
   useEffect(() => {
@@ -289,17 +339,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             // 更新初始状态
             updateSessionState(sessionData.session);
             
-            // 然后设置认证状态监听器
-            const authListener = supabase.auth.onAuthStateChange((event, newSession) => {
-              console.log("[Auth] 认证状态变化:", event);
-              // 异步更新以避免引起渲染问题
-              setTimeout(() => {
-                updateSessionState(newSession);
-              }, 0);
-            });
-            
-            // 存储订阅引用用于清理
-            authListenerRef.current = authListener;
+            // 然后设置认证状态监听器，使用更稳健的错误处理
+            try {
+              const authListener = supabase.auth.onAuthStateChange((event, newSession) => {
+                console.log("[Auth] 认证状态变化:", event);
+                // 异步更新以避免引起渲染问题
+                setTimeout(() => {
+                  updateSessionState(newSession);
+                }, 0);
+              });
+              
+              // 存储订阅引用用于清理
+              authListenerRef.current = authListener;
+            } catch (listenerError) {
+              console.error("[Auth] 设置认证状态监听器失败:", listenerError);
+            }
             
             // 标记为已初始化
             initializedRef.current = true;
@@ -309,12 +363,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setLoading(false);
           } catch (error) {
             console.error("[Auth] 认证初始化错误:", error);
+            // 即使发生错误也要结束加载状态，避免无限加载
             setLoading(false);
+            initializedRef.current = true; // 标记为已初始化，避免重复尝试
           }
         }, 0);
       } catch (error) {
         console.error("[Auth] 外部初始化错误:", error);
         setLoading(false);
+        initializedRef.current = true;
       }
     };
     
@@ -325,7 +382,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => {
       console.log("[Auth] 清理认证监听器");
       if (authListenerRef.current) {
-        authListenerRef.current.data.subscription.unsubscribe();
+        try {
+          authListenerRef.current.data.subscription.unsubscribe();
+        } catch (error) {
+          console.error("[Auth] 清理监听器失败:", error);
+        }
       }
     };
   }, [updateSessionState]);
