@@ -3,9 +3,8 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { CourseNew } from "@/lib/types/course-new";
-import { Book, Play, Clock, CheckCircle } from "lucide-react";
+import { Book, Play, CheckCircle, Globe } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { motion } from "framer-motion";
 
 export function SimpleCourseTab() {
@@ -72,9 +71,6 @@ export function SimpleCourseTab() {
                     <div className="h-4 bg-gray-200 rounded w-20"></div>
                     <div className="h-4 bg-gray-200 rounded w-24"></div>
                   </div>
-                  <div className="w-full sm:max-w-xs mt-2">
-                    <div className="h-2 bg-gray-200 rounded w-full"></div>
-                  </div>
                 </div>
                 <div className="flex gap-2 w-full sm:w-auto justify-end">
                   <div className="h-9 bg-gray-200 rounded w-24"></div>
@@ -126,10 +122,9 @@ interface CourseListItemProps {
 const CourseListItem = ({ course }: CourseListItemProps) => {
   const navigate = useNavigate();
   
-  // 随机生成课程进度 (0-100)
-  const progress = Math.floor(Math.random() * 101);
-  const isCompleted = progress === 100;
-  const hasStarted = progress > 0;
+  // 随机判断是否已经开始学习
+  const hasStarted = Math.random() > 0.5;
+  const isCompleted = hasStarted && Math.random() > 0.7;
   
   // 获取状态标签
   const getStatusBadge = () => {
@@ -145,6 +140,19 @@ const CourseListItem = ({ course }: CourseListItemProps) => {
     } else {
       return <Badge variant="outline" className="group-hover:bg-gray-100 transition-colors">未开始</Badge>;
     }
+  };
+
+  // 获取语言标签
+  const getLanguageBadge = () => {
+    const languages = ["中文", "英语", "日语", "韩语", "法语", "德语"];
+    const randomLanguage = languages[Math.floor(Math.random() * languages.length)];
+    
+    return (
+      <Badge variant="courseTag" className="group-hover:bg-gray-100 transition-colors flex items-center gap-1">
+        <Globe className="h-3.5 w-3.5" />
+        {randomLanguage}
+      </Badge>
+    );
   };
 
   return (
@@ -167,38 +175,7 @@ const CourseListItem = ({ course }: CourseListItemProps) => {
         
         <div className="flex items-center gap-2 flex-wrap">
           {getStatusBadge()}
-          
-          <Badge variant="courseTag" className="group-hover:bg-gray-100 transition-colors">
-            {course.category || "通用课程"}
-          </Badge>
-          
-          <span className="text-sm text-muted-foreground flex items-center gap-1 group-hover:text-gray-700 transition-colors">
-            <Clock className="h-3.5 w-3.5" />
-            {Math.floor(Math.random() * 10) + 1}小时内容
-          </span>
-        </div>
-        
-        <div className="flex flex-col gap-1 w-full sm:max-w-xs">
-          <div className="flex justify-between items-center text-xs">
-            <span>学习进度</span>
-            <span className="font-medium">{progress}%</span>
-          </div>
-          <div className="relative w-full h-2">
-            {/* Background progress bar */}
-            <Progress value={progress} className="h-2 transition-all duration-500 ease-out" />
-            
-            {/* Animated progress pill that shows on hover */}
-            {progress > 0 && (
-              <div 
-                className="absolute top-0 left-0 h-full bg-primary rounded-full transition-all duration-300
-                  opacity-0 group-hover:opacity-100 group-hover:animate-pulse"
-                style={{ 
-                  width: `${progress}%`, 
-                  boxShadow: '0 0 8px rgba(var(--primary), 0.5)' 
-                }}
-              />
-            )}
-          </div>
+          {getLanguageBadge()}
         </div>
       </div>
       
