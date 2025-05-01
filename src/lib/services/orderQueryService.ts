@@ -41,50 +41,49 @@ export const getOrderById = async (
       return null;
     }
     
-    // Get order items manually using raw SQL approach to avoid type issues
+    // Get order items manually using REST API approach
     let orderItems = [];
     try {
-      // Use SQL instead of direct table access
-      const { data, error: itemsError } = await supabase
-        .rpc('get_order_items', { order_id_param: orderId })
-        .then(res => {
-          if (res.error) {
-            console.warn('[orderQueryService] RPC error getting order items:', res.error);
-            return { data: null, error: res.error };
-          }
-          return { data: res.data || [], error: null };
-        })
-        .catch(err => {
-          console.warn('[orderQueryService] Error getting order items:', err);
-          return { data: null, error: err };
-        });
+      // Use direct fetch to avoid type issues
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/order_items?order_id=eq.${orderId}`;
+      const response = await fetch(url, {
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY || '',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY || ''}`
+        }
+      });
+      
+      if (response.ok) {
+        const items = await response.json();
+        
+        if (Array.isArray(items)) {
+          // Manually process each item to get course information
+          for (const item of items) {
+            try {
+              // Use a safer approach to fetch course information
+              if (item && typeof item === 'object' && item.course_id) {
+                const { data: course } = await supabase
+                  .from('courses_new')
+                  .select('id, title, description, price, thumbnail_url')
+                  .eq('id', item.course_id)
+                  .single();
 
-      if (itemsError) {
-        console.warn('[orderQueryService] Error fetching order items:', itemsError);
-      } else if (data && Array.isArray(data)) {
-        // Manually process each item to get course information
-        for (const item of data) {
-          try {
-            // Use a safer approach to fetch course information
-            if (item && typeof item === 'object' && 'course_id' in item) {
-              const { data: course } = await supabase
-                .from('courses_new')
-                .select('id, title, description, price, thumbnail_url')
-                .eq('id', item.course_id)
-                .single();
-
-              orderItems.push({
-                ...item,
-                courses: course || null
-              });
-            } else {
+                orderItems.push({
+                  ...item,
+                  courses: course || null
+                });
+              } else {
+                orderItems.push(item);
+              }
+            } catch (courseError) {
+              console.warn(`[orderQueryService] Error fetching course for item:`, courseError);
               orderItems.push(item);
             }
-          } catch (courseError) {
-            console.warn(`[orderQueryService] Error fetching course for item:`, courseError);
-            orderItems.push(item);
           }
         }
+      } else {
+        console.warn(`[orderQueryService] Error fetching order items: ${response.status}`);
       }
     } catch (itemsQueryError) {
       console.warn('[orderQueryService] Error with order items query:', itemsQueryError);

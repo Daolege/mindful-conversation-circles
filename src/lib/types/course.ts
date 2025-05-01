@@ -1,3 +1,4 @@
+
 export interface Course {
   id: number;
   title: string;
@@ -38,6 +39,41 @@ export interface Course {
   currency?: string;
   video_url?: string;
   syllabus?: any;
+}
+
+export interface CourseWithDetails extends Course {
+  sections?: CourseSection[];
+  learning_objectives?: string[];
+  requirements?: string[];
+  target_audience?: string[];
+  instructor_name?: string;
+  instructor_bio?: string;
+  instructor_avatar?: string;
+  original_price?: number;
+  materials?: CourseMaterial[];
+  status?: 'published' | 'draft' | 'archived';
+  thumbnail_url?: string;
+}
+
+export interface CourseSection {
+  id: string;
+  title: string;
+  description?: string;
+  position: number;
+  lectures?: CourseLecture[];
+}
+
+export interface CourseLecture {
+  id: string;
+  title: string;
+  description?: string;
+  duration?: string;
+  position: number;
+  video_url?: string;
+  has_homework?: boolean;
+  section_id?: string;
+  is_free?: boolean;
+  requires_homework_completion?: boolean;
 }
 
 export interface CourseMaterial {

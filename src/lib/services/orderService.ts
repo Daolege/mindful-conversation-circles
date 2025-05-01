@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { OrderItem } from '@/types/dashboard';
 import { Order, OrderListResponse } from "@/lib/types/order";
@@ -75,53 +76,38 @@ export async function getUserOrders(userId: string, status: string = 'all', time
       return orderItem;
     });
     
-    // Try to fetch order items for each order
+    // Try to fetch order items for each order using REST API
     try {
       for (const order of processedOrders) {
         // Use a try-catch block for the entire order items retrieval process
         try {
-          // Use RPC function to get order items if available
-          const { data: items } = await supabase.rpc('get_order_items', {
-            order_id_param: order.id
+          // Use direct REST API call to get order items
+          const url = `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/order_items?order_id=eq.${order.id}`;
+          const response = await fetch(url, {
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY || '',
+              'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY || ''}`
+            }
           });
           
-          if (items && items.length > 0) {
-            // Map the returned items to the expected structure
-            order.order_items = items.map(item => ({
-              course_id: item.course_id,
-              price: item.price,
-              currency: item.currency || 'cny',
-              courses: item.courses || null
-            }));
+          if (response.ok) {
+            const items = await response.json();
+            
+            if (Array.isArray(items) && items.length > 0) {
+              // Map items to expected structure
+              order.order_items = items.map((item: any) => ({
+                course_id: item.course_id,
+                price: item.price || 0,
+                currency: item.currency || 'cny',
+                courses: item.courses || null
+              }));
+            }
+          } else {
+            console.warn(`[orderService] REST API error: ${response.status}`);
           }
         } catch (itemError) {
           console.warn(`[orderService] Could not fetch items for order ${order.id}:`, itemError);
-          
-          // Fallback: make a direct REST API call if possible
-          try {
-            const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/order_items?order_id=eq.${order.id}`, {
-              method: 'GET',
-              headers: {
-                'Content-Type': 'application/json',
-                'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY || '',
-                'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY || ''}`
-              }
-            });
-            
-            if (response.ok) {
-              const items = await response.json();
-              
-              if (Array.isArray(items) && items.length > 0) {
-                order.order_items = items.map(item => ({
-                  course_id: item.course_id,
-                  price: item.price,
-                  currency: item.currency || 'cny'
-                }));
-              }
-            }
-          } catch (restError) {
-            console.warn(`[orderService] REST API fallback failed:`, restError);
-          }
         }
       }
     } catch (itemsError) {
@@ -169,49 +155,32 @@ export async function getOrderById(orderId: string): Promise<{ data: OrderItem |
       order_items: []
     };
     
-    // Try to get order items using the RPC function
+    // Try to get order items using REST API
     try {
-      const { data: items, error: itemsError } = await supabase.rpc('get_order_items', {
-        order_id_param: orderId
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/order_items?order_id=eq.${orderId}`;
+      const response = await fetch(url, {
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY || '',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY || ''}`
+        }
       });
       
-      if (!itemsError && items && Array.isArray(items) && items.length > 0) {
-        // Map the returned items to the expected structure
-        orderItem.order_items = items.map(item => ({
-          course_id: item.course_id,
-          price: item.price,
-          currency: item.currency || 'cny',
-          courses: item.courses || null
-        }));
+      if (response.ok) {
+        const items = await response.json();
+        
+        if (Array.isArray(items) && items.length > 0) {
+          // Map items to expected structure
+          orderItem.order_items = items.map((item: any) => ({
+            course_id: item.course_id,
+            price: item.price || 0,
+            currency: item.currency || 'cny',
+            courses: item.courses || null
+          }));
+        }
       }
     } catch (itemError) {
       console.warn(`[orderService] Could not fetch items for order ${orderId}:`, itemError);
-      
-      // Fallback approach if RPC fails
-      try {
-        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/order_items?order_id=eq.${orderId}`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY || '',
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY || ''}`
-          }
-        });
-        
-        if (response.ok) {
-          const items = await response.json();
-          
-          if (Array.isArray(items) && items.length > 0) {
-            orderItem.order_items = items.map(item => ({
-              course_id: item.course_id,
-              price: item.price,
-              currency: item.currency || 'cny'
-            }));
-          }
-        }
-      } catch (restError) {
-        console.warn(`[orderService] REST API fallback failed:`, restError);
-      }
     }
     
     return { data: orderItem, error: null };
@@ -280,61 +249,36 @@ export async function generateMockOrder(userId: string, status: string = 'comple
       return { success: false, error: orderError };
     }
     
-    // 3. Create order items table if it doesn't exist
-    try {
-      // Check if table exists with RPC
-      const { data: tableExists, error: rpcError } = await supabase.rpc(
-        'check_table_exists', 
-        { table_name: 'order_items' }
-      );
-      
-      if (rpcError) {
-        console.error('[orderService] Error checking if order_items table exists:', rpcError);
+    // 3. Create order items directly using REST API
+    for (const course of selectedCourses) {
+      try {
+        const orderItemData = {
+          order_id: orderId,
+          course_id: course.id,
+          price: course.price || 99,
+          currency: 'cny',
+          created_at: orderDateString
+        };
         
-        // Try to create table using SQL directly
-        const { error: createTableError } = await supabase.rpc(
-          'execute_sql',
-          {
-            sql_statement: `
-              CREATE TABLE IF NOT EXISTS order_items (
-                id SERIAL PRIMARY KEY,
-                order_id TEXT REFERENCES orders(id),
-                course_id INTEGER REFERENCES courses_new(id),
-                price NUMERIC,
-                currency TEXT,
-                created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
-              );
-            `
-          }
-        );
+        // Use fetch for direct database access
+        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/order_items`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY || '',
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY || ''}`
+          },
+          body: JSON.stringify(orderItemData)
+        });
         
-        if (createTableError) {
-          console.error('[orderService] Error creating order_items table:', createTableError);
+        if (!response.ok) {
+          console.warn('[orderService] REST API error for order item:', await response.text());
+        } else {
+          console.log(`[orderService] Created order item for ${orderId}`);
         }
+      } catch (itemError) {
+        console.warn('[orderService] Error inserting order item:', itemError);
       }
-      
-      // If table exists or was created, insert items
-      for (const course of selectedCourses) {
-        try {
-          const { error: itemError } = await supabase
-            .from('order_items')
-            .insert({
-              order_id: orderId,
-              course_id: course.id,
-              price: course.price || 99,
-              currency: 'cny',
-              created_at: orderDateString
-            });
-          
-          if (itemError) {
-            console.error('[orderService] Error creating mock order item:', itemError);
-          }
-        } catch (itemError) {
-          console.warn('[orderService] Error inserting order item:', itemError);
-        }
-      }
-    } catch (tableError) {
-      console.warn('[orderService] Could not create or access order_items table:', tableError);
     }
     
     console.log(`[orderService] Successfully created mock order: ${orderId}`);
@@ -448,7 +392,7 @@ export async function getAllOrders(
           order.currency = order.currency.toLowerCase();
         }
         
-        // Fetch course data
+        // Fetch course data if course_id exists
         let courseData = null;
         if (order.course_id) {
           const { data: course, error: courseError } = await supabase

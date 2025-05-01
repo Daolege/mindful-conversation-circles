@@ -1,178 +1,169 @@
 
-import React, { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import React, { useState, useEffect } from "react";
+import { getSiteSettings, updateSiteSettings } from "@/lib/services/siteSettingsService";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Loader2 } from "lucide-react";
+import { SiteSetting } from "@/lib/types/course-new";
 
-interface SystemSettingsProps {
-  activeTab: string;
+export interface SystemSettingsProps {
+  activeTab?: string;
 }
 
-export function SystemSettings({ activeTab }: SystemSettingsProps) {
-  const [siteName, setSiteName] = useState("");
-  const [siteDescription, setSiteDescription] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [currentTab, setCurrentTab] = useState("home");
+export const SystemSettings = ({ activeTab }: SystemSettingsProps) => {
+  const [settings, setSettings] = useState<SiteSetting>({});
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
+    const loadSettings = async () => {
+      setIsLoading(true);
+      try {
+        const siteSettings = await getSiteSettings();
+        if (siteSettings) {
+          setSettings(siteSettings);
+        }
+      } catch (error) {
+        console.error("Error loading site settings:", error);
+        toast.error("加载设置失败");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
     loadSettings();
   }, []);
 
-  const loadSettings = async () => {
+  const handleChange = (field: string, value: any) => {
+    setSettings((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  const handleSave = async () => {
+    setIsSaving(true);
     try {
-      setLoading(true);
-      // Load site settings
-      const { data, error } = await supabase
-        .from('site_settings')
-        .select('site_name, site_description')
-        .single();
-
-      if (error) throw error;
-
-      if (data) {
-        setSiteName(data.site_name);
-        setSiteDescription(data.site_description);
-      }
-    } catch (err) {
-      console.error('Error loading settings:', err);
-      toast.error('加载设置失败');
+      await updateSiteSettings(settings);
+      toast.success("设置已保存");
+    } catch (error) {
+      console.error("Error saving settings:", error);
+      toast.error("保存设置失败");
     } finally {
-      setLoading(false);
+      setIsSaving(false);
     }
   };
 
-  const handleSaveSettings = async () => {
-    try {
-      setLoading(true);
-      // Save site settings
-      const { error } = await supabase
-        .from('site_settings')
-        .update({ 
-          site_name: siteName, 
-          site_description: siteDescription 
-        })
-        .eq('id', '1');
-
-      if (error) throw error;
-
-      toast.success('设置已保存');
-    } catch (err) {
-      console.error('Error saving settings:', err);
-      toast.error('保存设置失败');
-    } finally {
-      setLoading(false);
-    }
-  };
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center p-6">
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+        <span className="ml-2">加载设置...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      <Card className="border-none shadow-sm">
-        <CardContent className="px-0 pt-4 pb-0">
-          <Tabs value={currentTab} onValueChange={setCurrentTab} className="w-full">
-            <TabsList className="w-full grid grid-cols-6 mb-4">
-              <TabsTrigger value="home">首页设置</TabsTrigger>
-              <TabsTrigger value="courses">课程设置</TabsTrigger>
-              <TabsTrigger value="subscriptions">订阅设置</TabsTrigger>
-              <TabsTrigger value="orders">订单设置</TabsTrigger>
-              <TabsTrigger value="features">功能设置</TabsTrigger>
-              <TabsTrigger value="others">其他设置</TabsTrigger>
-            </TabsList>
+      <Card>
+        <CardHeader className="space-y-1">
+          <CardTitle className="text-2xl">系统设置</CardTitle>
+          <CardDescription>配置网站的基本设置和功能</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="site_name">网站名称</Label>
+            <Input
+              id="site_name"
+              value={settings.site_name || ""}
+              onChange={(e) => handleChange("site_name", e.target.value)}
+              placeholder="输入网站名称"
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="site_description">网站描述</Label>
+            <Textarea
+              id="site_description"
+              value={settings.site_description || ""}
+              onChange={(e) => handleChange("site_description", e.target.value)}
+              placeholder="输入简短的网站描述"
+              rows={3}
+            />
+          </div>
 
-            <TabsContent value="home">
-              <Card>
-                <CardHeader>
-                  <CardTitle>站点信息</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="siteName">站点名称</Label>
-                      <Input
-                        id="siteName"
-                        value={siteName}
-                        onChange={(e) => setSiteName(e.target.value)}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="siteDescription">站点描述</Label>
-                      <Input
-                        id="siteDescription"
-                        value={siteDescription}
-                        onChange={(e) => setSiteDescription(e.target.value)}
-                      />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+          <div className="space-y-2">
+            <Label htmlFor="contact_email">联系邮箱</Label>
+            <Input
+              id="contact_email"
+              type="email"
+              value={settings.contact_email || ""}
+              onChange={(e) => handleChange("contact_email", e.target.value)}
+              placeholder="name@example.com"
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="support_phone">支持电话</Label>
+            <Input
+              id="support_phone"
+              value={settings.support_phone || ""}
+              onChange={(e) => handleChange("support_phone", e.target.value)}
+              placeholder="+86 123 4567 8901"
+            />
+          </div>
 
-              <div className="flex justify-end mt-6">
-                <Button onClick={handleSaveSettings} disabled={loading}>
-                  保存设置
-                </Button>
+          <div className="flex items-center justify-between space-x-2 pt-2">
+            <div className="space-y-0.5">
+              <Label htmlFor="maintenance">维护模式</Label>
+              <div className="text-sm text-muted-foreground">
+                启用后，网站将显示维护页面
               </div>
-            </TabsContent>
+            </div>
+            <Switch
+              id="maintenance"
+              checked={settings.maintenance_mode || false}
+              onCheckedChange={(checked) => handleChange("maintenance_mode", checked)}
+            />
+          </div>
 
-            <TabsContent value="courses">
-              <Card>
-                <CardHeader>
-                  <CardTitle>课程设置</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">课程相关设置内容将显示在此处</p>
-                </CardContent>
-              </Card>
-            </TabsContent>
+          <div className="flex items-center justify-between space-x-2 pt-2">
+            <div className="space-y-0.5">
+              <Label htmlFor="registration">开放注册</Label>
+              <div className="text-sm text-muted-foreground">
+                允许新用户注册账号
+              </div>
+            </div>
+            <Switch
+              id="registration"
+              checked={settings.enable_registration !== false}
+              onCheckedChange={(checked) => handleChange("enable_registration", checked)}
+            />
+          </div>
 
-            <TabsContent value="subscriptions">
-              <Card>
-                <CardHeader>
-                  <CardTitle>订阅设置</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">订阅相关设置内容将显示在此处</p>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="orders">
-              <Card>
-                <CardHeader>
-                  <CardTitle>订单设置</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">订单相关设置内容将显示在此处</p>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="features">
-              <Card>
-                <CardHeader>
-                  <CardTitle>功能设置</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">功能相关设置内容将显示在此处</p>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="others">
-              <Card>
-                <CardHeader>
-                  <CardTitle>其他设置</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">其他系统设置内容将显示在此处</p>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
+          <div className="pt-4 text-right">
+            <Button
+              onClick={handleSave}
+              className="w-24"
+              disabled={isSaving}
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  保存中
+                </>
+              ) : (
+                "保存"
+              )}
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>
   );
-}
+};

@@ -62,6 +62,9 @@ export interface CourseNew {
   student_count?: number;
   enrollment_count?: number;
   thumbnail_url?: string;
+  language?: string;
+  published_at?: string;
+  lecture_count?: number;
 }
 
 // For form handling
@@ -177,5 +180,6 @@ export interface DatabaseFunctions {
   check_table_exists: any;
   execute_sql: any;
   insert_order_item: any;
+  get_order_items: any;
   delete_order: any;
 }
