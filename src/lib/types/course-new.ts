@@ -143,10 +143,6 @@ export interface SiteSetting {
   enable_registration?: boolean;
   created_at?: string;
   updated_at?: string;
-  
-  // Compatibility fields for migration function
-  key?: string;
-  value?: string;
 }
 
 // Define OrderLineItem interface with required properties
@@ -161,7 +157,7 @@ export interface OrderLineItem {
   [key: string]: any;
 }
 
-// Update DatabaseFunctions to include all functions used in the application
+// Update DatabaseFunctions to include all functions needed in the application
 export interface DatabaseFunctions {
   create_test_subscription: any;
   has_role: any;
