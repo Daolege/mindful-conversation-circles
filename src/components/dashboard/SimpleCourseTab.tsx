@@ -135,13 +135,13 @@ const CourseListItem = ({ course }: CourseListItemProps) => {
   const getStatusBadge = () => {
     if (isCompleted) {
       return (
-        <Badge className="bg-green-500 hover:bg-green-600 group-hover:animate-pulse flex items-center gap-1">
+        <Badge variant="success" className="group-hover:animate-pulse flex items-center gap-1">
           <CheckCircle className="h-3.5 w-3.5" />
           已完成
         </Badge>
       );
     } else if (hasStarted) {
-      return <Badge className="bg-yellow-500 hover:bg-yellow-600 group-hover:scale-105 transition-transform">进行中</Badge>;
+      return <Badge variant="warning" className="group-hover:scale-105 transition-transform">进行中</Badge>;
     } else {
       return <Badge variant="outline" className="group-hover:bg-gray-100 transition-colors">未开始</Badge>;
     }
@@ -168,7 +168,7 @@ const CourseListItem = ({ course }: CourseListItemProps) => {
         <div className="flex items-center gap-2 flex-wrap">
           {getStatusBadge()}
           
-          <Badge variant="outline" className="group-hover:bg-gray-100 transition-colors">
+          <Badge variant="courseTag" className="group-hover:bg-gray-100 transition-colors">
             {course.category || "通用课程"}
           </Badge>
           
@@ -243,10 +243,17 @@ function getSampleCourses(): CourseNew[] {
     "React 框架实战课程",
     "数据结构与算法入门",
     "Web前端性能优化指南",
-    "Python 数据分析基础"
+    "Python 数据分析基础",
+    "Node.js 服务端开发",
+    "Vue.js 组件化开发",
+    "TypeScript 项目实践",
+    "微信小程序开发入门",
+    "CSS3 动画与交互设计",
+    "MongoDB 数据库开发",
+    "React Native 移动应用开发"
   ];
   
-  const categories = ["前端开发", "后端开发", "算法", "数据分析", "云计算", null];
+  const categories = ["前端开发", "后端开发", "算法", "数据分析", "云计算", "移动开发", "UI设计", "数据库"];
   
   return courseTitles.map((title, index) => ({
     id: index + 1,
