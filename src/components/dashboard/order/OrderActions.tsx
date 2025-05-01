@@ -5,9 +5,10 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Order } from '@/lib/types/order';
 import { updateOrderStatus } from '@/lib/services/orderService';
 import { toast } from 'sonner';
-import { Loader2, Trash2 } from 'lucide-react';
+import { FileText, Loader2, Trash2 } from 'lucide-react';
 import { deleteOrder } from '@/lib/services/orderUpdateService';
 import { useNavigate } from 'react-router-dom';
+import { PaymentReceiptModal } from './PaymentReceiptModal';
 
 interface OrderActionsProps {
   order: Order;
@@ -17,6 +18,7 @@ interface OrderActionsProps {
 export const OrderActions = ({ order, onOrderUpdated }: OrderActionsProps) => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [receiptModalOpen, setReceiptModalOpen] = useState(false);
   const navigate = useNavigate();
 
   const handleStatusUpdate = async (newStatus: string) => {
@@ -58,9 +60,22 @@ export const OrderActions = ({ order, onOrderUpdated }: OrderActionsProps) => {
     }
   };
 
+  const showReceiptButton = order.status === 'completed' || order.is_paid;
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col space-y-2">
+        {showReceiptButton && (
+          <Button 
+            variant="outline" 
+            className="w-full justify-start" 
+            onClick={() => setReceiptModalOpen(true)}
+          >
+            <FileText className="mr-2 h-4 w-4" />
+            查看支付凭证
+          </Button>
+        )}
+        
         {order.status === 'pending' && (
           <Button 
             disabled={isUpdating} 
@@ -120,6 +135,13 @@ export const OrderActions = ({ order, onOrderUpdated }: OrderActionsProps) => {
           </AlertDialogContent>
         </AlertDialog>
       </div>
+      
+      {/* Payment Receipt Modal */}
+      <PaymentReceiptModal 
+        order={order} 
+        open={receiptModalOpen} 
+        onOpenChange={setReceiptModalOpen} 
+      />
     </div>
   );
 };

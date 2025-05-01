@@ -1,166 +1,74 @@
+import { formatCurrency } from "@/lib/utils";
+import { Order } from "@/lib/types/order";
 
-/**
- * Currency Service
- * Provides utility functions for working with currencies, formatting amounts, and exchange rates
- */
-
-import { Order } from '@/lib/types/order';
-import { getExchangeRate } from './migrationService';
-
-/**
- * Format a monetary amount with the appropriate currency symbol
- */
-export const formatAmount = (amount: number | string | undefined, currency: string = 'cny'): string => {
-  if (amount === undefined || amount === null) {
-    return '0.00';
-  }
-  
-  // Convert to number if string
-  const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
-  
-  // Format the number according to currency
-  const currencyLower = (currency || 'cny').toLowerCase();
-  
-  switch (currencyLower) {
-    case 'usd':
-      return `$${numAmount.toFixed(2)}`;
-    case 'eur':
-      return `€${numAmount.toFixed(2)}`;
-    case 'gbp':
-      return `£${numAmount.toFixed(2)}`;
-    case 'jpy':
-      return `¥${Math.round(numAmount)}`;
-    case 'cny':
-    case 'rmb':
-      return `¥${numAmount.toFixed(2)}`;
-    default:
-      return `${numAmount.toFixed(2)} ${currencyLower.toUpperCase()}`;
-  }
+// Format amount with currency symbol
+export const formatAmount = (amount: number | undefined, currency: string | undefined) => {
+  if (amount === undefined) return '-';
+  return formatCurrency(amount, currency || 'usd');
 };
 
-/**
- * Format pre-payment amount (for display before payment)
- */
-export const formatPrePaymentAmount = (amount: number, currency: string = 'cny'): string => {
-  return formatAmount(amount, currency);
-};
+// Get display name for payment method
+export const getPaymentMethodDisplay = (paymentType: string | undefined) => {
+  if (!paymentType) return '未知支付方式';
 
-/**
- * Get display text for exchange rate
- */
-export const getExchangeRateDisplay = (
-  originalCurrency?: string,
-  targetCurrency?: string,
-  rate?: number
-): string => {
-  if (!originalCurrency || !targetCurrency || !rate) {
-    return '';
-  }
-  
-  return `${originalCurrency.toUpperCase()} → ${targetCurrency.toUpperCase()} @ ${rate.toFixed(4)}`;
-};
-
-/**
- * Get the payment method display text
- */
-export const getPaymentMethodDisplay = (method?: string): string => {
-  if (!method) return '未知支付方式';
-  
-  const methodLower = method.toLowerCase();
-  
-  switch (methodLower) {
+  switch (paymentType) {
     case 'wechat':
-    case 'wechatpay':
       return '微信支付';
     case 'alipay':
       return '支付宝';
-    case 'creditcard':
-    case 'credit_card':
     case 'credit-card':
       return '信用卡';
     case 'paypal':
       return 'PayPal';
     case 'stripe':
       return 'Stripe';
-    case 'bank_transfer':
-    case 'bank-transfer':
-      return '银行转账';
     default:
-      if (methodLower.startsWith('subscription')) {
-        return '订阅';
+      if (paymentType?.includes('subscription')) {
+        return '订阅付款';
       }
-      return method;
+      return paymentType;
   }
 };
 
-/**
- * Get actual payment amount and currency from order
- */
-export const getActualPaymentAmount = (order: Order): { amount: number; currency: string } => {
-  if (!order) {
-    return { amount: 0, currency: 'cny' };
-  }
+// Get exchange rate display string
+export const getExchangeRateDisplay = (
+  fromCurrency: string | undefined,
+  toCurrency: string | undefined,
+  rate: number | undefined
+) => {
+  if (!fromCurrency || !toCurrency || !rate) return '';
   
-  // If there's an original amount and currency (pre-conversion), use that
-  if (order.original_amount !== undefined && order.original_currency) {
-    return { 
-      amount: order.original_amount, 
-      currency: order.original_currency 
+  return `汇率: 1 ${fromCurrency.toUpperCase()} = ${rate} ${toCurrency.toUpperCase()}`;
+};
+
+// Get actual payment amount considering original currency
+export const getActualPaymentAmount = (order: Order) => {
+  // If we have original currency and amount, use that
+  if (order.original_currency && order.original_amount !== undefined) {
+    return {
+      amount: order.original_amount,
+      currency: order.original_currency
     };
   }
   
-  // Otherwise use the order amount and currency
-  return { 
-    amount: order.amount || order.total_amount || 0, 
-    currency: order.currency || 'cny' 
+  // Otherwise use the stored amount and currency
+  return {
+    amount: order.amount || 0,
+    currency: order.currency || 'usd'
   };
 };
 
-/**
- * Get default exchange rate for USD to CNY conversion
- * Used when system exchange rate is not available
- */
-export const getDefaultExchangeRate = (): number => {
-  return 7.0; // Default USD to CNY exchange rate
+// Calculate savings amount
+export const calculateSavings = (order: Order) => {
+  if (!order.original_amount || !order.amount) return 0;
+  if (order.original_amount <= order.amount) return 0;
+  
+  return order.original_amount - order.amount;
 };
 
-/**
- * Convert currency based on exchange rate
- * @param amount - The amount to convert
- * @param fromCurrency - Source currency code
- * @param toCurrency - Target currency code
- * @param exchangeRate - Exchange rate to use (optional, will use default if not provided)
- */
-export const convertCurrency = async (
-  amount: number, 
-  fromCurrency: string = 'usd', 
-  toCurrency: string = 'cny', 
-  exchangeRate?: number
-): Promise<number> => {
-  // If currencies are the same, no conversion needed
-  if (fromCurrency.toLowerCase() === toCurrency.toLowerCase()) {
-    return amount;
-  }
+// Get savings percentage
+export const getSavingsPercentage = (order: Order) => {
+  if (!order.original_amount || !order.amount || order.original_amount <= order.amount) return 0;
   
-  // If no exchange rate provided, try to get from system settings
-  if (!exchangeRate) {
-    try {
-      exchangeRate = await getExchangeRate();
-    } catch (error) {
-      console.error('Error getting exchange rate, using default:', error);
-      exchangeRate = getDefaultExchangeRate();
-    }
-  }
-  
-  // Basic conversion - only supporting USD to CNY for now
-  // For more complex conversions, we'd need a full rate table
-  if (fromCurrency.toLowerCase() === 'usd' && toCurrency.toLowerCase() === 'cny') {
-    return amount * exchangeRate;
-  } else if (fromCurrency.toLowerCase() === 'cny' && toCurrency.toLowerCase() === 'usd') {
-    return amount / exchangeRate;
-  }
-  
-  // If we don't know how to convert, return original amount
-  console.warn(`Unsupported currency conversion from ${fromCurrency} to ${toCurrency}`);
-  return amount;
+  return Math.round((order.original_amount - order.amount) / order.original_amount * 100);
 };

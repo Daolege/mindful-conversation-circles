@@ -1,3 +1,4 @@
+
 export interface Order {
   id: string;
   order_number?: string;
@@ -40,6 +41,7 @@ export interface Order {
   refund_processed_at?: string;
   admin_notes?: string;
   is_refundable?: boolean;
+  billing_address?: string;
   
   // Add these new fields for enhanced status handling
   payment_status?: string;
