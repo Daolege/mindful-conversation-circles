@@ -1,8 +1,14 @@
 
 import { supabase } from '@/integrations/supabase/client';
 
+// 定义返回类型接口，避免无限类型实例化
+interface CourseResponse<T> {
+  data: T | null;
+  error: Error | null;
+}
+
 // Add the getCourseById function
-export const getCourseById = async (courseId: number) => {
+export const getCourseById = async (courseId: number): Promise<CourseResponse<any>> => {
   try {
     const { data, error } = await supabase
       .from('courses_new')
@@ -18,12 +24,12 @@ export const getCourseById = async (courseId: number) => {
     return { data, error: null };
   } catch (err) {
     console.error('[courseService] Unexpected error in getCourseById:', err);
-    return { data: null, error: err };
+    return { data: null, error: err as Error };
   }
 };
 
 // Add the saveCourse function
-export const saveCourse = async (courseData: any) => {
+export const saveCourse = async (courseData: any): Promise<CourseResponse<any>> => {
   try {
     const { data, error } = await supabase
       .from('courses_new')
@@ -39,12 +45,12 @@ export const saveCourse = async (courseData: any) => {
     return { data, error: null };
   } catch (err) {
     console.error('[courseService] Unexpected error in saveCourse:', err);
-    return { data: null, error: err };
+    return { data: null, error: err as Error };
   }
 };
 
 // Add the getCoursesByInstructorId function (needed by instructorService)
-export const getCoursesByInstructorId = async (instructorId: string) => {
+export const getCoursesByInstructorId = async (instructorId: string): Promise<CourseResponse<any[]>> => {
   try {
     const { data, error } = await supabase
       .from('courses_new')
@@ -59,12 +65,12 @@ export const getCoursesByInstructorId = async (instructorId: string) => {
     return { data, error: null };
   } catch (err) {
     console.error('[courseService] Unexpected error in getCoursesByInstructorId:', err);
-    return { data: null, error: err };
+    return { data: null, error: err as Error };
   }
 };
 
 // Add this export for the updateCourseOrder function
-export const updateCourseOrder = async (courseIds: number[]) => {
+export const updateCourseOrder = async (courseIds: number[]): Promise<{ success: boolean; error?: any }> => {
   try {
     console.log('[courseService] Updating course display order:', courseIds);
     

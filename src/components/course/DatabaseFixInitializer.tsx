@@ -55,8 +55,8 @@ export const DatabaseFixInitializer: React.FC = () => {
             .eq('key', 'homework_migration_completed')
             .maybeSingle();
           
-          // Use optional chaining to avoid errors when accessing properties
-          if (settingsData?.key === 'homework_migration_completed') {
+          // 使用安全的可选链和条件检查
+          if (settingsData && typeof settingsData === 'object' && 'key' in settingsData) {
             console.log('[DatabaseFixInitializer] Migration already recorded in site_settings');
             localStorage.setItem(storageKey, 'true');
             setMigrationExecuted(true);

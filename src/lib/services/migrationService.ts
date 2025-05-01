@@ -5,6 +5,13 @@ import { supabase } from '@/integrations/supabase/client';
  * Migration service to help with database migrations and schema fixes
  */
 
+// Interface for migration data to avoid infinite type instantiation
+interface MigrationRecord {
+  key: string;
+  value: string;
+  updated_at: string;
+}
+
 // Set up the migration table to track database changes
 export const setupMigrationTable = async (): Promise<{ success: boolean; message: string }> => {
   try {
@@ -100,10 +107,10 @@ export const hasMigrationExecuted = async (migrationName: string): Promise<boole
     }
     
     // Get the first record
-    const record = data[0];
+    const record = data[0] as MigrationRecord;
     
-    // Check if it has a string value that can be parsed
-    if (typeof record.value === 'string') {
+    // 安全地检查record和value属性
+    if (record && typeof record === 'object' && 'value' in record && typeof record.value === 'string') {
       try {
         const migrationData = JSON.parse(record.value);
         return !!migrationData?.success;

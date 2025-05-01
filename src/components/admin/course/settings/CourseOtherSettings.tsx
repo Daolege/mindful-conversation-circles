@@ -32,26 +32,27 @@ const updateSectionVisibility = async ({ courseId, section, isVisible }: {
   isVisible: boolean;
 }) => {
   try {
-    let endpoint = '';
+    // 使用直接的数据表操作而不是RPC方法，避免RPC不存在的问题
+    let tableName = '';
     switch (section) {
       case 'objectives':
-        endpoint = 'updateObjectivesVisibility';
+        tableName = 'course_objectives';
         break;
       case 'requirements':
-        endpoint = 'updateRequirementsVisibility';
+        tableName = 'course_requirements';
         break;
       case 'audiences':
-        endpoint = 'updateAudiencesVisibility';
+        tableName = 'course_audiences';
         break;
       default:
         throw new Error(`Unknown section: ${section}`);
     }
     
-    // Use Supabase directly since the specific endpoint might not exist
-    const { data, error } = await supabase.rpc(endpoint, {
-      course_id: courseId,
-      is_visible: isVisible
-    });
+    // 使用直接的数据表更新操作
+    const { data, error } = await supabase
+      .from(tableName)
+      .update({ is_visible: isVisible })
+      .eq('course_id', courseId);
     
     if (error) throw error;
     

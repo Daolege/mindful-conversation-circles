@@ -137,7 +137,7 @@ export const CourseMaterialsEditor = ({ courseId }: CourseMaterialsEditorProps) 
   const { user } = useAuth();
   
   // Connect to the CourseEditorContext
-  const { sectionVisibility, setSectionVisibility } = useCourseEditor();
+  const { sectionVisibility, setSectionVisibility: updateSectionVisibility } = useCourseEditor();
   // Use the materialsVisible state from CourseEditorContext, default to false
   const isVisible = sectionVisibility?.materials !== false;
   
@@ -196,7 +196,10 @@ export const CourseMaterialsEditor = ({ courseId }: CourseMaterialsEditorProps) 
       // If we have materials, set the visibility state based on the first material
       // Otherwise, use the default visibility from CourseEditorContext
       if (sortedMaterials.length > 0 && sortedMaterials[0].is_visible !== undefined) {
-        setSectionVisibility('materials', !!sortedMaterials[0].is_visible);
+        updateSectionVisibility({
+          ...sectionVisibility,
+          materials: !!sortedMaterials[0].is_visible
+        });
       }
     } catch (err: any) {
       console.error("Error fetching materials:", err);
@@ -325,18 +328,12 @@ export const CourseMaterialsEditor = ({ courseId }: CourseMaterialsEditorProps) 
     }
   };
   
-  const setSectionVisibility = (key, value) => {
-    if (setSectionVisibility) {
-      setSectionVisibility({
-        ...sectionVisibility,
-        [key]: value
-      });
-    }
-  };
-  
   const handleVisibilityChange = async (checked: boolean) => {
     // Update visibility in CourseEditorContext first for responsive UI
-    setSectionVisibility('materials', checked);
+    updateSectionVisibility({
+      ...sectionVisibility,
+      materials: checked
+    });
     
     try {
       // Update visibility for all materials using the service function
