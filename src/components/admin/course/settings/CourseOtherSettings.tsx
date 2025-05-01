@@ -8,12 +8,7 @@ import { EditableListComponent } from './EditableListComponent';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-
-// Define specific types for our lists to avoid deep nesting
-interface ListItem {
-  id: string;
-  text: string;
-}
+import { ListItem } from '@/lib/types/course-new';
 
 // Define props for the CourseOtherSettings component
 interface CourseOtherSettingsProps {
@@ -40,6 +35,8 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({
     return arr.map((item, index) => ({
       id: `item-${index}`,
       text: item,
+      position: index,
+      is_visible: true
     }));
   };
 

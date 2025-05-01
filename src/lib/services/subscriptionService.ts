@@ -1,141 +1,180 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { SubscriptionItem } from '@/types/dashboard';
+import { User } from '@/contexts/authTypes';
+import { SubscriptionPeriod } from '@/lib/types/course-new';
 
-export interface SubscriptionPlan {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  interval: string;
-  currency: string;
-  features?: string[];
-  display_order: number;
-  discount_percentage: number;
-  is_active: boolean;
-  created_at?: string;
-  updated_at?: string;
-}
-
-export type SubscriptionPeriod = 'monthly' | 'quarterly' | 'yearly' | '2years' | '3years';
-
-export const getUserSubscriptionHistory = async (userId: string): Promise<any[]> => {
+// Get subscription plans
+export const getSubscriptionPlans = async () => {
   try {
-    console.log(`[subscriptionService] Getting subscription history for user: ${userId}`);
-    
-    const { data, error } = await supabase
-      .from('subscription_history')
-      .select(`
-        *,
-        new_plan:new_plan_id (
-          id, name, description, features
-        )
-      `)
-      .eq('user_id', userId)
-      .order('effective_date', { ascending: false });
-    
-    if (error) {
-      console.error('[subscriptionService] Error fetching subscription history:', error);
-      return [];
-    }
-    
-    console.log(`[subscriptionService] Found ${data?.length || 0} subscription records`);
-    return data || [];
-  } catch (err) {
-    console.error('[subscriptionService] getUserSubscriptionHistory error:', err);
-    return [];
-  }
-};
-
-export const getCurrentSubscription = async (userId: string): Promise<SubscriptionItem | null> => {
-  try {
-    console.log(`[subscriptionService] Getting current subscription for user: ${userId}`);
-    
-    const { data, error } = await supabase
-      .from('user_subscriptions')
-      .select(`
-        *,
-        subscription_plan:plan_id (*)
-      `)
-      .eq('user_id', userId)
-      .eq('status', 'active')
-      .maybeSingle();
-    
-    if (error) {
-      console.error('[subscriptionService] Error fetching current subscription:', error);
-      return null;
-    }
-    
-    return data as SubscriptionItem | null;
-  } catch (err) {
-    console.error('[subscriptionService] getCurrentSubscription error:', err);
-    return null;
-  }
-};
-
-export const createTestSubscription = async (userId: string, planInterval: string = 'monthly'): Promise<boolean> => {
-  try {
-    console.log(`[subscriptionService] Creating test subscription for user: ${userId}, interval: ${planInterval}`);
-    
-    const { data, error } = await supabase.rpc('create_test_subscription', {
-      user_id: userId,
-      plan_interval: planInterval
-    });
-    
-    if (error) {
-      console.error('[subscriptionService] Error creating test subscription:', error);
-      return false;
-    }
-    
-    console.log('[subscriptionService] Test subscription created successfully');
-    return true;
-  } catch (err) {
-    console.error('[subscriptionService] createTestSubscription error:', err);
-    return false;
-  }
-};
-
-export const getSubscriptionPlans = async (): Promise<SubscriptionPlan[]> => {
-  try {
-    console.log('[subscriptionService] Getting subscription plans');
-    
     const { data, error } = await supabase
       .from('subscription_plans')
       .select('*')
       .eq('is_active', true)
       .order('display_order', { ascending: true });
-    
-    if (error) {
-      console.error('[subscriptionService] Error fetching subscription plans:', error);
-      return [];
-    }
-    
-    console.log(`[subscriptionService] Found ${data?.length || 0} subscription plans`);
+      
+    if (error) throw error;
     return data || [];
-  } catch (err) {
-    console.error('[subscriptionService] getSubscriptionPlans error:', err);
+  } catch (error) {
+    console.error('Error fetching subscription plans:', error);
     return [];
   }
 };
 
-export const forceDeleteSubscriptionPlan = async (id: string): Promise<boolean> => {
+// Get user's active subscription
+export const getUserActiveSubscription = async (userId: string) => {
   try {
-    console.log(`[subscriptionService] Deleting subscription plan: ${id}`);
-    
-    const { error } = await supabase
+    const { data, error } = await supabase
+      .from('user_subscriptions')
+      .select(`
+        *,
+        subscription_plans (*)
+      `)
+      .eq('user_id', userId)
+      .eq('status', 'active')
+      .lte('start_date', new Date().toISOString())
+      .gte('end_date', new Date().toISOString())
+      .single();
+      
+    if (error && error.code !== 'PGRST116') throw error; // PGRST116 is "no rows returned"
+    return data || null;
+  } catch (error) {
+    console.error('Error fetching user subscription:', error);
+    return null;
+  }
+};
+
+// Create a new subscription
+export const createSubscription = async (user: User, period: SubscriptionPeriod, paymentMethod: string) => {
+  try {
+    // First, get the plan details
+    const { data: plans, error: plansError } = await supabase
       .from('subscription_plans')
-      .delete()
-      .eq('id', id);
-    
-    if (error) {
-      console.error('[subscriptionService] Error deleting subscription plan:', error);
-      return false;
+      .select('*')
+      .eq('interval', period)
+      .eq('is_active', true)
+      .single();
+      
+    if (plansError || !plans) {
+      console.error('Error fetching subscription plan:', plansError);
+      return { success: false, error: '无法找到对应的订阅计划' };
     }
     
-    console.log('[subscriptionService] Subscription plan deleted successfully');
-    return true;
-  } catch (err) {
-    console.error('[subscriptionService] forceDeleteSubscriptionPlan error:', err);
-    return false;
+    // Calculate dates
+    const startDate = new Date();
+    const endDate = new Date();
+    
+    // Set end date based on period
+    if (period === 'monthly') {
+      endDate.setMonth(endDate.getMonth() + 1);
+    } else if (period === 'quarterly') {
+      endDate.setMonth(endDate.getMonth() + 3);
+    } else if (period === 'yearly') {
+      endDate.setFullYear(endDate.getFullYear() + 1);
+    }
+    
+    // Create subscription
+    const subscriptionId = `sub-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+    const { error: subscriptionError } = await supabase
+      .from('user_subscriptions')
+      .insert({
+        id: subscriptionId,
+        user_id: user.id,
+        plan_id: plans.id,
+        status: 'active',
+        start_date: startDate.toISOString(),
+        end_date: endDate.toISOString(),
+        auto_renew: true,
+        payment_method: paymentMethod,
+        last_payment_date: startDate.toISOString(),
+        next_payment_date: endDate.toISOString()
+      });
+      
+    if (subscriptionError) {
+      console.error('Error creating subscription:', subscriptionError);
+      return { success: false, error: '创建订阅失败' };
+    }
+    
+    // Create subscription history record
+    const { error: historyError } = await supabase
+      .from('subscription_history')
+      .insert({
+        user_id: user.id,
+        subscription_id: subscriptionId,
+        new_plan_id: plans.id,
+        change_type: 'new',
+        amount: plans.price,
+        currency: plans.currency,
+        effective_date: startDate.toISOString()
+      });
+      
+    if (historyError) {
+      console.error('Error creating subscription history:', historyError);
+      // Non-critical, continue
+    }
+    
+    // Create transaction
+    const { error: transactionError } = await supabase
+      .from('subscription_transactions')
+      .insert({
+        subscription_id: subscriptionId,
+        transaction_type: 'payment',
+        amount: plans.price,
+        currency: plans.currency,
+        payment_method: paymentMethod,
+        status: 'completed'
+      });
+      
+    if (transactionError) {
+      console.error('Error creating transaction:', transactionError);
+      // Non-critical, continue
+    }
+    
+    return { success: true };
+  } catch (error) {
+    console.error('Error in createSubscription:', error);
+    return { success: false, error: '处理订阅请求时出错' };
+  }
+};
+
+// Create a test subscription for the current user
+export const createTestSubscription = async (userId: string) => {
+  try {
+    const { data: plans, error: plansError } = await supabase
+      .from('subscription_plans')
+      .select('*')
+      .eq('interval', 'monthly')
+      .eq('is_active', true)
+      .single();
+      
+    if (plansError || !plans) {
+      return { success: false, error: 'No active monthly plan found' };
+    }
+    
+    const startDate = new Date();
+    const endDate = new Date();
+    endDate.setMonth(endDate.getMonth() + 1);
+    
+    const subscriptionId = `test-${Date.now()}`;
+    const { error } = await supabase
+      .from('user_subscriptions')
+      .insert({
+        id: subscriptionId,
+        user_id: userId,
+        plan_id: plans.id,
+        status: 'active',
+        start_date: startDate.toISOString(),
+        end_date: endDate.toISOString(),
+        auto_renew: false,
+        payment_method: 'test',
+        last_payment_date: startDate.toISOString()
+      });
+      
+    if (error) {
+      return { success: false, error: error.message };
+    }
+    
+    return { success: true, subscriptionId };
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
   }
 };
