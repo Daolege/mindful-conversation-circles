@@ -6,11 +6,6 @@ import ContactMethodsSettings from "./ContactMethodsSettings";
 
 export function AdminSettings() {
   const [activeTab, setActiveTab] = useState("system");
-  const [activeSettingsTab, setActiveSettingsTab] = useState("home");
-
-  const handleSettingsTabChange = (value: string) => {
-    setActiveSettingsTab(value);
-  };
 
   return (
     <div className="space-y-6">
@@ -22,7 +17,7 @@ export function AdminSettings() {
         
         <TabsContent value="system">
           <div className="space-y-6">
-            <SystemSettings activeTab={activeSettingsTab} />
+            <SystemSettings activeTab="home" />
           </div>
         </TabsContent>
 
