@@ -19,7 +19,6 @@ export function OrderHistoryView() {
   const { 
     data: ordersResponse, 
     isLoading, 
-    error, 
     refetch,
     isFetching
   } = useQuery({

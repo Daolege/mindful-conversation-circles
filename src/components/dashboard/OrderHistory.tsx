@@ -80,16 +80,7 @@ export function OrderHistory({
 
   return (
     <div>
-      <div className="mb-6">
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            className={`px-4 py-2 rounded-md ${statusFilter === 'all' ? 'bg-knowledge-primary text-white' : 'bg-gray-100'}`}
-            onClick={() => onStatusFilterChange('all')}
-          >
-            全部
-          </button>
-        </div>
-      </div>
+      {/* Removed "全部" button and related container div */}
 
       {orders.length > 0 ? (
         <div className="border rounded-lg overflow-hidden">
