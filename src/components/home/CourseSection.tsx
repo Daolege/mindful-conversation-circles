@@ -21,6 +21,7 @@ const CourseSection = ({
   filterBy,
   filterValue,
 }: CourseSectionProps) => {
+  // Fix the type instantiation issue by explicitly typing the query function return
   const { data: courses = [], isLoading } = useQuery({
     queryKey: ['homepage-courses', filterBy, filterValue, limit],
     queryFn: async () => {
@@ -38,10 +39,10 @@ const CourseSection = ({
       
       if (error) {
         console.error('Error fetching courses:', error);
-        return [];
+        return [] as CourseNew[];
       }
       
-      return data as CourseNew[];
+      return (data || []) as CourseNew[];
     }
   });
 
@@ -78,7 +79,7 @@ const CourseSection = ({
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {Array(4).fill(0).map((_, i) => (
-              <div key={i} className="h-[380px] bg-gray-200 animate-pulse rounded-lg"></div>
+              <div key={i} className="h-[400px] bg-gray-200 animate-pulse rounded-lg"></div>
             ))}
           </div>
         ) : courses.length > 0 ? (

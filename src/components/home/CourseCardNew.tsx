@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Users, Clock, Tag } from "lucide-react";
+import { Users, Clock, Star } from "lucide-react";
 import { CourseNew } from "@/lib/types/course-new";
 
 interface CourseCardNewProps {
@@ -18,89 +18,95 @@ const CourseCardNew = ({ course, variantIndex = 0 }: CourseCardNewProps) => {
   const discount = hasDiscount 
     ? Math.round(((course.original_price - course.price) / course.original_price) * 100) 
     : 0;
-
+    
   return (
     <motion.div 
       whileHover={{ y: -8 }}
       transition={{ duration: 0.3 }}
     >
       <Link to={`/courses-new/${course.id}`} className="block">
-        <Card className="overflow-hidden h-[380px] border-0 shadow-md hover:shadow-xl transition-shadow duration-300 bg-white relative">
-          {/* Card top image section */}
-          <div className="h-48 relative overflow-hidden">
+        <Card className="overflow-hidden h-[400px] border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 bg-white group">
+          {/* Card image section */}
+          <div className="h-52 relative overflow-hidden">
             {course.thumbnail_url ? (
               <img 
                 src={course.thumbnail_url} 
                 alt={course.title} 
-                className="w-full h-full object-cover transition-transform duration-700 hover:scale-110"
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
               />
             ) : (
-              <div className="w-full h-full bg-gradient-to-r from-gray-200 to-gray-300 flex items-center justify-center">
-                <span className="text-gray-500">课程图片</span>
+              <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                <span className="text-gray-400">课程图片</span>
               </div>
             )}
             
-            {/* Featured badge */}
-            {course.is_featured && (
-              <div className="absolute top-3 right-3">
-                <Badge className="bg-black text-white">热门课程</Badge>
-              </div>
-            )}
-            
-            {/* Discount badge */}
+            {/* Discount tag */}
             {hasDiscount && (
-              <div className="absolute top-3 left-3">
-                <Badge variant="destructive" className="font-bold">
+              <div className="absolute top-0 left-0">
+                <div className="bg-black text-white px-3 py-1 font-medium">
                   {discount}% OFF
-                </Badge>
+                </div>
               </div>
             )}
           </div>
           
           {/* Card content */}
           <div className="p-5 flex flex-col h-[200px]">
-            {/* Category */}
-            {course.category && (
-              <Badge 
-                variant="outline" 
-                className="self-start mb-2 text-xs font-normal border-gray-200 text-gray-600 flex items-center gap-1"
-              >
-                <Tag className="w-3 h-3" />
-                {course.category}
-              </Badge>
-            )}
+            {/* Title with ellipsis for long titles */}
+            <h3 className="font-bold text-lg mb-2 line-clamp-2 text-gray-900 group-hover:text-black">
+              {course.title}
+            </h3>
             
-            {/* Title */}
-            <h3 className="font-bold text-lg mb-2 line-clamp-2 text-gray-900">{course.title}</h3>
-            
-            {/* Stats row */}
-            <div className="flex items-center space-x-4 text-sm text-gray-600 mb-3">
+            {/* Course meta info */}
+            <div className="flex items-center space-x-4 text-xs text-gray-500 mb-3">
               <div className="flex items-center">
-                <Users className="w-4 h-4 mr-1" />
-                <span>{course.enrollment_count || 0}</span>
+                <Users className="w-3.5 h-3.5 mr-1" />
+                <span>{course.enrollment_count || 0}人已学习</span>
               </div>
               <div className="flex items-center">
-                <Clock className="w-4 h-4 mr-1" />
+                <Clock className="w-3.5 h-3.5 mr-1" />
                 <span>随时学习</span>
               </div>
+              {course.is_featured && (
+                <Badge variant="outline" className="bg-black text-white border-black text-[10px] py-0">
+                  热门
+                </Badge>
+              )}
+            </div>
+            
+            {/* Category if available */}
+            {course.category && (
+              <div className="mb-2">
+                <Badge variant="outline" className="text-xs font-normal text-gray-600">
+                  {course.category}
+                </Badge>
+              </div>
+            )}
+            
+            {/* Rating stars visualization */}
+            <div className="flex items-center mt-auto mb-3">
+              <div className="flex">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Star 
+                    key={star} 
+                    className="w-4 h-4 text-yellow-400 fill-yellow-400" 
+                  />
+                ))}
+              </div>
+              <span className="text-xs text-gray-500 ml-2">(5.0)</span>
             </div>
             
             {/* Price section */}
-            <div className="mt-auto pt-3 border-t border-gray-100 flex justify-between items-center">
-              <div className="flex items-end gap-2">
+            <div className="flex justify-between items-center pt-3 border-t border-gray-100">
+              <div className="flex items-baseline gap-2">
                 <span className="text-xl font-bold text-gray-900">¥{course.price}</span>
                 {hasDiscount && (
-                  <span className="text-sm text-gray-500 line-through">¥{course.original_price}</span>
+                  <span className="text-sm text-gray-400 line-through">¥{course.original_price}</span>
                 )}
               </div>
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <Badge className="bg-black text-white hover:bg-gray-800 cursor-pointer px-3 py-1">
-                  立即查看
-                </Badge>
-              </motion.div>
+              <Badge className="bg-black hover:bg-gray-800 cursor-pointer">
+                立即查看
+              </Badge>
             </div>
           </div>
         </Card>

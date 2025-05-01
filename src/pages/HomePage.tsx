@@ -21,14 +21,14 @@ const HomePage = () => {
         >
           {/* 热门课程模块 */}
           <CourseSection 
-            title="热门跨境电商课程" 
-            subtitle="精选适合各层次学员的高质量课程，助您轻松入行" 
+            title="精选热门课程" 
+            subtitle="发现最受欢迎的优质课程，快速提升核心技能" 
           />
           
           {/* 入门课程模块 */}
           <CourseSection 
-            title="跨境电商入门精选" 
-            subtitle="零基础起步，掌握跨境电商核心技能" 
+            title="零基础入门课程" 
+            subtitle="专为初学者设计的系统化学习内容" 
             filterBy="category"
             filterValue="beginner"
           />
@@ -36,7 +36,7 @@ const HomePage = () => {
           {/* 高级课程模块 */}
           <CourseSection 
             title="进阶实战课程" 
-            subtitle="深入电商运营与营销策略，提升业务增长" 
+            subtitle="深度学习与高级案例分析，提升专业水平" 
             filterBy="category"
             filterValue="advanced"
           />
