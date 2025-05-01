@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useTranslations } from '@/hooks/useTranslations';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -13,16 +12,7 @@ import { toast } from 'sonner';
 import { Search, Save, RefreshCw } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { exportTranslationsToJson } from '@/lib/utils/translationUtils';
-
-type TranslationItem = {
-  id?: number;
-  language_code: string;
-  namespace: string;
-  key: string;
-  value: string;
-  created_at?: string;
-  updated_at?: string;
-};
+import { TranslationItem } from '@/lib/services/languageService';
 
 const NAMESPACES = ['common', 'navigation', 'courses', 'auth', 'admin', 'checkout', 'dashboard', 'errors', 'orders'];
 
@@ -73,8 +63,10 @@ export const TranslationEditor = () => {
       const result = await getTranslations(selectedLanguage, selectedNamespace);
       
       if (result.success) {
-        setTranslations(result.data);
-        setFilteredTranslations(result.data);
+        // Ensure we're setting the correct type
+        const typedData = result.data as TranslationItem[];
+        setTranslations(typedData);
+        setFilteredTranslations(typedData);
       } else {
         toast.error(t('errors:general'), { description: result.error });
       }

@@ -1,6 +1,7 @@
 
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
+import { TranslationItem } from '@/lib/services/languageService';
 
 export const useTranslations = () => {
   const { t, i18n } = useTranslation(['common', 'navigation', 'courses', 'auth', 'admin', 'checkout', 'dashboard', 'errors', 'orders']);
@@ -13,36 +14,39 @@ export const useTranslations = () => {
     value: string
   ) => {
     try {
-      // 检查翻译是否存在
-      const { data: existingTranslation } = await supabase
+      // 检查翻译是否存在，由于类型系统限制，我们使用原始SQL查询
+      const { data: existingTranslation, error: selectError } = await supabase
         .from('translations')
         .select('*')
         .eq('language_code', language)
         .eq('namespace', namespace)
         .eq('key', key)
-        .single();
+        .maybeSingle();
+      
+      if (selectError) throw selectError;
       
       if (existingTranslation) {
         // 更新已有翻译
-        const { error } = await supabase
-          .from('translations')
-          .update({ value, updated_at: new Date().toISOString() })
-          .eq('id', existingTranslation.id);
+        const { error: updateError } = await supabase
+          .rpc('update_translation', {
+            p_id: existingTranslation.id,
+            p_value: value,
+            p_updated_at: new Date().toISOString()
+          });
           
-        if (error) throw error;
+        if (updateError) throw updateError;
       } else {
-        // 添加新翻译
-        const { error } = await supabase
-          .from('translations')
-          .insert([{
-            language_code: language,
-            namespace,
-            key,
-            value,
-            created_at: new Date().toISOString()
-          }]);
+        // 添加新翻译，使用RPC调用避免类型问题
+        const { error: insertError } = await supabase
+          .rpc('insert_translation', {
+            p_language_code: language,
+            p_namespace: namespace,
+            p_key: key,
+            p_value: value,
+            p_created_at: new Date().toISOString()
+          });
           
-        if (error) throw error;
+        if (insertError) throw insertError;
       }
       
       // 重新加载该命名空间的翻译
@@ -61,24 +65,25 @@ export const useTranslations = () => {
   // 获取指定语言和命名空间的所有翻译
   const getTranslations = async (language: string, namespace: string) => {
     try {
+      // 使用原始SQL查询来避免类型问题
       const { data, error } = await supabase
-        .from('translations')
-        .select('*')
-        .eq('language_code', language)
-        .eq('namespace', namespace);
+        .rpc('get_translations', {
+          p_language_code: language,
+          p_namespace: namespace
+        });
         
       if (error) throw error;
       
       return { 
         success: true, 
-        data: data || []
+        data: data as TranslationItem[] || []
       };
     } catch (error) {
       console.error('Error fetching translations:', error);
       return { 
         success: false, 
         error: error instanceof Error ? error.message : 'Unknown error',
-        data: []
+        data: [] as TranslationItem[]
       };
     }
   };
