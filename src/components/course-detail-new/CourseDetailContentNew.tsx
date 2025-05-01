@@ -1,9 +1,9 @@
-
 import React, { useState } from 'react';
 import { CourseWithDetails } from '@/lib/types/course-new';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AnimatedCollapsible } from '@/components/ui/animated-collapsible';
 import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
 import { 
   Lock, BookOpen, 
   Download, File, Target, Award, Users, Bookmark, GraduationCap, Book, CheckCircle
@@ -25,12 +25,18 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
     }
     return initial;
   });
+  
+  const navigate = useNavigate();
 
   const toggleSection = (sectionId: string) => {
     setOpenSectionIds(prev => ({
       ...prev,
       [sectionId]: !prev[sectionId]
     }));
+  };
+  
+  const handleFreeLearnClick = (lectureId: string) => {
+    navigate(`/learn/${course.id}?source=new&lectureId=${lectureId}`);
   };
 
   const totalLessons = course.sections?.reduce(
@@ -89,7 +95,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
       </Card>
 
       {/* 课程大纲 */}
-      <Card className="hover:shadow-lg transition-shadow duration-500 shadow-sm animate-in fade-in duration-700 delay-[400ms]">
+      <Card className="hover:shadow-lg transition-shadow duration-500 shadow-sm animate-in fade-in duration-700 delay-300">
         <CardHeader className="pb-0">
           <CardTitle className="text-xl flex items-center gap-2">
             <BookOpen className="h-5 w-5" />
@@ -137,6 +143,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
                               size="sm" 
                               variant="knowledge" 
                               className="text-xs py-2 px-3 h-8 flex items-center gap-1"
+                              onClick={() => handleFreeLearnClick(lecture.id)}
                             >
                               免费学习
                             </Button>
@@ -157,7 +164,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
       </Card>
 
       {/* 课程附件 */}
-      <Card className="hover:shadow-lg transition-shadow duration-500 shadow-sm animate-in fade-in duration-700 delay-[600ms]">
+      <Card className="hover:shadow-lg transition-shadow duration-500 shadow-sm animate-in fade-in duration-700 delay-400">
         <CardHeader className="pb-0">
           <CardTitle className="text-xl flex items-center gap-2">
             <File className="h-5 w-5" />
@@ -200,7 +207,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
       {/* 学习信息栏 - 三栏布局 */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* 学习目标 */}
-        <Card className="hover:shadow-lg transition-shadow duration-500 shadow-sm animate-in fade-in duration-700 delay-[800ms]">
+        <Card className="hover:shadow-lg transition-shadow duration-500 shadow-sm animate-in fade-in duration-700 delay-500">
           <CardHeader className="pb-0">
             <CardTitle className="text-lg flex items-center gap-2">
               <Target className="h-5 w-5" />
@@ -228,7 +235,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
         </Card>
 
         {/* 课程要求 */}
-        <Card className="hover:shadow-lg transition-shadow duration-500 shadow-sm animate-in fade-in duration-700 delay-[1000ms]">
+        <Card className="hover:shadow-lg transition-shadow duration-500 shadow-sm animate-in fade-in duration-700 delay-600">
           <CardHeader className="pb-0">
             <CardTitle className="text-lg flex items-center gap-2">
               <Book className="h-5 w-5" />
@@ -256,7 +263,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
         </Card>
 
         {/* 适合人群 */}
-        <Card className="hover:shadow-lg transition-shadow duration-500 shadow-sm animate-in fade-in duration-700 delay-[1200ms]">
+        <Card className="hover:shadow-lg transition-shadow duration-500 shadow-sm animate-in fade-in duration-700 delay-700">
           <CardHeader className="pb-0">
             <CardTitle className="text-lg flex items-center gap-2">
               <Users className="h-5 w-5" />

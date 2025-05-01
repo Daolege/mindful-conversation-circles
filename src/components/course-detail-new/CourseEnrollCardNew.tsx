@@ -13,13 +13,13 @@ interface CourseEnrollCardNewProps {
 
 export const CourseEnrollCardNew: React.FC<CourseEnrollCardNewProps> = ({ course }) => {
   // Format price with currency symbol
-  const formattedPrice = `¥${course.price.toFixed(2)}`;
-  const formattedOriginalPrice = course.original_price
+  const formattedPrice = course.price === 0 ? '免费' : `¥${course.price.toFixed(2)}`;
+  const formattedOriginalPrice = course.original_price && course.price !== 0
     ? `¥${course.original_price.toFixed(2)}`
     : null;
 
   // Calculate discount percentage if original price exists
-  const discountPercentage = course.original_price
+  const discountPercentage = course.original_price && course.price !== 0
     ? Math.round(((course.original_price - course.price) / course.original_price) * 100)
     : null;
     
@@ -40,15 +40,21 @@ export const CourseEnrollCardNew: React.FC<CourseEnrollCardNewProps> = ({ course
   }, []);
 
   const handleEnrollClick = () => {
-    navigate(`/checkout?courseId=${course.id}`, { 
-      state: { 
-        isNewCourse: true, // Flag to identify this is from the new course system
-        courseId: course.id,
-        courseTitle: course.title,
-        courseDescription: course.description,
-        coursePrice: course.price
-      }
-    });
+    if (course.price === 0) {
+      // For free courses, navigate directly to the learning page
+      navigate(`/learn/${course.id}?source=new`);
+    } else {
+      // For paid courses, navigate to checkout
+      navigate(`/checkout?courseId=${course.id}`, { 
+        state: { 
+          isNewCourse: true,
+          courseId: course.id,
+          courseTitle: course.title,
+          courseDescription: course.description,
+          coursePrice: course.price
+        }
+      });
+    }
   };
 
   return (
@@ -76,7 +82,7 @@ export const CourseEnrollCardNew: React.FC<CourseEnrollCardNewProps> = ({ course
             variant="knowledge"
             onClick={handleEnrollClick}
           >
-            立即报名学习
+            {course.price === 0 ? '免费学习' : '立即报名学习'}
           </Button>
 
           {/* Course features */}
@@ -93,11 +99,11 @@ export const CourseEnrollCardNew: React.FC<CourseEnrollCardNewProps> = ({ course
               <BookOpen className="h-4 w-4 text-gray-500 mr-2" />
               <span>0门槛学习</span>
             </div>
-            <div className="flex items-center animate-in fade-in slide-in-from-bottom-3 duration-700 delay-800">
+            <div className="flex items-center animate-in fade-in slide-in-from-bottom-3 duration-700 delay-[800ms]">
               <Globe className="h-4 w-4 text-gray-500 mr-2" />
               <span>课程语言：{course.language || '中文'}</span>
             </div>
-            <div className="flex items-center animate-in fade-in slide-in-from-bottom-3 duration-700 delay-900">
+            <div className="flex items-center animate-in fade-in slide-in-from-bottom-3 duration-700 delay-[900ms]">
               <Download className="h-4 w-4 text-gray-500 mr-2" />
               <span>可下载课件附件</span>
             </div>
