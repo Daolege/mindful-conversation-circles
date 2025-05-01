@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useTranslations } from '@/hooks/useTranslations';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -45,12 +46,10 @@ export const LanguageManagement = () => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Globe size={20} />
-          {currentLanguage === 'en' ? 'Language Management' : '语言管理'}
+          {t('admin:languageManagement')}
         </CardTitle>
         <CardDescription>
-          {currentLanguage === 'en' 
-            ? 'Manage which languages are available in your application.' 
-            : '管理应用程序中可用的语言。'}
+          {t('admin:languageManagementDescription')}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -77,11 +76,11 @@ export const LanguageManagement = () => {
               <div>
                 {language.enabled ? (
                   <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                    {currentLanguage === 'en' ? 'Active' : '已启用'}
+                    {t('admin:active')}
                   </Badge>
                 ) : (
                   <Badge variant="outline" className="bg-gray-50 text-gray-500 border-gray-200">
-                    {currentLanguage === 'en' ? 'Coming Soon' : '即将推出'}
+                    {t('admin:comingSoon')}
                   </Badge>
                 )}
                 {language.rtl && (
@@ -96,15 +95,13 @@ export const LanguageManagement = () => {
         
         <div className="mt-6">
           <Button variant="outline" disabled className="mr-2">
-            {currentLanguage === 'en' ? 'Add Language' : '添加语言'}
+            {t('admin:addLanguage')}
           </Button>
           <Button variant="outline" disabled>
-            {currentLanguage === 'en' ? 'Import Translations' : '导入翻译'}
+            {t('admin:importTranslations')}
           </Button>
           <p className="text-sm text-muted-foreground mt-2">
-            {currentLanguage === 'en' 
-              ? 'Additional language management features will be available in a future update.' 
-              : '更多语言管理功能将在未来更新中提供。'}
+            {t('admin:languageManagementFutureUpdate')}
           </p>
         </div>
       </CardContent>

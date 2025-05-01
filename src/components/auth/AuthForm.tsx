@@ -7,10 +7,12 @@ import { useAuth } from "@/contexts/authHooks";
 import Logo from "@/components/Logo";
 import { motion, AnimatePresence } from "framer-motion";
 import DemoAccountButton from "./DemoAccountButton";
+import { useTranslations } from "@/hooks/useTranslations";
 
 const AuthForm = () => {
   const [activeTab, setActiveTab] = useState("signin");
   const { user } = useAuth();
+  const { t } = useTranslations();
 
   if (user) {
     return <AuthManageForm />;
@@ -23,13 +25,13 @@ const AuthForm = () => {
           className={`auth-tab ${activeTab === "signin" ? "active" : ""}`}
           onClick={() => setActiveTab("signin")}
         >
-          登录
+          {t('navigation:login')}
         </button>
         <button 
           className={`auth-tab ${activeTab === "signup" ? "active" : ""}`}
           onClick={() => setActiveTab("signup")}
         >
-          注册
+          {t('navigation:register')}
         </button>
       </div>
 

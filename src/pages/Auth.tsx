@@ -1,4 +1,3 @@
-
 import React, { memo, useEffect, useRef, useState } from 'react';
 import { useLocation, Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/authHooks";
@@ -122,7 +121,7 @@ const Auth = memo(() => {
             setLoadingTimeout(false);
           }}
         >
-          继续到登录页面
+          {t('auth:continueToLogin')}
         </button>
       </div>
     );

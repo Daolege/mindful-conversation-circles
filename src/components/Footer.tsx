@@ -6,21 +6,25 @@ import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { handleContactMethodsQueryError, ContactMethod } from "@/lib/supabaseUtils";
+import { useTranslations } from "@/hooks/useTranslations";
 
 interface FooterLink {
   href: string;
   label: string;
+  translationKey: string;
 }
 
-const usefulLinks: FooterLink[] = [
-  { href: '/courses', label: '全部课程' },
-  { href: '/about', label: '关于我们' },
-  { href: '/faq', label: '常见问题' },
-  { href: '/terms', label: '服务条款' },
-  { href: '/privacy', label: '隐私政策' },
-];
-
 const Footer = () => {
+  const { t } = useTranslations();
+  
+  const usefulLinks: FooterLink[] = [
+    { href: '/courses', label: t('navigation:allCourses'), translationKey: 'navigation:allCourses' },
+    { href: '/about', label: t('navigation:aboutUs'), translationKey: 'navigation:aboutUs' },
+    { href: '/faq', label: t('common:faq'), translationKey: 'common:faq' },
+    { href: '/terms', label: t('common:termsOfService'), translationKey: 'common:termsOfService' },
+    { href: '/privacy', label: t('common:privacyPolicy'), translationKey: 'common:privacyPolicy' },
+  ];
+
   const { data: contactMethods = [] } = useQuery({
     queryKey: ["contact-methods"],
     queryFn: async () => {
@@ -75,12 +79,12 @@ const Footer = () => {
           </div>
 
           <div>
-            <div className="font-bold text-lg mb-4">快速链接</div>
+            <div className="font-bold text-lg mb-4">{t('common:quickLinks')}</div>
             <ul className="space-y-2">
               {usefulLinks.map((link) => (
                 <li key={link.href}>
                   <a href={link.href} className="text-gray-600 hover:text-gray-800">
-                    {link.label}
+                    {t(link.translationKey)}
                   </a>
                 </li>
               ))}
@@ -88,25 +92,25 @@ const Footer = () => {
           </div>
 
           <div>
-            <div className="font-bold text-lg mb-4">订阅我们</div>
+            <div className="font-bold text-lg mb-4">{t('common:subscribeToUs')}</div>
             <p className="text-gray-600 mb-4">
-              订阅我们的新闻邮件，获取最新的课程信息和优惠。
+              {t('common:subscribeDescription')}
             </p>
             <div className="flex">
               <input
                 type="email"
-                placeholder="输入您的邮箱"
+                placeholder={t('common:enterYourEmail')}
                 className="border rounded-l px-4 py-2 w-3/4 text-gray-700 focus:outline-none"
               />
               <button className="bg-knowledge-primary hover:bg-knowledge-secondary text-white rounded-r px-4 py-2">
-                订阅
+                {t('common:subscribe')}
               </button>
             </div>
           </div>
         </div>
 
         <div className="mt-12 text-center text-gray-500">
-          &copy; {new Date().getFullYear()} {siteConfig.name}. All rights reserved.
+          &copy; {new Date().getFullYear()} {siteConfig.name}. {t('common:allRightsReserved')}
         </div>
       </div>
     </footer>

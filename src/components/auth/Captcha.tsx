@@ -1,5 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
+import { useTranslations } from '@/hooks/useTranslations';
 
 interface CaptchaProps {
   onChange: (value: string) => void;
@@ -9,6 +10,7 @@ export const Captcha: React.FC<CaptchaProps> = ({ onChange }) => {
   const [captchaText, setCaptchaText] = useState('');
   const [inputValue, setInputValue] = useState('');
   const [isValid, setIsValid] = useState(false);
+  const { t } = useTranslations();
 
   const generateCaptcha = () => {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
@@ -62,13 +64,13 @@ export const Captcha: React.FC<CaptchaProps> = ({ onChange }) => {
         onClick={generateCaptcha}
         className="text-sm text-gray-500 hover:text-gray-700"
       >
-        刷新
+        {t('common:refresh')}
       </button>
       <input
         type="text"
         value={inputValue}
         className={`flex h-9 w-[120px] rounded-md border ${isValid ? 'border-green-500' : 'border-input'} bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring`}
-        placeholder="请输入验证码"
+        placeholder={t('auth:enterCaptcha')}
         onChange={handleInputChange}
       />
     </div>

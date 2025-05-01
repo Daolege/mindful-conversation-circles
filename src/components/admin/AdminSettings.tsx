@@ -14,7 +14,7 @@ export function AdminSettings() {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="mb-4">
           <TabsTrigger value="system">{t('admin:systemSettings')}</TabsTrigger>
-          <TabsTrigger value="contact">联系方式</TabsTrigger>
+          <TabsTrigger value="contact">{t('admin:contactMethods')}</TabsTrigger>
         </TabsList>
         
         <TabsContent value="system">

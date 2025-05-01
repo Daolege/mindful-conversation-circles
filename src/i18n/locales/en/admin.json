@@ -26,5 +26,16 @@
   "general": "General",
   "appearance": "Appearance",
   "permissions": "Permissions",
-  "contentManagement": "Content Management"
+  "contentManagement": "Content Management",
+  "languageManagement": "Language Management",
+  "languageManagementDescription": "Manage which languages are available in your application.",
+  "comingSoon": "Coming Soon",
+  "addLanguage": "Add Language",
+  "importTranslations": "Import Translations",
+  "languageManagementFutureUpdate": "Additional language management features will be available in a future update.",
+  "contactMethods": "Contact Methods",
+  "noMatchingUsers": "No matching users found",
+  "tryDifferentSearchCriteria": "Try using different search criteria or clear filters",
+  "noUsersYet": "No users yet",
+  "noRegisteredUsers": "There are no registered users in the system yet"
 }

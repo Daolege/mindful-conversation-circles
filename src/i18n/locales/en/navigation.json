@@ -10,5 +10,6 @@
   "login": "Login",
   "register": "Register",
   "language": "Language",
-  "dashboard": "Dashboard"
+  "dashboard": "Dashboard",
+  "searchCourses": "Search courses..."
 }

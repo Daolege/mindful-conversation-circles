@@ -10,5 +10,6 @@
   "login": "登录",
   "register": "注册",
   "language": "语言",
-  "dashboard": "控制面板"
+  "dashboard": "控制面板",
+  "searchCourses": "搜索课程..."
 }

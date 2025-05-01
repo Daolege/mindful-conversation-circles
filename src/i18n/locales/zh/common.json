@@ -42,5 +42,14 @@
   "light": "浅色",
   "system": "系统",
   "all": "全部",
-  "refresh": "刷新"
+  "refresh": "刷新",
+  "quickLinks": "快速链接",
+  "subscribeToUs": "订阅我们",
+  "subscribeDescription": "订阅我们的新闻邮件，获取最新的课程信息和优惠。",
+  "enterYourEmail": "输入您的邮箱",
+  "subscribe": "订阅",
+  "allRightsReserved": "版权所有。",
+  "faq": "常见问题",
+  "termsOfService": "服务条款",
+  "privacyPolicy": "隐私政策"
 }

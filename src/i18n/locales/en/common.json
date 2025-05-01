@@ -42,5 +42,14 @@
   "light": "Light",
   "system": "System",
   "all": "All",
-  "refresh": "Refresh"
+  "refresh": "Refresh",
+  "quickLinks": "Quick Links",
+  "subscribeToUs": "Subscribe to Us",
+  "subscribeDescription": "Subscribe to our newsletter to get the latest course information and special offers.",
+  "enterYourEmail": "Enter your email",
+  "subscribe": "Subscribe",
+  "allRightsReserved": "All rights reserved.",
+  "faq": "FAQ",
+  "termsOfService": "Terms of Service",
+  "privacyPolicy": "Privacy Policy"
 }

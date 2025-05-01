@@ -26,5 +26,16 @@
   "general": "常规",
   "appearance": "外观",
   "permissions": "权限",
-  "contentManagement": "内容管理"
+  "contentManagement": "内容管理",
+  "languageManagement": "语言管理",
+  "languageManagementDescription": "管理应用程序中可用的语言。",
+  "comingSoon": "即将推出",
+  "addLanguage": "添加语言",
+  "importTranslations": "导入翻译",
+  "languageManagementFutureUpdate": "更多语言管理功能将在未来更新中提供。",
+  "contactMethods": "联系方式",
+  "noMatchingUsers": "没有找到匹配的用户",
+  "tryDifferentSearchCriteria": "尝试使用不同的搜索条件或清除筛选器",
+  "noUsersYet": "暂无用户数据",
+  "noRegisteredUsers": "系统中还没有注册用户"
 }
