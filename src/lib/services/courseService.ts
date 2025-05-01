@@ -224,11 +224,26 @@ export async function getCourseNewById(courseId: number): Promise<any> {
 }
 
 // Fix the problematic function with proper typing to avoid infinite type instantiation
+// Define explicit interface for the course sections to avoid deep type instantiation
+interface CourseSectionWithLectures {
+  id: string;
+  title: string;
+  position: number;
+  lectures?: {
+    id: string;
+    title: string;
+    position: number;
+    video_url?: string;
+    duration?: string;
+    description?: string;
+  }[];
+}
+
 export const getCourseWithSections = async (courseId: number): Promise<CourseWithSections | null> => {
   try {
     // Query for the course
     const { data: courseData, error } = await supabase
-      .from('courses_new') // Changed from 'courses' to 'courses_new' which has the required fields
+      .from('courses_new')
       .select(`
         id,
         title,
@@ -263,6 +278,15 @@ export const getCourseWithSections = async (courseId: number): Promise<CourseWit
       return null;
     }
 
+    // Type-safe casting of sections
+    const sections: CourseSectionWithLectures[] = Array.isArray(courseData.sections) ? 
+      courseData.sections.map(section => ({
+        id: section.id,
+        title: section.title,
+        position: section.position,
+        lectures: Array.isArray(section.lectures) ? section.lectures : []
+      })) : [];
+
     // Create a properly typed result object
     const result: CourseWithSections = {
       id: courseData.id,
@@ -271,7 +295,7 @@ export const getCourseWithSections = async (courseId: number): Promise<CourseWit
       price: courseData.price,
       currency: courseData.currency,
       category: courseData.category,
-      sections: Array.isArray(courseData.sections) ? courseData.sections : []
+      sections: sections
     };
 
     return result;

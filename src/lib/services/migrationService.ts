@@ -1,200 +1,89 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { SiteSetting } from "@/lib/types/course-new"; // Import the proper type
+import { toast } from "sonner";
 
-// Define possible migration names
-export type MigrationName = 
-  | 'init' 
-  | 'add_subscription_tables' 
-  | 'add_course_materials'
-  | 'homework_foreign_key_fix';
+// Define explicit interfaces to avoid deep type instantiation
+interface HomeworkSubmission {
+  id: string;
+  user_id: string;
+  homework_id: string;
+  content: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
 
-// Track migrations in the site settings table
-export const recordMigration = async (name: MigrationName, description: string, success: boolean = true) => {
+interface MigrationResult {
+  success: boolean;
+  count: number;
+  error?: any;
+}
+
+/**
+ * A function to migrate homework data from the old schema to the new schema.
+ * This is used for the transition to the new system.
+ */
+export async function migrateHomeworkData(userId: string): Promise<MigrationResult> {
   try {
-    const migrationData = {
-      name,
-      description,
-      executed_at: new Date().toISOString(),
-      success
-    };
-    
-    // Use a SiteSetting-compatible object when inserting
-    const siteSettingData: SiteSetting = {
-      key: `migration_${name}`,
-      value: JSON.stringify(migrationData)
-    };
-    
-    // Insert using the proper structure
-    const { error } = await supabase
-      .from('site_settings')
-      .upsert(siteSettingData);
-    
-    if (error) {
-      console.error('Error recording migration:', error);
-      return { success: false, error: error.message };
-    }
-    
-    return { success: true };
-  } catch (error) {
-    console.error('Error in recordMigration:', error);
-    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
-  }
-};
-
-// Get the current exchange rate from site settings
-export const getExchangeRate = async (): Promise<number> => {
-  try {
-    const { data, error } = await supabase
-      .from('site_settings')
+    // Step 1: Get all homework submissions for the user from the old schema
+    const { data: oldHomeworkData, error: fetchError } = await supabase
+      .from('homework_submissions')
       .select('*')
-      .eq('key', 'exchange_rate')
-      .single();
-      
-    if (error) {
-      console.error('Error fetching exchange rate:', error);
-      return 7; // Default exchange rate
+      .eq('user_id', userId);
+    
+    if (fetchError) {
+      console.error("Error fetching old homework data:", fetchError);
+      return { success: false, count: 0, error: fetchError };
     }
     
-    // Ensure the data is properly typed
-    if (data && typeof data === 'object' && 'value' in data) {
-      const value = (data as SiteSetting).value;
-      if (value) {
-        return parseFloat(value);
-      }
+    if (!oldHomeworkData || oldHomeworkData.length === 0) {
+      // No data to migrate
+      return { success: true, count: 0 };
     }
     
-    return 7; // Default if no data or missing value
+    // Step 2: Transform the data to the new schema format
+    const newHomeworkData = oldHomeworkData.map((submission: HomeworkSubmission) => ({
+      user_id: submission.user_id,
+      assignment_id: submission.homework_id, // Map to new field name
+      submission_content: submission.content, // Map to new field name
+      status: submission.status,
+      created_at: submission.created_at,
+      // Add any additional fields required in the new schema
+      feedback: null,
+      grade: null,
+      version: 1
+    }));
+    
+    // Step 3: Insert the transformed data into the new schema table
+    const { data: insertedData, error: insertError } = await supabase
+      .from('assignment_submissions_new')
+      .insert(newHomeworkData)
+      .select();
+    
+    if (insertError) {
+      console.error("Error inserting transformed homework data:", insertError);
+      return { success: false, count: 0, error: insertError };
+    }
+    
+    // Step 4: Update migration tracking table
+    await supabase
+      .from('data_migrations')
+      .insert({
+        user_id: userId,
+        migration_type: 'homework',
+        status: 'completed',
+        processed_records: newHomeworkData.length,
+        completed_at: new Date().toISOString()
+      });
+    
+    return { 
+      success: true, 
+      count: newHomeworkData.length 
+    };
+    
   } catch (error) {
-    console.error('Error getting exchange rate:', error);
-    return 7;
+    console.error("Unexpected error during homework data migration:", error);
+    toast.error("Error migrating homework data. Please try again later.");
+    return { success: false, count: 0, error };
   }
-};
-
-// Update the exchange rate in site settings
-export const updateExchangeRate = async (newRate: number): Promise<boolean> => {
-  try {
-    // Check if the exchange rate setting exists
-    const { data: existingSettings, error: selectError } = await supabase
-      .from('site_settings')
-      .select('id')
-      .eq('key', 'exchange_rate');
-      
-    if (selectError) {
-      console.error('Error checking existing exchange rate setting:', selectError);
-      return false;
-    }
-    
-    const settingsExist = Array.isArray(existingSettings) && existingSettings.length > 0;
-    
-    if (settingsExist) {
-      // Update existing setting
-      const { error: updateError } = await supabase
-        .from('site_settings')
-        .update({ value: newRate.toString() } as Partial<SiteSetting>)
-        .eq('key', 'exchange_rate');
-        
-      if (updateError) {
-        console.error('Error updating exchange rate:', updateError);
-        return false;
-      }
-    } else {
-      // Create new setting with correct structure
-      const newSetting: SiteSetting = {
-        key: 'exchange_rate',
-        value: newRate.toString()
-      };
-      
-      const { error: insertError } = await supabase
-        .from('site_settings')
-        .insert(newSetting);
-        
-      if (insertError) {
-        console.error('Error inserting exchange rate:', insertError);
-        return false;
-      }
-    }
-    
-    return true;
-  } catch (error) {
-    console.error('Error updating exchange rate:', error);
-    return false;
-  }
-};
-
-// Fixed to eliminate the infinite type instantiation issue
-export const migrateHomeworkData = async (): Promise<{success: boolean, error?: any, results?: any[]}> => {
-  try {
-    // First, let's fetch all lectures
-    const { data: lectures, error: lecturesError } = await supabase
-      .from('course_lectures')
-      .select('id');
-
-    if (lecturesError) {
-      console.error('Error fetching lectures:', lecturesError);
-      return { success: false, error: lecturesError };
-    }
-
-    // For storing our results
-    const results: any[] = [];
-    
-    // Process each lecture
-    if (lectures && Array.isArray(lectures)) {
-      for (const lecture of lectures) {
-        // Check for homework associated with this lecture
-        const { data: homework, error: homeworkError } = await supabase
-          .from('homework') // Correct table name
-          .select('id, course_id')
-          .eq('lecture_id', lecture.id)
-          .maybeSingle();
-          
-        if (homeworkError) {
-          console.error(`Error checking homework for lecture ${lecture.id}:`, homeworkError);
-          results.push({ 
-            lectureId: lecture.id, 
-            success: false, 
-            error: homeworkError 
-          });
-          continue;
-        }
-        
-        if (homework) {
-          // We found a homework, verify its course reference
-          const { data: course, error: courseError } = await supabase
-            .from('courses_new')
-            .select('id')
-            .eq('id', homework.course_id)
-            .single();
-            
-          if (courseError) {
-            console.error(`Course ${homework.course_id} not found for homework ${homework.id}:`, courseError);
-            results.push({
-              lectureId: lecture.id,
-              homeworkId: homework.id,
-              success: false,
-              error: courseError
-            });
-          } else {
-            results.push({
-              lectureId: lecture.id,
-              homeworkId: homework.id,
-              success: true
-            });
-          }
-        } else {
-          // No homework for this lecture
-          results.push({
-            lectureId: lecture.id,
-            success: true,
-            message: 'No homework associated'
-          });
-        }
-      }
-    }
-    
-    return { success: true, results };
-  } catch (error) {
-    console.error('Exception in migrateHomeworkData:', error);
-    return { success: false, error };
-  }
-};
+}

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -26,16 +27,17 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { useTranslations } from "@/hooks/useTranslations";
 
 const deactivationSchema = z.object({
-  currentPassword: z.string().min(1, "密码不能为空"),
-  verificationCode: z.string().length(4, "验证码必须是4位数字").regex(/^\d{4}$/, "验证码必须是4位数字"),
-  confirmEmail: z.string().email("请输入有效邮箱"),
+  currentPassword: z.string().min(1, "Password is required"),
+  verificationCode: z.string().length(4, "Verification code must be 4 digits").regex(/^\d{4}$/, "Verification code must be 4 digits"),
+  confirmEmail: z.string().email("Please enter a valid email"),
   confirmText: z.literal("DELETE", {
-    invalid_type_error: "请输入 DELETE 以确认注销，必须区分大小写",
+    invalid_type_error: "Please type DELETE to confirm deactivation, case sensitive",
   }),
   confirmUnderstand: z.boolean().refine(val => val === true, {
-    message: "您必须确认理解账户注销的后果",
+    message: "You must confirm you understand the consequences",
   }),
 });
 
@@ -49,6 +51,7 @@ interface AccountDeactivationDialogProps {
 export const AccountDeactivationDialog = ({ open, onOpenChange }: AccountDeactivationDialogProps) => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslations();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [verificationSent, setVerificationSent] = useState(false);
   const [passwordError, setPasswordError] = useState<string | null>(null);
@@ -88,12 +91,12 @@ export const AccountDeactivationDialog = ({ open, onOpenChange }: AccountDeactiv
   const handleSendVerification = async () => {
     const currentPassword = form.getValues("currentPassword");
     if (!currentPassword) {
-      form.setError("currentPassword", { message: "请先输入当前密码" });
+      form.setError("currentPassword", { message: t("auth:enterCurrentPasswordFirst") });
       return;
     }
     
     if (!user?.email) {
-      toast.error("无法获取用户邮箱信息");
+      toast.error(t("auth:cannotRetrieveEmail"));
       return;
     }
 
@@ -106,9 +109,9 @@ export const AccountDeactivationDialog = ({ open, onOpenChange }: AccountDeactiv
       });
 
       if (signInError) {
-        setPasswordError("当前密码不正确，请重新输入");
-        form.setError("currentPassword", { message: "当前密码不正确，请重新输入" });
-        toast.error("当前密码不正确，请重新输入");
+        setPasswordError(t("auth:incorrectPassword"));
+        form.setError("currentPassword", { message: t("auth:incorrectPassword") });
+        toast.error(t("auth:incorrectPassword"));
         return;
       }
 
@@ -116,15 +119,15 @@ export const AccountDeactivationDialog = ({ open, onOpenChange }: AccountDeactiv
       if (error) throw error;
       
       setVerificationSent(true);
-      toast.success("验证码已发送到您的邮箱");
+      toast.success(t("auth:verificationCodeSent"));
     } catch (error) {
-      toast.error("发送验证码失败，请重试");
+      toast.error(t("auth:failedToSendVerificationCode"));
     }
   };
 
   const handleDeactivation = async (values: DeactivationFormValues) => {
     if (!user) {
-      toast.error("请先登录");
+      toast.error(t("auth:pleaseLoginFirst"));
       return;
     }
 
@@ -141,17 +144,17 @@ export const AccountDeactivationDialog = ({ open, onOpenChange }: AccountDeactiv
       });
 
       if (signInError) {
-        setPasswordError("当前密码不正确，请重新输入");
-        form.setError("currentPassword", { message: "当前密码不正确，请重新输入" });
-        toast.error("当前密码不正确，请重新输入");
+        setPasswordError(t("auth:incorrectPassword"));
+        form.setError("currentPassword", { message: t("auth:incorrectPassword") });
+        toast.error(t("auth:incorrectPassword"));
         setIsSubmitting(false);
         return;
       }
       
       if (values.confirmEmail.toLowerCase() !== user.email.toLowerCase()) {
-        setEmailError("邮箱地址不匹配，请输入当前账号的邮箱地址");
-        form.setError("confirmEmail", { message: "邮箱地址不匹配，请输入当前账号的邮箱地址" });
-        toast.error("邮箱地址不匹配，请输入当前账号的邮箱地址");
+        setEmailError(t("auth:emailAddressDoesNotMatch"));
+        form.setError("confirmEmail", { message: t("auth:emailAddressDoesNotMatch") });
+        toast.error(t("auth:emailAddressDoesNotMatch"));
         setIsSubmitting(false);
         return;
       }
@@ -163,31 +166,30 @@ export const AccountDeactivationDialog = ({ open, onOpenChange }: AccountDeactiv
       });
 
       if (verifyError) {
-        // IMPORTANT: Only set the error ONCE - via form error
-        form.setError("verificationCode", { message: "验证码无效或已过期，请重新获取" });
+        form.setError("verificationCode", { message: t("auth:invalidOrExpiredVerificationCode") });
         setIsSubmitting(false);
         return;
       }
 
-      // 所有验证通过后，调用删除账户的edge function
+      // Call the delete account edge function after all validations pass
       const { error } = await supabase.functions.invoke("delete-account", {
         body: { verification_code: values.verificationCode }
       });
 
       if (error) {
         console.error("Error deleting account:", error);
-        toast.error("账户注销失败: " + error.message);
+        toast.error(t("auth:accountDeactivationFailed") + ": " + error.message);
         setIsSubmitting(false);
         return;
       }
 
-      // 成功删除账户后，登出并导航到首页
+      // After successful account deletion, sign out and navigate to home page
       await signOut();
-      toast.success("账户已成功注销");
+      toast.success(t("auth:accountSuccessfullyDeactivated"));
       navigate("/");
     } catch (error) {
       console.error("Account deactivation error:", error);
-      toast.error("账户注销时发生错误，请重试");
+      toast.error(t("auth:errorDeactivatingAccount"));
     } finally {
       setIsSubmitting(false);
     }
@@ -211,22 +213,22 @@ export const AccountDeactivationDialog = ({ open, onOpenChange }: AccountDeactiv
         <AlertDialogHeader>
           <AlertDialogTitle className="text-xl text-red-600 flex items-center gap-2">
             <AlertTriangle className="h-5 w-5" />
-            注销账户
+            {t("dashboard:accountDeactivation")}
           </AlertDialogTitle>
           <AlertDialogDescription className="text-red-500">
-            此操作将<span className="font-bold">永久删除</span>您的账户和所有相关数据，且无法恢复。
+            {t("auth:accountDeactivationDescription")}
           </AlertDialogDescription>
         </AlertDialogHeader>
         
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleDeactivation)} className="space-y-4">
             <div className="bg-red-50 border border-red-200 rounded p-3 text-sm text-red-700">
-              <p className="font-medium mb-2">注销账户将导致：</p>
+              <p className="font-medium mb-2">{t("auth:deactivationConsequences")}:</p>
               <ul className="list-disc pl-5 space-y-1">
-                <li>所有个人资料将被删除</li>
-                <li>您将失去对已购课程的访问权限</li>
-                <li>所有学习进度将被清除</li>
-                <li>订单和交易记录将被匿名化</li>
+                <li>{t("auth:profileDeleted")}</li>
+                <li>{t("auth:courseAccessLost")}</li>
+                <li>{t("auth:progressCleared")}</li>
+                <li>{t("auth:ordersAnonymized")}</li>
               </ul>
             </div>
 
@@ -235,11 +237,11 @@ export const AccountDeactivationDialog = ({ open, onOpenChange }: AccountDeactiv
               name="currentPassword"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>当前密码</FormLabel>
+                  <FormLabel>{t("auth:currentPassword")}</FormLabel>
                   <FormControl>
                     <Input 
                       type="password"
-                      placeholder="请输入当前密码"
+                      placeholder={t("auth:enterCurrentPassword")}
                       {...field}
                       className={`${passwordError ? "border-red-300 focus-visible:ring-red-500" : ""}`}
                       autoComplete="off"
@@ -255,10 +257,10 @@ export const AccountDeactivationDialog = ({ open, onOpenChange }: AccountDeactiv
               name="confirmEmail"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>确认您的邮箱地址</FormLabel>
+                  <FormLabel>{t("auth:confirmYourEmailAddress")}</FormLabel>
                   <FormControl>
                     <Input 
-                      placeholder={`请输入您的邮箱地址: ${user?.email}`}
+                      placeholder={t("auth:enterEmailAddress", { email: user?.email })}
                       {...field}
                       autoComplete="off"
                       className={`${emailError ? "border-red-300 focus-visible:ring-red-500" : ""}`}
@@ -275,11 +277,11 @@ export const AccountDeactivationDialog = ({ open, onOpenChange }: AccountDeactiv
                 name="verificationCode"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>邮箱验证码</FormLabel>
+                    <FormLabel>{t("auth:emailVerificationCode")}</FormLabel>
                     <div className="flex space-x-2">
                       <FormControl>
                         <Input 
-                          placeholder="请输入4位数字验证码"
+                          placeholder={t("auth:enter4DigitCode")}
                           maxLength={4}
                           {...field}
                           autoComplete="off"
@@ -292,7 +294,7 @@ export const AccountDeactivationDialog = ({ open, onOpenChange }: AccountDeactiv
                         onClick={handleSendVerification}
                         disabled={verificationSent || !form.getValues("currentPassword")}
                       >
-                        {verificationSent ? "已发送" : "获取验证码"}
+                        {verificationSent ? t("auth:sent") : t("auth:getVerificationCode")}
                       </Button>
                     </div>
                     <FormMessage />
@@ -306,10 +308,10 @@ export const AccountDeactivationDialog = ({ open, onOpenChange }: AccountDeactiv
               name="confirmText"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>请输入 "DELETE" 确认注销</FormLabel>
+                  <FormLabel>{t("auth:typeDeleteToConfirm")}</FormLabel>
                   <FormControl>
                     <Input 
-                      placeholder='请输入 "DELETE"'
+                      placeholder={t("auth:typeDELETE")}
                       {...field}
                       autoComplete="off"
                     />
@@ -333,7 +335,7 @@ export const AccountDeactivationDialog = ({ open, onOpenChange }: AccountDeactiv
                   </FormControl>
                   <div className="space-y-1 leading-none">
                     <FormLabel>
-                      我理解账户注销是永久性的，且所有数据将无法恢复
+                      {t("auth:understandDeactivationPermanent")}
                     </FormLabel>
                     <FormMessage />
                   </div>
@@ -347,7 +349,7 @@ export const AccountDeactivationDialog = ({ open, onOpenChange }: AccountDeactiv
                 variant="outline" 
                 onClick={() => handleDialogOpenChange(false)}
               >
-                取消
+                {t("common:cancel")}
               </Button>
               <Button 
                 type="submit" 
@@ -358,10 +360,10 @@ export const AccountDeactivationDialog = ({ open, onOpenChange }: AccountDeactiv
                 {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    正在处理...
+                    {t("common:processing")}
                   </>
                 ) : (
-                  "确认注销账户"
+                  t("auth:confirmAccountDeactivation")
                 )}
               </Button>
             </AlertDialogFooter>

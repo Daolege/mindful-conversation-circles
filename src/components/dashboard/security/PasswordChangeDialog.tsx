@@ -27,13 +27,14 @@ import {
 } from "@/components/ui/form";
 import { Loader2, Eye, EyeOff } from "lucide-react";
 import { PasswordStrengthIndicator } from "@/components/auth/PasswordStrengthIndicator";
+import { useTranslations } from "@/hooks/useTranslations";
 
 const passwordChangeSchema = z.object({
-  currentPassword: z.string().min(6, "请输入当前密码"),
-  newPassword: z.string().min(6, "请输入新密码"),
-  confirmPassword: z.string().min(6, "请确认新密码"),
+  currentPassword: z.string().min(6, "Please enter your current password"),
+  newPassword: z.string().min(6, "Please enter a new password"),
+  confirmPassword: z.string().min(6, "Please confirm your new password"),
 }).refine(data => data.newPassword === data.confirmPassword, {
-  message: "两次输入的密码不一致",
+  message: "Passwords don't match",
   path: ["confirmPassword"],
 });
 
@@ -46,6 +47,7 @@ interface PasswordChangeDialogProps {
 
 export const PasswordChangeDialog = ({ open, onOpenChange }: PasswordChangeDialogProps) => {
   const { user } = useAuth();
+  const { t } = useTranslations();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -63,11 +65,11 @@ export const PasswordChangeDialog = ({ open, onOpenChange }: PasswordChangeDialo
 
   const handlePasswordChange = async (values: PasswordChangeFormValues) => {
     if (!user) {
-      toast.error("请先登录");
+      toast.error(t("auth:pleaseLoginFirst"));
       return;
     }
 
-    // 清除之前的错误提示
+    // Clear previous error messages
     setCurrentPasswordError(null);
     setIsSubmitting(true);
     
@@ -78,8 +80,8 @@ export const PasswordChangeDialog = ({ open, onOpenChange }: PasswordChangeDialo
       });
 
       if (signInError) {
-        // 显示当前密码错误提示
-        setCurrentPasswordError("当前密码不正确");
+        // Show current password error message
+        setCurrentPasswordError(t("auth:incorrectCurrentPassword"));
         setIsSubmitting(false);
         return;
       }
@@ -89,22 +91,22 @@ export const PasswordChangeDialog = ({ open, onOpenChange }: PasswordChangeDialo
       });
 
       if (updateError) {
-        toast.error("修改密码失败: " + updateError.message);
+        toast.error(t("auth:passwordUpdateFailed") + ": " + updateError.message);
       } else {
-        toast.success("密码修改成功");
-        form.reset(); // 重置表单
-        onOpenChange(false); // 关闭对话框
+        toast.success(t("auth:passwordUpdatedSuccessfully"));
+        form.reset(); // Reset form
+        onOpenChange(false); // Close dialog
       }
     } catch (error) {
       console.error("Password change error:", error);
-      toast.error("修改密码时发生错误");
+      toast.error(t("auth:errorChangingPassword"));
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleDialogOpenChange = (newOpen: boolean) => {
-    // 重置表单和错误状态当对话框关闭时
+    // Reset form and error states when dialog closes
     if (!newOpen) {
       form.reset();
       setCurrentPasswordError(null);
@@ -116,21 +118,21 @@ export const PasswordChangeDialog = ({ open, onOpenChange }: PasswordChangeDialo
     <Dialog open={open} onOpenChange={handleDialogOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-xl">修改密码</DialogTitle>
+          <DialogTitle className="text-xl">{t("dashboard:changePassword")}</DialogTitle>
           <DialogDescription>
-            请输入您的当前密码和新密码以进行修改
+            {t("auth:enterCurrentAndNewPassword")}
           </DialogDescription>
         </DialogHeader>
         
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handlePasswordChange)} className="space-y-4">
             <FormItem>
-              <FormLabel>当前密码</FormLabel>
+              <FormLabel>{t("auth:currentPassword")}</FormLabel>
               <div className="relative">
                 <FormControl>
                   <Input
                     type={showCurrentPassword ? "text" : "password"}
-                    placeholder="请输入当前密码"
+                    placeholder={t("auth:enterCurrentPassword")}
                     {...form.register("currentPassword")}
                     className={`pr-10 ${currentPasswordError ? "border-red-500 focus:ring-red-300" : ""}`}
                   />
@@ -158,12 +160,12 @@ export const PasswordChangeDialog = ({ open, onOpenChange }: PasswordChangeDialo
               name="newPassword"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>新密码</FormLabel>
+                  <FormLabel>{t("auth:newPassword")}</FormLabel>
                   <div className="relative">
                     <FormControl>
                       <Input
                         type={showNewPassword ? "text" : "password"}
-                        placeholder="请输入新密码"
+                        placeholder={t("auth:enterNewPassword")}
                         {...field}
                         className="pr-10"
                       />
@@ -187,12 +189,12 @@ export const PasswordChangeDialog = ({ open, onOpenChange }: PasswordChangeDialo
               name="confirmPassword"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>确认新密码</FormLabel>
+                  <FormLabel>{t("auth:confirmNewPassword")}</FormLabel>
                   <div className="relative">
                     <FormControl>
                       <Input
                         type={showConfirmPassword ? "text" : "password"}
-                        placeholder="请再次输入新密码"
+                        placeholder={t("auth:reenterNewPassword")}
                         {...field}
                         className="pr-10"
                       />
@@ -212,7 +214,7 @@ export const PasswordChangeDialog = ({ open, onOpenChange }: PasswordChangeDialo
 
             <DialogFooter className="mt-6 gap-2">
               <DialogClose asChild>
-                <Button type="button" variant="outline">取消</Button>
+                <Button type="button" variant="outline">{t("common:cancel")}</Button>
               </DialogClose>
               <Button 
                 type="submit" 
@@ -222,10 +224,10 @@ export const PasswordChangeDialog = ({ open, onOpenChange }: PasswordChangeDialo
                 {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    处理中...
+                    {t("common:processing")}
                   </>
                 ) : (
-                  "确认修改"
+                  t("common:confirm")
                 )}
               </Button>
             </DialogFooter>
