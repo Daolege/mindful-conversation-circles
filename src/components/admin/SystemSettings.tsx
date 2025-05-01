@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Home, Book, Bookmark, ShoppingCart, PanelLeft, FileText } from "lucide-react";
 
 interface SystemSettingsProps {
   activeTab: string;
@@ -15,10 +17,15 @@ export function SystemSettings({ activeTab }: SystemSettingsProps) {
   const [siteName, setSiteName] = useState("");
   const [siteDescription, setSiteDescription] = useState("");
   const [loading, setLoading] = useState(true);
+  const [activeSettingTab, setActiveSettingTab] = useState(activeTab || "home");
 
   useEffect(() => {
     loadSettings();
   }, []);
+
+  useEffect(() => {
+    setActiveSettingTab(activeTab);
+  }, [activeTab]);
 
   const loadSettings = async () => {
     try {
@@ -66,9 +73,19 @@ export function SystemSettings({ activeTab }: SystemSettingsProps) {
     }
   };
 
-  // Render different content based on activeTab
+  // Define the settings tabs
+  const settingsTabs = [
+    { id: "home", label: "首页设置", icon: Home },
+    { id: "courses", label: "课程设置", icon: Book },
+    { id: "subscription", label: "订阅设置", icon: Bookmark },
+    { id: "orders", label: "订单设置", icon: ShoppingCart },
+    { id: "features", label: "功能设置", icon: PanelLeft },
+    { id: "other", label: "其他设置", icon: FileText },
+  ];
+
+  // Render content for each tab
   const renderContent = () => {
-    switch (activeTab) {
+    switch (activeSettingTab) {
       case "home":
         return (
           <Card>
@@ -185,7 +202,30 @@ export function SystemSettings({ activeTab }: SystemSettingsProps) {
 
   return (
     <div className="space-y-6">
-      {renderContent()}
+      <div className="bg-white p-1 rounded-xl shadow-sm border">
+        <Tabs 
+          value={activeSettingTab} 
+          onValueChange={setActiveSettingTab}
+          className="w-full"
+        >
+          <TabsList className="w-full flex flex-wrap justify-start gap-1 bg-muted/20 p-1 rounded-lg">
+            {settingsTabs.map((tab) => (
+              <TabsTrigger 
+                key={tab.id}
+                value={tab.id} 
+                className="flex items-center gap-2 px-4 py-2.5 data-[state=active]:bg-white"
+              >
+                <tab.icon className="h-4 w-4" />
+                <span>{tab.label}</span>
+              </TabsTrigger>
+            ))}
+          </TabsList>
+          
+          <div className="mt-4">
+            {renderContent()}
+          </div>
+        </Tabs>
+      </div>
 
       <div className="flex justify-end">
         <Button onClick={handleSaveSettings} disabled={loading}>
