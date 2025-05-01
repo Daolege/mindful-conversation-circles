@@ -1,3 +1,4 @@
+
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Shield, Home } from "lucide-react";
@@ -45,14 +46,6 @@ export const MobileNavbarMenu = React.memo(({
       >
         <Home size={18} className="mr-2" />
         首页
-      </Link>
-      
-      <Link 
-        to="/home" 
-        className="block py-2 px-4 hover:bg-knowledge-soft rounded"
-        onClick={handleLinkClick}
-      >
-        全新主页
       </Link>
       
       <Link 

@@ -143,6 +143,10 @@ export interface SiteSetting {
   enable_registration?: boolean;
   created_at?: string;
   updated_at?: string;
+  
+  // Compatibility fields for migration function
+  key?: string;
+  value?: string;
 }
 
 // Define OrderLineItem interface with required properties
