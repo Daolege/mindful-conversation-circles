@@ -58,7 +58,7 @@ export function DashboardNavigation() {
       {/* Simplified to two layers instead of three */}
       <div className="relative">
         {/* Outer layer with rounded corners, light shadow, and gray background */}
-        <div className="bg-gray-50/90 backdrop-blur-sm rounded-2xl border border-gray-200 shadow-sm p-3">
+        <div className="bg-gray-100/90 backdrop-blur-sm rounded-2xl border border-gray-200 shadow-sm p-3">
           <Tabs 
             value={activeTab} 
             onValueChange={handleTabChange}
