@@ -135,13 +135,7 @@ export interface SiteSetting {
   id?: string;
   key: string;  
   value: string;
-  contact_email?: string;
-  created_at?: string;
-  enable_registration?: boolean;
-  logo_url?: string;
-  maintenance_mode?: boolean;
-  site_description?: string;
-  site_name?: string;
-  support_phone?: string;
   updated_at?: string;
+  created_at?: string;
 }
+

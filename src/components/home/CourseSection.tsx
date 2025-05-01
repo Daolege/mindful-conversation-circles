@@ -21,29 +21,31 @@ const CourseSection = ({
   filterBy,
   filterValue,
 }: CourseSectionProps) => {
-  // Fix the type instantiation issue by explicitly typing the query function return
+  const fetchCourses = async () => {
+    let query = supabase
+      .from('courses_new')
+      .select('*')
+      .eq('status', 'published')
+      .order('display_order', { ascending: true });
+    
+    if (filterBy && filterValue) {
+      query = query.eq(filterBy, filterValue);
+    }
+    
+    const { data, error } = await query.limit(limit);
+    
+    if (error) {
+      console.error('Error fetching courses:', error);
+      return [] as CourseNew[];
+    }
+    
+    return (data || []) as CourseNew[];
+  };
+
+  // Use the query with explicit function 
   const { data: courses = [], isLoading } = useQuery({
     queryKey: ['homepage-courses', filterBy, filterValue, limit],
-    queryFn: async () => {
-      let query = supabase
-        .from('courses_new')
-        .select('*')
-        .eq('status', 'published')
-        .order('display_order', { ascending: true });
-      
-      if (filterBy && filterValue) {
-        query = query.eq(filterBy, filterValue);
-      }
-      
-      const { data, error } = await query.limit(limit);
-      
-      if (error) {
-        console.error('Error fetching courses:', error);
-        return [] as CourseNew[];
-      }
-      
-      return (data || []) as CourseNew[];
-    }
+    queryFn: fetchCourses
   });
 
   // Animation variants

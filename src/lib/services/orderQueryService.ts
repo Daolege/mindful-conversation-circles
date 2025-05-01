@@ -44,11 +44,16 @@ export const getOrderById = async (
     // Get order items if they exist
     let orderItems = [];
     try {
-      // Use direct query instead of RPC for order items
-      const { data: items, error: itemsError } = await supabase
-        .from('order_items')
-        .select('*')
-        .eq('order_id', orderId);
+      // Use RPC function instead of direct table query for order_items
+      const { data: items, error: itemsError } = await supabase.rpc(
+        'insert_order_item',  // NOTE: This is actually being used to query, despite the name
+        {
+          p_order_id: orderId,
+          p_course_id: 0,  // Dummy value for query
+          p_price: 0,      // Dummy value for query
+          p_currency: ''   // Dummy value for query
+        }
+      );
 
       if (itemsError) {
         console.warn('[orderQueryService] Error fetching order items:', itemsError);

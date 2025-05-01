@@ -12,33 +12,27 @@ export type MigrationName =
 // Track migrations in the site settings table
 export const recordMigration = async (name: MigrationName, description: string, success: boolean = true) => {
   try {
-    // Try using direct SQL for migration recording to avoid type issues
-    try {
-      const migrationData = {
-        name,
-        description,
-        executed_at: new Date().toISOString(),
-        success
-      };
-      
-      // Use direct database insert instead of RPC calls
-      const { error } = await supabase
-        .from('site_settings')
-        .insert({
-          key: `migration_${name}`,
-          value: JSON.stringify(migrationData)
-        });
-      
-      if (error) {
-        console.error('Error recording migration:', error);
-        return { success: false, error: error.message };
-      }
-      
-      return { success: true };
-    } catch (insertError) {
-      console.error('Error in recordMigration:', insertError);
-      return { success: false, error: insertError instanceof Error ? insertError.message : 'Unknown error' };
+    const migrationData = {
+      name,
+      description,
+      executed_at: new Date().toISOString(),
+      success
+    };
+    
+    // Use correct schema for site_settings
+    const { error } = await supabase
+      .from('site_settings')
+      .upsert({
+        key: `migration_${name}`,
+        value: JSON.stringify(migrationData)
+      });
+    
+    if (error) {
+      console.error('Error recording migration:', error);
+      return { success: false, error: error.message };
     }
+    
+    return { success: true };
   } catch (error) {
     console.error('Error in recordMigration:', error);
     return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
@@ -48,7 +42,6 @@ export const recordMigration = async (name: MigrationName, description: string, 
 // Get the current exchange rate from site settings
 export const getExchangeRate = async (): Promise<number> => {
   try {
-    // Use direct query instead of RPC calls
     const { data, error } = await supabase
       .from('site_settings')
       .select('value')
@@ -62,7 +55,7 @@ export const getExchangeRate = async (): Promise<number> => {
     
     // Handle the result
     if (data && data.value) {
-      return parseFloat(data.value || '7');
+      return parseFloat(data.value);
     }
     
     return 7; // Default if no data
@@ -100,7 +93,7 @@ export const updateExchangeRate = async (newRate: number): Promise<boolean> => {
         return false;
       }
     } else {
-      // Create new setting
+      // Create new setting with correct schema
       const { error: insertError } = await supabase
         .from('site_settings')
         .insert({

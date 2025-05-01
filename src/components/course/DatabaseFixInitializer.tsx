@@ -73,10 +73,9 @@ export const DatabaseFixInitializer: React.FC = () => {
             // Record successful execution in site_settings
             await supabase
               .from('site_settings')
-              .upsert({
+              .insert({
                 key: 'homework_migration_completed',
-                value: 'true',
-                updated_at: new Date().toISOString()
+                value: 'true'
               });
               
             localStorage.setItem(storageKey, 'true');
