@@ -13,10 +13,12 @@ import { SubscriptionHistory } from "@/components/dashboard/SubscriptionHistory"
 import { ProfileManagement } from "@/components/dashboard/ProfileManagement";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
+import { useTranslations } from "@/hooks/useTranslations";
 
 const Dashboard = () => {
   const location = useLocation();
   const { user, loading } = useAuth();
+  const { t } = useTranslations();
   const [activeTab, setActiveTab] = useState(() => {
     const searchParams = new URLSearchParams(location.search);
     return searchParams.get('tab') || 'courses';
@@ -147,8 +149,8 @@ const Dashboard = () => {
             exit="exit"
           >
             <Card className="p-8 text-center">
-              <h2 className="text-2xl font-bold mb-4">页面未找到</h2>
-              <p>请选择一个有效的选项卡查看内容</p>
+              <h2 className="text-2xl font-bold mb-4">{t('errors:pageNotFound')}</h2>
+              <p>{t('dashboard:selectValidTab')}</p>
             </Card>
           </motion.div>
         );
@@ -165,9 +167,9 @@ const Dashboard = () => {
           transition={{ duration: 0.4 }}
           className="mb-8"
         >
-          <h1 className="text-3xl font-bold">个人中心</h1>
+          <h1 className="text-3xl font-bold">{t('navigation:userCenter')}</h1>
           <p className="text-muted-foreground mt-2">
-            欢迎回来，{user?.user_metadata?.name || user?.email}
+            {t('dashboard:welcomeBack', { name: user?.user_metadata?.name || user?.email })}
           </p>
         </motion.div>
         

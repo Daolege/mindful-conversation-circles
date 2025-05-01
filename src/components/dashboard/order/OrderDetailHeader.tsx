@@ -1,9 +1,11 @@
+
 import { Badge } from "@/components/ui/badge";
 import { Order } from "@/lib/types/order";
 import { formatCurrency } from "@/lib/utils";
 import { CheckCircle, AlertTriangle, Clock, ExternalLink, RefreshCw, XCircle } from "lucide-react";
 import { format } from "date-fns";
 import { OrderStatusActions } from "./OrderStatusActions";
+import { useTranslations } from "@/hooks/useTranslations";
 
 interface OrderDetailHeaderProps {
   order: Order;
@@ -11,6 +13,8 @@ interface OrderDetailHeaderProps {
 }
 
 export const OrderDetailHeader = ({ order, onOrderUpdate }: OrderDetailHeaderProps) => {
+  const { t } = useTranslations();
+  
   // 判断是否为订阅订单
   const isSubscription = order.payment_type?.includes('subscription-');
   const subscriptionType = isSubscription ? 
@@ -56,17 +60,57 @@ export const OrderDetailHeader = ({ order, onOrderUpdate }: OrderDetailHeaderPro
   const getStatusText = () => {
     switch (order.status) {
       case 'completed':
-        return '已完成';
+        return t('checkout:orderStatus.completed');
       case 'pending':
-        return '待支付';
+        return t('checkout:orderStatus.pending');
       case 'processing':
-        return '处理中';
+        return t('checkout:orderStatus.processing');
       case 'failed':
-        return '支付失败';
+        return t('checkout:orderStatus.failed');
       case 'cancelled':
-        return '已取消';
+        return t('checkout:orderStatus.cancelled');
       default:
         return order.status;
+    }
+  };
+
+  // Translate subscription type
+  const getSubscriptionTypeText = (type: string | null) => {
+    if (!type) return '';
+    
+    switch (type) {
+      case 'monthly':
+        return t('checkout:subscriptionPeriod.monthly');
+      case 'quarterly':
+        return t('checkout:subscriptionPeriod.quarterly');
+      case 'yearly':
+        return t('checkout:subscriptionPeriod.yearly');
+      case '2years':
+        return t('checkout:subscriptionPeriod.2years');
+      case '3years':
+        return t('checkout:subscriptionPeriod.3years');
+      default:
+        return type;
+    }
+  };
+
+  // Translate payment method
+  const getPaymentMethodText = (method: string | undefined) => {
+    if (!method) return t('checkout:paymentMethod.unknown');
+    
+    switch (method) {
+      case 'wechat':
+        return t('checkout:paymentMethod.wechat');
+      case 'alipay':
+        return t('checkout:paymentMethod.alipay');
+      case 'paypal':
+        return t('checkout:paymentMethod.paypal');
+      case 'stripe':
+        return t('checkout:paymentMethod.stripe');
+      case 'credit-card':
+        return t('checkout:paymentMethod.creditCard');
+      default:
+        return isSubscription ? t('checkout:paymentMethod.subscription') : method;
     }
   };
 
@@ -75,31 +119,26 @@ export const OrderDetailHeader = ({ order, onOrderUpdate }: OrderDetailHeaderPro
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">订单号:</span>
+            <span className="text-sm text-muted-foreground">{t('checkout:orderNumber')}:</span>
             <span className="text-sm font-medium">{order.order_number || order.id}</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">下单时间:</span>
+            <span className="text-sm text-muted-foreground">{t('checkout:orderDate')}:</span>
             <span className="text-sm font-medium">
               {format(new Date(order.created_at), 'yyyy-MM-dd HH:mm:ss')}
             </span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">订单类型:</span>
+            <span className="text-sm text-muted-foreground">{t('checkout:orderType')}:</span>
             <span className="text-sm font-medium">
               {isSubscription ? 
-                `订阅服务 (${subscriptionType === 'monthly' ? '月' : 
-                  subscriptionType === 'quarterly' ? '季' : 
-                  subscriptionType === 'yearly' ? '年' : 
-                  subscriptionType === '2years' ? '两年' :
-                  subscriptionType === '3years' ? '三年' :
-                  subscriptionType})` : 
-                '单次购买'}
+                `${t('checkout:subscriptionService')} (${getSubscriptionTypeText(subscriptionType)})` : 
+                t('checkout:oneTimePurchase')}
             </span>
           </div>
           {order.profiles?.email && (
             <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">用户邮箱:</span>
+              <span className="text-sm text-muted-foreground">{t('checkout:userEmail')}:</span>
               <span className="text-sm font-medium">{order.profiles.email}</span>
             </div>
           )}
@@ -107,30 +146,24 @@ export const OrderDetailHeader = ({ order, onOrderUpdate }: OrderDetailHeaderPro
         
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">支付方式:</span>
+            <span className="text-sm text-muted-foreground">{t('checkout:paymentMethod')}:</span>
             <span className="text-sm font-medium">
-              {order.payment_type === 'wechat' ? '微信支付' :
-              order.payment_type === 'alipay' ? '支付宝' :
-              order.payment_type === 'paypal' ? 'PayPal' :
-              order.payment_type === 'stripe' ? 'Stripe' :
-              order.payment_type === 'credit-card' ? '信用卡' : 
-              isSubscription ? '订阅付款' :
-              order.payment_method || order.payment_type || '未知支付方式'}
+              {getPaymentMethodText(order.payment_type)}
             </span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">支付货币:</span>
+            <span className="text-sm text-muted-foreground">{t('checkout:currency')}:</span>
             <span className="text-sm font-medium">{order.currency?.toUpperCase() || 'USD'}</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">支付金额:</span>
+            <span className="text-sm text-muted-foreground">{t('checkout:amount')}:</span>
             <span className="text-sm font-bold">
               {formatCurrency(order.total_amount || order.amount || 0, order.currency || 'USD')}
             </span>
           </div>
           {order.original_amount && order.original_amount !== (order.total_amount || order.amount) && (
             <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">原价:</span>
+              <span className="text-sm text-muted-foreground">{t('checkout:originalPrice')}:</span>
               <span className="text-sm line-through text-gray-500">
                 {formatCurrency(order.original_amount, order.currency || 'USD')}
               </span>
@@ -140,7 +173,7 @@ export const OrderDetailHeader = ({ order, onOrderUpdate }: OrderDetailHeaderPro
       </div>
 
       <div className="flex items-center border-t pt-4 mt-2">
-        <span className="text-sm font-medium mr-2">支付状态:</span>
+        <span className="text-sm font-medium mr-2">{t('checkout:paymentStatus')}:</span>
         <div className="flex items-center gap-2">
           {getStatusIcon()}
           <Badge variant={getStatusBadgeVariant()}>
@@ -148,7 +181,7 @@ export const OrderDetailHeader = ({ order, onOrderUpdate }: OrderDetailHeaderPro
           </Badge>
           {order.status === 'processing' && (
             <span className="text-xs text-muted-foreground ml-2">
-              正在等待支付确认...
+              {t('checkout:waitingForPaymentConfirmation')}
             </span>
           )}
           <div className="ml-auto">
@@ -161,7 +194,7 @@ export const OrderDetailHeader = ({ order, onOrderUpdate }: OrderDetailHeaderPro
         </div>
         {order.updated_at && (
           <span className="ml-auto text-xs text-muted-foreground">
-            最近更新: {format(new Date(order.updated_at), 'yyyy-MM-dd HH:mm')}
+            {t('checkout:lastUpdated')}: {format(new Date(order.updated_at), 'yyyy-MM-dd HH:mm')}
           </span>
         )}
       </div>

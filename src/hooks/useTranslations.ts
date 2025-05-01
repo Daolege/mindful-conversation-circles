@@ -2,7 +2,7 @@
 import { useTranslation } from 'react-i18next';
 
 export const useTranslations = () => {
-  const { t, i18n } = useTranslation(['common', 'navigation', 'courses', 'auth', 'admin', 'checkout']);
+  const { t, i18n } = useTranslation(['common', 'navigation', 'courses', 'auth', 'admin', 'checkout', 'dashboard', 'errors']);
   
   return {
     t,

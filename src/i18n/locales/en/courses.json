@@ -20,5 +20,28 @@
   "category": "Category",
   "instructor": "Instructor",
   "rating": "Rating",
-  "reviews": "Reviews"
+  "reviews": "Reviews",
+  "all": "All",
+  "allCourses": "All Courses",
+  "myCourses": "My Courses",
+  "noCoursesYet": "You haven't purchased any courses yet",
+  "sort": "Sort",
+  "sortOptions": {
+    "relevance": "Relevance",
+    "newest": "Newest",
+    "price-asc": "Price: Low to High",
+    "price-desc": "Price: High to Low"
+  },
+  "categories": {
+    "all": "All",
+    "programming": "Programming",
+    "design": "Design",
+    "marketing": "Marketing",
+    "finance": "Finance",
+    "photography": "Photography",
+    "business": "Business",
+    "music": "Music",
+    "health": "Health"
+  },
+  "searchCourses": "Search courses..."
 }

@@ -9,9 +9,11 @@ import Footer from "@/components/Footer";
 import { Navigate } from "react-router-dom";
 import { transformCourseData } from "@/lib/types/course";
 import { handleSupabaseQueryError } from "@/lib/supabaseUtils";
+import { useTranslations } from "@/hooks/useTranslations";
 
 const MyCourses = () => {
   const { user, loading } = useAuth();
+  const { t } = useTranslations();
 
   const { data: courses, isLoading } = useQuery({
     queryKey: ['my-courses', user?.id],
@@ -50,7 +52,7 @@ const MyCourses = () => {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       <main className="container mx-auto px-4 py-8 flex-grow">
-        <h1 className="text-3xl font-bold mb-8">我的课程</h1>
+        <h1 className="text-3xl font-bold mb-8">{t('courses:myCourses')}</h1>
         {isLoading ? (
           <div className="flex justify-center">
             <Loader2 className="h-8 w-8 animate-spin" />
@@ -63,7 +65,7 @@ const MyCourses = () => {
           </div>
         ) : (
           <div className="text-center py-12">
-            <p className="text-gray-500">您还没有购买任何课程</p>
+            <p className="text-gray-500">{t('courses:noCoursesYet')}</p>
           </div>
         )}
       </main>

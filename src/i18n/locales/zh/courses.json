@@ -20,5 +20,28 @@
   "category": "分类",
   "instructor": "讲师",
   "rating": "评分",
-  "reviews": "评论"
+  "reviews": "评论",
+  "all": "全部",
+  "allCourses": "全部课程",
+  "myCourses": "我的课程",
+  "noCoursesYet": "您还没有购买任何课程",
+  "sort": "排序",
+  "sortOptions": {
+    "relevance": "相关性",
+    "newest": "最新",
+    "price-asc": "价格从低到高",
+    "price-desc": "价格从高到低"
+  },
+  "categories": {
+    "all": "全部",
+    "programming": "编程",
+    "design": "设计",
+    "marketing": "营销",
+    "finance": "金融",
+    "photography": "摄影",
+    "business": "商业",
+    "music": "音乐",
+    "health": "健康"
+  },
+  "searchCourses": "搜索课程..."
 }

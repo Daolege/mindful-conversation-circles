@@ -1,0 +1,26 @@
+
+{
+  "title": "User Center",
+  "welcomeBack": "Welcome back, {{name}}",
+  "selectValidTab": "Please select a valid tab to view content",
+  "myAccount": "My Account",
+  "personalInfo": "Personal Information",
+  "accountSettings": "Account Settings",
+  "security": "Security",
+  "notifications": "Notifications",
+  "billingHistory": "Billing History",
+  "subscriptions": "Subscriptions",
+  "activeSubscription": "Active Subscription",
+  "noActiveSubscription": "No active subscription",
+  "expiresOn": "Expires on",
+  "renewsOn": "Renews on",
+  "paymentMethods": "Payment Methods",
+  "addPaymentMethod": "Add Payment Method",
+  "progress": "Progress",
+  "certificates": "Certificates",
+  "noCertificatesYet": "No certificates yet",
+  "continueLearning": "Continue Learning",
+  "lastCourse": "Last Course",
+  "lastAccessed": "Last Accessed",
+  "viewAll": "View All"
+}

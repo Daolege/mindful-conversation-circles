@@ -12,6 +12,7 @@ import CourseGrid from '@/components/courses/CourseGrid';
 import LoadingState from '@/components/courses/LoadingState';
 import { getAllCoursesNew } from '@/lib/services/courseNewService';
 import { transformCourseNewToOld } from '@/lib/utils/courseTransformers';
+import { useTranslations } from '@/hooks/useTranslations';
 
 // The mockCourses data will be used as a fallback if the API fails
 const mockCourses: Course[] = [
@@ -310,6 +311,7 @@ const Courses = () => {
   const [category, setCategory] = useState('all');
   const [sort, setSort] = useState('relevance');
   const [visibleCount, setVisibleCount] = useState(12);
+  const { t } = useTranslations();
 
   // Changed to use getAllCoursesNew instead of getAllCourses
   const { data: coursesResponse, isLoading } = useQuery({
@@ -376,13 +378,13 @@ const Courses = () => {
       <Navbar />
       <main className="flex-grow container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-semibold">所有课程</h1>
+          <h1 className="text-3xl font-semibold">{t('courses:allCourses')}</h1>
           <div className="flex items-center space-x-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
               <Input
                 type="search"
-                placeholder="搜索课程..."
+                placeholder={t('actions:searchCourses')}
                 className="pl-10 pr-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -390,14 +392,14 @@ const Courses = () => {
             </div>
             <div className="relative">
               <button className="flex items-center py-2 px-4 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                分类: {category}
+                {t('courses:category')}: {category === 'all' ? t('courses:all') : t(`courses:categories.${category.toLowerCase()}`)}
                 <ChevronDown className="ml-2 h-4 w-4" />
               </button>
               {/* Implement category selection dropdown here */}
             </div>
             <div className="relative">
               <button className="flex items-center py-2 px-4 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                排序: {sort}
+                {t('courses:sort')}: {t(`courses:sortOptions.${sort}`)}
                 <ChevronDown className="ml-2 h-4 w-4" />
               </button>
               {/* Implement sorting options dropdown here */}
@@ -410,11 +412,11 @@ const Courses = () => {
 
         <Tabs defaultValue="all" className="w-full mb-4">
           <TabsList>
-            <TabsTrigger value="all" onClick={() => setCategory('all')}>全部</TabsTrigger>
-            <TabsTrigger value="programming" onClick={() => setCategory('Programming')}>编程</TabsTrigger>
-            <TabsTrigger value="design" onClick={() => setCategory('Design')}>设计</TabsTrigger>
-            <TabsTrigger value="marketing" onClick={() => setCategory('Marketing')}>营销</TabsTrigger>
-            <TabsTrigger value="finance" onClick={() => setCategory('Finance')}>金融</TabsTrigger>
+            <TabsTrigger value="all" onClick={() => setCategory('all')}>{t('courses:all')}</TabsTrigger>
+            <TabsTrigger value="programming" onClick={() => setCategory('Programming')}>{t('courses:categories.programming')}</TabsTrigger>
+            <TabsTrigger value="design" onClick={() => setCategory('Design')}>{t('courses:categories.design')}</TabsTrigger>
+            <TabsTrigger value="marketing" onClick={() => setCategory('Marketing')}>{t('courses:categories.marketing')}</TabsTrigger>
+            <TabsTrigger value="finance" onClick={() => setCategory('Finance')}>{t('courses:categories.finance')}</TabsTrigger>
             {/* Add more categories as needed */}
           </TabsList>
           <TabsContent value="all" className="pt-4">

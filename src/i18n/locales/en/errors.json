@@ -1,0 +1,13 @@
+
+{
+  "general": "An error occurred",
+  "notFound": "Not found",
+  "pageNotFound": "Page not found",
+  "unauthorized": "Unauthorized access",
+  "forbidden": "Access forbidden",
+  "fieldRequired": "This field is required",
+  "invalidEmail": "Please enter a valid email",
+  "serverError": "Server error occurred",
+  "networkError": "Network error. Please check your connection",
+  "tryAgainLater": "Please try again later"
+}

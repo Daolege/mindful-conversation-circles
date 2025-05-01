@@ -11,6 +11,7 @@ import { format } from "date-fns";
 import { OrderPaymentDetails } from './OrderPaymentDetails';
 import { calculateSavings, getSavingsPercentage } from '@/lib/services/currencyService';
 import { formatCurrency } from '@/lib/utils';
+import { useTranslations } from '@/hooks/useTranslations';
 
 interface OrderDetailContentProps {
   order: Order;
@@ -18,6 +19,7 @@ interface OrderDetailContentProps {
 
 export const OrderDetailContent = ({ order: initialOrder }: OrderDetailContentProps) => {
   const [order, setOrder] = useState(initialOrder);
+  const { t } = useTranslations();
 
   const handleOrderUpdate = () => {
     // Reload the page to get fresh data
@@ -46,14 +48,14 @@ export const OrderDetailContent = ({ order: initialOrder }: OrderDetailContentPr
         <div className="md:col-span-2">
           <Card className="bg-white shadow">
             <CardHeader className="pb-2">
-              <CardTitle className="text-2xl font-bold">订单详情</CardTitle>
+              <CardTitle className="text-2xl font-bold">{t('checkout:orderDetails')}</CardTitle>
             </CardHeader>
             <CardContent className="p-6">
               <div className="space-y-8">
                 {/* 基本信息区块 */}
                 <div>
                   <h3 className="text-lg font-semibold mb-4 flex items-center">
-                    基本信息
+                    {t('checkout:basicInformation')}
                   </h3>
                   <OrderDetailHeader order={order} onOrderUpdate={handleOrderUpdate} />
                 </div>
@@ -64,7 +66,7 @@ export const OrderDetailContent = ({ order: initialOrder }: OrderDetailContentPr
                 <div>
                   <h3 className="text-lg font-semibold mb-4 flex items-center">
                     <CreditCard className="h-5 w-5 mr-2" />
-                    支付信息
+                    {t('checkout:paymentInformation')}
                   </h3>
                   <OrderPaymentDetails order={order} />
 
@@ -73,8 +75,8 @@ export const OrderDetailContent = ({ order: initialOrder }: OrderDetailContentPr
                     <div className="mt-4 p-3 bg-green-50 rounded-lg border border-green-100">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-sm font-medium text-green-700">优惠节省</p>
-                          <p className="text-xs text-green-600">相比原价节省 {savingsPercentage}%</p>
+                          <p className="text-sm font-medium text-green-700">{t('checkout:discountSavings')}</p>
+                          <p className="text-xs text-green-600">{t('checkout:savedComparedToOriginal', { percentage: savingsPercentage })}</p>
                         </div>
                         <p className="text-green-700 font-semibold">
                           {formatCurrency(savingsAmount, order.currency)}
@@ -90,26 +92,26 @@ export const OrderDetailContent = ({ order: initialOrder }: OrderDetailContentPr
                 <div>
                   <h3 className="text-lg font-semibold mb-4 flex items-center">
                     <UserIcon className="h-5 w-5 mr-2" />
-                    客户信息
+                    {t('checkout:customerInformation')}
                   </h3>
                   <div className="space-y-3 p-4 bg-gray-50 rounded-lg">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <p className="text-sm text-muted-foreground">客户ID</p>
+                        <p className="text-sm text-muted-foreground">{t('checkout:customerId')}</p>
                         <p className="font-medium">{order.user_id}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground">邮箱地址</p>
-                        <p className="font-medium">{order.profiles?.email || '未知'}</p>
+                        <p className="text-sm text-muted-foreground">{t('checkout:emailAddress')}</p>
+                        <p className="font-medium">{order.profiles?.email || t('checkout:unknown')}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground">姓名</p>
-                        <p className="font-medium">{order.profiles?.full_name || '未提供'}</p>
+                        <p className="text-sm text-muted-foreground">{t('checkout:name')}</p>
+                        <p className="font-medium">{order.profiles?.full_name || t('checkout:notProvided')}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground">下单时间</p>
+                        <p className="text-sm text-muted-foreground">{t('checkout:orderDate')}</p>
                         <p className="font-medium">
-                          {order.created_at ? format(new Date(order.created_at), 'yyyy-MM-dd HH:mm:ss') : '未知'}
+                          {order.created_at ? format(new Date(order.created_at), 'yyyy-MM-dd HH:mm:ss') : t('checkout:unknown')}
                         </p>
                       </div>
                     </div>
@@ -124,7 +126,7 @@ export const OrderDetailContent = ({ order: initialOrder }: OrderDetailContentPr
           <div className="sticky top-20 space-y-4">
             <Card className="bg-white shadow">
               <CardHeader className="pb-2">
-                <CardTitle className="text-xl font-semibold">订单操作</CardTitle>
+                <CardTitle className="text-xl font-semibold">{t('checkout:orderActions')}</CardTitle>
               </CardHeader>
               <CardContent className="p-6">
                 <OrderActions order={order} onOrderUpdated={handleOrderUpdate} />

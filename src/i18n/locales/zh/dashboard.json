@@ -1,0 +1,26 @@
+
+{
+  "title": "个人中心",
+  "welcomeBack": "欢迎回来，{{name}}",
+  "selectValidTab": "请选择一个有效的选项卡查看内容",
+  "myAccount": "我的账户",
+  "personalInfo": "个人信息",
+  "accountSettings": "账户设置",
+  "security": "安全设置",
+  "notifications": "通知设置",
+  "billingHistory": "账单历史",
+  "subscriptions": "订阅管理",
+  "activeSubscription": "当前订阅",
+  "noActiveSubscription": "暂无活跃订阅",
+  "expiresOn": "到期日",
+  "renewsOn": "续订日",
+  "paymentMethods": "支付方式",
+  "addPaymentMethod": "添加支付方式",
+  "progress": "学习进度",
+  "certificates": "证书",
+  "noCertificatesYet": "暂无证书",
+  "continueLearning": "继续学习",
+  "lastCourse": "最近课程",
+  "lastAccessed": "最后访问",
+  "viewAll": "查看全部"
+}
