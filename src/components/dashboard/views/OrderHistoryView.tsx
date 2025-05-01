@@ -149,22 +149,6 @@ export function OrderHistoryView() {
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
             <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
               <Select
-                value={filterStatus}
-                onValueChange={setFilterStatus}
-              >
-                <SelectTrigger className="w-full sm:w-[200px]">
-                  <SelectValue placeholder="筛选订单状态" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">全部状态</SelectItem>
-                  <SelectItem value="completed">已完成</SelectItem>
-                  <SelectItem value="processing">处理中</SelectItem>
-                  <SelectItem value="refunded">已退款</SelectItem>
-                  <SelectItem value="failed">失败</SelectItem>
-                </SelectContent>
-              </Select>
-              
-              <Select
                 value={timeFilter}
                 onValueChange={setTimeFilter}
               >

@@ -11,20 +11,25 @@ export type MigrationName =
 // Track migrations in the site settings table
 export const recordMigration = async (name: MigrationName, description: string, success: boolean = true) => {
   try {
-    // Try using direct insert for migration recording
+    // Try using direct SQL for migration recording to avoid type issues
     try {
-      // Add migration record using direct insert
-      const { error } = await supabase
-        .from('site_settings')
-        .insert({
-          key: `migration_${name}`,
-          value: JSON.stringify({
-            name,
-            description,
-            executed_at: new Date().toISOString(),
-            success
-          })
-        });
+      const migrationData = {
+        name,
+        description,
+        executed_at: new Date().toISOString(),
+        success
+      };
+      
+      // Use SQL directly to insert the record
+      const { error } = await supabase.rpc(
+        'execute_sql',
+        { 
+          sql_statement: `
+            INSERT INTO site_settings (key, value)
+            VALUES ('migration_${name}', '${JSON.stringify(migrationData)}')
+          `
+        }
+      );
       
       if (error) {
         console.error('Error recording migration:', error);
@@ -45,22 +50,23 @@ export const recordMigration = async (name: MigrationName, description: string, 
 // Get the current exchange rate from site settings
 export const getExchangeRate = async (): Promise<number> => {
   try {
-    const { data, error } = await supabase
-      .from('site_settings')
-      .select('value')
-      .eq('key', 'exchange_rate')
-      .single();
+    // Use SQL query to avoid type issues
+    const { data, error } = await supabase.rpc(
+      'execute_sql',
+      { sql_statement: `SELECT value FROM site_settings WHERE key = 'exchange_rate'` }
+    );
       
     if (error) {
       console.error('Error fetching exchange rate:', error);
       return 7; // Default exchange rate
     }
     
-    if (!data || !data.value) {
-      return 7; // Default if no data
+    // Handle the result from SQL query
+    if (Array.isArray(data) && data.length > 0 && data[0].value) {
+      return parseFloat(data[0].value || '7');
     }
     
-    return parseFloat(data.value || '7');
+    return 7; // Default if no data
   } catch (error) {
     console.error('Error getting exchange rate:', error);
     return 7;
@@ -70,37 +76,47 @@ export const getExchangeRate = async (): Promise<number> => {
 // Update the exchange rate in site settings
 export const updateExchangeRate = async (newRate: number): Promise<boolean> => {
   try {
-    // Check if the exchange rate setting exists
-    const { data: existingSetting, error: selectError } = await supabase
-      .from('site_settings')
-      .select('id')
-      .eq('key', 'exchange_rate')
-      .single();
+    // Check if the exchange rate setting exists using SQL
+    const { data: existingSettings, error: selectError } = await supabase.rpc(
+      'execute_sql',
+      { sql_statement: `SELECT id FROM site_settings WHERE key = 'exchange_rate'` }
+    );
       
-    if (selectError && !selectError.message?.includes('No rows found')) {
+    if (selectError) {
       console.error('Error checking existing exchange rate setting:', selectError);
       return false;
     }
     
-    if (existingSetting) {
-      // Update existing setting
-      const { error: updateError } = await supabase
-        .from('site_settings')
-        .update({ value: newRate.toString() })
-        .eq('key', 'exchange_rate');
+    const settingsExist = Array.isArray(existingSettings) && existingSettings.length > 0;
+    
+    if (settingsExist) {
+      // Update existing setting using SQL
+      const { error: updateError } = await supabase.rpc(
+        'execute_sql',
+        { 
+          sql_statement: `
+            UPDATE site_settings 
+            SET value = '${newRate.toString()}' 
+            WHERE key = 'exchange_rate'
+          `
+        }
+      );
         
       if (updateError) {
         console.error('Error updating exchange rate:', updateError);
         return false;
       }
     } else {
-      // Create new setting
-      const { error: insertError } = await supabase
-        .from('site_settings')
-        .insert({
-          key: 'exchange_rate',
-          value: newRate.toString()
-        });
+      // Create new setting using SQL
+      const { error: insertError } = await supabase.rpc(
+        'execute_sql',
+        { 
+          sql_statement: `
+            INSERT INTO site_settings (key, value)
+            VALUES ('exchange_rate', '${newRate.toString()}')
+          `
+        }
+      );
         
       if (insertError) {
         console.error('Error inserting exchange rate:', insertError);

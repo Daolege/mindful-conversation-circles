@@ -14,12 +14,12 @@ export const executeHomeworkMigration = async () => {
     const migrationName = 'homework_foreign_key_fix';
     
     // Check if migration was already executed by looking at site_settings
-    const { data: settingsData } = await supabase
-      .from('site_settings')
-      .select('*')
-      .eq('key', 'homework_migration_completed');
+    const { data: settingsResult } = await supabase.rpc(
+      'execute_sql',
+      { sql_statement: "SELECT * FROM site_settings WHERE key = 'homework_migration_completed'" }
+    );
     
-    if (settingsData && settingsData.length > 0) {
+    if (Array.isArray(settingsResult) && settingsResult.length > 0) {
       console.log('[executeHomeworkMigration] Migration already executed successfully');
       return { 
         success: true, 
@@ -30,42 +30,46 @@ export const executeHomeworkMigration = async () => {
     console.log('[executeHomeworkMigration] Executing migration');
     
     // 2. Check for orphaned homework records using direct DB query
-    const { data: homeworks, error: homeworkError } = await supabase
-      .rpc('execute_sql', {
-        sql_statement: 'SELECT * FROM homework'
-      });
+    const { data: homeworkResult } = await supabase.rpc(
+      'execute_sql',
+      { sql_statement: 'SELECT * FROM homework' }
+    );
     
-    if (homeworkError) {
-      console.error('[executeHomeworkMigration] Error checking homework table:', homeworkError);
-    } else if (homeworks && homeworks.length > 0) {
+    // Safely handle the homework data
+    const homeworks = Array.isArray(homeworkResult) ? homeworkResult : [];
+    
+    if (homeworks.length > 0) {
       console.log(`[executeHomeworkMigration] Found ${homeworks.length} homework records`);
       
+      // Extract course IDs safely
+      const courseIds = homeworks
+        .filter(hw => hw && hw.course_id)
+        .map(hw => hw.course_id);
+      
+      const uniqueCourseIds = [...new Set(courseIds)];
+      
       // Check which ones are orphaned by checking course existence
-      const courseIds = Array.from(new Set(homeworks.map(hw => hw.course_id)));
+      const { data: coursesResult } = await supabase.rpc(
+        'execute_sql',
+        { sql_statement: `SELECT id FROM courses_new WHERE id IN (${uniqueCourseIds.join(',')})` }
+      );
       
-      const { data: courses, error: courseError } = await supabase
-        .from('courses_new')
-        .select('id')
-        .in('id', courseIds);
+      const courses = Array.isArray(coursesResult) ? coursesResult : [];
       
-      if (courseError) {
-        console.error('[executeHomeworkMigration] Error checking courses:', courseError);
-      } else {
-        const validCourseIds = courses ? courses.map(c => c.id) : [];
-        const orphanedHomeworks = homeworks.filter(hw => !validCourseIds.includes(hw.course_id));
+      if (courses) {
+        const validCourseIds = courses.map(c => c.id);
+        const orphanedHomeworks = homeworks.filter(hw => hw.course_id && !validCourseIds.includes(hw.course_id));
         
         if (orphanedHomeworks.length > 0) {
           console.log(`[executeHomeworkMigration] Found ${orphanedHomeworks.length} orphaned homework records`);
           
           // Delete orphaned records
           for (const hw of orphanedHomeworks) {
-            const { error: deleteError } = await supabase
-              .rpc('execute_sql', {
-                sql_statement: `DELETE FROM homework WHERE id = ${hw.id}`
-              });
-            
-            if (deleteError) {
-              console.error(`[executeHomeworkMigration] Error deleting homework ${hw.id}:`, deleteError);
+            if (hw && hw.id) {
+              await supabase.rpc(
+                'execute_sql',
+                { sql_statement: `DELETE FROM homework WHERE id = ${hw.id}` }
+              );
             }
           }
           
@@ -86,12 +90,15 @@ export const executeHomeworkMigration = async () => {
     );
     
     // 4. Update site settings to remember migration was completed
-    await supabase
-      .from('site_settings')
-      .insert({
-        key: 'homework_migration_completed',
-        value: 'true'
-      });
+    await supabase.rpc(
+      'execute_sql',
+      { 
+        sql_statement: `
+          INSERT INTO site_settings (key, value)
+          VALUES ('homework_migration_completed', 'true')
+        ` 
+      }
+    );
     
     console.log('[executeHomeworkMigration] Migration completed successfully');
     

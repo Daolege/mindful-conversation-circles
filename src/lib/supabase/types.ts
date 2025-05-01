@@ -371,6 +371,50 @@ export interface Database {
           price: number
           currency: string
         }[]
+      },
+      admin_add_course_item: {
+        Args: Record<string, unknown>
+        Returns: unknown
+      }
+      create_test_subscription: {
+        Args: Record<string, unknown>
+        Returns: unknown
+      }
+      enroll_user_in_course: {
+        Args: Record<string, unknown>
+        Returns: unknown
+      }
+      get_dashboard_stats: {
+        Args: Record<string, unknown>
+        Returns: unknown
+      }
+      get_financial_stats: {
+        Args: Record<string, unknown>
+        Returns: unknown
+      }
+      get_payment_method_stats: {
+        Args: Record<string, unknown>
+        Returns: unknown
+      }
+      has_role: {
+        Args: Record<string, unknown>
+        Returns: unknown
+      }
+      update_course_progress: {
+        Args: Record<string, unknown>
+        Returns: unknown
+      }
+      update_exchange_rate: {
+        Args: Record<string, unknown>
+        Returns: unknown
+      }
+      update_site_settings: {
+        Args: Record<string, unknown>
+        Returns: unknown
+      }
+      user_has_course_access: {
+        Args: Record<string, unknown>
+        Returns: unknown
       }
     }
     Enums: {

@@ -44,6 +44,7 @@ export const getOrderById = async (
     // Get order items if they exist
     let orderItems = [];
     try {
+      // Use direct SQL query for order items to avoid type issues
       const { data: items, error: itemsError } = await supabase
         .rpc('execute_sql', { 
           sql_statement: `SELECT * FROM order_items WHERE order_id = '${orderId}'` 
@@ -51,7 +52,7 @@ export const getOrderById = async (
 
       if (itemsError) {
         console.warn('[orderQueryService] Error fetching order items:', itemsError);
-      } else if (items) {
+      } else if (items && Array.isArray(items)) {
         // Try to get course information for each item
         for (const item of items) {
           try {

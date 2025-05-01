@@ -50,11 +50,24 @@ export function OrderHistory({
   };
 
   const getOrderItemsText = (order: OrderItem) => {
-    if (!order.order_items || order.order_items.length === 0) {
-      return "无商品信息";
+    if (order.order_items && order.order_items.length > 0) {
+      return order.order_items
+        .filter(item => item.courses)
+        .map(item => item.courses?.title || '未知课程')
+        .join(", ");
+    } else if (order.courses) {
+      // Handle if courses are directly on the order object
+      if (Array.isArray(order.courses)) {
+        return order.courses
+          .filter(course => course && course.title)
+          .map(course => course.title)
+          .join(", ");
+      } else if (order.courses.title) {
+        return order.courses.title;
+      }
     }
     
-    return order.order_items.map(item => item.courses?.title || '未知课程').join(", ");
+    return "未知课程";
   };
   
   // Function to get appropriate amount field from order
@@ -101,7 +114,7 @@ export function OrderHistory({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[120px]">订单号</TableHead>
+                <TableHead className="w-[200px]">订单号</TableHead>
                 <TableHead>商品</TableHead>
                 <TableHead className="w-[100px]">金额</TableHead>
                 <TableHead className="w-[120px]">支付方式</TableHead>
@@ -114,13 +127,13 @@ export function OrderHistory({
               {orders.map((order) => (
                 <TableRow key={order.id}>
                   <TableCell className="font-mono text-xs">
-                    {order.id.split('-')[0]}...
+                    {order.id}
                   </TableCell>
                   <TableCell>
                     {getOrderItemsText(order)}
                   </TableCell>
                   <TableCell>
-                    {getOrderAmount(order)} {order.currency.toUpperCase()}
+                    {getOrderAmount(order)} {order.currency?.toUpperCase()}
                   </TableCell>
                   <TableCell>
                     {getPaymentMethod(order) === 'wechat' ? '微信支付' : 
