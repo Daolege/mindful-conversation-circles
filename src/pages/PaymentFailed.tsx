@@ -6,14 +6,17 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { AlertCircle } from "lucide-react";
+import { useTranslations } from "@/hooks/useTranslations";
 
 const PaymentFailed = () => {
   const location = useLocation();
   const { state } = location;
+  const { t } = useTranslations();
+  
   const errorDetails = state?.errorDetails || {
     errorCode: 'PAYMENT_FAILED',
     paymentMethod: 'PayPal',
-    errorMessage: '支付处理未能完成，请重试',
+    errorMessage: t('checkout:paymentProcessingFailed'),
     courseId: null,
   };
 
@@ -27,34 +30,34 @@ const PaymentFailed = () => {
               <div className="flex justify-center mb-4">
                 <AlertCircle className="h-16 w-16 text-red-500" />
               </div>
-              <h1 className="text-2xl font-bold mb-2">支付失败</h1>
+              <h1 className="text-2xl font-bold mb-2">{t('checkout:paymentFailed')}</h1>
               <p className="text-gray-500 mb-6">{errorDetails.errorMessage}</p>
               <Button className="mt-6 w-full bg-[#0f172a] hover:bg-[#1e293b] text-white h-12 text-base font-medium" asChild>
                 <Link to={`/checkout${errorDetails.courseId ? `?courseId=${errorDetails.courseId}` : ''}`}>
-                  返回支付页面 ›
+                  {t('checkout:returnToPaymentPage')} ›
                 </Link>
               </Button>
-              <p className="mt-2 text-sm text-gray-500">您可以重新选择支付方式进行付款</p>
+              <p className="mt-2 text-sm text-gray-500">{t('checkout:selectAnotherPaymentMethod')}</p>
             </div>
 
             <div className="space-y-6">
               <div className="space-y-4">
                 <div className="flex justify-between py-2">
-                  <span className="text-gray-600">支付方式</span>
+                  <span className="text-gray-600">{t('checkout:paymentMethod')}</span>
                   <span>{errorDetails.paymentMethod === 'paypal' ? 'PayPal' : 
-                         errorDetails.paymentMethod === 'wechat' ? '微信支付' :
-                         errorDetails.paymentMethod === 'stripe' ? 'Stripe' : '信用卡支付'}</span>
+                         errorDetails.paymentMethod === 'wechat' ? t('checkout:wechatPay') :
+                         errorDetails.paymentMethod === 'stripe' ? 'Stripe' : t('checkout:creditCard')}</span>
                 </div>
                 <div className="flex justify-between py-2">
-                  <span className="text-gray-600">错误代码</span>
+                  <span className="text-gray-600">{t('errors:errorCode')}</span>
                   <span className="text-red-500">{errorDetails.errorCode}</span>
                 </div>
               </div>
 
               <div className="text-center space-y-4">
                 <div className="text-sm text-gray-500">
-                  <p>如有任何问题，请联系客服解决</p>
-                  <p>电子邮件：support@example.com | 电话：400-123-4567</p>
+                  <p>{t('checkout:contactCustomerService')}</p>
+                  <p>{t('checkout:contactEmail')}</p>
                 </div>
               </div>
             </div>

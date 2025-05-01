@@ -10,6 +10,7 @@ import { useAuth } from "@/contexts/authHooks";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { useTranslations } from "@/hooks/useTranslations";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,6 +29,7 @@ export const ProfileManagement = () => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const { signOut } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslations();
 
   const handleLogout = async () => {
     if (isLoggingOut) return;
@@ -36,13 +38,13 @@ export const ProfileManagement = () => {
       setIsLoggingOut(true);
       await signOut();
       // 不要在这里直接导航，让AuthProvider处理登出后的导航
-      toast.success("退出成功", {
-        description: "期待您的再次登录"
+      toast.success(t('auth:logoutSuccess'), {
+        description: t('auth:lookForwardToYourReturn')
       });
     } catch (error) {
       console.error("Logout error:", error);
-      toast.error("退出失败", { 
-        description: "请稍后重试" 
+      toast.error(t('auth:logoutFailed'), { 
+        description: t('common:errors.tryAgainLater') 
       });
       setIsLoggingOut(false);
     }
@@ -55,16 +57,16 @@ export const ProfileManagement = () => {
         
         <Card>
           <CardHeader className="bg-gradient-to-r from-knowledge-primary/5 to-knowledge-secondary/5">
-            <h3 className="text-2xl font-semibold">账号安全</h3>
+            <h3 className="text-2xl font-semibold">{t('dashboard:accountSecurity')}</h3>
           </CardHeader>
           <CardContent className="pt-6">
             <div className="space-y-6">
               {/* 密码管理 */}
               <div className="flex items-center justify-between gap-4 p-4 border border-dashed rounded-lg transition-colors hover:bg-gray-50">
                 <div className="space-y-1">
-                  <div className="font-medium">密码管理</div>
+                  <div className="font-medium">{t('dashboard:passwordManagement')}</div>
                   <div className="text-sm text-muted-foreground">
-                    定期更改密码，确保您的账户安全
+                    {t('dashboard:changingRegularly')}
                   </div>
                 </div>
                 <Button 
@@ -73,16 +75,16 @@ export const ProfileManagement = () => {
                   className="w-28 shrink-0 hover:scale-105 hover:shadow-sm transition-all"
                 >
                   <Key className="h-4 w-4 mr-2" />
-                  更改密码
+                  {t('dashboard:changePassword')}
                 </Button>
               </div>
 
               {/* 退出登录 */}
               <div className="flex items-center justify-between gap-4 p-4 border border-dashed rounded-lg transition-colors hover:bg-gray-50">
                 <div className="space-y-1">
-                  <div className="font-medium">退出登录</div>
+                  <div className="font-medium">{t('dashboard:logout')}</div>
                   <div className="text-sm text-muted-foreground">
-                    安全退出您的账号
+                    {t('dashboard:safelyLogout')}
                   </div>
                 </div>
                 <Button 
@@ -92,11 +94,11 @@ export const ProfileManagement = () => {
                   className="w-28 shrink-0 hover:scale-105 hover:shadow-sm transition-all"
                 >
                   {isLoggingOut ? (
-                    <>处理中...</>
+                    <>{t('dashboard:processing')}</>
                   ) : (
                     <>
                       <LogOut className="h-4 w-4 mr-2" />
-                      退出
+                      {t('dashboard:logout')}
                     </>
                   )}
                 </Button>
@@ -105,9 +107,9 @@ export const ProfileManagement = () => {
               {/* 账号注销 - moved to bottom */}
               <div className="flex items-center justify-between gap-4 p-4 border border-dashed border-destructive/30 rounded-lg transition-colors hover:bg-red-50">
                 <div className="space-y-1">
-                  <div className="font-medium">账号注销</div>
+                  <div className="font-medium">{t('dashboard:accountDeactivation')}</div>
                   <div className="text-sm text-muted-foreground">
-                    永久删除您的账号和所有关联数据
+                    {t('dashboard:permanentlyDelete')}
                   </div>
                 </div>
                 <Button 
@@ -116,7 +118,7 @@ export const ProfileManagement = () => {
                   className="w-28 shrink-0 text-destructive border-destructive/50 hover:border-destructive hover:bg-destructive/10 hover:scale-105 hover:shadow-sm transition-all"
                 >
                   <Shield className="h-4 w-4 mr-2" />
-                  申请注销
+                  {t('dashboard:applyForDeactivation')}
                 </Button>
               </div>
             </div>
@@ -139,18 +141,18 @@ export const ProfileManagement = () => {
         <AlertDialog open={isLogoutDialogOpen} onOpenChange={setIsLogoutDialogOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>确认退出</AlertDialogTitle>
+              <AlertDialogTitle>{t('dashboard:confirmLogout')}</AlertDialogTitle>
               <AlertDialogDescription>
-                您确定要退出登录吗？退出后需要重新登录才能访问您的账户。
+                {t('dashboard:logoutConfirmation')}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>取消</AlertDialogCancel>
+              <AlertDialogCancel>{t('dashboard:cancel')}</AlertDialogCancel>
               <AlertDialogAction 
                 onClick={handleLogout}
                 disabled={isLoggingOut}
               >
-                {isLoggingOut ? "处理中..." : "确认退出"}
+                {isLoggingOut ? t('dashboard:processing') : t('dashboard:confirmLogoutButton')}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

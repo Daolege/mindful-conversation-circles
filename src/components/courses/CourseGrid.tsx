@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import CourseCard from "@/components/CourseCard";
 import type { Course } from "@/lib/types/course";
 import { Loader2 } from "lucide-react";
+import { useTranslations } from "@/hooks/useTranslations";
 
 interface CourseGridProps {
   courses: Course[];
@@ -14,6 +15,7 @@ interface CourseGridProps {
 
 const CourseGrid = ({ courses, hasMore, onLoadMore, isLoading = false }: CourseGridProps) => {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const { t } = useTranslations();
 
   const handleLoadMore = async () => {
     if (isLoadingMore) return;
@@ -70,8 +72,8 @@ const CourseGrid = ({ courses, hasMore, onLoadMore, isLoading = false }: CourseG
     return (
       <div className="bg-white border border-gray-100 rounded-lg shadow-sm p-12 text-center animate-in fade-in duration-500">
         <div className="mx-auto max-w-md">
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">暂无课程</h3>
-          <p className="text-gray-500 mb-6">该分类下暂时没有课程，请查看其他分类或稍后再来</p>
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">{t('courses:noCourseInThisCategory')}</h3>
+          <p className="text-gray-500 mb-6">{t('common:noContentFound')}</p>
           <img 
             src="/placeholder.svg" 
             alt="No courses" 
@@ -108,10 +110,10 @@ const CourseGrid = ({ courses, hasMore, onLoadMore, isLoading = false }: CourseG
             {isLoadingMore ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                加载中...
+                {t('actions:loading')}
               </>
             ) : (
-              "加载更多课程"
+              t('courses:loadMoreCourses')
             )}
           </Button>
         </div>

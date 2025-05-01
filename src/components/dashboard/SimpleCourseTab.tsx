@@ -6,11 +6,13 @@ import { CourseNew } from "@/lib/types/course-new";
 import { Book, Play, CheckCircle, Globe, Eye } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
+import { useTranslations } from "@/hooks/useTranslations";
 
 export function SimpleCourseTab() {
   const navigate = useNavigate();
   const [courses] = useState<CourseNew[]>(getSampleCourses());
   const [isLoading, setIsLoading] = useState(true);
+  const { t } = useTranslations();
 
   // Simulate loading
   useEffect(() => {
@@ -48,7 +50,7 @@ export function SimpleCourseTab() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4">
-        <h3 className="text-xl font-medium">我的课程 <span className="text-muted-foreground text-sm">({courses.length})</span></h3>
+        <h3 className="text-xl font-medium">{t('dashboard:myCourses')} <span className="text-muted-foreground text-sm">({courses.length})</span></h3>
       </div>
 
       {isLoading ? (
@@ -90,16 +92,16 @@ export function SimpleCourseTab() {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.3 }}
         >
-          <h3 className="text-lg font-medium mb-2">暂无已购课程</h3>
+          <h3 className="text-lg font-medium mb-2">{t('dashboard:noPurchasedCoursesYet')}</h3>
           <p className="text-muted-foreground mb-6">
-            您还没有购买任何课程，浏览我们的课程库开始您的学习之旅
+            {t('dashboard:browseCoursesToStartLearning')}
           </p>
           
           <Button 
             onClick={() => navigate('/courses')} 
             className="min-w-[150px] hover:scale-105 transition-all duration-300 hover:shadow-lg"
           >
-            浏览课程
+            {t('dashboard:browseCourses')}
           </Button>
         </motion.div>
       )}
@@ -113,6 +115,7 @@ interface CourseListItemProps {
 
 const CourseListItem = ({ course }: CourseListItemProps) => {
   const navigate = useNavigate();
+  const { t } = useTranslations();
   
   // 随机判断是否已经开始学习
   const hasStarted = Math.random() > 0.5;
@@ -124,19 +127,19 @@ const CourseListItem = ({ course }: CourseListItemProps) => {
       return (
         <Badge variant="courseTag" className="group-hover:bg-gray-100 transition-colors flex items-center gap-1">
           <CheckCircle className="h-3.5 w-3.5" />
-          已完成
+          {t('dashboard:completed')}
         </Badge>
       );
     } else if (hasStarted) {
       return (
         <Badge variant="courseTag" className="group-hover:bg-gray-100 transition-colors">
-          进行中
+          {t('dashboard:ongoing')}
         </Badge>
       );
     } else {
       return (
         <Badge variant="courseTag" className="group-hover:bg-gray-100 transition-colors">
-          未开始
+          {t('dashboard:notStarted')}
         </Badge>
       );
     }
@@ -144,13 +147,13 @@ const CourseListItem = ({ course }: CourseListItemProps) => {
 
   // 获取语言标签
   const getLanguageBadge = () => {
-    const languages = ["中文", "英语", "日语", "韩语", "法语", "德语"];
+    const languages = ["chinese", "english", "japanese", "korean", "french", "german"];
     const randomLanguage = languages[Math.floor(Math.random() * languages.length)];
     
     return (
       <Badge variant="courseTag" className="group-hover:bg-gray-100 transition-colors flex items-center gap-1">
         <Globe className="h-3.5 w-3.5" />
-        {randomLanguage}
+        {t(`dashboard:${randomLanguage}`)}
       </Badge>
     );
   };
@@ -186,58 +189,28 @@ const CourseListItem = ({ course }: CourseListItemProps) => {
           className="flex-1 sm:flex-none transition-all duration-300 hover:scale-105 hover:shadow-md"
         >
           <Book className="h-4 w-4 mr-1" />
-          开始学习
+          {t('dashboard:startLearning')}
         </Button>
         
         <Button 
           size="sm"
-          variant="outline" 
-          onClick={() => navigate(`/course-detail/${course.id}`)}
-          className="flex-1 sm:flex-none transition-all duration-300 hover:scale-105 hover:shadow-md
-            hover:bg-gray-100/80"
+          variant="outline"
+          onClick={() => navigate(`/courses-new/${course.id}`)}
+          className="flex-1 sm:flex-none transition-all duration-300 hover:scale-105 hover:shadow-md"
         >
           <Eye className="h-4 w-4 mr-1" />
-          查看课程
+          {t('dashboard:viewCourse')}
         </Button>
       </div>
     </motion.div>
   );
 };
 
-// 生成示例课程数据
+// Sample course data function
 function getSampleCourses(): CourseNew[] {
-  const courseTitles = [
-    "JavaScript 高级编程技巧",
-    "React 框架实战课程",
-    "数据结构与算法入门",
-    "Web前端性能优化指南",
-    "Python 数据分析基础",
-    "Node.js 服务端开发",
-    "Vue.js 组件化开发",
-    "TypeScript 项目实践",
-    "微信小程序开发入门",
-    "CSS3 动画与交互设计",
-    "MongoDB 数据库开发",
-    "React Native 移动应用开发"
+  return [
+    { id: 1, title: 'Advanced React Development', price: 299, status: 'published' },
+    { id: 2, title: 'Full Stack Development with Node.js', price: 349, status: 'published' },
+    { id: 3, title: 'Machine Learning Fundamentals', price: 399, status: 'published' }
   ];
-  
-  const categories = ["前端开发", "后端开发", "算法", "数据分析", "云计算", "移动开发", "UI设计", "数据库"];
-  
-  return courseTitles.map((title, index) => ({
-    id: index + 1,
-    title,
-    description: `这是${title}的详细描述，包含了课程的主要内容和学习目标。`,
-    price: Math.floor(Math.random() * 10000) / 10,
-    original_price: Math.floor(Math.random() * 20000) / 10,
-    currency: "CNY",
-    category: categories[Math.floor(Math.random() * categories.length)],
-    display_order: index,
-    status: 'published',
-    is_featured: Math.random() > 0.7,
-    student_count: Math.floor(Math.random() * 1000),
-    enrollment_count: Math.floor(Math.random() * 2000),
-    thumbnail_url: `/lovable-uploads/${index + 1}8b1149-2643-4e8c-b18a-658de84ead30.png`,
-    created_at: new Date(Date.now() - Math.floor(Math.random() * 10000000000)).toISOString(),
-    updated_at: new Date().toISOString()
-  }));
 }

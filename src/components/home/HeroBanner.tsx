@@ -4,9 +4,11 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
+import { useTranslations } from "@/hooks/useTranslations";
 
 const HeroBanner = () => {
   const navigate = useNavigate();
+  const { t } = useTranslations();
   
   return (
     <div className="relative h-[600px] overflow-hidden">
@@ -31,12 +33,12 @@ const HeroBanner = () => {
           >
             {/* Clean, minimal heading */}
             <h1 className="text-5xl md:text-6xl font-bold text-white leading-tight">
-              知识成就<span className="text-white/80">无限未来</span>
+              {t('home:knowledgeEmpowerment')}
             </h1>
             
             {/* Elegant subheading */}
             <p className="text-xl text-gray-300 leading-relaxed">
-              发现精选优质课程，从行业专家直接学习，随时随地提升自我价值。
+              {t('home:discoverQualityCourses')}
             </p>
             
             {/* Clean button group */}
@@ -49,7 +51,7 @@ const HeroBanner = () => {
                   onClick={() => navigate('/courses')}
                   className="bg-white text-black hover:bg-gray-100 px-8 py-6 text-lg rounded-md"
                 >
-                  探索课程
+                  {t('home:exploreCourses')}
                   <ChevronRight className="ml-2 h-5 w-5" />
                 </Button>
               </motion.div>
@@ -63,7 +65,7 @@ const HeroBanner = () => {
                   onClick={() => navigate('/auth')}
                   className="border-2 border-white text-white hover:bg-white/10 px-8 py-6 text-lg rounded-md"
                 >
-                  立即注册
+                  {t('home:registerNow')}
                 </Button>
               </motion.div>
             </div>
@@ -85,12 +87,12 @@ const HeroBanner = () => {
                     </div>
                   ))}
                 </div>
-                <span className="ml-4 text-white/80 text-sm">加入千万学员的行列</span>
+                <span className="ml-4 text-white/80 text-sm">{t('home:joinMillionsOfStudents')}</span>
               </div>
               
               <div className="hidden md:flex items-center">
                 <span className="text-white font-bold">4.9</span>
-                <span className="text-white/80 text-sm ml-1">学员平均评分</span>
+                <span className="text-white/80 text-sm ml-1">{t('home:averageRating')}</span>
               </div>
             </div>
           </motion.div>

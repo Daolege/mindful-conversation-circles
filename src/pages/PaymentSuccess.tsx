@@ -8,18 +8,21 @@ import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { CheckCircle, Download } from "lucide-react";
 import { toast } from 'sonner';
+import { useTranslations } from "@/hooks/useTranslations";
 
 const PaymentSuccess = () => {
   const location = useLocation();
   const { state } = location;
+  const { t } = useTranslations();
+  
   const orderDetails = state?.orderDetails || {
     orderId: 'ORD-1703157',
-    orderType: '年度订阅计划',
+    orderType: t('checkout:subscriptionPlan'),
     userEmail: 'guest@example.com',
     paymentDate: '2025-04-18',
     amount: '¥399.00',
-    paymentMethod: '支付宝',
-    paymentStatus: '已完成',
+    paymentMethod: t('checkout:alipay'),
+    paymentStatus: t('checkout:paymentCompleted'),
     courseId: '80',
     isNewCourse: true
   };
@@ -38,9 +41,11 @@ const PaymentSuccess = () => {
     
     // Check if courseId is valid
     if (!courseId) {
-      toast.error('课程ID无效，将使用默认课程');
+      toast.error(t('errors:invalidCourseId'), {
+        description: t('errors:usingDefaultCourse')
+      });
     }
-  }, [courseId, isNewCourse, learningUrl]);
+  }, [courseId, isNewCourse, learningUrl, t]);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -52,59 +57,59 @@ const PaymentSuccess = () => {
               <div className="flex justify-center mb-4">
                 <CheckCircle className="h-16 w-16 text-green-500" />
               </div>
-              <h1 className="text-2xl font-bold mb-2">支付成功</h1>
-              <p className="text-gray-500">您的订单已成功支付，感谢您的购买！</p>
+              <h1 className="text-2xl font-bold mb-2">{t('checkout:paymentSuccess')}</h1>
+              <p className="text-gray-500">{t('checkout:paymentCompleted')}</p>
               <Button className="mt-6 w-full bg-[#0f172a] hover:bg-[#1e293b] text-white h-12 text-base font-medium" asChild>
-                <Link to={learningUrl}>前往学习 ›</Link>
+                <Link to={learningUrl}>{t('courses:startLearning')} ›</Link>
               </Button>
-              <p className="mt-2 text-sm text-gray-500">已报名的课程在个人中心查看</p>
+              <p className="mt-2 text-sm text-gray-500">{t('courses:enrolledCoursesInDashboard')}</p>
             </div>
 
             <div className="space-y-6">
               <div className="flex justify-between items-center">
-                <h2 className="text-lg font-semibold">付款完成</h2>
+                <h2 className="text-lg font-semibold">{t('checkout:paymentCompleted')}</h2>
                 <Button variant="outline" size="sm">
                   <Download className="h-4 w-4 mr-2" />
-                  下载收据
+                  {t('checkout:downloadReceipt')}
                 </Button>
               </div>
 
               <div className="space-y-4">
                 <div className="flex justify-between py-2">
-                  <span className="text-gray-600">订单编号</span>
+                  <span className="text-gray-600">{t('checkout:orderNumber')}</span>
                   <span>{orderDetails.orderId}</span>
                 </div>
                 <div className="flex justify-between py-2">
-                  <span className="text-gray-600">订单类型</span>
+                  <span className="text-gray-600">{t('checkout:orderType')}</span>
                   <span>{orderDetails.orderType}</span>
                 </div>
                 <div className="flex justify-between py-2">
-                  <span className="text-gray-600">用户邮箱</span>
+                  <span className="text-gray-600">{t('checkout:userEmail')}</span>
                   <span>{orderDetails.userEmail}</span>
                 </div>
                 <div className="flex justify-between py-2">
-                  <span className="text-gray-600">支付日期</span>
+                  <span className="text-gray-600">{t('checkout:paymentDate')}</span>
                   <span>{orderDetails.paymentDate}</span>
                 </div>
                 <div className="flex justify-between py-2">
-                  <span className="text-gray-600">支付金额</span>
+                  <span className="text-gray-600">{t('checkout:paymentAmount')}</span>
                   <span>{orderDetails.amount}</span>
                 </div>
                 <div className="flex justify-between py-2">
-                  <span className="text-gray-600">支付方式</span>
+                  <span className="text-gray-600">{t('checkout:paymentMethod')}</span>
                   <span>{orderDetails.paymentMethod}</span>
                 </div>
                 <div className="flex justify-between py-2">
-                  <span className="text-gray-600">支付状态</span>
+                  <span className="text-gray-600">{t('checkout:paymentStatus')}</span>
                   <span className="text-green-500">{orderDetails.paymentStatus}</span>
                 </div>
                 <div className="flex justify-between py-2">
-                  <span className="text-gray-600">课程 ID</span>
+                  <span className="text-gray-600">{t('checkout:courseId')}</span>
                   <span>{courseId}</span>
                 </div>
                 <div className="flex justify-between py-2">
-                  <span className="text-gray-600">课程类型</span>
-                  <span>{isNewCourse ? '新课程系统' : '标准课程'}</span>
+                  <span className="text-gray-600">{t('checkout:courseType')}</span>
+                  <span>{isNewCourse ? t('checkout:newCourseSystem') : t('checkout:standardCourse')}</span>
                 </div>
               </div>
 
@@ -112,11 +117,11 @@ const PaymentSuccess = () => {
 
               <div className="text-center space-y-4">
                 <Button variant="outline" className="w-full" asChild>
-                  <Link to="/courses">查看更多好课</Link>
+                  <Link to="/courses">{t('checkout:viewMoreCourses')}</Link>
                 </Button>
                 <div className="text-sm text-gray-500">
-                  <p>如有任何问题，请联系客服解决</p>
-                  <p>电子邮件：support@example.com | 电话：400-123-4567</p>
+                  <p>{t('checkout:contactCustomerService')}</p>
+                  <p>{t('checkout:contactEmail')}</p>
                 </div>
               </div>
             </div>

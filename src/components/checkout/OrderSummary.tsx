@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import type { PaymentMethod } from './PaymentMethodSelect';
 import { formatAmount, convertCurrency } from '@/lib/services/currencyService';
+import { useTranslations } from "@/hooks/useTranslations";
 
 interface OrderSummaryProps {
   orderNumber?: string;
@@ -40,6 +41,8 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
   currency = 'usd'
 }) => {
   const navigate = useNavigate();
+  const { t } = useTranslations();
+  
   // 标准化货币为小写
   const normalizedCurrency = currency.toLowerCase();
   
@@ -52,7 +55,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
           errorDetails: {
             errorCode: 'PAYPAL_PROCESSING_ERROR',
             paymentMethod: paymentMethod,
-            errorMessage: 'PayPal支付处理过程中出现错误，请重新尝试或选择其他支付方式。',
+            errorMessage: t('checkout:paymentFailed'),
             courseId: null
           }
         }
@@ -99,41 +102,41 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
 
   return (
     <Card className="p-6">
-      <h2 className="text-xl font-semibold mb-4">订单摘要</h2>
+      <h2 className="text-xl font-semibold mb-4">{t('checkout:orderSummary')}</h2>
       <div className="space-y-4">
         <div className="flex justify-between text-sm">
-          <span className="text-gray-600">订单编号</span>
+          <span className="text-gray-600">{t('checkout:orderNumber')}</span>
           <span>{orderNumber}</span>
         </div>
         <div className="flex justify-between text-sm">
-          <span className="text-gray-600">下单日期</span>
+          <span className="text-gray-600">{t('checkout:orderDate')}</span>
           <span>{orderDate}</span>
         </div>
         <div className="flex justify-between text-sm">
-          <span className="text-gray-600">原价</span>
+          <span className="text-gray-600">{t('checkout:originalPrice')}</span>
           <span>{getFormattedPrice(originalPrice)}</span>
         </div>
         {discount > 0 && (
           <div className="flex justify-between text-sm text-green-500">
-            <span>优惠折扣</span>
+            <span>{t('checkout:discount')}</span>
             <span>-{getFormattedPrice(discount)}</span>
           </div>
         )}
         {tax > 0 && (
           <div className="flex justify-between text-sm">
-            <span className="text-gray-600">税费</span>
+            <span className="text-gray-600">{t('checkout:tax')}</span>
             <span>{getFormattedPrice(tax)}</span>
           </div>
         )}
         <Separator />
         <div className="flex justify-between font-semibold text-lg">
-          <span>应付总额</span>
+          <span>{t('checkout:total')}</span>
           <span>{getFormattedPrice(total)}</span>
         </div>
         
         {isSubscription && subscriptionPlanName && (
           <p className="text-sm text-gray-500 text-center">
-            {subscriptionPlanName}订阅计划，可随时取消
+            {subscriptionPlanName}{t('checkout:cancelAnytime')}
           </p>
         )}
 
@@ -146,10 +149,10 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
             {loading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                处理中...
+                {t('checkout:processing')}
               </>
             ) : (
-              `立即支付 ${getPayDisplayAmount()}`
+              `${t('checkout:payNow')} ${getPayDisplayAmount()}`
             )}
           </Button>
         </div>
@@ -163,9 +166,9 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
           </div>
           
           <div className="flex items-center justify-center gap-4 text-xs text-gray-500">
-            <span>安全支付</span>
-            <span>加密保护</span>
-            <span>24/7客户支持</span>
+            <span>{t('checkout:securePayment')}</span>
+            <span>{t('checkout:encryptedProtection')}</span>
+            <span>{t('checkout:customerSupport')}</span>
           </div>
         </div>
       </div>

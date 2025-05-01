@@ -226,7 +226,7 @@ export async function getCourseNewById(courseId: number): Promise<any> {
 // Fix the problematic function with proper typing to avoid infinite type instantiation
 export const getCourseWithSections = async (courseId: number): Promise<CourseWithSections | null> => {
   try {
-    // Use proper type casting to fix the conversion error
+    // Query for the course
     const { data: courseData, error } = await supabase
       .from('courses')
       .select(`
@@ -258,7 +258,12 @@ export const getCourseWithSections = async (courseId: number): Promise<CourseWit
       return null;
     }
 
-    // Cast the result to CourseWithSections after validating its structure
+    // Make sure we have actual data
+    if (!courseData) {
+      return null;
+    }
+
+    // Create a properly typed result object
     const result: CourseWithSections = {
       id: courseData.id,
       title: courseData.title,
@@ -266,7 +271,6 @@ export const getCourseWithSections = async (courseId: number): Promise<CourseWit
       price: courseData.price,
       currency: courseData.currency,
       category: courseData.category,
-      // Only include sections if they're valid arrays
       sections: Array.isArray(courseData.sections) ? courseData.sections : []
     };
 

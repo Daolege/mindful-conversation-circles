@@ -2,8 +2,11 @@
 import { Button } from "@/components/ui/button";
 import { BookOpen, ChevronRight, Users, Star, Play } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useTranslations } from "@/hooks/useTranslations";
 
 const HeroSection = () => {
+  const { t } = useTranslations();
+
   return (
     <section className="relative overflow-hidden bg-gradient-to-r from-knowledge-dark to-knowledge-primary text-white py-24">
       {/* 背景装饰 */}
@@ -18,16 +21,16 @@ const HeroSection = () => {
             <div className="inline-block">
               <span className="inline-flex items-center px-3 py-1 rounded-full bg-white/10 backdrop-blur-sm text-sm font-medium">
                 <span className="w-2 h-2 rounded-full bg-green-400 mr-2"></span>
-                全新在线学习平台
+                {t('home:newOnlineLearningPlatform')}
               </span>
             </div>
             
             <h1 className="text-5xl md:text-6xl font-bold leading-tight">
-              开启您的<br /><span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-300">知识旅程</span>
+              {t('home:startYour')}<br /><span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-300">{t('home:knowledgeJourney')}</span>
             </h1>
             
             <p className="text-xl opacity-90 leading-relaxed max-w-xl">
-              从顶尖专家那里获取最新、最实用的知识。我们精心挑选的课程将助您成为所在领域的专家。
+              {t('home:learningFromExpertsDescription')}
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4">
@@ -37,7 +40,7 @@ const HeroSection = () => {
                 className="bg-white hover:bg-gray-100 text-knowledge-dark hover:text-knowledge-primary transition-colors font-medium text-base px-8 rounded-full h-12"
               >
                 <Link to="/courses">
-                  浏览所有课程
+                  {t('courses:browseAllCourses')}
                   <ChevronRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>
@@ -50,7 +53,7 @@ const HeroSection = () => {
               >
                 <Link to="/about">
                   <Play className="mr-2 h-4 w-4" />
-                  观看平台介绍
+                  {t('home:watchPlatformIntro')}
                 </Link>
               </Button>
             </div>
@@ -73,7 +76,7 @@ const HeroSection = () => {
                   ))}
                 </div>
                 <div className="ml-4">
-                  <p className="font-medium text-sm">已有<span className="text-white font-bold"> 1,000+ </span>名学员</p>
+                  <p className="font-medium text-sm">{t('home:alreadyHave')}<span className="text-white font-bold"> 1,000+ </span>{t('home:students')}</p>
                   <div className="flex items-center mt-1">
                     {[1, 2, 3, 4, 5].map((i) => (
                       <Star key={i} className="w-3 h-3 text-yellow-400 fill-current" />
@@ -88,7 +91,7 @@ const HeroSection = () => {
               <div className="hidden sm:flex items-center">
                 <Users className="h-5 w-5 mr-2 text-white/70" />
                 <span className="text-sm">
-                  <span className="font-bold">100+</span> 专业导师
+                  <span className="font-bold">100+</span> {t('home:professionals')}
                 </span>
               </div>
             </div>
@@ -111,8 +114,8 @@ const HeroSection = () => {
                 <div className="flex items-center space-x-2">
                   <BookOpen className="h-5 w-5 text-knowledge-primary" />
                   <div>
-                    <p className="font-medium">新课程</p>
-                    <p className="text-xs text-gray-500">每周更新</p>
+                    <p className="font-medium">{t('courses:newCourses')}</p>
+                    <p className="text-xs text-gray-500">{t('home:weeklyUpdates')}</p>
                   </div>
                 </div>
               </div>
@@ -124,7 +127,7 @@ const HeroSection = () => {
                   <Users className="h-5 w-5 text-knowledge-primary mr-2" />
                   <div>
                     <p className="font-medium text-knowledge-primary">100+</p>
-                    <p className="text-xs text-gray-500">专业导师</p>
+                    <p className="text-xs text-gray-500">{t('home:professionals')}</p>
                   </div>
                 </div>
               </div>
@@ -136,7 +139,7 @@ const HeroSection = () => {
                   <Star className="h-5 w-5 text-yellow-400 fill-yellow-400 mr-2" />
                   <div>
                     <p className="font-medium">4.9/5</p>
-                    <p className="text-xs text-gray-500">学员满意度</p>
+                    <p className="text-xs text-gray-500">{t('home:studentSatisfaction')}</p>
                   </div>
                 </div>
               </div>

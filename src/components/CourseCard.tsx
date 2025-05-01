@@ -1,8 +1,10 @@
+
 import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Languages, Users, Clock } from "lucide-react";
+import { useTranslations } from "@/hooks/useTranslations";
 
 type CourseCardProps = {
   id: number;
@@ -24,6 +26,7 @@ const CourseCard = ({
   featured = false,
   language = "中文",
 }: CourseCardProps) => {
+  const { t } = useTranslations();
   const positionVariant = id % 4;
   const colorVariant = id % 6;
   
@@ -147,7 +150,7 @@ const CourseCard = ({
             className="bg-white/90 text-gray-800 backdrop-blur-sm shadow-sm border border-white/20
               transform transition-all duration-300 group-hover:scale-105 flex items-center gap-1">
             <Users className="h-4 w-4" />
-            {studentCount} 学员
+            {studentCount} {t('courses:students')}
           </Badge>
           
           <Badge 
@@ -155,7 +158,7 @@ const CourseCard = ({
             className="bg-white/90 text-gray-800 backdrop-blur-sm shadow-sm border border-white/20
               transform transition-all duration-300 group-hover:scale-105 flex items-center gap-1">
             <Clock className="h-4 w-4" />
-            随时学习
+            {t('courses:anyTimeStudy')}
           </Badge>
         </div>
 
@@ -165,7 +168,7 @@ const CourseCard = ({
               <Badge 
                 className="bg-white/90 text-gray-800 backdrop-blur-sm
                   transform transition-all duration-300 group-hover:scale-105">
-                热门课程
+                {t('courses:hot')}
               </Badge>
             )}
 
@@ -182,7 +185,7 @@ const CourseCard = ({
                 variant="secondary" 
                 className="bg-gray-900 text-white hover:bg-black hover:text-white
                   transition-all duration-300 group-hover:scale-105">
-                立即查看
+                {t('courses:viewDetails')}
               </Button>
             </div>
           </div>

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircle } from 'lucide-react';
 import { SubscriptionPlan } from '@/lib/types/course-new';
+import { useTranslations } from "@/hooks/useTranslations";
 
 interface PurchaseOptionsProps {
   onSelectSingle: () => void;
@@ -36,8 +37,10 @@ export function PurchaseOptions({
   exchangeRate,
   course
 }: PurchaseOptionsProps) {
+  const { t } = useTranslations();
+  
   const formatPrice = (price?: number) => {
-    if (!price && price !== 0) return '免费';
+    if (!price && price !== 0) return t('courses:free');
     return currency === 'CNY' || currency === 'cny' 
       ? `¥${price.toFixed(2)}` 
       : `$${price.toFixed(2)}`;
@@ -54,30 +57,30 @@ export function PurchaseOptions({
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       <Card className={`relative hover:shadow-lg transition-shadow border-2 ${selectedOption === 'single' ? 'border-primary' : ''}`}>
         <CardHeader className="bg-gray-50">
-          <CardTitle className="text-xl font-semibold">单次购买</CardTitle>
+          <CardTitle className="text-xl font-semibold">{t('checkout:singlePurchase')}</CardTitle>
         </CardHeader>
         <CardContent className="pt-6">
           <div className="mb-6">
             <div className="text-3xl font-bold mb-2">{formatPrice(coursePrice)}</div>
-            <p className="text-muted-foreground">一次性付款</p>
+            <p className="text-muted-foreground">{t('checkout:permanentAccess')}</p>
           </div>
           
           <ul className="space-y-3 mb-8">
             <li className="flex items-start gap-2">
               <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-              <span>永久访问《{courseTitle}》</span>
+              <span>{t('checkout:permanentAccess')} «{courseTitle}»</span>
             </li>
             <li className="flex items-start gap-2">
               <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-              <span>完整课程内容</span>
+              <span>{t('checkout:fullCourseContent')}</span>
             </li>
             <li className="flex items-start gap-2">
               <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-              <span>课后作业和练习</span>
+              <span>{t('checkout:homeworkAndExercises')}</span>
             </li>
             <li className="flex items-start gap-2">
               <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-              <span>支持随时观看回放</span>
+              <span>{t('checkout:replayAnytime')}</span>
             </li>
           </ul>
           
@@ -90,48 +93,48 @@ export function PurchaseOptions({
             size="lg"
             variant={selectedOption === 'single' ? 'default' : 'outline'}
           >
-            立即购买
+            {t('checkout:buyNow')}
           </Button>
         </CardContent>
       </Card>
       
       <Card className={`relative hover:shadow-lg transition-shadow border-2 ${selectedOption === 'subscription' ? 'border-knowledge-primary' : 'border-knowledge-primary/30'}`}>
         <div className="absolute top-0 right-0 -translate-y-1/2 bg-knowledge-primary text-white py-1 px-4 rounded-full text-sm font-medium">
-          推荐
+          {t('checkout:recommended')}
         </div>
         
         <CardHeader className="bg-knowledge-primary/10">
-          <CardTitle className="text-xl font-semibold">订阅计划</CardTitle>
+          <CardTitle className="text-xl font-semibold">{t('checkout:subscriptionPlan')}</CardTitle>
         </CardHeader>
         <CardContent className="pt-6">
           <div className="mb-6">
             <div className="text-3xl font-bold mb-2">
               {formatPrice(subscriptionPrice || coursePrice * 0.8)}
-              <span className="text-sm font-normal text-muted-foreground ml-1">/ 月起</span>
+              <span className="text-sm font-normal text-muted-foreground ml-1">/ {t('dates:months')}</span>
             </div>
-            <p className="text-muted-foreground">灵活订阅，随时可取消</p>
+            <p className="text-muted-foreground">{t('checkout:flexibleSubscription')}</p>
           </div>
           
           <ul className="space-y-3 mb-8">
             <li className="flex items-start gap-2">
               <CheckCircle className="h-5 w-5 text-knowledge-primary mt-0.5 flex-shrink-0" />
-              <span>访问全站所有课程</span>
+              <span>{t('checkout:accessAllCourses')}</span>
             </li>
             <li className="flex items-start gap-2">
               <CheckCircle className="h-5 w-5 text-knowledge-primary mt-0.5 flex-shrink-0" />
-              <span>新课程优先体验</span>
+              <span>{t('checkout:earlyAccessNewCourses')}</span>
             </li>
             <li className="flex items-start gap-2">
               <CheckCircle className="h-5 w-5 text-knowledge-primary mt-0.5 flex-shrink-0" />
-              <span>专属学习社区</span>
+              <span>{t('checkout:exclusiveLearnCommunity')}</span>
             </li>
             <li className="flex items-start gap-2">
               <CheckCircle className="h-5 w-5 text-knowledge-primary mt-0.5 flex-shrink-0" />
-              <span>季付/年付更多优惠</span>
+              <span>{t('checkout:quarterlyYearlyDiscounts')}</span>
             </li>
             <li className="flex items-start gap-2">
               <CheckCircle className="h-5 w-5 text-knowledge-primary mt-0.5 flex-shrink-0" />
-              <span>随时取消，无长期绑定</span>
+              <span>{t('checkout:cancelAnytime')}</span>
             </li>
           </ul>
           
@@ -144,7 +147,7 @@ export function PurchaseOptions({
             }}
             size="lg"
           >
-            选择订阅
+            {t('checkout:chooseSubscription')}
           </Button>
         </CardContent>
       </Card>
