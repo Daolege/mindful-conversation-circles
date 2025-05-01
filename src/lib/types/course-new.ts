@@ -1,4 +1,3 @@
-
 import { Course } from "./course";
 
 export interface CourseSection {
@@ -138,4 +137,3 @@ export interface SiteSetting {
   updated_at?: string;
   created_at?: string;
 }
-

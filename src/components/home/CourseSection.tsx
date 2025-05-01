@@ -14,14 +14,14 @@ interface CourseSectionProps {
   filterValue?: string;
 }
 
-const CourseSection = ({
+const CourseSection: React.FC<CourseSectionProps> = ({
   title,
   subtitle,
   limit = 4,
   filterBy,
   filterValue,
-}: CourseSectionProps) => {
-  const fetchCourses = async () => {
+}) => {
+  const fetchCourses = async (): Promise<CourseNew[]> => {
     let query = supabase
       .from('courses_new')
       .select('*')
@@ -36,13 +36,13 @@ const CourseSection = ({
     
     if (error) {
       console.error('Error fetching courses:', error);
-      return [] as CourseNew[];
+      return [];
     }
     
-    return (data || []) as CourseNew[];
+    return data as CourseNew[] || [];
   };
 
-  // Use the query with explicit function 
+  // Use the query with explicit typed function
   const { data: courses = [], isLoading } = useQuery({
     queryKey: ['homepage-courses', filterBy, filterValue, limit],
     queryFn: fetchCourses

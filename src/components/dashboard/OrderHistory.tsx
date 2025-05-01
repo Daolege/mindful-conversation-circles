@@ -58,7 +58,7 @@ export function OrderHistory({
     }
     
     // If no course items found, return order ID
-    return `订单 ${order.order_number || order.id.substring(0, 8)}`;
+    return `订单 ${order.id.substring(0, 8)}`;
   };
   
   // Function to get appropriate amount field from order

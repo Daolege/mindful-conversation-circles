@@ -44,7 +44,7 @@ export const getExchangeRate = async (): Promise<number> => {
   try {
     const { data, error } = await supabase
       .from('site_settings')
-      .select('value')
+      .select('*')
       .eq('key', 'exchange_rate')
       .single();
       
