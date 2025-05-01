@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { SubscriptionPeriod } from "@/lib/types/course-new";
+import { supabase } from '@/integrations/supabase/client';
 
 export function SubscriptionHistory() {
   const { user } = useAuth();
@@ -75,39 +76,6 @@ export function SubscriptionHistory() {
     },
     enabled: !!user?.id,
   });
-
-  const isLoading = isLoadingCurrent || isLoadingHistory;
-
-  const handleGenerateData = async () => {
-    if (!user?.id || isGeneratingData) return;
-    
-    setIsGeneratingData(true);
-    try {
-      const result = await createTestSubscription(user.id, periodOption);
-      
-      if (result.success) {
-        toast.success("订阅测试数据已生成", {
-          description: "您的订阅历史和当前订阅已更新"
-        });
-        
-        await Promise.all([
-          refetchCurrent(),
-          refetchHistory()
-        ]);
-      } else {
-        toast.error("生成订阅数据失败", {
-          description: "请稍后再试"
-        });
-      }
-    } catch (err) {
-      console.error("生成订阅测试数据错误:", err);
-      toast.error("生成订阅数据时发生错误", {
-        description: "请联系管理员"
-      });
-    } finally {
-      setIsGeneratingData(false);
-    }
-  };
 
   // 格式化日期
   const formatDate = (dateString: string | null | undefined) => {

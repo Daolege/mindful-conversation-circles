@@ -4,36 +4,26 @@ import { supabase } from "@/integrations/supabase/client";
 export type MigrationName = 
   | 'init' 
   | 'add_subscription_tables' 
-  | 'add_course_materials';
+  | 'add_course_materials'
+  | 'homework_foreign_key_fix';
 
 // Track migrations in a migrations table
-export const recordMigration = async (name: MigrationName, description: string) => {
+export const recordMigration = async (name: MigrationName, description: string, success: boolean = true) => {
   try {
-    // Check if we can call RPC for system SQL - this is safer approach but might not be available
+    // Try using direct insert for migration recording
     try {
-      // Try using our custom function instead of built-in ones
-      await supabase.rpc('record_migration_data', { 
-        migration_name: name,
-        migration_description: description 
-      });
-      return { success: true };
-    } catch (rpcError) {
-      console.log("Cannot use RPC for migration recording, using direct insert", rpcError);
-      
-      // Check if migrations table exists
-      const { data: tableExists } = await supabase
-        .from('migrations')
-        .select('count')
-        .limit(1)
-        .throwOnError();
-      
-      // If table exists, insert the migration record
+      // Add migration record using direct insert
       const { error } = await supabase
-        .from('migrations')
-        .insert({
-          name,
-          description,
-          executed_at: new Date().toISOString()
+        .from('site_settings')
+        .upsert({
+          key: `migration_${name}`,
+          setting_value: JSON.stringify({
+            name,
+            description,
+            executed_at: new Date().toISOString(),
+            success
+          }),
+          updated_at: new Date().toISOString()
         });
       
       if (error) {
@@ -42,6 +32,9 @@ export const recordMigration = async (name: MigrationName, description: string) 
       }
       
       return { success: true };
+    } catch (insertError) {
+      console.error('Error in recordMigration:', insertError);
+      return { success: false, error: insertError instanceof Error ? insertError.message : 'Unknown error' };
     }
   } catch (error) {
     console.error('Error in recordMigration:', error);
@@ -55,7 +48,7 @@ export const getExchangeRate = async (): Promise<number> => {
     const { data, error } = await supabase
       .from('site_settings')
       .select('setting_value')
-      .eq('setting_key', 'exchange_rate')
+      .eq('key', 'exchange_rate')
       .single();
       
     if (error) {
@@ -77,7 +70,7 @@ export const updateExchangeRate = async (newRate: number): Promise<boolean> => {
     const { data: existingSetting, error: selectError } = await supabase
       .from('site_settings')
       .select('id')
-      .eq('setting_key', 'exchange_rate')
+      .eq('key', 'exchange_rate')
       .single();
       
     if (selectError && !selectError.message.includes('No rows found')) {
@@ -90,7 +83,7 @@ export const updateExchangeRate = async (newRate: number): Promise<boolean> => {
       const { error: updateError } = await supabase
         .from('site_settings')
         .update({ setting_value: newRate.toString() })
-        .eq('setting_key', 'exchange_rate');
+        .eq('key', 'exchange_rate');
         
       if (updateError) {
         console.error('Error updating exchange rate:', updateError);
@@ -100,7 +93,7 @@ export const updateExchangeRate = async (newRate: number): Promise<boolean> => {
       // Insert new setting
       const { error: insertError } = await supabase
         .from('site_settings')
-        .insert({ setting_key: 'exchange_rate', setting_value: newRate.toString() });
+        .insert({ key: 'exchange_rate', setting_value: newRate.toString() });
         
       if (insertError) {
         console.error('Error inserting exchange rate:', insertError);

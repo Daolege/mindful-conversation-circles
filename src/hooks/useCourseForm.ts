@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -55,7 +56,7 @@ export function useCourseForm(initialData?: Partial<CourseWithDetails>) {
     price: initialData?.price ?? 0,
     currency: initialData?.currency ?? 'cny',
     category: initialData?.category ?? null,
-    featured: initialData?.featured ?? false, // Use featured instead of is_featured
+    featured: initialData?.featured ?? false,
     display_order: initialData?.display_order ?? 0,
     status: initialData?.status ?? 'draft',
     learning_objectives: initialData?.learning_objectives ?? [],

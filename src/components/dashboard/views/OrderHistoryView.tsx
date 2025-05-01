@@ -76,13 +76,6 @@ export function OrderHistoryView() {
     refetch();
   }, [refetch]);
 
-  if (error) {
-    console.error("Error loading orders:", error);
-    toast.error("加载订单记录失败", {
-      description: "请稍后再试"
-    });
-  }
-
   if (isLoading) {
     return (
       <div className="flex justify-center py-10">
@@ -142,10 +135,8 @@ export function OrderHistoryView() {
             <Select
               value={filterStatus}
               onValueChange={setFilterStatus}
-              disabled={isFetching}
-              className="w-full sm:w-[200px]"
             >
-              <SelectTrigger>
+              <SelectTrigger className="w-full sm:w-[200px]">
                 <SelectValue placeholder="筛选订单状态" />
               </SelectTrigger>
               <SelectContent>

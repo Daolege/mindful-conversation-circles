@@ -21,18 +21,18 @@ export const EnrolledCourses = memo(({
   showAll?: boolean
 }) => {
   const [displayLimit, setDisplayLimit] = useState(COURSES_PER_PAGE);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
 
   const displayCourses = coursesWithProgress?.slice(0, displayLimit);
   const hasMore = coursesWithProgress ? displayLimit < coursesWithProgress.length : false;
   
   const handleLoadMore = useCallback(async () => {
-    setIsLoadingMore(true);
+    setIsLoading(true);
     // Simulate loading delay
     await new Promise(resolve => setTimeout(resolve, 500));
     setDisplayLimit(prev => prev + COURSES_PER_PAGE);
-    setIsLoadingMore(false);
+    setIsLoading(false);
   }, []);
   
   const handleGenerateSampleData = useCallback(async () => {
@@ -82,7 +82,7 @@ export const EnrolledCourses = memo(({
             <InfiniteScroll
               onLoadMore={handleLoadMore}
               hasMore={hasMore}
-              isLoading={isLoadingMore}
+              isLoading={isLoading}
             >
               <div className="space-y-4">
                 {displayCourses.map((item) => (

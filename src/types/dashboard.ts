@@ -1,4 +1,6 @@
 
+import { Course } from "@/lib/types/course";
+
 export interface OrderItem {
   id: string;
   user_id: string;
@@ -43,4 +45,17 @@ export interface SubscriptionItem {
     interval?: string;
     features?: string[];
   }
+}
+
+// Add UserCourse interface from dashboard.d.ts
+export interface UserCourse {
+  course_id: number;
+  purchased_at: string;
+  user_id?: string;
+  courses: Course;
+  course_progress?: {
+    progress_percent: number;
+    completed: boolean;
+    last_lecture_id: string;
+  }[];
 }

@@ -4,8 +4,8 @@ import { User } from '@/contexts/authTypes';
 import { SubscriptionPeriod, SubscriptionPlan } from '@/lib/types/course-new';
 import { SubscriptionItem } from '@/types/dashboard';
 
-// Re-export types
-export { SubscriptionPeriod, SubscriptionPlan };
+// Re-export types (maintaining backward compatibility)
+export type { SubscriptionPeriod, SubscriptionPlan };
 
 // Get subscription plans
 export const getSubscriptionPlans = async (): Promise<SubscriptionPlan[]> => {

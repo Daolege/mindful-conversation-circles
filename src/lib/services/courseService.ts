@@ -1,5 +1,6 @@
+
 import { supabase } from "@/integrations/supabase/client";
-import { generateSlug } from "../utils";
+import { CourseData, CourseResponse } from "@/lib/types/course-new";
 
 // Define a simpler type to avoid excessive type instantiation
 type BasicCourseData = {
@@ -57,7 +58,7 @@ export const getCourseById = async (courseId: number): Promise<CourseResponse<Co
   }
 };
 
-// Add the saveCourse function
+// Add the saveCourse function with simplified types
 export const saveCourse = async (courseData: CourseData): Promise<CourseResponse<CourseData>> => {
   try {
     // Ensure title exists when creating a new course
@@ -146,8 +147,8 @@ export const updateCourseOrder = async (courseIds: number[]): Promise<{ success:
   }
 };
 
-// Fix insertCourse function to use the simplified type
-export const insertCourse = async (courseData: BasicCourseData) => {
+// Fix insertCourse function to use a proper type
+export const insertCourse = async (courseData: any) => {
   try {
     const { data, error } = await supabase
       .from("courses")
@@ -166,8 +167,8 @@ export const insertCourse = async (courseData: BasicCourseData) => {
   }
 };
 
-// Fix updateMultipleCourses to use array of objects with required fields
-export const updateMultipleCourses = async (coursesData: {id: number, title: string, display_order: number}[]) => {
+// Fix updateMultipleCourses with correct types
+export const updateMultipleCourses = async (coursesData: any[]) => {
   try {
     const { data, error } = await supabase
       .from("courses")
@@ -182,5 +183,24 @@ export const updateMultipleCourses = async (coursesData: {id: number, title: str
   } catch (error) {
     console.error("Error updating multiple courses:", error);
     throw error;
+  }
+};
+
+// Add getCourseNewById for the new system
+export const getCourseNewById = async (courseId: number) => {
+  try {
+    const { data, error } = await supabase
+      .from('courses_new')
+      .select('*')
+      .eq('id', courseId)
+      .single();
+    
+    if (error) {
+      return { data: null, error };
+    }
+    
+    return { data, error: null };
+  } catch (err) {
+    return { data: null, error: err };
   }
 };

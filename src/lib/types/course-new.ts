@@ -33,6 +33,7 @@ export interface CourseWithDetails extends Course {
   original_price?: number;
   materials?: CourseMaterial[];
   status?: 'published' | 'draft' | 'archived';
+  thumbnail_url?: string; // Added thumbnail_url here
 }
 
 export interface CourseMaterial {
@@ -85,10 +86,10 @@ export interface ListItem {
   is_visible?: boolean;
 }
 
-// Subscription period type - properly exported
+// Properly export SubscriptionPeriod type
 export type SubscriptionPeriod = 'monthly' | 'quarterly' | 'yearly' | '2years' | '3years';
 
-// SubscriptionPlan interface for subscription management - properly exported
+// Properly export SubscriptionPlan interface
 export interface SubscriptionPlan {
   id: string;
   name: string;
@@ -102,4 +103,17 @@ export interface SubscriptionPlan {
   created_at?: string;
   updated_at?: string;
   discount_percentage?: number;
+}
+
+// Add CourseData and CourseResponse types for courseService.ts
+export interface CourseData {
+  id?: number;
+  title: string;
+  description?: string;
+  [key: string]: any;
+}
+
+export interface CourseResponse<T> {
+  data: T | null;
+  error: Error | null;
 }
