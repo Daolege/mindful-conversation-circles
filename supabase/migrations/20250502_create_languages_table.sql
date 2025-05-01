@@ -11,12 +11,9 @@ CREATE TABLE IF NOT EXISTS languages (
   updated_at TIMESTAMPTZ
 );
 
--- Add indexes for better performance
-CREATE INDEX IF NOT EXISTS idx_languages_code ON languages(code);
-CREATE INDEX IF NOT EXISTS idx_languages_enabled ON languages(enabled);
-
--- Insert default languages
-INSERT INTO languages (code, name, nativeName, enabled, rtl) 
-VALUES ('en', 'English', 'English', TRUE, FALSE), 
-       ('zh', 'Chinese (Simplified)', '简体中文', TRUE, FALSE)
+-- Insert default languages if they don't exist
+INSERT INTO languages (code, name, nativeName, enabled)
+VALUES 
+  ('en', 'English', 'English', TRUE),
+  ('zh', 'Chinese (Simplified)', '简体中文', TRUE)
 ON CONFLICT (code) DO NOTHING;

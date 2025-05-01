@@ -40,7 +40,7 @@ i18n.use({
         .from('translations')
         .select('key, value')
         .eq('language_code', language)
-        .eq('namespace', namespace);
+        .eq('namespace', namespace) as { data: Array<{key: string, value: string}> | null, error: any };
       
       if (!error && data && data.length > 0) {
         // 转换为键值对

@@ -25,7 +25,7 @@ export const useTranslations = () => {
         .eq('language_code', language)
         .eq('namespace', namespace)
         .eq('key', key)
-        .single();
+        .single() as { data: ExistingTranslation | null, error: any };
       
       if (selectError && selectError.code !== 'PGRST116') throw selectError;
       
@@ -71,13 +71,13 @@ export const useTranslations = () => {
         .from('translations')
         .select('*')
         .eq('language_code', language)
-        .eq('namespace', namespace);
+        .eq('namespace', namespace) as { data: TranslationItem[] | null, error: any };
         
       if (error) throw error;
       
       return { 
         success: true, 
-        data: data as TranslationItem[] || []
+        data: data || []
       };
     } catch (error) {
       console.error('Error fetching translations:', error);

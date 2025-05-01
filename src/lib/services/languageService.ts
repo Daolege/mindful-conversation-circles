@@ -29,14 +29,14 @@ export async function getAllLanguages(): Promise<Language[]> {
     const { data, error } = await supabase
       .from('languages')
       .select('*')
-      .order('name', { ascending: true }) as { data: Language[], error: any };
+      .order('name', { ascending: true });
     
     if (error) {
       console.error('Error fetching languages:', error);
       return [];
     }
     
-    return data || [];
+    return data as Language[] || [];
   } catch (error) {
     console.error('Unexpected error in getAllLanguages:', error);
     return [];
@@ -50,14 +50,14 @@ export async function getEnabledLanguages(): Promise<Language[]> {
       .from('languages')
       .select('*')
       .eq('enabled', true)
-      .order('name', { ascending: true }) as { data: Language[], error: any };
+      .order('name', { ascending: true });
     
     if (error) {
       console.error('Error fetching enabled languages:', error);
       return [];
     }
     
-    return data || [];
+    return data as Language[] || [];
   } catch (error) {
     console.error('Unexpected error in getEnabledLanguages:', error);
     return [];
@@ -70,14 +70,14 @@ export async function addLanguage(language: Language): Promise<{ success: boolea
     const { data, error } = await supabase
       .from('languages')
       .insert([language])
-      .select() as { data: Language[] | null, error: any };
+      .select();
     
     if (error) {
       console.error('Error adding language:', error);
       return { success: false, error };
     }
     
-    return { success: true, data: data && data.length > 0 ? data[0] : undefined };
+    return { success: true, data: data && data.length > 0 ? data[0] as Language : undefined };
   } catch (error) {
     console.error('Unexpected error in addLanguage:', error);
     return { success: false, error: error as Error };
@@ -142,7 +142,7 @@ export async function deleteLanguage(languageId: number): Promise<{ success: boo
       .from('languages')
       .select('code')
       .eq('id', languageId)
-      .single() as { data: { code: string } | null, error: any };
+      .single();
     
     if (fetchError) {
       return { success: false, error: fetchError };
