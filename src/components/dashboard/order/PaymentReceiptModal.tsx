@@ -324,8 +324,9 @@ export const PaymentReceiptModal = ({ order, open, onOpenChange }: PaymentReceip
         </div>
       </DialogContent>
 
-      {/* 添加专用于打印的样式 */}
-      <style jsx global>{`
+      {/* Fix: Changed to regular style tag without jsx/global props */}
+      <style>
+        {`
         @media print {
           body * {
             visibility: hidden !important;
@@ -343,7 +344,8 @@ export const PaymentReceiptModal = ({ order, open, onOpenChange }: PaymentReceip
             width: 100% !important;
           }
         }
-      `}</style>
+      `}
+      </style>
     </Dialog>
   );
 };
