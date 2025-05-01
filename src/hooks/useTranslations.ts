@@ -3,6 +3,10 @@ import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import { TranslationItem } from '@/lib/services/languageService';
 
+interface ExistingTranslation {
+  id: number;
+}
+
 export const useTranslations = () => {
   const { t, i18n } = useTranslation(['common', 'navigation', 'courses', 'auth', 'admin', 'checkout', 'dashboard', 'errors', 'orders']);
   
@@ -20,7 +24,7 @@ export const useTranslations = () => {
           p_language_code: language,
           p_namespace: namespace,
           p_key: key
-        });
+        }) as { data: ExistingTranslation | null, error: any };
       
       if (selectError) throw selectError;
       
@@ -66,13 +70,13 @@ export const useTranslations = () => {
         .rpc('get_translations', {
           p_language_code: language,
           p_namespace: namespace
-        });
+        }) as { data: TranslationItem[], error: any };
         
       if (error) throw error;
       
       return { 
         success: true, 
-        data: data as TranslationItem[] || []
+        data: data || []
       };
     } catch (error) {
       console.error('Error fetching translations:', error);

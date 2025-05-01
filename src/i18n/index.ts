@@ -40,11 +40,11 @@ i18n.use({
         .rpc('get_namespace_translations', {
           p_language_code: language,
           p_namespace: namespace
-        });
+        }) as { data: Array<{key: string, value: string}>, error: any };
       
       if (!error && data && data.length > 0) {
         // 转换为键值对
-        const translations = data.reduce((acc: Record<string, string>, item: any) => {
+        const translations = data.reduce((acc: Record<string, string>, item: {key: string, value: string}) => {
           acc[item.key] = item.value;
           return acc;
         }, {});

@@ -36,7 +36,7 @@ export async function getAllLanguages(): Promise<Language[]> {
       return [];
     }
     
-    return data || [];
+    return data as Language[] || [];
   } catch (error) {
     console.error('Unexpected error in getAllLanguages:', error);
     return [];
@@ -57,7 +57,7 @@ export async function getEnabledLanguages(): Promise<Language[]> {
       return [];
     }
     
-    return data || [];
+    return data as Language[] || [];
   } catch (error) {
     console.error('Unexpected error in getEnabledLanguages:', error);
     return [];
