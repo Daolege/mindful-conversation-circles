@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CourseNew } from "@/lib/types/course-new";
-import { Users, Clock, Star } from "lucide-react";
+import { Users, Clock } from "lucide-react";
 
 interface NewHomePageCourseCardProps {
   course: CourseNew;
@@ -18,182 +18,67 @@ const NewHomePageCourseCard = ({ course, index }: NewHomePageCourseCardProps) =>
     ? Math.round(((course.original_price - course.price) / course.original_price) * 100) 
     : 0;
   
-  // Calculate position variants based on index
-  const positionVariant = index % 4;
-  const colorVariant = index % 6;
-  
-  const getLargeCirclePosition = () => {
-    switch (positionVariant) {
-      case 0: return 'right-[-25%] top-[-25%]';
-      case 1: return 'right-[-20%] top-[-30%]';
-      case 2: return 'right-[-30%] top-[-20%]';
-      default: return 'right-[-25%] top-[-25%]';
-    }
-  };
-  
-  const getMediumCirclePosition = () => {
-    switch (positionVariant) {
-      case 0: return 'left-[-15%] bottom-[-15%]';
-      case 1: return 'left-[-20%] bottom-[-10%]';
-      case 2: return 'left-[-10%] bottom-[-20%]';
-      default: return 'left-[-15%] bottom-[-15%]';
-    }
-  };
-  
-  const getSmallCirclePosition = () => {
-    switch (positionVariant) {
-      case 0: return 'left-[10%] top-[10%]';
-      case 1: return 'left-[15%] top-[5%]';
-      case 2: return 'left-[5%] top-[15%]';
-      default: return 'left-[10%] top-[10%]';
-    }
-  };
-  
-  const getGradientColors = () => {
-    switch (colorVariant) {
-      case 0:
-        return {
-          large: 'group-hover:from-purple-600/90 group-hover:to-blue-600/90',
-          medium: 'group-hover:from-pink-600/90 group-hover:to-purple-600/90',
-          small: 'group-hover:from-blue-600/90 group-hover:to-cyan-600/90'
-        };
-      case 1:
-        return {
-          large: 'group-hover:from-blue-600/90 group-hover:to-cyan-600/90',
-          medium: 'group-hover:from-teal-600/90 group-hover:to-emerald-600/90',
-          small: 'group-hover:from-violet-600/90 group-hover:to-purple-600/90'
-        };
-      case 2:
-        return {
-          large: 'group-hover:from-rose-600/90 group-hover:to-pink-600/90',
-          medium: 'group-hover:from-amber-600/90 group-hover:to-orange-600/90',
-          small: 'group-hover:from-emerald-600/90 group-hover:to-teal-600/90'
-        };
-      case 3:
-        return {
-          large: 'group-hover:from-amber-600/90 group-hover:to-orange-600/90',
-          medium: 'group-hover:from-violet-600/90 group-hover:to-fuchsia-600/90',
-          small: 'group-hover:from-cyan-600/90 group-hover:to-sky-600/90'
-        };
-      case 4:
-        return {
-          large: 'group-hover:from-emerald-600/90 group-hover:to-teal-600/90',
-          medium: 'group-hover:from-blue-600/90 group-hover:to-indigo-600/90',
-          small: 'group-hover:from-rose-600/90 group-hover:to-pink-600/90'
-        };
-      default:
-        return {
-          large: 'group-hover:from-violet-600/90 group-hover:to-purple-600/90',
-          medium: 'group-hover:from-rose-600/90 group-hover:to-pink-600/90',
-          small: 'group-hover:from-teal-600/90 group-hover:to-emerald-600/90'
-        };
-    }
+  const getGrayGradient = (index: number) => {
+    const variants = [
+      'from-gray-100 to-gray-200',
+      'from-gray-200 to-gray-300',
+      'from-gray-50 to-gray-200',
+      'from-gray-200 to-gray-100',
+    ];
+    return variants[index % variants.length];
   };
 
-  const gradientColors = getGradientColors();
-
-  // Course tags - mock data for visual demonstration
-  const courseTags = [
-    { id: 1, name: course.category || "入门课程", color: "bg-blue-100 text-blue-800" },
-    { id: 2, name: course.is_featured ? "精品课程" : "基础课程", color: "bg-purple-100 text-purple-800" },
-    { id: 3, name: "热门", color: "bg-amber-100 text-amber-800" }
-  ];
-  
   return (
-    <Link to={`/courses-new/${course.id}`} className="block transform transition-all duration-700 hover:translate-y-[-8px]">
-      <Card className="relative h-[270px] overflow-hidden bg-gradient-to-br from-gray-200/90 to-gray-300/90 backdrop-blur-sm border-0 shadow-lg group cursor-pointer hover:shadow-2xl transition-all duration-1000">
-        <div className="absolute inset-0 w-full h-full overflow-hidden">
-          <div className="absolute inset-0">
-            <div 
-              className={`absolute ${getLargeCirclePosition()} w-[70%] h-[70%] rounded-full
-                bg-gradient-to-br from-gray-300/30 to-gray-400/30
-                ${gradientColors.large}
-                transform transition-all duration-[1500ms] group-hover:scale-150 group-hover:rotate-[120deg]
-                mix-blend-screen blur-sm`}
-            />
-            
-            <div 
-              className={`absolute ${getMediumCirclePosition()} w-[50%] h-[50%] rounded-full
-                bg-gradient-to-tr from-gray-300/30 to-gray-400/30
-                ${gradientColors.medium}
-                transform transition-all duration-[2000ms] group-hover:scale-[1.8] group-hover:rotate-[-120deg]
-                mix-blend-screen blur-sm`}
-            />
-            
-            <div 
-              className={`absolute ${getSmallCirclePosition()} w-[30%] h-[30%] rounded-full
-                bg-gradient-to-bl from-gray-300/30 to-gray-400/30
-                ${gradientColors.small}
-                transform transition-all duration-[2500ms] group-hover:scale-[2] group-hover:rotate-[240deg]
-                mix-blend-screen blur-sm`}
-            />
+    <Link to={`/courses-new/${course.id}`} className="block transform transition-all duration-500 hover:translate-y-[-8px]">
+      <Card className="overflow-hidden h-[320px] relative border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300">
+        {/* Card background */}
+        <div className="absolute inset-0 bg-gradient-to-br ${getGrayGradient(index)} opacity-80"></div>
+        
+        {/* Top section with course tags */}
+        <div className="relative p-3 flex flex-wrap gap-2 border-b border-gray-100">
+          <div className="flex items-center bg-gray-100 text-gray-700 rounded-full px-3 py-1 text-xs">
+            <Users className="w-3.5 h-3.5 mr-1.5" />
+            <span>{course.enrollment_count || 0}人已学习</span>
           </div>
-
-          <div className="absolute inset-0 bg-gradient-to-b from-gray-200/40 via-gray-300/40 to-gray-400/60 backdrop-blur-[1px]" />
+          
+          <div className="flex items-center bg-gray-100 text-gray-700 rounded-full px-3 py-1 text-xs">
+            <Clock className="w-3.5 h-3.5 mr-1.5" />
+            <span>随时学习</span>
+          </div>
+          
+          {hasDiscount && (
+            <div className="ml-auto bg-gray-800 text-white rounded-full px-3 py-1 text-xs font-medium">
+              {discount}% OFF
+            </div>
+          )}
         </div>
-
-        {/* Course tags */}
-        <div className="absolute top-3 left-3 z-20 flex flex-wrap gap-2">
-          {courseTags.map((tag, idx) => (
+        
+        {/* Main content */}
+        <div className="relative p-5 flex flex-col h-[220px]">
+          {/* Title - allow space for long titles */}
+          <h3 className="text-xl font-bold mb-4 line-clamp-3 text-gray-900 group-hover:text-black">
+            {course.title}
+          </h3>
+          
+          {/* Optional description if available */}
+          {course.description && (
+            <p className="text-sm text-gray-600 line-clamp-2 mb-4">{course.description}</p>
+          )}
+          
+          {/* Price section at bottom */}
+          <div className="mt-auto flex justify-between items-center pt-4 border-t border-gray-200">
+            <div className="flex items-baseline gap-2">
+              <span className="text-xl font-bold text-gray-900">¥{course.price}</span>
+              {hasDiscount && (
+                <span className="text-sm text-gray-500 line-through">¥{course.original_price}</span>
+              )}
+            </div>
+            
             <Badge 
-              key={tag.id}
-              className={`${tag.color} backdrop-blur-sm shadow-sm border border-white/20
-                transform transition-all duration-300 group-hover:scale-105`}
-            >
-              {tag.name}
+              variant="outline" 
+              className="bg-gray-900 hover:bg-black text-white border-gray-900 hover:border-black hover:text-white transition-colors duration-200">
+              立即查看
             </Badge>
-          ))}
-        </div>
-
-        {/* Course meta info */}
-        <div className="absolute top-3 right-3 z-20">
-          <div className="flex items-center space-x-2 bg-black/40 backdrop-blur-sm rounded-full px-3 py-1 text-white text-xs">
-            <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-            <span>5.0</span>
-            <span className="text-white/70">({course.enrollment_count || 0})</span>
-          </div>
-        </div>
-
-        {/* Content section at bottom */}
-        <div className="absolute inset-x-0 bottom-0 z-10 p-5 bg-black/10 backdrop-blur-[2px]">
-          <div className="space-y-3">
-            <h3 className="text-xl font-bold text-black drop-shadow-md
-              transform transition-all duration-300 group-hover:scale-[1.02]">
-              {course.title}
-            </h3>
-            
-            <div className="flex items-center gap-4 text-xs text-gray-700">
-              <div className="flex items-center">
-                <Users className="w-3.5 h-3.5 mr-1" />
-                <span>{course.enrollment_count || 0}人已学习</span>
-              </div>
-              <div className="flex items-center">
-                <Clock className="w-3.5 h-3.5 mr-1" />
-                <span>随时学习</span>
-              </div>
-            </div>
-
-            <div className="flex justify-between items-center pt-2">
-              <div className="font-bold text-lg text-black">
-                ¥{course.price}
-                {hasDiscount && (
-                  <span className="text-sm line-through text-gray-600 ml-2">
-                    ¥{course.original_price}
-                  </span>
-                )}
-                {hasDiscount && (
-                  <span className="ml-2 text-xs bg-red-600 text-white px-1.5 py-0.5 rounded">
-                    {discount}% OFF
-                  </span>
-                )}
-              </div>
-              <Badge 
-                variant="secondary" 
-                className="bg-gray-900 text-white hover:bg-black hover:text-white
-                  transition-all duration-300 group-hover:scale-105">
-                立即查看
-              </Badge>
-            </div>
           </div>
         </div>
       </Card>

@@ -132,6 +132,7 @@ export interface CourseResponse<T> {
 
 // Updated SiteSetting interface to include both database structure and compatibility with migration functions
 export interface SiteSetting {
+  // Database fields
   id?: string;
   site_name?: string;
   site_description?: string;
@@ -143,12 +144,21 @@ export interface SiteSetting {
   created_at?: string;
   updated_at?: string;
   
-  // Compatibility layer for recordMigration function
+  // Compatibility fields for migration function
   key?: string;
   value?: string;
 }
 
-// Database Function Types with fixed type definitions
+// Define OrderLineItem interface with required properties
+export interface OrderLineItem {
+  order_id: string;
+  course_id: number;
+  price: number;
+  currency: string;
+  [key: string]: any;
+}
+
+// Update DatabaseFunctions to include all functions used in the application
 export interface DatabaseFunctions {
   create_test_subscription: any;
   has_role: any;
@@ -164,13 +174,4 @@ export interface DatabaseFunctions {
   check_table_exists: any;
   execute_sql: any;
   insert_order_item: any;
-}
-
-// OrderLineItem interface with required properties
-export interface OrderLineItem {
-  order_id: string;
-  course_id: number;
-  price: number;
-  currency: string;
-  [key: string]: any;
 }
