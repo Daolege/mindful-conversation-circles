@@ -40,11 +40,13 @@ i18n.use({
         .from('translations')
         .select('key, value')
         .eq('language_code', language)
-        .eq('namespace', namespace) as { data: Array<{key: string, value: string}> | null, error: any };
+        .eq('namespace', namespace);
       
-      if (!error && data && data.length > 0) {
+      const typedData = data as Array<{key: string, value: string}> | null;
+      
+      if (!error && typedData && typedData.length > 0) {
         // 转换为键值对
-        const translations = data.reduce((acc: Record<string, string>, item: {key: string, value: string}) => {
+        const translations = typedData.reduce((acc: Record<string, string>, item: {key: string, value: string}) => {
           acc[item.key] = item.value;
           return acc;
         }, {});

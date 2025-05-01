@@ -54,6 +54,65 @@ export interface Database {
           updated_at?: string
         }
       },
+      translations: {
+        Row: {
+          id: number
+          language_code: string
+          namespace: string
+          key: string
+          value: string
+          created_at?: string
+          updated_at?: string
+        }
+        Insert: {
+          id?: number
+          language_code: string
+          namespace: string
+          key: string
+          value: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          language_code?: string
+          namespace?: string
+          key?: string
+          value?: string
+          updated_at?: string
+        }
+      },
+      languages: {
+        Row: {
+          id: number
+          code: string
+          name: string
+          nativeName: string
+          enabled: boolean
+          rtl?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Insert: {
+          id?: number
+          code: string
+          name: string
+          nativeName: string
+          enabled?: boolean
+          rtl?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          code?: string
+          name?: string
+          nativeName?: string
+          enabled?: boolean
+          rtl?: boolean
+          updated_at?: string
+        }
+      },
       order_items: {
         Row: {
           id?: number
@@ -521,6 +580,44 @@ export interface Database {
           sql_statement: string
         }
         Returns: unknown
+      },
+      check_translation_exists: {
+        Args: {
+          p_language_code: string
+          p_namespace: string
+          p_key: string
+        }
+        Returns: Json
+      },
+      update_translation: {
+        Args: {
+          p_id: number
+          p_value: string
+        }
+        Returns: void
+      },
+      insert_translation: {
+        Args: {
+          p_language_code: string
+          p_namespace: string
+          p_key: string
+          p_value: string
+        }
+        Returns: void
+      },
+      get_translations: {
+        Args: {
+          p_language_code: string
+          p_namespace: string
+        }
+        Returns: Record<string, unknown>[]
+      },
+      get_namespace_translations: {
+        Args: {
+          p_language_code: string
+          p_namespace: string
+        }
+        Returns: {key: string, value: string}[]
       },
       insert_order_item: {
         Args: {

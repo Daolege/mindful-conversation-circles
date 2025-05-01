@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import i18n from "@/i18n";
+import { Database } from "@/lib/supabase/types";
 
 export interface Language {
   id?: number;
@@ -36,7 +37,7 @@ export async function getAllLanguages(): Promise<Language[]> {
       return [];
     }
     
-    return data as Language[] || [];
+    return (data as Language[]) || [];
   } catch (error) {
     console.error('Unexpected error in getAllLanguages:', error);
     return [];
@@ -57,7 +58,7 @@ export async function getEnabledLanguages(): Promise<Language[]> {
       return [];
     }
     
-    return data as Language[] || [];
+    return (data as Language[]) || [];
   } catch (error) {
     console.error('Unexpected error in getEnabledLanguages:', error);
     return [];
@@ -77,7 +78,7 @@ export async function addLanguage(language: Language): Promise<{ success: boolea
       return { success: false, error };
     }
     
-    return { success: true, data: data && data.length > 0 ? data[0] as Language : undefined };
+    return { success: true, data: data && data.length > 0 ? (data[0] as Language) : undefined };
   } catch (error) {
     console.error('Unexpected error in addLanguage:', error);
     return { success: false, error: error as Error };
@@ -148,7 +149,9 @@ export async function deleteLanguage(languageId: number): Promise<{ success: boo
       return { success: false, error: fetchError };
     }
     
-    if (language && (language.code === 'en' || language.code === 'zh')) {
+    const lang = language as { code: string } | null;
+    
+    if (lang && (lang.code === 'en' || lang.code === 'zh')) {
       return { 
         success: false, 
         error: new Error('Cannot delete default languages (English or Chinese)')
@@ -198,14 +201,14 @@ export async function getTranslationsByLanguage(languageCode: string): Promise<T
     const { data, error } = await supabase
       .from('translations')
       .select('*')
-      .eq('language_code', languageCode) as { data: TranslationItem[] | null, error: any };
+      .eq('language_code', languageCode);
     
     if (error) {
       console.error('Error fetching translations:', error);
       return [];
     }
     
-    return data || [];
+    return (data as TranslationItem[]) || [];
   } catch (error) {
     console.error('Unexpected error in getTranslationsByLanguage:', error);
     return [];

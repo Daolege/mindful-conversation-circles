@@ -25,28 +25,30 @@ export const useTranslations = () => {
         .eq('language_code', language)
         .eq('namespace', namespace)
         .eq('key', key)
-        .single() as { data: ExistingTranslation | null, error: any };
+        .single();
+      
+      const typedExistingTranslation = existingTranslation as ExistingTranslation | null;
       
       if (selectError && selectError.code !== 'PGRST116') throw selectError;
       
-      if (existingTranslation && existingTranslation.id) {
+      if (typedExistingTranslation && typedExistingTranslation.id) {
         // 更新已有翻译
         const { error: updateError } = await supabase
           .from('translations')
           .update({ value: value, updated_at: new Date().toISOString() })
-          .eq('id', existingTranslation.id);
+          .eq('id', typedExistingTranslation.id);
           
         if (updateError) throw updateError;
       } else {
         // 添加新翻译
         const { error: insertError } = await supabase
           .from('translations')
-          .insert([{
+          .insert({
             language_code: language,
             namespace: namespace,
             key: key,
             value: value
-          }]);
+          });
           
         if (insertError) throw insertError;
       }
@@ -71,13 +73,13 @@ export const useTranslations = () => {
         .from('translations')
         .select('*')
         .eq('language_code', language)
-        .eq('namespace', namespace) as { data: TranslationItem[] | null, error: any };
+        .eq('namespace', namespace);
         
       if (error) throw error;
       
       return { 
         success: true, 
-        data: data || []
+        data: (data as TranslationItem[]) || []
       };
     } catch (error) {
       console.error('Error fetching translations:', error);
