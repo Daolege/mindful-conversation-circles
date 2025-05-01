@@ -3,10 +3,9 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Order } from '@/lib/types/order';
-import { updateOrderStatus } from '@/lib/services/orderService';
+import { setOrderStatus, deleteOrder } from '@/lib/services/orderUpdateService';
 import { toast } from 'sonner';
 import { FileText, Loader2, CreditCard, Trash2 } from 'lucide-react';
-import { deleteOrder } from '@/lib/services/orderUpdateService';
 import { useNavigate } from 'react-router-dom';
 import { PaymentReceiptModal } from './PaymentReceiptModal';
 
@@ -24,7 +23,7 @@ export const OrderActions = ({ order, onOrderUpdated }: OrderActionsProps) => {
   const handleStatusUpdate = async (newStatus: string) => {
     setIsUpdating(true);
     try {
-      const result = await updateOrderStatus(order.id, newStatus);
+      const result = await setOrderStatus(order.id, newStatus);
       if (result.success) {
         toast.success(`订单状态已更新为 ${newStatus}`);
         if (onOrderUpdated) onOrderUpdated();

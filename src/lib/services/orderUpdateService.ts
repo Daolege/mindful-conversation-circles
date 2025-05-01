@@ -5,13 +5,13 @@ import { Order } from '@/lib/types/order';
 /**
  * Updates an order in the database
  * @param order Order data to update
- * @returns Promise<boolean>
+ * @returns Promise<{success: boolean, error?: any}>
  */
-export const updateOrder = async (order: Partial<Order>): Promise<boolean> => {
+export const updateOrder = async (order: Partial<Order>): Promise<{success: boolean, error?: any}> => {
   try {
     if (!order.id) {
       console.error('Order ID is required for update');
-      return false;
+      return {success: false, error: 'Order ID is required'};
     }
 
     const { error } = await supabase
@@ -21,22 +21,47 @@ export const updateOrder = async (order: Partial<Order>): Promise<boolean> => {
 
     if (error) {
       console.error('Error updating order:', error);
-      return false;
+      return {success: false, error};
     }
 
-    return true;
+    return {success: true};
   } catch (err) {
     console.error('Error in updateOrder:', err);
-    return false;
+    return {success: false, error: err};
+  }
+};
+
+/**
+ * Updates a specific order's status
+ * @param orderId The order ID
+ * @param status The new status
+ * @returns Promise<{success: boolean, error?: any}>
+ */
+export const updateOrderStatus = async (orderId: string, status: string): Promise<{success: boolean, error?: any}> => {
+  try {
+    const { error } = await supabase
+      .from('orders')
+      .update({ status })
+      .eq('id', orderId);
+
+    if (error) {
+      console.error('Error updating order status:', error);
+      return {success: false, error};
+    }
+
+    return {success: true};
+  } catch (err) {
+    console.error('Error in updateOrderStatus:', err);
+    return {success: false, error: err};
   }
 };
 
 /**
  * Deletes an order and its related items
  * @param orderId The ID of the order to delete
- * @returns Promise<boolean>
+ * @returns Promise<{success: boolean, error?: any}>
  */
-export const deleteOrder = async (orderId: string): Promise<boolean> => {
+export const deleteOrder = async (orderId: string): Promise<{success: boolean, error?: any}> => {
   try {
     // Using direct REST API fetch to avoid type issues
     const url = `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/order_items?order_id=eq.${orderId}`;
@@ -54,7 +79,7 @@ export const deleteOrder = async (orderId: string): Promise<boolean> => {
     
     if (!deleteItemsResponse.ok) {
       console.error('Failed to delete order items:', deleteItemsResponse.statusText);
-      return false;
+      return {success: false, error: `Failed to delete order items: ${deleteItemsResponse.statusText}`};
     }
     
     // Then delete the order
@@ -65,13 +90,13 @@ export const deleteOrder = async (orderId: string): Promise<boolean> => {
 
     if (error) {
       console.error('Error deleting order:', error);
-      return false;
+      return {success: false, error};
     }
 
-    return true;
+    return {success: true};
   } catch (err) {
     console.error('Error in deleteOrder:', err);
-    return false;
+    return {success: false, error: err};
   }
 };
 
@@ -79,9 +104,9 @@ export const deleteOrder = async (orderId: string): Promise<boolean> => {
  * Sets an order status
  * @param orderId The order ID
  * @param status The new status
- * @returns Promise<boolean>
+ * @returns Promise<{success: boolean, error?: any}>
  */
-export const setOrderStatus = async (orderId: string, status: string): Promise<boolean> => {
+export const setOrderStatus = async (orderId: string, status: string): Promise<{success: boolean, error?: any}> => {
   try {
     const { error } = await supabase
       .from('orders')
@@ -90,12 +115,12 @@ export const setOrderStatus = async (orderId: string, status: string): Promise<b
 
     if (error) {
       console.error('Error updating order status:', error);
-      return false;
+      return {success: false, error};
     }
 
-    return true;
+    return {success: true};
   } catch (err) {
     console.error('Error in setOrderStatus:', err);
-    return false;
+    return {success: false, error: err};
   }
 };
