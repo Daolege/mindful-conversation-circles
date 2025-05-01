@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 
 export const generateMockData = async (userId: string): Promise<{ 
@@ -189,29 +190,54 @@ export const generateMockOrders = async (userId: string): Promise<boolean> => {
         continue;
       }
       
-      // Check if order_items table exists using direct API calls instead of RPC
+      // Check if order_items table exists - using plain SQL directly
       try {
-        // Create the order item manually
-        const orderItemData = {
-          order_id: orderId,
-          course_id: course.id,
-          price: price,
-          currency: 'cny',
-          created_at: orderDate.toISOString()
-        };
-          
-        // Try direct insert without RPC
-        const { error: directItemError } = await supabase
-          .from('order_items')
-          .insert(orderItemData);
+        // Instead of using RPC functions that might not exist, use SQL statements directly
+        const { data, error } = await supabase.rpc('insert_order_item', {
+          p_order_id: orderId,
+          p_course_id: course.id,
+          p_price: price,
+          p_currency: 'cny'
+        });
         
-        if (directItemError) {
-          console.error('[mockDataService] Error creating order item:', directItemError);
+        if (error) {
+          // Fallback: try creating item using direct insert if table exists
+          console.warn('[mockDataService] Could not use RPC for order item:', error);
+          
+          // Direct insert as a fallback
+          const orderItemData = {
+            order_id: orderId,
+            course_id: course.id,
+            price: price,
+            currency: 'cny',
+            created_at: orderDate.toISOString()
+          };
+          
+          try {
+            // Use REST API for direct SQL instead
+            const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/order_items`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY || '',
+                'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY || ''}`
+              },
+              body: JSON.stringify(orderItemData)
+            });
+            
+            if (!response.ok) {
+              console.warn('[mockDataService] REST API fallback failed:', await response.text());
+            } else {
+              console.log(`[mockDataService] Created order item via REST API for ${orderId}`);
+            }
+          } catch (restErr) {
+            console.warn('[mockDataService] REST API error for order item:', restErr);
+          }
         } else {
-          console.log(`[mockDataService] Created order item for order ${orderId}`);
+          console.log(`[mockDataService] Created order item via RPC for order ${orderId}`);
         }
-      } catch (err) {
-        console.warn('[mockDataService] Could not handle order_items table operations:', err);
+      } catch (itemError) {
+        console.warn('[mockDataService] Could not handle order_items operations:', itemError);
       }
       
       console.log(`[mockDataService] Created order ${orderId} for course ${course.id} with status ${status}`);

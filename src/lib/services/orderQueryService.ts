@@ -41,31 +41,45 @@ export const getOrderById = async (
       return null;
     }
     
-    // Get order items manually to avoid type issues
+    // Get order items manually using raw SQL approach to avoid type issues
     let orderItems = [];
     try {
-      // Use raw SQL query or direct fetch to avoid type issues
-      const { data: items, error: itemsError } = await supabase
-        .from('order_items')
-        .select('*')
-        .eq('order_id', orderId);
+      // Use SQL instead of direct table access
+      const { data, error: itemsError } = await supabase
+        .rpc('get_order_items', { order_id_param: orderId })
+        .then(res => {
+          if (res.error) {
+            console.warn('[orderQueryService] RPC error getting order items:', res.error);
+            return { data: null, error: res.error };
+          }
+          return { data: res.data || [], error: null };
+        })
+        .catch(err => {
+          console.warn('[orderQueryService] Error getting order items:', err);
+          return { data: null, error: err };
+        });
 
       if (itemsError) {
         console.warn('[orderQueryService] Error fetching order items:', itemsError);
-      } else if (items && Array.isArray(items)) {
+      } else if (data && Array.isArray(data)) {
         // Manually process each item to get course information
-        for (const item of items) {
+        for (const item of data) {
           try {
-            const { data: course } = await supabase
-              .from('courses_new')
-              .select('id, title, description, price, thumbnail_url')
-              .eq('id', item.course_id)
-              .single();
+            // Use a safer approach to fetch course information
+            if (item && typeof item === 'object' && 'course_id' in item) {
+              const { data: course } = await supabase
+                .from('courses_new')
+                .select('id, title, description, price, thumbnail_url')
+                .eq('id', item.course_id)
+                .single();
 
-            orderItems.push({
-              ...item,
-              courses: course || null
-            });
+              orderItems.push({
+                ...item,
+                courses: course || null
+              });
+            } else {
+              orderItems.push(item);
+            }
           } catch (courseError) {
             console.warn(`[orderQueryService] Error fetching course for item:`, courseError);
             orderItems.push(item);
