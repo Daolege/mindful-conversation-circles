@@ -65,6 +65,15 @@ export interface HomeworkData {
   updated_at?: string;
 }
 
+// Site settings type
+export interface SiteSetting {
+  id?: string;
+  key: string;
+  value: string;
+  updated_at?: string;
+  created_at?: string;
+}
+
 // Instructor types
 export interface Instructor {
   id: string;

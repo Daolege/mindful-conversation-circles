@@ -8,7 +8,7 @@ export type MigrationName =
   | 'add_course_materials'
   | 'homework_foreign_key_fix';
 
-// Updated SiteSetting interface with key and value fields
+// Updated SiteSetting interface to match the database schema
 export interface SiteSetting {
   id?: string;
   key: string;  
@@ -65,7 +65,7 @@ export const getExchangeRate = async (): Promise<number> => {
     }
     
     // Access value property from the data (which should be a SiteSetting)
-    const siteSettingData = data as unknown as SiteSetting;
+    const siteSettingData = data as SiteSetting;
     if (siteSettingData && siteSettingData.value) {
       return parseFloat(siteSettingData.value);
     }

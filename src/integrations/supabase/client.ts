@@ -1,4 +1,3 @@
-
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
@@ -117,8 +116,8 @@ export async function loadMockCourses() {
           studentcount: 1250,
           ratingcount: 320,
           lectures: 48,
-          whatyouwilllearn: ["人工智能基础理论", "机器学习算���", "神经网络基础", "AI实际应用案例"],
-          requirements: ["基础编程知���", "高中数学水平"],
+          whatyouwilllearn: ["人工智能基础理论", "机器学习算", "神经网络基础", "AI实际应用案例"],
+          requirements: ["基础编程知", "高中数学水平"],
           category: "技术",
           level: "初级到中级",
           duration: "24小时",
@@ -140,7 +139,7 @@ export async function loadMockCourses() {
         },
         {
           title: "现代设计方法与案例分析",
-          description: "掌���现代设计方法，提升设计技巧",
+          description: "掌现代设计方法，提升设计技巧",
           instructor: "王晓设计师",
           instructorid: 2,
           price: 199,
@@ -397,7 +396,7 @@ export async function createMockHomeworkSubmissions() {
               user_id: userId,
               course_id: course.id,
               lecture_id: lecture.id,
-              answer: '这是我的作业提交内容，希望老师能给予���导。' + Math.random().toString(36).substring(7),
+              answer: '这是我的作业提交内容，希望老师能给予导。' + Math.random().toString(36).substring(7),
               submitted_at: new Date().toISOString(),
               score: 90,
               teacher_comment: '做得不错，继续加油！',

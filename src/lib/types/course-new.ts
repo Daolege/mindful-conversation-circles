@@ -1,3 +1,4 @@
+
 import { Course } from "./course";
 
 export interface CourseSection {
@@ -98,7 +99,7 @@ export interface SubscriptionPlan {
   interval: string;
   display_order: number;
   is_active: boolean;
-  features?: string[] | null; // Make features optional and nullable to match database
+  features?: string[] | null;
   created_at?: string;
   updated_at?: string;
   discount_percentage?: number;
@@ -132,7 +133,7 @@ export interface CourseResponse<T> {
 // Updated SiteSetting interface to fix type issues
 export interface SiteSetting {
   id?: string;
-  key: string;  
+  key: string;
   value: string;
   updated_at?: string;
   created_at?: string;

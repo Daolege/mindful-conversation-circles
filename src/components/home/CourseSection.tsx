@@ -42,7 +42,7 @@ const CourseSection: React.FC<CourseSectionProps> = ({
     return data as CourseNew[];
   };
 
-  // Use the query with explicitly typed function
+  // Use the query with a more straightforward type approach
   const { data: courses = [], isLoading } = useQuery({
     queryKey: ['homepage-courses', filterBy, filterValue, limit],
     queryFn: fetchCourses
