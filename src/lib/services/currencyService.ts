@@ -1,3 +1,4 @@
+
 import { formatCurrency } from "@/lib/utils";
 import { Order } from "@/lib/types/order";
 
@@ -71,4 +72,36 @@ export const getSavingsPercentage = (order: Order) => {
   if (!order.original_amount || !order.amount || order.original_amount <= order.amount) return 0;
   
   return Math.round((order.original_amount - order.amount) / order.original_amount * 100);
+};
+
+// Adding the missing functions that are being imported elsewhere
+
+// Default exchange rate function
+export const getDefaultExchangeRate = (): number => {
+  // You can customize this with a more dynamic approach later
+  return 7.23; // USD to CNY default exchange rate
+};
+
+// Convert currency function
+export const convertCurrency = (amount: number, fromCurrency: string, toCurrency: string, exchangeRate: number = 7.23): number => {
+  if (fromCurrency.toLowerCase() === toCurrency.toLowerCase()) {
+    return amount;
+  }
+  
+  if (fromCurrency.toLowerCase() === 'usd' && toCurrency.toLowerCase() === 'cny') {
+    return amount * exchangeRate;
+  }
+  
+  if (fromCurrency.toLowerCase() === 'cny' && toCurrency.toLowerCase() === 'usd') {
+    return amount / exchangeRate;
+  }
+  
+  // Default case
+  return amount;
+};
+
+// Format pre-payment amount
+export const formatPrePaymentAmount = (order: Order): string => {
+  const { amount, currency } = getActualPaymentAmount(order);
+  return formatAmount(amount, currency);
 };
