@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/utils';
 import { siteConfig } from '@/config/site';
+import { calculateSavings, getSavingsPercentage } from '@/lib/services/currencyService';
 
 interface PaymentReceiptModalProps {
   order: Order;
@@ -18,6 +19,7 @@ interface PaymentReceiptModalProps {
 export const PaymentReceiptModal = ({ order, open, onOpenChange }: PaymentReceiptModalProps) => {
   const receiptRef = useRef<HTMLDivElement>(null);
 
+  // 修复打印功能
   const handlePrint = () => {
     // Add print class to make receipt visible during printing
     if (receiptRef.current) {
@@ -35,6 +37,7 @@ export const PaymentReceiptModal = ({ order, open, onOpenChange }: PaymentReceip
     }
   };
 
+  // 修复下载功能，生成更可靠的PDF内容
   const handleDownload = () => {
     try {
       // Create a new window to generate PDF
@@ -44,12 +47,10 @@ export const PaymentReceiptModal = ({ order, open, onOpenChange }: PaymentReceip
         return;
       }
       
-      // Build receipt HTML with styles
-      const savingsAmount = order.original_amount && order.amount ? 
-        order.original_amount - order.amount : 0;
-      
-      const savingsPercentage = order.original_amount && order.amount && order.original_amount > order.amount ? 
-        Math.round((order.original_amount - order.amount) / order.original_amount * 100) : 0;
+      // Calculate savings information
+      const savingsAmount = calculateSavings(order);
+      const savingsPercentage = getSavingsPercentage(order);
+      const hasSavings = savingsAmount > 0;
       
       // Generate receipt content
       const content = `
@@ -83,7 +84,7 @@ export const PaymentReceiptModal = ({ order, open, onOpenChange }: PaymentReceip
                   <p>Payment Receipt</p>
                 </div>
                 <div>
-                  <p>${siteConfig.name}</p>
+                  <p>${siteConfig.name || '在线学习平台'}</p>
                 </div>
               </div>
               
@@ -98,6 +99,12 @@ export const PaymentReceiptModal = ({ order, open, onOpenChange }: PaymentReceip
                 }</p>
                 <p><strong>订单日期:</strong> ${new Date(order.created_at).toLocaleString()}</p>
                 <p><strong>订单编号:</strong> ${order.id}</p>
+                <p><strong>订单状态:</strong> ${order.status === 'completed' ? '已完成' : 
+                                              order.status === 'pending' ? '待支付' : 
+                                              order.status === 'processing' ? '处理中' : 
+                                              order.status === 'failed' ? '失败' : 
+                                              order.status === 'cancelled' ? '已取消' : 
+                                              order.status}</p>
               </div>
               
               <table>
@@ -122,11 +129,15 @@ export const PaymentReceiptModal = ({ order, open, onOpenChange }: PaymentReceip
               </table>
               
               <div class="totals">
-                ${order.original_amount && order.amount && order.original_amount > order.amount ? `
-                  <p><strong>原价:</strong> ${formatCurrency(order.original_amount, order.currency)}</p>
+                ${hasSavings ? `
+                  <p><strong>原价:</strong> ${formatCurrency(order.original_amount || 0, order.currency)}</p>
                   <p class="green"><strong>节省金额 (${savingsPercentage}%):</strong> -${formatCurrency(savingsAmount, order.currency)}</p>
                 ` : ''}
                 <p><strong>实付金额:</strong> ${formatCurrency(order.amount || 0, order.currency)}</p>
+                ${order.exchange_rate && order.currency === 'cny' ? `
+                  <p style="font-size: 12px; color: #666;">汇率: 1 USD = ${order.exchange_rate} CNY</p>
+                  <p style="font-size: 12px; color: #666;">折合美元: $${(order.amount / (order.exchange_rate || 1)).toFixed(2)}</p>
+                ` : ''}
               </div>
               
               <div class="footer">

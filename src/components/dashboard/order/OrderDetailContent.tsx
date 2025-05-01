@@ -3,7 +3,7 @@ import { Order } from '@/lib/types/order';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { OrderDetailHeader } from '@/components/dashboard/order/OrderDetailHeader';
 import { OrderActions } from '@/components/dashboard/order/OrderActions';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Separator } from '@/components/ui/separator';
 import { CreditCard, UserIcon } from 'lucide-react';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -29,13 +29,16 @@ export const OrderDetailContent = ({ order: initialOrder }: OrderDetailContentPr
   const savingsPercentage = getSavingsPercentage(order);
   const hasSavings = savingsAmount > 0;
 
-  console.log('Savings info:', { 
-    originalAmount: order.original_amount,
-    amount: order.amount, 
-    savingsAmount, 
-    savingsPercentage, 
-    hasSavings 
-  });
+  // Log savings information for debugging
+  useEffect(() => {
+    console.log('Savings info:', { 
+      originalAmount: order.original_amount,
+      amount: order.amount, 
+      savingsAmount, 
+      savingsPercentage, 
+      hasSavings 
+    });
+  }, [order, savingsAmount, savingsPercentage, hasSavings]);
 
   return (
     <TooltipProvider>
@@ -65,7 +68,7 @@ export const OrderDetailContent = ({ order: initialOrder }: OrderDetailContentPr
                   </h3>
                   <OrderPaymentDetails order={order} />
 
-                  {/* 添加节省金额信息 */}
+                  {/* 节省金额信息，使用显著的样式以确保可见 */}
                   {hasSavings && (
                     <div className="mt-4 p-3 bg-green-50 rounded-lg border border-green-100">
                       <div className="flex items-center justify-between">

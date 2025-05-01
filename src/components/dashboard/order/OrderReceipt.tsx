@@ -228,26 +228,26 @@ export const OrderReceipt = ({ order }: OrderReceiptProps) => {
         <p className="mt-2 text-xs text-gray-400">本凭证作为支付证明，非正式发票</p>
       </div>
 
-      <style jsx global>
+      <style>
         {`
-        @media print {
-          body * {
-            visibility: hidden;
+          @media print {
+            body * {
+              visibility: hidden;
+            }
+            .print-receipt, .print-receipt * {
+              visibility: visible;
+            }
+            .print-receipt {
+              position: absolute;
+              left: 0;
+              top: 0;
+              width: 100%;
+            }
+            .print-hide {
+              display: none !important;
+            }
           }
-          .print-receipt, .print-receipt * {
-            visibility: visible;
-          }
-          .print-receipt {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-          }
-          .print-hide {
-            display: none !important;
-          }
-        }
-      `}
+        `}
       </style>
     </div>
   );

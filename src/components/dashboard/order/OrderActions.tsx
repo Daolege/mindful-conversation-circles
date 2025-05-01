@@ -61,18 +61,21 @@ export const OrderActions = ({ order, onOrderUpdated }: OrderActionsProps) => {
   };
 
   const handleCompletePayment = () => {
-    // In a real app, this would redirect to a payment page
-    // For now, we'll just show a toast
-    toast.info('正在跳转到支付页面...');
-    // Simulated redirect, in a real app this would go to a payment gateway
+    // 显示成功消息
+    toast.success('正在处理支付请求...');
+    
+    // 在实际应用中，这里会重定向到支付网关
+    // 为了演示，我们使用定时器模拟支付流程
     setTimeout(() => {
-      // For demo purposes, we'll just mark as completed
       handleStatusUpdate('completed');
     }, 1500);
   };
 
+  // 检查订单状态确定按钮显示
   const isComplete = order.status === 'completed' || order.is_paid;
   const isPending = order.status === 'pending' || order.status === 'processing';
+  const isCancellable = order.status !== 'completed' && order.status !== 'cancelled';
+  const isAdminMarkable = isPending && order.payment_type === 'admin';
 
   return (
     <div className="space-y-4">
@@ -94,14 +97,19 @@ export const OrderActions = ({ order, onOrderUpdated }: OrderActionsProps) => {
             variant="default" 
             className="w-full justify-start bg-green-600 hover:bg-green-700" 
             onClick={handleCompletePayment}
+            disabled={isUpdating}
           >
-            <CreditCard className="mr-2 h-4 w-4" />
+            {isUpdating ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <CreditCard className="mr-2 h-4 w-4" />
+            )}
             完成支付
           </Button>
         )}
         
         {/* 仅管理员可见，对已完成订单不显示"标记为已完成" */}
-        {isPending && order.payment_type === 'admin' && (
+        {isAdminMarkable && (
           <Button 
             disabled={isUpdating} 
             variant="outline" 
@@ -113,7 +121,8 @@ export const OrderActions = ({ order, onOrderUpdated }: OrderActionsProps) => {
           </Button>
         )}
         
-        {isPending && (
+        {/* 仅对未完成和未取消的订单显示取消按钮 */}
+        {isCancellable && (
           <Button 
             disabled={isUpdating} 
             variant="outline" 
