@@ -31,8 +31,9 @@ export const executeHomeworkMigration = async () => {
     
     // 2. Check for orphaned homework records using direct DB query
     const { data: homeworks, error: homeworkError } = await supabase
-      .from('homework')
-      .select('*');
+      .rpc('execute_sql', {
+        sql_statement: 'SELECT * FROM homework'
+      });
     
     if (homeworkError) {
       console.error('[executeHomeworkMigration] Error checking homework table:', homeworkError);
@@ -59,9 +60,9 @@ export const executeHomeworkMigration = async () => {
           // Delete orphaned records
           for (const hw of orphanedHomeworks) {
             const { error: deleteError } = await supabase
-              .from('homework')
-              .delete()
-              .eq('id', hw.id);
+              .rpc('execute_sql', {
+                sql_statement: `DELETE FROM homework WHERE id = ${hw.id}`
+              });
             
             if (deleteError) {
               console.error(`[executeHomeworkMigration] Error deleting homework ${hw.id}:`, deleteError);
@@ -87,10 +88,9 @@ export const executeHomeworkMigration = async () => {
     // 4. Update site settings to remember migration was completed
     await supabase
       .from('site_settings')
-      .upsert({
+      .insert({
         key: 'homework_migration_completed',
-        value: 'true',
-        updated_at: new Date().toISOString()
+        value: 'true'
       });
     
     console.log('[executeHomeworkMigration] Migration completed successfully');

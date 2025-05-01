@@ -9,6 +9,58 @@ export interface User {
 export interface Database {
   public: {
     Tables: {
+      site_settings: {
+        Row: {
+          id?: string
+          key: string
+          value: string
+          created_at?: string
+          updated_at?: string
+        }
+        Insert: {
+          id?: string
+          key: string
+          value: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          key?: string
+          value?: string
+          created_at?: string
+          updated_at?: string
+        }
+      },
+      order_items: {
+        Row: {
+          id?: number
+          order_id: string
+          course_id: number
+          price: number
+          currency?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Insert: {
+          id?: number
+          order_id: string
+          course_id: number
+          price: number
+          currency?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          order_id?: string
+          course_id?: number
+          price?: number
+          currency?: string
+          created_at?: string
+          updated_at?: string
+        }
+      },
       courses: {
         Row: {
           id: number
@@ -293,7 +345,33 @@ export interface Database {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      check_table_exists: {
+        Args: {
+          table_name: string
+        }
+        Returns: boolean
+      }
+      execute_sql: {
+        Args: {
+          sql_statement: string
+        }
+        Returns: unknown
+      }
+      insert_order_item: {
+        Args: {
+          p_order_id: string
+          p_course_id: number
+          p_price: number
+          p_currency: string
+        }
+        Returns: {
+          id: number
+          order_id: string
+          course_id: number
+          price: number
+          currency: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

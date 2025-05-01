@@ -1,3 +1,4 @@
+
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
@@ -26,7 +27,10 @@ type DbFunctionNames =
   | 'admin_add_course_item'
   | 'get_dashboard_stats'
   | 'get_financial_stats'
-  | 'get_payment_method_stats';
+  | 'get_payment_method_stats'
+  | 'check_table_exists'
+  | 'execute_sql'
+  | 'insert_order_item';
 
 // 改进Supabase客户端配置以提高稳定性
 export const supabase = createClient<Database>(

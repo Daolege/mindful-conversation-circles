@@ -42,18 +42,37 @@ export const getOrderById = async (
     }
     
     // Get order items if they exist
-    const { data: orderItems, error: itemsError } = await supabase
-      .from('order_items')
-      .select(`
-        *,
-        courses:course_id (
-          id, title, description, price, thumbnail_url
-        )
-      `)
-      .eq('order_id', orderId);
-    
-    if (itemsError) {
-      console.warn('[orderQueryService] Error fetching order items:', itemsError);
+    let orderItems = [];
+    try {
+      const { data: items, error: itemsError } = await supabase
+        .rpc('execute_sql', { 
+          sql_statement: `SELECT * FROM order_items WHERE order_id = '${orderId}'` 
+        });
+
+      if (itemsError) {
+        console.warn('[orderQueryService] Error fetching order items:', itemsError);
+      } else if (items) {
+        // Try to get course information for each item
+        for (const item of items) {
+          try {
+            const { data: course } = await supabase
+              .from('courses_new')
+              .select('id, title, description, price, thumbnail_url')
+              .eq('id', item.course_id)
+              .single();
+
+            orderItems.push({
+              ...item,
+              courses: course || null
+            });
+          } catch (courseError) {
+            console.warn(`[orderQueryService] Error fetching course for item:`, courseError);
+            orderItems.push(item);
+          }
+        }
+      }
+    } catch (itemsQueryError) {
+      console.warn('[orderQueryService] Error with order items query:', itemsQueryError);
     }
     
     // Get user profile

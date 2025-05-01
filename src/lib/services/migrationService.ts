@@ -16,7 +16,7 @@ export const recordMigration = async (name: MigrationName, description: string, 
       // Add migration record using direct insert
       const { error } = await supabase
         .from('site_settings')
-        .upsert({
+        .insert({
           key: `migration_${name}`,
           value: JSON.stringify({
             name,
