@@ -41,9 +41,10 @@ export const getOrderById = async (
       return null;
     }
     
-    // Get order items directly from the order_items table
+    // Get order items manually to avoid type issues
     let orderItems = [];
     try {
+      // Use raw SQL query or direct fetch to avoid type issues
       const { data: items, error: itemsError } = await supabase
         .from('order_items')
         .select('*')
@@ -52,7 +53,7 @@ export const getOrderById = async (
       if (itemsError) {
         console.warn('[orderQueryService] Error fetching order items:', itemsError);
       } else if (items && Array.isArray(items)) {
-        // Try to get course information for each item
+        // Manually process each item to get course information
         for (const item of items) {
           try {
             const { data: course } = await supabase

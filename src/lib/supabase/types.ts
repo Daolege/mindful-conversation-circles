@@ -1,4 +1,3 @@
-
 export type Json =
   | string
   | number
@@ -406,6 +405,102 @@ export interface Database {
           notify_on_payment?: boolean
           notify_on_price_change?: boolean
           expiry_notification_days?: number[]
+          created_at?: string
+          updated_at?: string
+        }
+      },
+      profiles: {
+        Row: {
+          id: string
+          email?: string
+          full_name?: string
+          avatar_url?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Insert: {
+          id: string
+          email?: string
+          full_name?: string
+          avatar_url?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          email?: string
+          full_name?: string
+          avatar_url?: string
+          created_at?: string
+          updated_at?: string
+        }
+      },
+      _migrations: {
+        Row: {
+          id: number
+          name: string
+          sql?: string
+          executed_at?: string
+          success?: boolean
+        }
+        Insert: {
+          id?: number
+          name: string
+          sql?: string
+          executed_at?: string
+          success?: boolean
+        }
+        Update: {
+          id?: number
+          name?: string
+          sql?: string
+          executed_at?: string
+          success?: boolean
+        }
+      },
+      courses_new: {
+        Row: {
+          id: number
+          title: string
+          description?: string
+          price?: number
+          currency?: string
+          thumbnail_url?: string
+          instructor_id?: string
+          category?: string
+          status?: string
+          is_featured?: boolean
+          display_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Insert: {
+          id?: number
+          title: string
+          description?: string
+          price?: number
+          currency?: string
+          thumbnail_url?: string
+          instructor_id?: string
+          category?: string
+          status?: string
+          is_featured?: boolean
+          display_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          title?: string
+          description?: string
+          price?: number
+          currency?: string
+          thumbnail_url?: string
+          instructor_id?: string
+          category?: string
+          status?: string
+          is_featured?: boolean
+          display_order?: number
           created_at?: string
           updated_at?: string
         }

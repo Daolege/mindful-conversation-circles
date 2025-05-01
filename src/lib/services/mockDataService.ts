@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 export const generateMockData = async (userId: string): Promise<{ 
@@ -190,94 +189,26 @@ export const generateMockOrders = async (userId: string): Promise<boolean> => {
         continue;
       }
       
-      // Check if order_items table exists
+      // Check if order_items table exists using direct API calls instead of RPC
       try {
-        // Try to check if the table exists
-        const { data: tableExists, error: rpcError } = await supabase.rpc(
-          'check_table_exists',
-          { table_name: 'order_items' }
-        );
+        // Create the order item manually
+        const orderItemData = {
+          order_id: orderId,
+          course_id: course.id,
+          price: price,
+          currency: 'cny',
+          created_at: orderDate.toISOString()
+        };
+          
+        // Try direct insert without RPC
+        const { error: directItemError } = await supabase
+          .from('order_items')
+          .insert(orderItemData);
         
-        if (rpcError) {
-          console.warn('[mockDataService] Error checking if order_items table exists:', rpcError);
-          
-          // Try to create the table using SQL directly
-          try {
-            const { error: createTableError } = await supabase.rpc(
-              'execute_sql',
-              {
-                sql_statement: `
-                  CREATE TABLE IF NOT EXISTS order_items (
-                    id SERIAL PRIMARY KEY,
-                    order_id TEXT REFERENCES orders(id),
-                    course_id INTEGER REFERENCES courses_new(id),
-                    price NUMERIC,
-                    currency TEXT,
-                    created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
-                  );
-                `
-              }
-            );
-            
-            if (createTableError) {
-              console.error('[mockDataService] Error creating order_items table:', createTableError);
-            }
-          } catch (sqlError) {
-            console.error('[mockDataService] Error executing SQL to create table:', sqlError);
-          }
-        }
-        
-        // Try to insert an order item
-        try {
-          const { error: itemError } = await supabase.rpc(
-            'insert_order_item', 
-            { 
-              p_order_id: orderId,
-              p_course_id: course.id,
-              p_price: price,
-              p_currency: 'cny'
-            }
-          );
-          
-          if (itemError) {
-            console.error('[mockDataService] Error creating mock order item with RPC:', itemError);
-            
-            // Try direct insert as fallback
-            const { error: directItemError } = await supabase
-              .from('order_items')
-              .insert({
-                order_id: orderId,
-                course_id: course.id,
-                price: price,
-                currency: 'cny',
-                created_at: orderDate.toISOString()
-              });
-            
-            if (directItemError) {
-              console.error('[mockDataService] Error creating mock order item with direct insert:', directItemError);
-            }
-          }
-        } catch (itemInsertError) {
-          console.warn('[mockDataService] Error in insert_order_item RPC:', itemInsertError);
-          
-          // Try direct insert as fallback
-          try {
-            const { error: directItemError } = await supabase
-              .from('order_items')
-              .insert({
-                order_id: orderId,
-                course_id: course.id,
-                price: price,
-                currency: 'cny',
-                created_at: orderDate.toISOString()
-              });
-            
-            if (directItemError) {
-              console.error('[mockDataService] Error creating mock order item with direct insert:', directItemError);
-            }
-          } catch (directInsertError) {
-            console.error('[mockDataService] Direct insert of order item failed:', directInsertError);
-          }
+        if (directItemError) {
+          console.error('[mockDataService] Error creating order item:', directItemError);
+        } else {
+          console.log(`[mockDataService] Created order item for order ${orderId}`);
         }
       } catch (err) {
         console.warn('[mockDataService] Could not handle order_items table operations:', err);
