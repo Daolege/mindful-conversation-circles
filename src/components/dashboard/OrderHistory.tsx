@@ -80,8 +80,6 @@ export function OrderHistory({
 
   return (
     <div>
-      {/* Removed "全部" button and related container div */}
-
       {orders.length > 0 ? (
         <div className="border rounded-lg overflow-hidden">
           <Table>
