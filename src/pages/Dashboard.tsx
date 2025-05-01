@@ -13,7 +13,7 @@ import { EnrolledCoursesNew } from "@/components/dashboard/EnrolledCoursesNew";
 import { OrderHistoryView } from "@/components/dashboard/views/OrderHistoryView";
 import { SubscriptionHistory } from "@/components/dashboard/SubscriptionHistory";
 import { ProfileManagement } from "@/components/dashboard/ProfileManagement";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 const Dashboard = () => {
   const location = useLocation();
@@ -96,6 +96,30 @@ const Dashboard = () => {
     return <Navigate to="/auth" state={{ loginRequired: true, from: location.pathname + location.search }} replace />;
   }
 
+  // Enhanced animation variants
+  const containerVariants = {
+    initial: { 
+      opacity: 0,
+      y: 20
+    },
+    animate: { 
+      opacity: 1, 
+      y: 0,
+      transition: { 
+        duration: 0.4,
+        ease: "easeOut"
+      }
+    },
+    exit: { 
+      opacity: 0,
+      y: -20,
+      transition: { 
+        duration: 0.3,
+        ease: "easeIn"
+      }
+    }
+  };
+
   // Main content based on active tab
   const renderTabContent = () => {
     switch (activeTab) {
@@ -117,12 +141,6 @@ const Dashboard = () => {
     }
   };
 
-  const containerVariants = {
-    initial: { opacity: 0 },
-    animate: { opacity: 1, transition: { duration: 0.5 } },
-    exit: { opacity: 0, transition: { duration: 0.3 } }
-  };
-
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -141,21 +159,39 @@ const Dashboard = () => {
         
         <DashboardNavigation />
 
-        <motion.div
-          key={activeTab}
-          variants={containerVariants}
-          initial="initial"
-          animate="animate"
-          exit="exit"
-        >
-          {isLoadingCourses && activeTab === 'courses' ? (
-            <div className="flex justify-center py-10">
-              <Loader2 className="h-8 w-8 animate-spin text-knowledge-primary" />
-            </div>
-          ) : (
-            renderTabContent()
-          )}
-        </motion.div>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            variants={containerVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            className="relative"
+          >
+            {/* Add subtle page transition effect */}
+            <motion.div 
+              className="absolute inset-0 bg-gradient-to-r from-transparent via-gray-100/30 to-transparent rounded-xl" 
+              initial={{ opacity: 0, scaleX: 0 }}
+              animate={{ 
+                opacity: [0, 0.7, 0], 
+                scaleX: [0, 1, 1],
+                transition: { 
+                  times: [0, 0.5, 1],
+                  duration: 1.5
+                }
+              }}
+              key={`transition-${activeTab}`}
+            />
+
+            {isLoadingCourses && activeTab === 'courses' ? (
+              <div className="flex justify-center py-10">
+                <Loader2 className="h-8 w-8 animate-spin text-knowledge-primary" />
+              </div>
+            ) : (
+              renderTabContent()
+            )}
+          </motion.div>
+        </AnimatePresence>
       </main>
       <Footer />
     </div>
