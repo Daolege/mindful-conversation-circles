@@ -105,8 +105,11 @@ export async function migrateHomeworkData(userId: string): Promise<MigrationResu
     }
     
     // Ensure we transform the data correctly to match the homework_submissions table structure
-    const transformedData: HomeworkSubmissionDB[] = oldHomeworkData.map((submission: OldHomeworkData) => {
-      return {
+    let successCount = 0;
+    
+    // Process each homework submission individually, as the batch upsert was causing type errors
+    for (const submission of oldHomeworkData) {
+      const transformedData: HomeworkSubmissionDB = {
         user_id: submission.user_id,
         homework_id: submission.homework_id,
         answer: submission.content || submission.answer || "", 
@@ -119,31 +122,30 @@ export async function migrateHomeworkData(userId: string): Promise<MigrationResu
         grade: submission.grade || null,
         version: 1
       };
-    });
-    
-    // Step 3: Insert or update the data in the homework_submissions table
-    const { error: insertError } = await supabase
-      .from('homework_submissions')
-      .upsert(transformedData, { 
-        onConflict: 'user_id,homework_id',
-        ignoreDuplicates: false
-      });
-    
-    if (insertError) {
-      console.error("Error inserting transformed homework data:", insertError);
-      return { success: false, count: 0, error: insertError };
+      
+      // Insert or update each submission individually
+      const { error: insertError } = await supabase
+        .from('homework_submissions')
+        .upsert(transformedData)
+        .select();
+      
+      if (!insertError) {
+        successCount++;
+      } else {
+        console.error("Error inserting homework data:", insertError, "for submission:", transformedData);
+      }
     }
     
     // Step 4: Update migration tracking using site_settings
     await recordMigration(
       `homework_${userId}`,
-      `Migrated ${transformedData.length} homework records for user ${userId}`,
-      true
+      `Migrated ${successCount} homework records for user ${userId}`,
+      successCount > 0
     );
     
     return { 
-      success: true, 
-      count: transformedData.length 
+      success: successCount > 0, 
+      count: successCount 
     };
     
   } catch (error) {

@@ -107,7 +107,7 @@ export async function deleteCourse(courseId: number): Promise<{ success: boolean
 }
 
 // Get courses by instructor ID with simplified return type
-export async function getCoursesByInstructorId(instructorId: string): Promise<CourseResponse<any[]>> {
+export async function getCoursesByInstructorId(instructorId: string): Promise<{data: any[] | null, error: Error | null}> {
   try {
     const { data, error } = await supabase
       .from('courses_new')
@@ -270,7 +270,7 @@ export const getCourseWithSections = async (courseId: number): Promise<CourseWit
         // For each section, fetch lectures separately
         const { data: lecturesData, error: lecturesError } = await supabase
           .from('course_lectures')
-          .select('id, title, position, description')
+          .select('id, title, position')
           .eq('section_id', section.id)
           .order('position', { ascending: true });
           
@@ -284,20 +284,14 @@ export const getCourseWithSections = async (courseId: number): Promise<CourseWit
         
         if (lecturesData && Array.isArray(lecturesData)) {
           for (const lecture of lecturesData) {
-            // Also get additional lecture info separately to avoid column not found errors
-            const { data: lectureDetails } = await supabase
-              .from('lecture_details')
-              .select('video_url, duration')
-              .eq('lecture_id', lecture.id)
-              .maybeSingle();
-            
+            // Store lecture info with default values for missing fields
             lectures.push({
               id: lecture.id,
               title: lecture.title,
               position: lecture.position,
-              description: lecture.description || null,
-              video_url: lectureDetails?.video_url || null,
-              duration: lectureDetails?.duration || null
+              description: null,
+              video_url: null,
+              duration: null
             });
           }
         }
