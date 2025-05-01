@@ -1,6 +1,7 @@
+
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getUserSubscriptionHistory, getCurrentSubscription, createTestSubscription, SubscriptionPeriod } from "@/lib/services/subscriptionService";
+import { getUserSubscriptionHistory, getCurrentSubscription, createTestSubscription } from "@/lib/services/subscriptionService";
 import { useAuth } from "@/contexts/authHooks";
 import { SubscriptionItem } from "@/types/dashboard";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -10,6 +11,7 @@ import { CalendarIcon, Clock, Loader2, Plus, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import { SubscriptionPeriod } from "@/lib/types/course-new";
 
 export function SubscriptionHistory() {
   const { user } = useAuth();
@@ -51,9 +53,9 @@ export function SubscriptionHistory() {
     
     setIsGeneratingData(true);
     try {
-      const success = await createTestSubscription(user.id);
+      const result = await createTestSubscription(user.id, periodOption);
       
-      if (success) {
+      if (result.success) {
         toast.success("订阅测试数据已生成", {
           description: "您的订阅历史和当前订阅已更新"
         });
@@ -187,36 +189,36 @@ export function SubscriptionHistory() {
             <div className="space-y-4">
               <div>
                 <h4 className="text-lg font-medium">
-                  {currentSubscription.subscription_plan?.name || '未知计划'}
+                  {currentSubscription.subscription_plans?.name || '未知计划'}
                 </h4>
                 <p className="text-sm text-muted-foreground">
-                  {currentSubscription.subscription_plan?.description || '无描述'}
+                  {currentSubscription.subscription_plans?.description || '无描述'}
                 </p>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                 <div className="flex items-center gap-2">
                   <CalendarIcon className="h-4 w-4 text-muted-foreground" />
-                  <span>开始日期：{formatDate(currentSubscription.current_period_start)}</span>
+                  <span>开始日期：{formatDate(currentSubscription.start_date)}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Clock className="h-4 w-4 text-muted-foreground" />
-                  <span>到期日期：{formatDate(currentSubscription.current_period_end)}</span>
+                  <span>到期日期：{formatDate(currentSubscription.end_date)}</span>
                 </div>
               </div>
               
-              {currentSubscription.subscription_plan?.features && (
+              {currentSubscription.subscription_plans?.features && (
                 <div className="mt-4">
                   <h5 className="text-sm font-medium mb-2">包含特权</h5>
                   <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
-                    {currentSubscription.subscription_plan.features.map((feature, i) => (
+                    {currentSubscription.subscription_plans.features.map((feature, i) => (
                       <li key={i}>{feature}</li>
                     ))}
                   </ul>
                 </div>
               )}
               
-              {currentSubscription.cancel_at_period_end && (
+              {!currentSubscription.auto_renew && (
                 <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-md text-sm">
                   此订阅将在当前计费周期结束后自动取消
                 </div>
@@ -240,13 +242,13 @@ export function SubscriptionHistory() {
                 <div key={index} className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b last:border-0 last:pb-0 gap-3">
                   <div className="space-y-1">
                     <div className="flex items-center">
-                      <Badge variant="outline" className="mr-2">{renderEventType(item.event_type)}</Badge>
+                      <Badge variant="outline" className="mr-2">{renderEventType(item.change_type)}</Badge>
                       <h4 className="font-medium">
                         {item.new_plan?.name || "未知计划"}
                       </h4>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      {item.new_plan?.description || (item.event_type === 'subscription_cancelled' ? "订阅已取消" : "")}
+                      {item.new_plan?.description || (item.change_type === 'subscription_cancelled' ? "订阅已取消" : "")}
                     </p>
                   </div>
                   <div className="flex items-center gap-2 text-sm whitespace-nowrap">

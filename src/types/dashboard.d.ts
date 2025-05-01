@@ -49,7 +49,7 @@ export interface SubscriptionItem {
   currency?: string;
   auto_renew?: boolean;
   cancel_at_period_end?: boolean;
-  subscription_plan?: {
+  subscription_plans?: {
     id: string;
     name: string;
     description?: string | null;

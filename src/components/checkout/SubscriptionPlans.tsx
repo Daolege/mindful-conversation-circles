@@ -3,12 +3,11 @@ import { Card } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Loader2, Info } from "lucide-react";
-import { getSubscriptionPlans, type SubscriptionPlan } from '@/lib/services/subscriptionService';
+import { getSubscriptionPlans } from '@/lib/services/subscriptionService';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Alert, AlertDescription } from "@/components/ui/alert";
-
-export type SubscriptionPeriod = "monthly" | "quarterly" | "yearly" | "2years" | "3years" | string;
+import { SubscriptionPeriod, SubscriptionPlan } from '@/lib/types/course-new';
 
 interface SubscriptionPlansProps {
   selectedPlan: SubscriptionPeriod;
@@ -51,7 +50,7 @@ export function SubscriptionPlans({ selectedPlan, onPlanChange, paymentMethod, e
           selectedPlan, 
           selectedPlanObj.price, 
           selectedPlanObj.name,
-          selectedPlanObj.discount_percentage
+          selectedPlanObj.discount_percentage || 0
         );
       }
     }
@@ -124,7 +123,7 @@ export function SubscriptionPlans({ selectedPlan, onPlanChange, paymentMethod, e
     }
     
     console.log("设置订阅周期为:", interval);
-    onPlanChange(interval, plan.price, plan.name, plan.discount_percentage);
+    onPlanChange(interval as SubscriptionPeriod, plan.price, plan.name, plan.discount_percentage || 0);
   };
 
   return (

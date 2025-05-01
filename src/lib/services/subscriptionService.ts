@@ -140,6 +140,7 @@ export const createSubscription = async (user: User, period: SubscriptionPeriod,
         subscription_id: subscriptionId,
         new_plan_id: plans.id,
         change_type: 'new',
+        event_type: 'subscription_created',
         amount: plans.price,
         currency: plans.currency,
         effective_date: startDate.toISOString()
