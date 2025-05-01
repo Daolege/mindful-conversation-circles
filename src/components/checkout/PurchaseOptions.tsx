@@ -12,6 +12,13 @@ interface PurchaseOptionsProps {
   subscriptionPrice?: number;
   currency?: string;
   courseTitle?: string;
+  selectedPlan?: string;
+  selectedOption?: string;
+  onOptionChange?: (option: string) => void;
+  onPlanChange?: (period: string, price: number, name: string, discountPct: number) => void;
+  paymentMethod?: string;
+  exchangeRate?: number;
+  course?: any;
 }
 
 export function PurchaseOptions({
@@ -20,7 +27,14 @@ export function PurchaseOptions({
   coursePrice,
   subscriptionPrice,
   currency = 'CNY',
-  courseTitle = '课程'
+  courseTitle = '课程',
+  selectedOption,
+  selectedPlan,
+  onOptionChange,
+  onPlanChange,
+  paymentMethod,
+  exchangeRate,
+  course
 }: PurchaseOptionsProps) {
   const formatPrice = (price?: number) => {
     if (!price && price !== 0) return '免费';
@@ -29,9 +43,16 @@ export function PurchaseOptions({
       : `$${price.toFixed(2)}`;
   };
 
+  // Handle option change if the prop is provided
+  const handleOptionChange = (option: string) => {
+    if (onOptionChange) {
+      onOptionChange(option);
+    }
+  };
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <Card className="relative hover:shadow-lg transition-shadow border-2">
+      <Card className={`relative hover:shadow-lg transition-shadow border-2 ${selectedOption === 'single' ? 'border-primary' : ''}`}>
         <CardHeader className="bg-gray-50">
           <CardTitle className="text-xl font-semibold">单次购买</CardTitle>
         </CardHeader>
@@ -62,15 +83,19 @@ export function PurchaseOptions({
           
           <Button 
             className="w-full"
-            onClick={onSelectSingle}
+            onClick={() => {
+              if (onOptionChange) handleOptionChange('single');
+              onSelectSingle();
+            }}
             size="lg"
+            variant={selectedOption === 'single' ? 'default' : 'outline'}
           >
             立即购买
           </Button>
         </CardContent>
       </Card>
       
-      <Card className="relative hover:shadow-lg transition-shadow border-2 border-knowledge-primary">
+      <Card className={`relative hover:shadow-lg transition-shadow border-2 ${selectedOption === 'subscription' ? 'border-knowledge-primary' : 'border-knowledge-primary/30'}`}>
         <div className="absolute top-0 right-0 -translate-y-1/2 bg-knowledge-primary text-white py-1 px-4 rounded-full text-sm font-medium">
           推荐
         </div>
@@ -113,7 +138,10 @@ export function PurchaseOptions({
           <Button 
             variant="default"
             className="w-full bg-knowledge-primary hover:bg-knowledge-primary/90"
-            onClick={onSelectSubscription}
+            onClick={() => {
+              if (onOptionChange) handleOptionChange('subscription');
+              onSelectSubscription();
+            }}
             size="lg"
           >
             选择订阅

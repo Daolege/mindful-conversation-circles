@@ -1,32 +1,40 @@
+import { supabase } from "@/integrations/supabase/client";
+import { generateSlug } from "../utils";
 
-import { supabase } from '@/integrations/supabase/client';
-
-// Define specific return types to avoid infinite type instantiation
-interface CourseData {
+// Define a simpler type to avoid excessive type instantiation
+type BasicCourseData = {
   id?: number;
   title: string;
   description?: string;
   price?: number;
-  status?: string;
-  category?: string;
-  created_at?: string;
   currency?: string;
+  category?: string | null;
   display_order?: number;
-  enrollment_count?: number;
-  is_featured?: boolean;
-  lecture_count?: number;
-  original_price?: number;
-  instructor_id?: string;
-  instructor_name?: string;
-  published_at?: string;
+  status?: string;
+  featured?: boolean;
+  thumbnail_url?: string;
+  created_at?: string;
   updated_at?: string;
-  [key: string]: any;
-}
+};
 
-interface CourseResponse<T> {
-  data: T | null;
-  error: Error | null;
-}
+// Use more specific types to avoid deep instantiation issues
+export const getCourses = async () => {
+  try {
+    const { data, error } = await supabase
+      .from("courses")
+      .select("*")
+      .order("display_order", { ascending: true });
+
+    if (error) {
+      throw error;
+    }
+
+    return data || [];
+  } catch (error) {
+    console.error("Error fetching courses:", error);
+    return [];
+  }
+};
 
 // Add the getCourseById function
 export const getCourseById = async (courseId: number): Promise<CourseResponse<CourseData>> => {
@@ -135,5 +143,44 @@ export const updateCourseOrder = async (courseIds: number[]): Promise<{ success:
   } catch (error) {
     console.error('[courseService] Error updating course order:', error);
     return { success: false, error };
+  }
+};
+
+// Fix insertCourse function to use the simplified type
+export const insertCourse = async (courseData: BasicCourseData) => {
+  try {
+    const { data, error } = await supabase
+      .from("courses")
+      .insert(courseData)
+      .select()
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    return data;
+  } catch (error) {
+    console.error("Error inserting course:", error);
+    throw error;
+  }
+};
+
+// Fix updateMultipleCourses to use array of objects with required fields
+export const updateMultipleCourses = async (coursesData: {id: number, title: string, display_order: number}[]) => {
+  try {
+    const { data, error } = await supabase
+      .from("courses")
+      .upsert(coursesData)
+      .select();
+
+    if (error) {
+      throw error;
+    }
+
+    return data;
+  } catch (error) {
+    console.error("Error updating multiple courses:", error);
+    throw error;
   }
 };

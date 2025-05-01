@@ -1,76 +1,101 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { toast } from 'sonner';
-import { CourseFormValues, courseFormSchema } from '@/components/admin/course-editor/CourseBasicForm';
+import { z } from 'zod';
 import { CourseWithDetails } from '@/lib/types/course-new';
 
-export const useCourseForm = (initialData?: Partial<CourseWithDetails>) => {
-  console.log('[useCourseForm] Initializing with data:', initialData);
-  
-  const form = useForm<CourseFormValues>({
-    resolver: zodResolver(courseFormSchema),
-    defaultValues: {
-      title: "",
-      description: "",
-      price: 0,
-      original_price: null,
-      currency: "cny",
-      category: null,
-      display_order: 0,
-      status: "draft",
-      is_featured: false,
-    },
+const formSchema = z.object({
+  title: z.string().min(2, {
+    message: "课程标题必须至少包含2个字符",
+  }),
+  description: z.string().optional(),
+  price: z.number().min(0, {
+    message: "价格必须大于等于0",
+  }),
+  currency: z.string().optional(),
+  category: z.string().nullable().optional(),
+  featured: z.boolean().default(false).optional(),
+  display_order: z.number().optional(),
+  status: z.string().optional(),
+  learning_objectives: z.array(z.string()).optional(),
+  requirements: z.array(z.string()).optional(),
+  target_audience: z.array(z.string()).optional(),
+  sections: z.array(z.object({
+    id: z.string(),
+    title: z.string(),
+    description: z.string().optional(),
+    position: z.number(),
+    lectures: z.array(z.object({
+      id: z.string(),
+      title: z.string(),
+      description: z.string().optional(),
+      duration: z.string().optional(),
+      position: z.number(),
+      video_url: z.string().optional(),
+      has_homework: z.boolean().optional(),
+      section_id: z.string().optional(),
+      is_free: z.boolean().optional(),
+      requires_homework_completion: z.boolean().optional(),
+    })).optional()
+  })).optional(),
+  instructor_name: z.string().optional(),
+  instructor_bio: z.string().optional(),
+  instructor_avatar: z.string().optional(),
+  thumbnail_url: z.string().optional(),
+});
+
+export function useCourseForm(initialData?: Partial<CourseWithDetails>) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const defaultValues: CourseWithDetails = {
+    id: initialData?.id ?? 0,
+    title: initialData?.title ?? '',
+    description: initialData?.description ?? '',
+    price: initialData?.price ?? 0,
+    currency: initialData?.currency ?? 'cny',
+    category: initialData?.category ?? null,
+    featured: initialData?.featured ?? false, // Use featured instead of is_featured
+    display_order: initialData?.display_order ?? 0,
+    status: initialData?.status ?? 'draft',
+    learning_objectives: initialData?.learning_objectives ?? [],
+    requirements: initialData?.requirements ?? [],
+    target_audience: initialData?.target_audience ?? [],
+    sections: initialData?.sections ?? [],
+    instructor_name: initialData?.instructor_name ?? '',
+    instructor_bio: initialData?.instructor_bio ?? '',
+    instructor_avatar: initialData?.instructor_avatar ?? '',
+    thumbnail_url: initialData?.thumbnail_url ?? '',
+  };
+
+  const form = useForm<CourseWithDetails>({
+    resolver: zodResolver(formSchema),
+    defaultValues: defaultValues,
+    mode: "onChange"
   });
 
-  // Reset form when initialData changes
-  useEffect(() => {
-    if (initialData) {
-      console.log('[useCourseForm] Resetting form with initial data:', initialData);
-      
-      form.reset({
-        title: initialData.title || '',
-        description: initialData.description || '',
-        price: initialData.price || 0,
-        original_price: initialData.original_price || null,
-        currency: initialData.currency || 'cny',
-        category: initialData.category || null,
-        display_order: initialData.display_order || 0,
-        status: (initialData.status as "draft" | "published" | "archived") || 'draft',
-        is_featured: !!initialData.is_featured,
-      });
-    }
-  }, [initialData, form]);
+  const onSubmit = useCallback(async (values: CourseWithDetails) => {
+    setIsSubmitting(true);
+    setErrorMessage(null);
 
-  // Log form values when they change
-  useEffect(() => {
-    const subscription = form.watch((value) => {
-      console.log('[useCourseForm] Form values updated:', value);
-    });
-    
-    return () => subscription.unsubscribe();
-  }, [form]);
+    try {
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      console.log("Form values submitted:", values);
+      // Here you would typically make your API call
 
-  const validateForm = () => {
-    console.log('[useCourseForm] Validating form');
-    const values = form.getValues();
-    console.log('[useCourseForm] Current values:', values);
-    
-    const result = courseFormSchema.safeParse(values);
-    if (!result.success) {
-      console.error('[useCourseForm] Validation errors:', result.error);
-      toast.error('表单验证失败', {
-        description: '请检查所有必填字段',
-      });
-      return false;
+    } catch (error: any) {
+      console.error("Form submission error:", error);
+      setErrorMessage(error.message || "An error occurred while submitting.");
+    } finally {
+      setIsSubmitting(false);
     }
-    
-    console.log('[useCourseForm] Form is valid');
-    return true;
-  };
+  }, []);
 
   return {
     form,
-    validateForm,
+    onSubmit,
+    isSubmitting,
+    errorMessage
   };
-};
+}

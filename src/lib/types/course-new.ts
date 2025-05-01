@@ -85,10 +85,10 @@ export interface ListItem {
   is_visible?: boolean;
 }
 
-// Subscription period type - IMPORTANT: Properly export this type
+// Subscription period type - properly exported
 export type SubscriptionPeriod = 'monthly' | 'quarterly' | 'yearly' | '2years' | '3years';
 
-// SubscriptionPlan interface for subscription management
+// SubscriptionPlan interface for subscription management - properly exported
 export interface SubscriptionPlan {
   id: string;
   name: string;
@@ -103,4 +103,3 @@ export interface SubscriptionPlan {
   updated_at?: string;
   discount_percentage?: number;
 }
-

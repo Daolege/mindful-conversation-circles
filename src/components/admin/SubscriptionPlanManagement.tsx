@@ -12,11 +12,8 @@ import { Edit, Trash2, Plus, Check, X, AlertCircle, AlertTriangle, Shield } from
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { 
-  SubscriptionPlan, 
-  SubscriptionPeriod,
-  forceDeleteSubscriptionPlan
-} from '@/lib/services/subscriptionService';
+import { SubscriptionPeriod, SubscriptionPlan } from '@/lib/types/course-new';
+import { forceDeleteSubscriptionPlan } from '@/lib/services/subscriptionService';
 
 export function SubscriptionPlanManagement() {
   const queryClient = useQueryClient();
@@ -76,7 +73,17 @@ export function SubscriptionPlanManagement() {
   });
 
   const addMutation = useMutation({
-    mutationFn: async (planData: Omit<SubscriptionPlan, 'id' | 'created_at' | 'updated_at'>) => {
+    mutationFn: async (planData: {
+      name: string;
+      description: string | null;
+      price: number;
+      interval: string;
+      discount_percentage: number;
+      currency: string;
+      is_active: boolean;
+      display_order: number;
+      features?: string[];
+    }) => {
       const { data, error } = await supabase
         .from('subscription_plans')
         .insert(planData)

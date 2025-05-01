@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 export function OrderHistoryView() {
   const { user } = useAuth();
   const [filterStatus, setFilterStatus] = useState("all");
+  const [timeFilter, setTimeFilter] = useState("all");
   const [isGeneratingData, setIsGeneratingData] = useState(false);
   const queryClient = useQueryClient();
   
@@ -102,19 +103,17 @@ export function OrderHistoryView() {
           <div className="flex flex-col items-center gap-4">
             <div className="flex flex-col sm:flex-row gap-4 items-center max-w-md">
               <Select
-                value={filterStatus}
-                onValueChange={setFilterStatus}
-                disabled={isGeneratingData}
+                value={timeFilter}
+                onValueChange={setTimeFilter}
+                disabled={isLoading}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="筛选订单状态" />
+                  <SelectValue placeholder="选择时间范围" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">全部状态</SelectItem>
-                  <SelectItem value="completed">已完成</SelectItem>
-                  <SelectItem value="processing">处理中</SelectItem>
-                  <SelectItem value="refunded">已退款</SelectItem>
-                  <SelectItem value="failed">失败</SelectItem>
+                  <SelectItem value="all">所有时间</SelectItem>
+                  <SelectItem value="month">最近一个月</SelectItem>
+                  <SelectItem value="year">最近一年</SelectItem>
                 </SelectContent>
               </Select>
               

@@ -1,10 +1,11 @@
 
 import { PaymentPlanSelector, type PaymentPlan } from './PaymentPlanSelector';
 import { PaymentMethodSelect, type PaymentMethod } from './PaymentMethodSelect';
-import { SubscriptionPlans, type SubscriptionPeriod } from './SubscriptionPlans';
+import { SubscriptionPlans } from './SubscriptionPlans';
 import { PurchaseOptions } from './PurchaseOptions';
 import OrderSummary from './OrderSummary';
 import { CourseCard } from './CourseCard';
+import { SubscriptionPeriod } from '@/lib/types/course-new';  // Import from course-new.ts instead
 
 interface CheckoutContentProps {
   course: any;
@@ -70,22 +71,17 @@ export const CheckoutContent = ({
         )}
 
         <PurchaseOptions 
+          onSelectSingle={() => onPaymentPlanChange("single")}
+          onSelectSubscription={() => onPaymentPlanChange("subscription")}
+          coursePrice={course?.price || 0}
+          subscriptionPrice={(course?.subscription_price || course?.price * 0.8)}
+          currency={courseCurrency}
+          courseTitle={course?.title}
           selectedOption={paymentPlan}
-          onOptionChange={(value) => {
-            console.log("支付方式变更为:", value);
-            onPaymentPlanChange(value);
-          }}
-          selectedPlan={subscriptionPeriod}
-          onPlanChange={(period, price, name, discountPct) => {
-            console.log("订阅计划变更为:", period, "价格:", price, "折扣:", discountPct);
-            onSubscriptionPeriodChange(period, price, name, discountPct);
-          }}
+          onOptionChange={onPaymentPlanChange}
           paymentMethod={paymentMethod}
           exchangeRate={exchangeRate}
-          course={{
-            ...course,
-            currency: courseCurrency
-          }}
+          course={course}
         />
 
         {(paymentPlan === "single" || (paymentPlan === "subscription" && subscriptionPeriod)) && (

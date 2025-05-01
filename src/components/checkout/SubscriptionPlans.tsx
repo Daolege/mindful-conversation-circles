@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { Card } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -8,6 +9,9 @@ import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { SubscriptionPeriod, SubscriptionPlan } from '@/lib/types/course-new';
+
+// Re-export the SubscriptionPeriod type
+export type { SubscriptionPeriod };
 
 interface SubscriptionPlansProps {
   selectedPlan: SubscriptionPeriod;

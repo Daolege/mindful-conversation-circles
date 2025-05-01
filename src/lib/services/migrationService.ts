@@ -1,143 +1,188 @@
+import { supabase } from "@/integrations/supabase/client";
 
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+// Define possible migration names
+export type MigrationName = 
+  | 'init' 
+  | 'add_subscription_tables' 
+  | 'add_course_materials';
 
-/**
- * Records a migration in the database
- */
-export async function recordMigration(name: string, description: string, success: boolean): Promise<boolean> {
+// Track migrations in a migrations table
+export const recordMigration = async (name: MigrationName, description: string) => {
   try {
-    console.log(`[MigrationService] Recording migration: ${name}`);
-    
-    const timestamp = new Date().toISOString();
-    
-    // Try to use an RPC call first (preferred)
+    // Check if we can call RPC for system SQL - this is safer approach but might not be available
     try {
-      // Note: This assumes you have a stored procedure for this
-      // If not, it will fall back to direct insertion
-      const { data, error } = await supabase.rpc('record_migration', {
-        _name: name,
-        _description: description,
-        _success: success,
-        _executed_at: timestamp
+      // Try using our custom function instead of built-in ones
+      await supabase.rpc('record_migration_data', { 
+        migration_name: name,
+        migration_description: description 
       });
+      return { success: true };
+    } catch (rpcError) {
+      console.log("Cannot use RPC for migration recording, using direct insert", rpcError);
       
-      if (!error) {
-        return true;
+      // Check if migrations table exists
+      const { data: tableExists } = await supabase
+        .from('migrations')
+        .select('count')
+        .limit(1)
+        .throwOnError();
+      
+      // If table exists, insert the migration record
+      const { error } = await supabase
+        .from('migrations')
+        .insert({
+          name,
+          description,
+          executed_at: new Date().toISOString()
+        });
+      
+      if (error) {
+        console.error('Error recording migration:', error);
+        return { success: false, error: error.message };
       }
       
-      // If RPC fails (likely because the function doesn't exist), fall back to direct insertion
-      console.log(`[MigrationService] RPC call failed, falling back to direct insertion: ${error.message}`);
-    } catch (err) {
-      console.log(`[MigrationService] RPC method not available, using direct insert`);
+      return { success: true };
+    }
+  } catch (error) {
+    console.error('Error in recordMigration:', error);
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+  }
+};
+
+// Get the current exchange rate from site settings
+export const getExchangeRate = async (): Promise<number> => {
+  try {
+    const { data, error } = await supabase
+      .from('site_settings')
+      .select('setting_value')
+      .eq('setting_key', 'exchange_rate')
+      .single();
+      
+    if (error) {
+      console.error('Error fetching exchange rate:', error);
+      return 7; // Default exchange rate
     }
     
-    // Use a direct insert as fallback
-    // This requires permissions to insert into the _migrations table
-    const { error: insertError } = await supabase
-      .from('migrations')
-      .insert({
-        name: name,
-        description: description,
-        success: success,
-        executed_at: timestamp
-      });
-    
-    if (insertError) {
-      console.error(`[MigrationService] Failed to record migration: ${insertError.message}`);
+    return parseFloat(data.setting_value || '7');
+  } catch (error) {
+    console.error('Error getting exchange rate:', error);
+    return 7;
+  }
+};
+
+// Update the exchange rate in site settings
+export const updateExchangeRate = async (newRate: number): Promise<boolean> => {
+  try {
+    // Check if the exchange rate setting exists
+    const { data: existingSetting, error: selectError } = await supabase
+      .from('site_settings')
+      .select('id')
+      .eq('setting_key', 'exchange_rate')
+      .single();
+      
+    if (selectError && !selectError.message.includes('No rows found')) {
+      console.error('Error checking existing exchange rate setting:', selectError);
       return false;
+    }
+    
+    if (existingSetting) {
+      // Update existing setting
+      const { error: updateError } = await supabase
+        .from('site_settings')
+        .update({ setting_value: newRate.toString() })
+        .eq('setting_key', 'exchange_rate');
+        
+      if (updateError) {
+        console.error('Error updating exchange rate:', updateError);
+        return false;
+      }
+    } else {
+      // Insert new setting
+      const { error: insertError } = await supabase
+        .from('site_settings')
+        .insert({ setting_key: 'exchange_rate', setting_value: newRate.toString() });
+        
+      if (insertError) {
+        console.error('Error inserting exchange rate:', insertError);
+        return false;
+      }
     }
     
     return true;
   } catch (error) {
-    console.error('[MigrationService] Error recording migration:', error);
+    console.error('Error in updateExchangeRate:', error);
     return false;
   }
-}
+};
 
-/**
- * Checks if a migration has already been executed
- */
-export async function checkMigrationStatus(name: string): Promise<boolean> {
+// Get site settings
+export const getSiteSetting = async (key: string, defaultValue: string = ''): Promise<string> => {
   try {
-    // First try site_settings table, which is more accessible
-    const { data: settingsData } = await supabase
+    const { data, error } = await supabase
       .from('site_settings')
-      .select('value')
-      .eq('key', `migration_${name}_completed`)
+      .select('setting_value')
+      .eq('setting_key', key)
       .single();
-      
-    if (settingsData && settingsData.value === 'true') {
-      return true;
+    
+    if (error || !data) {
+      console.log(`Setting ${key} not found, using default: ${defaultValue}`);
+      return defaultValue;
     }
     
-    // If not found in site_settings, try migrations table
-    // Note: This might not have appropriate permissions for all users
-    const { data: migrationData, error: migrationError } = await supabase
-      .from('migrations')
-      .select('success')
-      .eq('name', name)
-      .order('executed_at', { ascending: false })
-      .limit(1);
-      
-    if (migrationError) {
-      console.log(`[MigrationService] Could not check migration table: ${migrationError.message}`);
-      return false;
-    }
-    
-    return migrationData && migrationData.length > 0 && migrationData[0].success;
+    return data.setting_value || defaultValue;
   } catch (error) {
-    console.error('[MigrationService] Error checking migration status:', error);
-    return false;
+    console.error('Error getting site setting:', error);
+    return defaultValue;
   }
-}
+};
 
-/**
- * Run a safe migration that handles any database schema changes
- */
-export async function runMigration(
-  name: string,
-  description: string,
-  migrationFn: () => Promise<boolean>
-): Promise<boolean> {
+// Update site settings
+export const updateSiteSettings = async (settings: { [key: string]: string }): Promise<boolean> => {
   try {
-    console.log(`[MigrationService] Running migration: ${name}`);
-    
-    // Check if migration already completed
-    const alreadyMigrated = await checkMigrationStatus(name);
-    if (alreadyMigrated) {
-      console.log(`[MigrationService] Migration ${name} already completed, skipping.`);
-      return true;
+    for (const key in settings) {
+      if (settings.hasOwnProperty(key)) {
+        const value = settings[key];
+        
+        // Check if the setting exists
+        const { data: existingSetting, error: selectError } = await supabase
+          .from('site_settings')
+          .select('id')
+          .eq('setting_key', key)
+          .single();
+          
+        if (selectError && !selectError.message.includes('No rows found')) {
+          console.error(`Error checking existing setting ${key}:`, selectError);
+          return false;
+        }
+        
+        if (existingSetting) {
+          // Update existing setting
+          const { error: updateError } = await supabase
+            .from('site_settings')
+            .update({ setting_value: value })
+            .eq('setting_key', key);
+            
+          if (updateError) {
+            console.error(`Error updating setting ${key}:`, updateError);
+            return false;
+          }
+        } else {
+          // Insert new setting
+          const { error: insertError } = await supabase
+            .from('site_settings')
+            .insert({ setting_key: key, setting_value: value });
+            
+          if (insertError) {
+            console.error(`Error inserting setting ${key}:`, insertError);
+            return false;
+          }
+        }
+      }
     }
     
-    // Run the migration function
-    console.log(`[MigrationService] Executing migration ${name}...`);
-    const success = await migrationFn();
-    
-    // Record the result
-    await recordMigration(name, description, success);
-    
-    // Record in site_settings for easier access
-    await supabase
-      .from('site_settings')
-      .upsert({
-        key: `migration_${name}_completed`,
-        value: success ? 'true' : 'false',
-        updated_at: new Date().toISOString()
-      });
-      
-    if (success) {
-      console.log(`[MigrationService] Migration ${name} completed successfully.`);
-      toast.success(`Migration ${name} completed successfully`);
-    } else {
-      console.error(`[MigrationService] Migration ${name} failed.`);
-      toast.error(`Migration ${name} failed`);
-    }
-    
-    return success;
+    return true;
   } catch (error) {
-    console.error(`[MigrationService] Error running migration ${name}:`, error);
-    toast.error(`Migration ${name} failed with an error`);
+    console.error('Error in updateSiteSettings:', error);
     return false;
   }
-}
+};

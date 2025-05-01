@@ -1,7 +1,6 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getUserSubscriptionHistory, getCurrentSubscription, createTestSubscription } from "@/lib/services/subscriptionService";
+import { getSubscriptionPlans, createTestSubscription } from "@/lib/services/subscriptionService";
 import { useAuth } from "@/contexts/authHooks";
 import { SubscriptionItem } from "@/types/dashboard";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -27,7 +26,23 @@ export function SubscriptionHistory() {
     queryKey: ['current-subscription', user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
-      return getCurrentSubscription(user.id);
+      try {
+        const { data } = await supabase
+          .from('user_subscriptions')
+          .select(`
+            *,
+            subscription_plans (*)
+          `)
+          .eq('user_id', user.id)
+          .eq('status', 'active')
+          .lte('start_date', new Date().toISOString())
+          .gte('end_date', new Date().toISOString())
+          .single();
+        return data || null;
+      } catch (error) {
+        console.error('Error fetching user subscription:', error);
+        return null;
+      }
     },
     enabled: !!user?.id,
   });
@@ -41,7 +56,22 @@ export function SubscriptionHistory() {
     queryKey: ['subscription-history', user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
-      return getUserSubscriptionHistory(user.id);
+      try {
+        const { data } = await supabase
+          .from('subscription_history')
+          .select(`
+            *,
+            new_plan:new_plan_id (*),
+            old_plan:old_plan_id (*)
+          `)
+          .eq('user_id', user.id)
+          .order('effective_date', { ascending: false });
+        
+        return data || [];
+      } catch (error) {
+        console.error('Error fetching subscription history:', error);
+        return [];
+      }
     },
     enabled: !!user?.id,
   });
@@ -172,6 +202,25 @@ export function SubscriptionHistory() {
     );
   }
 
+  // Fix the features rendering for currentSubscription
+  const hasFeatures = currentSubscription?.subscription_plans && 
+                      Array.isArray(currentSubscription.subscription_plans.features) && 
+                      currentSubscription.subscription_plans.features.length > 0;
+
+  // Fix the rendering of subscription plans features and description
+  const renderPlanInfo = (plan: any) => {
+    if (!plan) return null;
+    
+    return (
+      <>
+        <h4 className="font-medium">{plan.name || "未知计划"}</h4>
+        <p className="text-sm text-muted-foreground">
+          {plan.description || ""}
+        </p>
+      </>
+    );
+  };
+
   return (
     <div className="space-y-8">
       {currentSubscription && (
@@ -188,12 +237,7 @@ export function SubscriptionHistory() {
           <CardContent className="pt-6">
             <div className="space-y-4">
               <div>
-                <h4 className="text-lg font-medium">
-                  {currentSubscription.subscription_plans?.name || '未知计划'}
-                </h4>
-                <p className="text-sm text-muted-foreground">
-                  {currentSubscription.subscription_plans?.description || '无描述'}
-                </p>
+                {renderPlanInfo(currentSubscription.subscription_plans)}
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
@@ -207,7 +251,7 @@ export function SubscriptionHistory() {
                 </div>
               </div>
               
-              {currentSubscription.subscription_plans?.features && (
+              {hasFeatures && (
                 <div className="mt-4">
                   <h5 className="text-sm font-medium mb-2">包含特权</h5>
                   <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
