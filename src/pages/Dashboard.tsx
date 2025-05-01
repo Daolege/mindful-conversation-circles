@@ -3,17 +3,16 @@ import { useEffect, useState, useRef } from "react";
 import { useLocation, Navigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { useAuth } from "@/contexts/authHooks";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { Loader2 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { Loader2 } from "lucide-react";
 import { DashboardNavigation } from "@/components/dashboard/DashboardNavigation";
-import { EnrolledCoursesNew } from "@/components/dashboard/EnrolledCoursesNew";
+import { SimpleCourseTab } from "@/components/dashboard/SimpleCourseTab";
 import { OrderHistoryView } from "@/components/dashboard/views/OrderHistoryView";
 import { SubscriptionHistory } from "@/components/dashboard/SubscriptionHistory";
 import { ProfileManagement } from "@/components/dashboard/ProfileManagement";
 import { motion, AnimatePresence } from "framer-motion";
+import { supabase } from "@/integrations/supabase/client";
 
 const Dashboard = () => {
   const location = useLocation();
@@ -52,36 +51,6 @@ const Dashboard = () => {
       refreshSession();
     }
   }, [user, loading]);
-
-  const { data: coursesWithProgress, isLoading: isLoadingCourses } = useQuery({
-    queryKey: ['user-courses', user?.id],
-    queryFn: async () => {
-      if (!user?.id) return [];
-      
-      const { data, error } = await supabase
-        .from('user_courses')
-        .select(`
-          course_id,
-          purchased_at,
-          courses (*),
-          course_progress (
-            progress_percent,
-            completed,
-            last_lecture_id
-          )
-        `)
-        .eq('user_id', user.id)
-        .order('purchased_at', { ascending: false });
-        
-      if (error) {
-        console.error('Error loading user courses:', error);
-        return [];
-      }
-      
-      return data || [];
-    },
-    enabled: !!user,
-  });
 
   if (loading) {
     return (
@@ -124,7 +93,7 @@ const Dashboard = () => {
   const renderTabContent = () => {
     switch (activeTab) {
       case 'courses':
-        return <EnrolledCoursesNew coursesWithProgress={coursesWithProgress} showAll={true} />;
+        return <SimpleCourseTab />;
       case 'orders':
         return <OrderHistoryView />;
       case 'subscriptions':
@@ -183,13 +152,7 @@ const Dashboard = () => {
               key={`transition-${activeTab}`}
             />
 
-            {isLoadingCourses && activeTab === 'courses' ? (
-              <div className="flex justify-center py-10">
-                <Loader2 className="h-8 w-8 animate-spin text-knowledge-primary" />
-              </div>
-            ) : (
-              renderTabContent()
-            )}
+            {renderTabContent()}
           </motion.div>
         </AnimatePresence>
       </main>
