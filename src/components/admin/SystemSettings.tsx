@@ -210,19 +210,10 @@ export function SystemSettings({ activeTab }: SystemSettingsProps) {
                 key={tab.id}
                 onClick={() => setActiveSettingTab(tab.id)}
                 className={`flex flex-col items-center justify-center p-4 cursor-pointer transition-all
-                           ${activeSettingTab === tab.id ? 'text-gray-900' : 'text-gray-500'}
-                           hover:bg-gray-50 relative group`}
+                           ${activeSettingTab === tab.id ? 'text-gray-900' : 'text-gray-500'}`}
               >
-                <tab.icon className={`h-5 w-5 mb-2 ${activeSettingTab === tab.id ? 'text-primary' : 'text-gray-400'} 
-                                    transition-all duration-200 group-hover:scale-110 group-hover:text-primary`} />
-                <span className={`text-sm font-medium transition-all duration-200 
-                                ${activeSettingTab === tab.id ? 'font-semibold' : ''} 
-                                group-hover:text-gray-900`}>
-                  {tab.label}
-                </span>
-                {activeSettingTab === tab.id && (
-                  <span className="absolute bottom-0 w-12 h-0.5 bg-primary rounded-full transition-all duration-300"></span>
-                )}
+                <tab.icon className={`h-5 w-5 mb-2 ${activeSettingTab === tab.id ? 'text-primary' : 'text-gray-400'}`} />
+                <span className="text-sm font-medium">{tab.label}</span>
               </div>
             ))}
           </div>
