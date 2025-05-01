@@ -1,35 +1,46 @@
 
-export interface CourseProgress {
+export interface OrderItem {
   id: string;
   user_id: string;
-  course_id: number;
-  progress_percent: number;
-  completed: boolean;
-  lecture_id: string;
-  last_watched_at: string;
+  total_amount: number;
+  currency: string;
+  payment_method: string;
+  status: string;
+  created_at: string;
+  updated_at?: string;
+  order_items?: OrderLineItem[];
 }
 
-export interface UserCourse {
-  id: string;
-  user_id: string;
+export interface OrderLineItem {
+  id: number;
+  order_id: string;
   course_id: number;
-  purchased_at: string;
-  last_accessed_at: string;
-  courses: {
+  price: number;
+  currency: string;
+  courses?: {
     id: number;
     title: string;
-    category?: string;
     description?: string;
-    duration?: string;
-    featured?: boolean;
-    imageurl?: string;
-    instructor?: string;
-    instructorid?: number;
-    lastupdated?: string;
-    lectures?: number;
-    level?: string;
-    whatyouwilllearn?: string[];
-    syllabus?: any; // Changed from any[] to any to accept Json type from Supabase
-  };
-  course_progress?: CourseProgress[];
+    thumbnail_url?: string;
+  }
+}
+
+export interface SubscriptionItem {
+  id: string;
+  user_id: string;
+  plan_id: string;
+  status: string;
+  current_period_start?: string;
+  current_period_end?: string;
+  created_at?: string;
+  updated_at?: string;
+  cancel_at_period_end?: boolean;
+  subscription_plan?: {
+    id: string;
+    name: string;
+    description?: string;
+    price?: number;
+    interval?: string;
+    features?: string[];
+  }
 }

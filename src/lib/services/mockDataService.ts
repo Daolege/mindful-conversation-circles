@@ -1,319 +1,359 @@
 
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { supabase } from '@/integrations/supabase/client';
 
-// Generate mock orders for a user
-export const generateMockOrders = async (userId: string): Promise<{ success: boolean; message: string }> => {
+export const generateMockData = async (userId: string): Promise<{ 
+  success: boolean; 
+  courses: boolean;
+  orders: boolean;
+  subscriptions: boolean;
+  error: any;
+}> => {
   try {
-    console.log('Generating mock orders for user:', userId);
+    console.log('[mockDataService] Generating mock data for user:', userId);
     
-    // Check if user already has orders
-    const { data: existingOrders, error: checkError } = await supabase
-      .from('orders')
-      .select('id')
-      .eq('user_id', userId)
-      .limit(1);
-      
-    if (checkError) {
-      console.error('Error checking existing orders:', checkError);
-      return { success: false, message: '检查现有订单失败' };
-    }
+    const result = {
+      success: false,
+      courses: false,
+      orders: false,
+      subscriptions: false,
+      error: null
+    };
     
-    // If user already has orders, don't generate more
-    if (existingOrders && existingOrders.length > 0) {
-      console.log('User already has orders, skipping mock data generation');
-      return { success: true, message: '已存在订单数据，未生成新数据' };
-    }
+    // 1. Create mock course enrollments
+    result.courses = await generateMockCourseEnrollments(userId);
+    
+    // 2. Create mock orders
+    result.orders = await generateMockOrders(userId);
+    
+    // 3. Create mock subscription history
+    result.subscriptions = await generateMockSubscriptions(userId);
+    
+    result.success = result.courses || result.orders || result.subscriptions;
+    
+    console.log('[mockDataService] Mock data generation complete:', result);
+    return result;
+  } catch (err) {
+    console.error('[mockDataService] Error generating mock data:', err);
+    return {
+      success: false,
+      courses: false,
+      orders: false,
+      subscriptions: false,
+      error: err
+    };
+  }
+};
 
-    // Get up to 5 random courses
+export const generateMockCourseEnrollments = async (userId: string): Promise<boolean> => {
+  try {
+    console.log('[mockDataService] Generating mock course enrollments for user:', userId);
+    
+    // First check if we have any courses
     const { data: courses, error: coursesError } = await supabase
-      .from('courses')
-      .select('id, title, price')
-      .limit(5);
-
-    if (coursesError || !courses || courses.length === 0) {
-      console.error('Error fetching courses or no courses found:', coursesError);
-      return { success: false, message: '无法获取课程数据' };
-    }
-
-    // Generate 3 random orders with different statuses
-    const statuses = ['completed', 'processing', 'cancelled'];
-    const now = new Date();
+      .from('courses_new')
+      .select('id, title')
+      .limit(3);
     
-    for (let i = 0; i < 3; i++) {
-      const randomCourse = courses[Math.floor(Math.random() * courses.length)];
-      const orderDate = new Date(now.getTime() - (i * 30 * 24 * 60 * 60 * 1000)); // 30 days apart
+    if (coursesError || !courses?.length) {
+      console.error('[mockDataService] Error fetching courses or no courses available:', coursesError);
+      return false;
+    }
+    
+    // Delete existing enrollments to avoid duplicates
+    const { error: deleteError } = await supabase
+      .from('user_courses')
+      .delete()
+      .eq('user_id', userId);
+    
+    if (deleteError) {
+      console.warn('[mockDataService] Error deleting existing enrollments:', deleteError);
+      // Continue anyway
+    }
+    
+    // Create new enrollments for each course
+    for (const course of courses) {
+      // Generate a random progress percentage between 0 and 100
+      const progressPercent = Math.floor(Math.random() * 101);
+      const completed = progressPercent === 100;
       
-      // Create order
-      const { data: order, error: orderError } = await supabase
-        .from('orders')
+      // Create enrollment date (between 1 and 30 days ago)
+      const daysAgo = Math.floor(Math.random() * 30) + 1;
+      const enrollmentDate = new Date();
+      enrollmentDate.setDate(enrollmentDate.getDate() - daysAgo);
+      
+      // Insert user_course record
+      const { error: enrollError } = await supabase
+        .from('user_courses')
         .insert({
           user_id: userId,
-          status: statuses[i % statuses.length],
-          total_amount: randomCourse.price,
-          currency: 'CNY',
-          payment_method: 'wechat',
-          created_at: orderDate.toISOString()
-        })
-        .select('id')
-        .single();
-        
-      if (orderError) {
-        console.error('Error creating mock order:', orderError);
+          course_id: course.id,
+          purchased_at: enrollmentDate.toISOString(),
+          is_active: true
+        });
+      
+      if (enrollError) {
+        console.error(`[mockDataService] Error enrolling user in course ${course.id}:`, enrollError);
         continue;
       }
       
-      // Add order items
-      if (order) {
-        const { error: itemError } = await supabase
-          .from('order_items')
-          .insert({
-            order_id: order.id,
-            course_id: randomCourse.id,
-            price: randomCourse.price,
-            name: randomCourse.title
-          });
-          
-        if (itemError) {
-          console.error('Error creating order item:', itemError);
-        }
+      // Insert progress record
+      const { error: progressError } = await supabase
+        .from('course_progress')
+        .insert({
+          user_id: userId,
+          course_id: course.id,
+          progress_percent: progressPercent,
+          completed: completed,
+          last_accessed_at: new Date().toISOString()
+        });
+      
+      if (progressError) {
+        console.error(`[mockDataService] Error creating progress for course ${course.id}:`, progressError);
       }
+      
+      console.log(`[mockDataService] Enrolled user in course ${course.id} with ${progressPercent}% progress`);
     }
     
-    return { success: true, message: '已成功生成示例订单数据' };
-  } catch (error) {
-    console.error('Error generating mock orders:', error);
-    return { success: false, message: '生成示例订单数据失败' };
+    console.log('[mockDataService] Mock course enrollments generated successfully');
+    return true;
+  } catch (err) {
+    console.error('[mockDataService] Error generating mock course enrollments:', err);
+    return false;
   }
 };
 
-// Generate mock subscriptions for a user
-export const generateMockSubscriptions = async (userId: string): Promise<{ success: boolean; message: string }> => {
+export const generateMockOrders = async (userId: string): Promise<boolean> => {
   try {
-    console.log('Generating mock subscriptions for user:', userId);
+    console.log('[mockDataService] Generating mock orders for user:', userId);
     
-    // Check if user already has subscriptions
-    const { data: existingSubscriptions, error: checkError } = await supabase
-      .from('subscription_history')
-      .select('id')
-      .eq('user_id', userId)
-      .limit(1);
-      
-    if (checkError) {
-      console.error('Error checking existing subscriptions:', checkError);
-      return { success: false, message: '检查现有订阅记录失败' };
+    // First check if we have any courses
+    const { data: courses, error: coursesError } = await supabase
+      .from('courses_new')
+      .select('id, title, price')
+      .limit(5);
+    
+    if (coursesError || !courses?.length) {
+      console.error('[mockDataService] Error fetching courses or no courses available:', coursesError);
+      return false;
     }
     
-    // If user already has subscriptions, don't generate more
-    if (existingSubscriptions && existingSubscriptions.length > 0) {
-      console.log('User already has subscription history, skipping mock data generation');
-      return { success: true, message: '已存在订阅记录，未生成新数据' };
+    // Delete existing orders to avoid duplicates
+    const { error: deleteOrderError } = await supabase
+      .from('orders')
+      .delete()
+      .eq('user_id', userId);
+    
+    if (deleteOrderError) {
+      console.warn('[mockDataService] Error deleting existing orders:', deleteOrderError);
+      // Continue anyway
     }
-
-    // Get subscription plan
-    const { data: plans, error: plansError } = await supabase
-      .from('subscription_plans')
-      .select('id, name, price, currency')
-      .limit(1);
+    
+    // Create 5 orders with different statuses and dates
+    const statuses = ['completed', 'processing', 'cancelled', 'failed', 'refunded'];
+    const paymentMethods = ['wechat', 'alipay', 'creditcard'];
+    
+    for (let i = 0; i < 5; i++) {
+      // Create order date (between 1 and 60 days ago)
+      const daysAgo = Math.floor(Math.random() * 60) + 1;
+      const orderDate = new Date();
+      orderDate.setDate(orderDate.getDate() - daysAgo);
       
-    if (plansError || !plans || plans.length === 0) {
-      console.error('Error fetching subscription plans:', plansError);
+      // Select a random course
+      const course = courses[i % courses.length];
+      const price = course.price || 99;
       
-      // Create a default plan if none exists
-      const { data: newPlan, error: newPlanError } = await supabase
-        .from('subscription_plans')
+      // Generate unique order ID
+      const orderId = `order-${Date.now()}-${i}`;
+      const status = statuses[i % statuses.length];
+      const paymentMethod = paymentMethods[i % paymentMethods.length];
+      
+      // Insert the order
+      const { error: orderError } = await supabase
+        .from('orders')
         .insert({
-          name: '月度会员',
-          description: '畅享全部会员课程',
-          interval: 'monthly',
-          price: 49.99,
-          currency: 'CNY',
-          is_active: true,
-          features: ['无限制访问所有课程', '专属会员社区', '学习路径规划'],
-          display_order: 1
-        })
-        .select()
-        .single();
-        
-      if (newPlanError) {
-        console.error('Error creating subscription plan:', newPlanError);
-        return { success: false, message: '无法创建订阅计划' };
+          id: orderId,
+          user_id: userId,
+          total_amount: price,
+          currency: 'cny',
+          payment_method: paymentMethod,
+          status: status,
+          created_at: orderDate.toISOString(),
+          updated_at: orderDate.toISOString()
+        });
+      
+      if (orderError) {
+        console.error('[mockDataService] Error creating mock order:', orderError);
+        continue;
       }
       
-      var plan = newPlan;
-    } else {
-      var plan = plans[0];
+      // Insert an order item for this order
+      const { error: itemError } = await supabase
+        .from('order_items')
+        .insert({
+          order_id: orderId,
+          course_id: course.id,
+          price: price,
+          currency: 'cny',
+          created_at: orderDate.toISOString()
+        });
+      
+      if (itemError) {
+        console.error('[mockDataService] Error creating mock order item:', itemError);
+      }
+      
+      console.log(`[mockDataService] Created order ${orderId} for course ${course.id} with status ${status}`);
     }
     
-    // Generate subscription history records with different types
-    const changeTypes = ['new', 'renew', 'upgrade', 'downgrade', 'cancel'];
-    const now = new Date();
+    console.log('[mockDataService] Mock orders generated successfully');
+    return true;
+  } catch (err) {
+    console.error('[mockDataService] Error generating mock orders:', err);
+    return false;
+  }
+};
+
+export const generateMockSubscriptions = async (userId: string): Promise<boolean> => {
+  try {
+    console.log('[mockDataService] Generating mock subscriptions for user:', userId);
     
-    for (let i = 0; i < 3; i++) {
-      const recordDate = new Date(now.getTime() - (i * 30 * 24 * 60 * 60 * 1000)); // 30 days apart
+    // First check if we have any subscription plans
+    const { data: plans, error: plansError } = await supabase
+      .from('subscription_plans')
+      .select('id, name, price, interval')
+      .limit(3);
+    
+    if (plansError) {
+      console.error('[mockDataService] Error fetching subscription plans:', plansError);
       
-      // Create subscription history record
-      const { error: subError } = await supabase
+      // Create some subscription plans if none exist
+      const mockPlans = [
+        {
+          name: '月度订阅',
+          description: '每月订阅，随时可取消',
+          price: 39.99,
+          interval: 'monthly',
+          currency: 'cny',
+          features: ['所有课程访问', '每月新课程', '优先客服支持'],
+          display_order: 1,
+          discount_percentage: 0,
+          is_active: true
+        },
+        {
+          name: '年度订阅',
+          description: '年度订阅，比月度订阅更划算',
+          price: 399.99,
+          interval: 'yearly',
+          currency: 'cny',
+          features: ['所有课程访问', '每月新课程', '优先客服支持', '下载课程资料'],
+          display_order: 2,
+          discount_percentage: 17,
+          is_active: true
+        }
+      ];
+      
+      for (const plan of mockPlans) {
+        const { error } = await supabase
+          .from('subscription_plans')
+          .insert(plan);
+          
+        if (error) {
+          console.error('[mockDataService] Error creating mock subscription plan:', error);
+        }
+      }
+      
+      // Try fetching plans again
+      const { data: newPlans, error: newPlansError } = await supabase
+        .from('subscription_plans')
+        .select('id, name, price, interval')
+        .limit(3);
+        
+      if (newPlansError || !newPlans?.length) {
+        console.error('[mockDataService] Still cannot fetch subscription plans:', newPlansError);
+        return false;
+      }
+    }
+    
+    // Delete existing subscription records to avoid duplicates
+    const { error: deleteSubError } = await supabase
+      .from('subscription_history')
+      .delete()
+      .eq('user_id', userId);
+    
+    if (deleteSubError) {
+      console.warn('[mockDataService] Error deleting existing subscriptions:', deleteSubError);
+      // Continue anyway
+    }
+    
+    // Use plans if they exist, otherwise use default plans
+    const subscriptionPlans = plans || [
+      { id: 'mock-monthly', name: '月度订阅', price: 39.99, interval: 'monthly' },
+      { id: 'mock-yearly', name: '年度订阅', price: 399.99, interval: 'yearly' }
+    ];
+    
+    // Create 3 subscription history records with different dates
+    for (let i = 0; i < 3; i++) {
+      // Create effect date (between 30 and 360 days ago)
+      const daysAgo = 30 + (i * 150);
+      const effectiveDate = new Date();
+      effectiveDate.setDate(effectiveDate.getDate() - daysAgo);
+      
+      // Select a plan
+      const plan = subscriptionPlans[i % subscriptionPlans.length];
+      
+      // Determine event type
+      const eventType = i === 0 ? 'subscription_created' : 
+                       i === 1 ? 'plan_changed' : 'subscription_cancelled';
+      
+      // Insert subscription history record
+      const { error: historyError } = await supabase
         .from('subscription_history')
         .insert({
           user_id: userId,
-          new_plan_id: plan.id,
-          change_type: changeTypes[i % changeTypes.length],
-          amount: plan.price,
-          currency: plan.currency,
-          effective_date: recordDate.toISOString()
+          event_type: eventType,
+          previous_plan_id: i === 1 ? subscriptionPlans[0].id : null,
+          new_plan_id: eventType !== 'subscription_cancelled' ? plan.id : null,
+          effective_date: effectiveDate.toISOString(),
+          notes: `Mock subscription history record ${i + 1}`
         });
-        
-      if (subError) {
-        console.error('Error creating subscription history:', subError);
-      }
-    }
-    
-    return { success: true, message: '已成功生成示例订阅记录' };
-  } catch (error) {
-    console.error('Error generating mock subscriptions:', error);
-    return { success: false, message: '生成示例订阅记录失败' };
-  }
-};
-
-// Generate all mock data for a user
-export const generateAllMockData = async (userId: string): Promise<{ success: boolean; message: string }> => {
-  if (!userId) {
-    return { success: false, message: '用户ID不能为空' };
-  }
-  
-  try {
-    // Generate courses, orders and subscriptions
-    const ordersPromise = generateMockOrders(userId);
-    const subscriptionsPromise = generateMockSubscriptions(userId);
-    const coursesPromise = generateMockCourses(userId);
-    
-    const [ordersResult, subscriptionsResult, coursesResult] = await Promise.all([
-      ordersPromise, subscriptionsPromise, coursesPromise
-    ]);
-    
-    // Check results
-    if (!ordersResult.success && !subscriptionsResult.success && !coursesResult.success) {
-      return { 
-        success: false, 
-        message: '示例数据生成失败' 
-      };
-    }
-    
-    let successCount = 0;
-    if (ordersResult.success) successCount++;
-    if (subscriptionsResult.success) successCount++;
-    if (coursesResult.success) successCount++;
-    
-    return { 
-      success: true, 
-      message: `已成功生成${successCount}种示例数据` 
-    };
-  } catch (error) {
-    console.error('Error generating all mock data:', error);
-    return { success: false, message: '生成示例数据失败' };
-  }
-};
-
-// Generate mock courses for a user
-export const generateMockCourses = async (userId: string): Promise<{ success: boolean; message: string }> => {
-  try {
-    console.log('Generating mock courses for user:', userId);
-    
-    // Check if user already has enrolled courses
-    const { data: existingCourses, error: checkError } = await supabase
-      .from('user_courses')
-      .select('course_id')
-      .eq('user_id', userId)
-      .limit(1);
       
-    if (checkError) {
-      console.error('Error checking existing enrollments:', checkError);
-      return { success: false, message: '检查已报名课程失败' };
-    }
-    
-    // If user already has courses, don't generate more
-    if (existingCourses && existingCourses.length > 0) {
-      console.log('User already has courses, skipping sample data generation');
-      return { success: true, message: '已存在课程数据，未生成新数据' };
-    }
-    
-    // Get up to 8 random courses
-    const { data: courses, error: coursesError } = await supabase
-      .from('courses')
-      .select('id')
-      .limit(8);
-
-    if (coursesError || !courses || courses.length === 0) {
-      console.error('Error fetching courses:', coursesError);
-      return { success: false, message: '无法获取课程数据' };
-    }
-
-    // Shuffle courses randomly
-    const shuffledCourses = [...courses].sort(() => Math.random() - 0.5);
-    const selectedCourses = shuffledCourses.slice(0, Math.min(4, shuffledCourses.length));
-    
-    console.log('Selected courses for enrollment:', selectedCourses);
-
-    // Enroll user in courses with random purchase dates and progress data
-    const now = new Date();
-    
-    for (const course of selectedCourses) {
-      try {
-        // Direct SQL insert instead of RPC function
-        const purchaseDate = new Date(now.getTime() - Math.random() * 90 * 24 * 60 * 60 * 1000).toISOString();
-        
-        // 1. Add user-course relationship
-        const { error: enrollError } = await supabase
-          .from('user_courses')
-          .insert({
-            user_id: userId,
-            course_id: course.id,
-            purchased_at: purchaseDate
-          });
-
-        if (enrollError) {
-          console.error('Error enrolling in course:', course.id, enrollError);
-          continue;
-        }
-
-        // 2. Add course progress
-        const progressType = Math.random();
-        let progress;
-        let isCompleted;
-
-        if (progressType < 0.3) { // Completed
-          progress = 100;
-          isCompleted = true;
-        } else if (progressType < 0.8) { // In progress
-          progress = Math.floor(Math.random() * 65) + 25; // 25% to 90%
-          isCompleted = false;
-        } else { // Just started
-          progress = Math.floor(Math.random() * 20) + 5; // 5% to 25%
-          isCompleted = false;
-        }
-
-        const { error: progressError } = await supabase
-          .from('course_progress')
-          .insert({
-            user_id: userId,
-            course_id: course.id,
-            progress_percent: progress,
-            completed: isCompleted,
-            last_lecture_id: `lecture-${Math.floor(Math.random() * 5) + 1}`
-          });
-
-        if (progressError) {
-          console.error('Error adding course progress:', progressError);
-        }
-      } catch (error) {
-        console.error('Error processing course enrollment:', error);
+      if (historyError) {
+        console.error('[mockDataService] Error creating mock subscription history:', historyError);
       }
+      
+      console.log(`[mockDataService] Created subscription history record for event ${eventType}`);
     }
     
-    return { success: true, message: '已成功生成课程数据' };
-  } catch (error) {
-    console.error('Error in sample course enrollment process:', error);
-    return { success: false, message: '生成课程数据失败' };
+    // Create current subscription if it's not cancelled
+    const { error: activeSubError } = await supabase
+      .from('user_subscriptions')
+      .delete()
+      .eq('user_id', userId);
+      
+    if (activeSubError) {
+      console.warn('[mockDataService] Error deleting existing user subscription:', activeSubError);
+    }
+    
+    // Insert current active subscription
+    const { error: currentSubError } = await supabase
+      .from('user_subscriptions')
+      .insert({
+        user_id: userId,
+        plan_id: subscriptionPlans[0].id,
+        status: 'active',
+        current_period_start: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
+        current_period_end: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      });
+      
+    if (currentSubError) {
+      console.error('[mockDataService] Error creating current subscription:', currentSubError);
+    }
+    
+    console.log('[mockDataService] Mock subscription data generated successfully');
+    return true;
+  } catch (err) {
+    console.error('[mockDataService] Error generating mock subscriptions:', err);
+    return false;
   }
 };

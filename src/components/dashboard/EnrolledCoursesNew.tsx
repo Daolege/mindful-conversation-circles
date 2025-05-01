@@ -1,183 +1,142 @@
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { UserCourse } from "@/types/dashboard";
-import { memo, useCallback, useState, useEffect } from "react";
+import { useState } from "react";
+import { Loader2, Plus } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { Book, RefreshCcw, ChevronDown } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/authHooks";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { EnrolledCourseCard } from "./EnrolledCourseCard";
-import { Link } from "react-router-dom";
-import { PaginatedContent } from "./common/PaginatedContent";
-import { motion } from "framer-motion";
-import { generateAllMockData } from "@/lib/services/mockDataService";
+import { generateMockData } from "@/lib/services/mockDataService";
 
-const COURSES_PER_PAGE = 6;
-
-interface EnrolledCoursesNewProps {
-  coursesWithProgress: UserCourse[] | undefined;
+export function EnrolledCoursesNew({ coursesWithProgress, showAll = false }: { 
+  coursesWithProgress: any[];
   showAll?: boolean;
-}
-
-export const EnrolledCoursesNew = memo(({ 
-  coursesWithProgress,
-  showAll = false
-}: EnrolledCoursesNewProps) => {
-  const [currentPage, setCurrentPage] = useState(1);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [isGeneratingData, setIsGeneratingData] = useState(false);
+}) {
+  const navigate = useNavigate();
   const { user } = useAuth();
-  
-  const totalPages = coursesWithProgress ? Math.ceil(coursesWithProgress.length / COURSES_PER_PAGE) : 0;
-  const displayCourses = coursesWithProgress?.slice(
-    (currentPage - 1) * COURSES_PER_PAGE, 
-    currentPage * COURSES_PER_PAGE
-  );
-  
-  const handlePageChange = useCallback((page: number) => {
-    setIsLoadingMore(true);
-    // Simulate a small delay for smooth transition
-    setTimeout(() => {
-      setCurrentPage(page);
-      setIsLoadingMore(false);
-      // Scroll to top of the container
-      document.querySelector('.enrolled-courses-container')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 300);
-  }, []);
-  
-  const handleGenerateSampleData = useCallback(async () => {
-    if (!user?.id) {
-      toast.error('请先登录');
-      return;
-    }
+  const [isGeneratingData, setIsGeneratingData] = useState(false);
+
+  const displayedCourses = showAll 
+    ? coursesWithProgress 
+    : coursesWithProgress?.slice(0, 3);
+
+  const handleGenerateData = async () => {
+    if (!user?.id || isGeneratingData) return;
     
     setIsGeneratingData(true);
-    toast.loading('正在生成示例数据...');
-    
     try {
-      // Use our new mock data service
-      const result = await generateAllMockData(user.id);
+      const result = await generateMockData(user.id);
       
-      if (result.success) {
-        toast.success('已添加示例数据', {
-          description: '请刷新页面查看',
-          action: {
-            label: '刷新',
-            onClick: () => window.location.reload()
-          }
+      if (result.success && result.courses) {
+        toast.success("示例数据已生成", {
+          description: "课程数据已添加到您的账户，请刷新页面查看"
         });
+        // Reload the page to see the new data
+        window.location.reload();
       } else {
-        toast.error('生成示例数据失败', {
-          description: result.message
+        toast.error("生成示例数据失败", {
+          description: "请稍后再试"
         });
       }
-    } catch (error) {
-      console.error('Error generating sample data:', error);
-      toast.error('生成示例数据失败');
+    } catch (err) {
+      console.error("Error generating mock data:", err);
+      toast.error("生成示例数据时发生错误");
     } finally {
       setIsGeneratingData(false);
     }
-  }, [user]);
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1
-      }
-    }
   };
 
-  useEffect(() => {
-    // Console log for debugging
-    console.log("Courses with progress:", coursesWithProgress);
-  }, [coursesWithProgress]);
+  const getProgressPercentage = (courseProgress: any) => {
+    if (!courseProgress) return 0;
+    if (Array.isArray(courseProgress)) {
+      return courseProgress[0]?.progress_percent || 0;
+    }
+    return courseProgress.progress_percent || 0;
+  };
+
+  if (coursesWithProgress?.length === 0) {
+    return (
+      <div className="bg-muted/50 border rounded-lg p-8 text-center">
+        <h3 className="text-lg font-medium mb-2">尚未购买课程</h3>
+        <p className="text-muted-foreground mb-6">您尚未购买任何课程，浏览所有课程找到适合您的学习内容</p>
+        
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <Button 
+            onClick={() => navigate('/courses')} 
+            className="min-w-[150px]"
+          >
+            浏览课程
+          </Button>
+          
+          <Button 
+            onClick={handleGenerateData} 
+            variant="outline" 
+            disabled={isGeneratingData}
+            className="min-w-[150px] inline-flex items-center"
+          >
+            {isGeneratingData ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Plus className="mr-2 h-4 w-4" />
+            )}
+            添加示例数据
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <Card className="shadow-md border-gray-200 hover:shadow-lg transition-all duration-300 enrolled-courses-container">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="flex items-center gap-2 text-xl">
-          <Book className="h-5 w-5 text-knowledge-primary" />
-          我报名的课程
-        </CardTitle>
-        <Button 
-          variant="outline" 
-          size="sm"
-          onClick={handleGenerateSampleData}
-          disabled={isGeneratingData}
-          className="flex items-center gap-2 hover:bg-knowledge-primary hover:text-white transition-all duration-200"
-        >
-          {isGeneratingData ? (
-            <>
-              <RefreshCcw className="h-4 w-4 animate-spin" />
-              <span>生成中...</span>
-            </>
-          ) : (
-            <>
-              <RefreshCcw className="h-4 w-4" />
-              <span>添加示例数据</span>
-            </>
-          )}
-        </Button>
-      </CardHeader>
-      <CardContent>
-        <TooltipProvider>
-          {displayCourses && displayCourses.length > 0 ? (
-            <PaginatedContent
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={handlePageChange}
+    <div className="space-y-6">
+      {!showAll && (
+        <div className="flex justify-between items-center">
+          <h3 className="text-lg font-semibold">我的课程</h3>
+          {coursesWithProgress?.length > 3 && (
+            <Button 
+              variant="link" 
+              className="text-knowledge-primary"
+              onClick={() => navigate('/dashboard?tab=courses')}
             >
-              <motion.div 
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"
-                variants={containerVariants}
-                initial="hidden"
-                animate="visible"
-              >
-                {displayCourses.map((item, index) => (
-                  <EnrolledCourseCard 
-                    key={item.course_id} 
-                    course={item} 
-                    index={index}
-                  />
-                ))}
-              </motion.div>
+              查看全部
+            </Button>
+          )}
+        </div>
+      )}
 
-              {!showAll && coursesWithProgress && coursesWithProgress.length > COURSES_PER_PAGE && (
-                <div className="text-center pt-6">
-                  <Link to="/dashboard?tab=courses">
-                    <Button variant="outline" className="group hover:bg-knowledge-primary hover:text-white transition-all duration-200">
-                      查看全部课程
-                      <ChevronDown className="ml-1 h-4 w-4 transition-transform group-hover:translate-y-1" />
-                    </Button>
-                  </Link>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {displayedCourses?.map((item) => {
+          const course = item.courses;
+          const progress = getProgressPercentage(item.course_progress);
+          const isCompleted = item.course_progress?.completed || false;
+
+          return (
+            <Card key={course?.id} className="overflow-hidden hover:shadow-md transition-shadow">
+              <div 
+                className="h-40 bg-cover bg-center" 
+                style={{ backgroundImage: `url(${course?.imageurl || '/placeholder-course.jpg'})` }}
+              />
+              <CardContent className="pt-4">
+                <h4 className="font-medium mb-2 h-14 line-clamp-2">{course?.title}</h4>
+                <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
+                  <span>{isCompleted ? '已完成' : '进行中'}</span>
+                  <span>{progress}%</span>
                 </div>
-              )}
-            </PaginatedContent>
-          ) : (
-            <motion.div 
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="text-center py-12"
-            >
-              <p className="text-muted-foreground mb-4">暂无报名课程</p>
-              <p className="text-sm text-muted-foreground mb-6">您可以点击上方"添加示例数据"按钮生成演示数据</p>
-              <div className="flex justify-center gap-4">
-                <Link to="/courses">
-                  <Button variant="outline" className="hover:bg-knowledge-primary hover:text-white transition-all duration-200">
-                    浏览全部课程
+                <Progress value={progress} className="h-2" />
+                <div className="mt-4">
+                  <Button 
+                    onClick={() => navigate(`/learn/${course?.id}`)} 
+                    className="w-full"
+                    variant={isCompleted ? "outline" : "default"}
+                  >
+                    {isCompleted ? '复习课程' : '继续学习'}
                   </Button>
-                </Link>
-              </div>
-            </motion.div>
-          )}
-        </TooltipProvider>
-      </CardContent>
-    </Card>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+    </div>
   );
-});
-
-EnrolledCoursesNew.displayName = 'EnrolledCoursesNew';
+}
