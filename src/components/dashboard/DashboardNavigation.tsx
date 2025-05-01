@@ -1,7 +1,8 @@
 
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useEffect, useState } from 'react';
+import { motion, AnimatePresence } from "framer-motion";
 
 export function DashboardNavigation() {
   const location = useLocation();
@@ -31,31 +32,47 @@ export function DashboardNavigation() {
     { value: 'profile', label: '个人信息' }
   ];
 
+  // Match the same animation variants from Admin.tsx
+  const tabContentVariants = {
+    hidden: { opacity: 0, y: 10 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: { 
+        duration: 0.4,
+        ease: "easeInOut" 
+      }
+    },
+    exit: { 
+      opacity: 0,
+      y: -10,
+      transition: { 
+        duration: 0.3,
+        ease: "easeInOut"
+      }
+    }
+  };
+
   return (
     <div className="mb-8">
-      <div className="bg-gradient-to-b from-white to-gray-50/95 backdrop-blur-md p-3 rounded-2xl border border-gray-100/80 shadow-[0_6px_16px_-6px_rgba(0,0,0,0.1),0_2px_8px_-2px_rgba(0,0,0,0.05)] relative">
+      <div className="bg-gray-50/90 p-3 rounded-2xl border border-gray-200 shadow-sm">
         <Tabs 
           value={activeTab} 
           onValueChange={handleTabChange}
           className="w-full"
         >
-          <TabsList className="w-full grid grid-cols-4">
+          <TabsList className="w-full flex flex-wrap justify-start gap-2">
             {tabs.map((tab) => (
               <TabsTrigger
                 key={tab.value}
                 value={tab.value}
-                className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm"
+                className="flex-1 px-6 py-3.5 text-sm font-medium min-w-[120px] relative overflow-hidden"
               >
                 {tab.label}
               </TabsTrigger>
             ))}
           </TabsList>
         </Tabs>
-        <div className="absolute inset-0 rounded-2xl bg-white/30 pointer-events-none" style={{ 
-          filter: 'blur(4px)',
-          opacity: 0.5,
-          transform: 'translateZ(-10px)',
-        }}></div>
       </div>
     </div>
   );

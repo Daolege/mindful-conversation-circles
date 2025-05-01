@@ -65,30 +65,92 @@ const Dashboard = () => {
     return <Navigate to="/auth" state={{ loginRequired: true, from: location.pathname + location.search }} replace />;
   }
 
-  // Simplified animation variants
-  const containerVariants = {
-    initial: { opacity: 0, y: 10 },
-    animate: { opacity: 1, y: 0, transition: { duration: 0.3 } },
-    exit: { opacity: 0, y: -10, transition: { duration: 0.2 } }
+  // Animation variants - matching Admin.tsx
+  const tabContentVariants = {
+    hidden: { opacity: 0, y: 10 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: { 
+        duration: 0.4,
+        ease: "easeInOut"
+      }
+    },
+    exit: { 
+      opacity: 0,
+      y: -10,
+      transition: { 
+        duration: 0.3,
+        ease: "easeInOut"
+      }
+    }
   };
 
   // Main content based on active tab
   const renderTabContent = () => {
     switch (activeTab) {
       case 'courses':
-        return <SimpleCourseTab />;
+        return (
+          <motion.div
+            key="courses"
+            variants={tabContentVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+          >
+            <SimpleCourseTab />
+          </motion.div>
+        );
       case 'orders':
-        return <OrderHistoryView />;
+        return (
+          <motion.div
+            key="orders"
+            variants={tabContentVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+          >
+            <OrderHistoryView />
+          </motion.div>
+        );
       case 'subscriptions':
-        return <SubscriptionHistory />;
+        return (
+          <motion.div
+            key="subscriptions"
+            variants={tabContentVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+          >
+            <SubscriptionHistory />
+          </motion.div>
+        );
       case 'profile':
-        return <ProfileManagement />;
+        return (
+          <motion.div
+            key="profile"
+            variants={tabContentVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+          >
+            <ProfileManagement />
+          </motion.div>
+        );
       default:
         return (
-          <Card className="p-8 text-center">
-            <h2 className="text-2xl font-bold mb-4">页面未找到</h2>
-            <p>请选择一个有效的选项卡查看内容</p>
-          </Card>
+          <motion.div
+            key="not-found"
+            variants={tabContentVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+          >
+            <Card className="p-8 text-center">
+              <h2 className="text-2xl font-bold mb-4">页面未找到</h2>
+              <p>请选择一个有效的选项卡查看内容</p>
+            </Card>
+          </motion.div>
         );
     }
   };
@@ -112,16 +174,7 @@ const Dashboard = () => {
         <DashboardNavigation />
 
         <AnimatePresence mode="wait">
-          <motion.div
-            key={activeTab}
-            variants={containerVariants}
-            initial="initial"
-            animate="animate"
-            exit="exit"
-            className="relative"
-          >
-            {renderTabContent()}
-          </motion.div>
+          {renderTabContent()}
         </AnimatePresence>
       </main>
       <Footer />
