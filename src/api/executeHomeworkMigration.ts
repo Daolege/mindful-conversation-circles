@@ -41,6 +41,10 @@ export const executeHomeworkMigration = async () => {
       
     if (homeworkError) {
       console.error('[executeHomeworkMigration] Error querying homework:', homeworkError);
+      return {
+        success: false,
+        message: `查询作业数据失败: ${homeworkError.message}`
+      };
     }
     
     // Safely handle the homework data
@@ -65,6 +69,10 @@ export const executeHomeworkMigration = async () => {
           
         if (coursesError) {
           console.error('[executeHomeworkMigration] Error checking courses:', coursesError);
+          return {
+            success: false,
+            message: `检查课程数据失败: ${coursesError.message}`
+          };
         }
         
         const courses = Array.isArray(coursesResult) ? coursesResult : [];

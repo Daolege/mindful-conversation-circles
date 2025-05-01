@@ -122,12 +122,10 @@ export const updateExchangeRate = async (newRate: number): Promise<boolean> => {
   }
 };
 
-// Fix the problematic function with proper typing to avoid infinite type instantiation
-export const migrateHomeworkData = async () => {
+// Fixed to eliminate the infinite type instantiation issue
+export const migrateHomeworkData = async (): Promise<{success: boolean, error?: any, results?: any[]}> => {
   try {
-    // Fetch course_lectures that might have homework references
-    // Renamed the table from 'homeworks' to 'homework' to match the actual table name
-    // Also modified the query to select just the needed fields
+    // First, let's fetch all lectures
     const { data: lectures, error: lecturesError } = await supabase
       .from('course_lectures')
       .select('id');
@@ -137,58 +135,66 @@ export const migrateHomeworkData = async () => {
       return { success: false, error: lecturesError };
     }
 
-    // Process each lecture - modified to handle the actual structure correctly
-    const results = [];
-    for (const lecture of lectures || []) {
-      // Check if related homework exists in the homework table
-      const { data: homeworkData, error: homeworkError } = await supabase
-        .from('homework')
-        .select('*')
-        .eq('lecture_id', lecture.id)
-        .maybeSingle();
-
-      if (homeworkError) {
-        console.error(`Error checking homework for lecture ${lecture.id}:`, homeworkError);
-        results.push({ lectureId: lecture.id, success: false, error: homeworkError });
-        continue;
-      }
-
-      // If homework exists, verify its course reference
-      if (homeworkData) {
-        const { data: courseData, error: courseError } = await supabase
-          .from('courses_new')
-          .select('id')
-          .eq('id', homeworkData.course_id)
-          .single();
-
-        if (courseError || !courseData) {
-          console.error(`Course ${homeworkData.course_id} not found for homework of lecture ${lecture.id}`);
+    // For storing our results
+    const results: any[] = [];
+    
+    // Process each lecture
+    if (lectures && Array.isArray(lectures)) {
+      for (const lecture of lectures) {
+        // Check for homework associated with this lecture
+        const { data: homework, error: homeworkError } = await supabase
+          .from('homework') // Correct table name
+          .select('id, course_id')
+          .eq('lecture_id', lecture.id)
+          .maybeSingle();
+          
+        if (homeworkError) {
+          console.error(`Error checking homework for lecture ${lecture.id}:`, homeworkError);
           results.push({ 
             lectureId: lecture.id, 
-            homeworkId: homeworkData.id,
             success: false, 
-            error: courseError || 'Course not found'
+            error: homeworkError 
           });
+          continue;
+        }
+        
+        if (homework) {
+          // We found a homework, verify its course reference
+          const { data: course, error: courseError } = await supabase
+            .from('courses_new')
+            .select('id')
+            .eq('id', homework.course_id)
+            .single();
+            
+          if (courseError) {
+            console.error(`Course ${homework.course_id} not found for homework ${homework.id}:`, courseError);
+            results.push({
+              lectureId: lecture.id,
+              homeworkId: homework.id,
+              success: false,
+              error: courseError
+            });
+          } else {
+            results.push({
+              lectureId: lecture.id,
+              homeworkId: homework.id,
+              success: true
+            });
+          }
         } else {
-          results.push({ 
+          // No homework for this lecture
+          results.push({
             lectureId: lecture.id,
-            homeworkId: homeworkData.id,
-            success: true 
+            success: true,
+            message: 'No homework associated'
           });
         }
-      } else {
-        // No homework for this lecture
-        results.push({ 
-          lectureId: lecture.id,
-          success: true,
-          message: 'No homework associated'
-        });
       }
     }
-
+    
     return { success: true, results };
   } catch (error) {
-    console.error('Exception migrating homework data:', error);
+    console.error('Exception in migrateHomeworkData:', error);
     return { success: false, error };
   }
 };

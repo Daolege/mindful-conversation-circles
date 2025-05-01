@@ -1,3 +1,4 @@
+
 import { Course } from "./course";
 
 export interface CourseSection {
@@ -188,6 +189,9 @@ export interface CourseWithSections {
   id: number;
   title: string;
   description?: string;
+  price?: number;
+  currency?: string;
+  category?: string;
   sections?: {
     id: string;
     title: string;
@@ -198,13 +202,8 @@ export interface CourseWithSections {
       position: number;
       video_url?: string;
       duration?: string;
-      homework_id?: string;
       description?: string;
     }[];
   }[];
-  // Include other course fields that might be needed
-  price?: number;
-  currency?: string;
-  category?: string;
   [key: string]: any; // Allow other properties
 }
