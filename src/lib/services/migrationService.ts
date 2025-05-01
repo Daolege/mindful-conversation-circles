@@ -1,6 +1,5 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { SiteSetting } from "@/lib/types/course-new";
 
 // Define possible migration names
 export type MigrationName = 
@@ -8,6 +7,15 @@ export type MigrationName =
   | 'add_subscription_tables' 
   | 'add_course_materials'
   | 'homework_foreign_key_fix';
+
+// Updated SiteSetting interface with key and value fields
+export interface SiteSetting {
+  id?: string;
+  key: string;  
+  value: string;
+  updated_at?: string;
+  created_at?: string;
+}
 
 // Track migrations in the site settings table
 export const recordMigration = async (name: MigrationName, description: string, success: boolean = true) => {
@@ -19,13 +27,16 @@ export const recordMigration = async (name: MigrationName, description: string, 
       success
     };
     
-    // Use correct schema for site_settings
+    // Use a SiteSetting-compatible object when inserting
+    const siteSettingData: SiteSetting = {
+      key: `migration_${name}`,
+      value: JSON.stringify(migrationData)
+    };
+    
+    // Insert using the proper structure
     const { error } = await supabase
       .from('site_settings')
-      .upsert({
-        key: `migration_${name}`,
-        value: JSON.stringify(migrationData)
-      });
+      .upsert(siteSettingData);
     
     if (error) {
       console.error('Error recording migration:', error);
@@ -53,7 +64,7 @@ export const getExchangeRate = async (): Promise<number> => {
       return 7; // Default exchange rate
     }
     
-    // Handle the result
+    // Handle the result using the value field from data
     if (data && data.value) {
       return parseFloat(data.value);
     }
@@ -93,13 +104,15 @@ export const updateExchangeRate = async (newRate: number): Promise<boolean> => {
         return false;
       }
     } else {
-      // Create new setting with correct schema
+      // Create new setting with correct structure
+      const newSetting: SiteSetting = {
+        key: 'exchange_rate',
+        value: newRate.toString()
+      };
+      
       const { error: insertError } = await supabase
         .from('site_settings')
-        .insert({
-          key: 'exchange_rate',
-          value: newRate.toString()
-        });
+        .insert(newSetting);
         
       if (insertError) {
         console.error('Error inserting exchange rate:', insertError);

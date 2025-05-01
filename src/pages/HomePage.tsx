@@ -2,7 +2,7 @@
 import React from 'react';
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import HeroBanner from "@/components/home/HeroBanner";
+import ModernBanner from "@/components/home/ModernBanner";
 import CourseSection from "@/components/home/CourseSection";
 import { motion } from "framer-motion";
 
@@ -12,7 +12,7 @@ const HomePage = () => {
       <Navbar />
       
       <main className="flex-grow">
-        <HeroBanner />
+        <ModernBanner />
         
         <motion.div
           initial={{ opacity: 0 }}
