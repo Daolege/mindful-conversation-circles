@@ -228,7 +228,7 @@ export const OrderReceipt = ({ order }: OrderReceiptProps) => {
         <p className="mt-2 text-xs text-gray-400">本凭证作为支付证明，非正式发票</p>
       </div>
 
-      <style jsx="true" global="true">
+      <style jsx global>
         {`
         @media print {
           body * {

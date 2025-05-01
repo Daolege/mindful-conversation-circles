@@ -5,7 +5,7 @@ import { OrderDetailHeader } from '@/components/dashboard/order/OrderDetailHeade
 import { OrderActions } from '@/components/dashboard/order/OrderActions';
 import { useState } from 'react';
 import { Separator } from '@/components/ui/separator';
-import { CreditCard, ShoppingBag, UserIcon } from 'lucide-react';
+import { CreditCard, UserIcon } from 'lucide-react';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { format } from "date-fns";
 import { OrderPaymentDetails } from './OrderPaymentDetails';
@@ -28,6 +28,14 @@ export const OrderDetailContent = ({ order: initialOrder }: OrderDetailContentPr
   const savingsAmount = calculateSavings(order);
   const savingsPercentage = getSavingsPercentage(order);
   const hasSavings = savingsAmount > 0;
+
+  console.log('Savings info:', { 
+    originalAmount: order.original_amount,
+    amount: order.amount, 
+    savingsAmount, 
+    savingsPercentage, 
+    hasSavings 
+  });
 
   return (
     <TooltipProvider>

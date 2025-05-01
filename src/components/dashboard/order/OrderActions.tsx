@@ -60,6 +60,17 @@ export const OrderActions = ({ order, onOrderUpdated }: OrderActionsProps) => {
     }
   };
 
+  const handleCompletePayment = () => {
+    // In a real app, this would redirect to a payment page
+    // For now, we'll just show a toast
+    toast.info('正在跳转到支付页面...');
+    // Simulated redirect, in a real app this would go to a payment gateway
+    setTimeout(() => {
+      // For demo purposes, we'll just mark as completed
+      handleStatusUpdate('completed');
+    }, 1500);
+  };
+
   const isComplete = order.status === 'completed' || order.is_paid;
   const isPending = order.status === 'pending' || order.status === 'processing';
 
@@ -82,6 +93,7 @@ export const OrderActions = ({ order, onOrderUpdated }: OrderActionsProps) => {
           <Button 
             variant="default" 
             className="w-full justify-start bg-green-600 hover:bg-green-700" 
+            onClick={handleCompletePayment}
           >
             <CreditCard className="mr-2 h-4 w-4" />
             完成支付
