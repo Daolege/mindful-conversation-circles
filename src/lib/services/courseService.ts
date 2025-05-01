@@ -105,8 +105,8 @@ export async function deleteCourse(courseId: number): Promise<{ success: boolean
   }
 }
 
-// Get courses by instructor ID - completely simplify the return type to avoid deep type instantiation
-export async function getCoursesByInstructorId(instructorId: string): Promise<{data: any | null, error: Error | null}> {
+// Get courses by instructor ID - use a simpler explicit return type
+export async function getCoursesByInstructorId(instructorId: string): Promise<{ data: any[] | null; error: Error | null }> {
   try {
     const { data, error } = await supabase
       .from('courses_new')
@@ -118,7 +118,7 @@ export async function getCoursesByInstructorId(instructorId: string): Promise<{d
       return { data: null, error };
     }
     
-    return { data, error: null };
+    return { data: data || [], error: null };
   } catch (err) {
     console.error('[courseService] Unexpected error in getCoursesByInstructorId:', err);
     return { data: null, error: err as Error };
