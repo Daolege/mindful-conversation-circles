@@ -558,7 +558,7 @@ const CourseManagement = () => {
                 <TableHead>标题</TableHead>
                 <TableHead>价格</TableHead>
                 <TableHead>类别</TableHead>
-                <TableHead>讲师</TableHead>
+                <TableHead>讲师名称</TableHead>
                 <TableHead>操作</TableHead>
               </TableRow>
             </TableHeader>
@@ -583,7 +583,7 @@ const CourseManagement = () => {
                           <TableCell>{course.title}</TableCell>
                           <TableCell>{course.price}</TableCell>
                           <TableCell>{course.category}</TableCell>
-                          <TableCell>{course.instructor}</TableCell>
+                          <TableCell>{course.instructor_name || '未知讲师'}</TableCell>
                           <TableCell>
                             <Button
                               variant="secondary"

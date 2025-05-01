@@ -4,13 +4,50 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { toast } from 'sonner';
-import { updateSectionVisibility, getObjectives, getRequirements, getAudiences } from '@/lib/services/courseSettingsService';
+import { getObjectives, getRequirements, getAudiences } from '@/lib/services/courseSettingsService';
 import { Loader2 } from 'lucide-react';
 import { useCourseEditor } from '@/hooks/useCourseEditor';
 
 interface CourseOtherSettingsProps {
   courseId: number;
 }
+
+// Create a separate function to handle section visibility updates
+const updateSectionVisibility = async ({ courseId, section, isVisible }: { 
+  courseId: number;
+  section: string;
+  isVisible: boolean;
+}) => {
+  try {
+    let endpoint = '';
+    switch (section) {
+      case 'objectives':
+        endpoint = 'updateObjectivesVisibility';
+        break;
+      case 'requirements':
+        endpoint = 'updateRequirementsVisibility';
+        break;
+      case 'audiences':
+        endpoint = 'updateAudiencesVisibility';
+        break;
+      default:
+        throw new Error(`Unknown section: ${section}`);
+    }
+    
+    // Use Supabase directly since the specific endpoint might not exist
+    const { data, error } = await supabase.rpc(endpoint, {
+      course_id: courseId,
+      is_visible: isVisible
+    });
+    
+    if (error) throw error;
+    
+    return { data, error: null };
+  } catch (error) {
+    console.error(`Error updating ${section} visibility:`, error);
+    return { data: null, error };
+  }
+};
 
 const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({ courseId }) => {
   const [loading, setLoading] = useState(true);

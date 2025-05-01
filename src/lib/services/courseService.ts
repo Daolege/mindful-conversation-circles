@@ -71,7 +71,7 @@ export const updateCourseOrder = async (courseIds: number[]) => {
     // Update each course with its new position
     const updatePromises = courseIds.map((courseId, index) => {
       return supabase
-        .from('courses_new')  // Use courses_new table instead of courses
+        .from('courses_new')
         .update({ display_order: index })
         .eq('id', courseId);
     });

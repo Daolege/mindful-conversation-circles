@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import type { Instructor } from '../types/instructor';
 import { getCoursesByInstructorId } from './courseService';
@@ -24,7 +23,8 @@ export async function getAllInstructors() {
             ? instructor.id 
             : 0;
         
-        const coursesResult = await getCoursesByInstructorId(instructorId);
+        const instructorIdStr = String(instructorId);
+        const coursesResult = await getCoursesByInstructorId(instructorIdStr);
         const courseCount = coursesResult.data?.length || 0;
         
         return {
@@ -58,13 +58,7 @@ export async function getInstructorById(id: string) {
     if (error) throw error;
     
     // Get instructor courses
-    const instructorIdNum = typeof id === 'string' && !isNaN(Number(id)) 
-      ? Number(id) 
-      : typeof id === 'number' 
-        ? id 
-        : 0;
-        
-    const coursesResult = await getCoursesByInstructorId(instructorIdNum);
+    const coursesResult = await getCoursesByInstructorId(id);
     
     return {
       data: {
