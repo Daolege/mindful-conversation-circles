@@ -20,7 +20,7 @@ export const CourseDetailHeaderNew: React.FC<CourseDetailHeaderNewProps> = ({ co
   
   return (
     <div className="mb-10 animate-in fade-in duration-500">
-      <h1 className={`${isMobile ? 'text-2xl' : 'text-3xl md:text-4xl'} font-bold mb-12 animate-in fade-in slide-in-from-left-5 duration-500`}>{course.title}</h1>
+      <h1 className={`${isMobile ? 'text-2xl' : 'text-3xl md:text-4xl'} font-bold mb-8 animate-in fade-in slide-in-from-left-5 duration-500`}>{course.title}</h1>
       
       <div className="flex flex-wrap gap-4 mb-8">
         {course.category && (
@@ -46,7 +46,7 @@ export const CourseDetailHeaderNew: React.FC<CourseDetailHeaderNewProps> = ({ co
           className="text-sm flex items-center animate-in fade-in slide-in-from-bottom-3 duration-500"
         >
           <BookOpen size={16} className="mr-1" />
-          {course.sections?.length || 0} 章节 · {totalLectures} 课时
+          {course.sections?.length || 0} 章节 • {totalLectures} 课时
         </Badge>
         
         {course.language && (

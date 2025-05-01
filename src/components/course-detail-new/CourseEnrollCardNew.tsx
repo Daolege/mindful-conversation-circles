@@ -85,34 +85,34 @@ export const CourseEnrollCardNew: React.FC<CourseEnrollCardNewProps> = ({ course
             {course.price === 0 ? '免费学习' : '立即报名学习'}
           </Button>
 
-          {/* Course features */}
+          {/* Course features - Fix animation here */}
           <div className={`space-y-3 text-sm ${isMobile ? 'grid grid-cols-2 gap-2' : ''}`}>
-            {/* All items now have the same animation class with incrementing delays */}
-            <div className="flex items-center animate-in fade-in duration-300 delay-100">
+            {/* Use consistent animation timing for all items */}
+            <div className="flex items-center animate-in fade-in duration-300">
               <Video className="h-4 w-4 text-gray-500 mr-2" />
               <span>高清视频课程</span>
             </div>
-            <div className="flex items-center animate-in fade-in duration-300 delay-200">
+            <div className="flex items-center animate-in fade-in duration-300">
               <Clock className="h-4 w-4 text-gray-500 mr-2" />
               <span>随时随地学习</span>
             </div>
-            <div className="flex items-center animate-in fade-in duration-300 delay-300">
+            <div className="flex items-center animate-in fade-in duration-300">
               <BookOpen className="h-4 w-4 text-gray-500 mr-2" />
               <span>0门槛学习</span>
             </div>
-            <div className="flex items-center animate-in fade-in duration-300 delay-400">
+            <div className="flex items-center animate-in fade-in duration-300">
               <Globe className="h-4 w-4 text-gray-500 mr-2" />
               <span>课程语言：{course.language || '中文'}</span>
             </div>
-            <div className="flex items-center animate-in fade-in duration-300 delay-500">
+            <div className="flex items-center animate-in fade-in duration-300">
               <Download className="h-4 w-4 text-gray-500 mr-2" />
               <span>可下载课件附件</span>
             </div>
-            <div className="flex items-center animate-in fade-in duration-300 delay-600">
+            <div className="flex items-center animate-in fade-in duration-300">
               <Calendar className="h-4 w-4 text-gray-500 mr-2" />
               <span>长期观看权益</span>
             </div>
-            <div className="flex items-center animate-in fade-in duration-300 delay-700">
+            <div className="flex items-center animate-in fade-in duration-300">
               <MessageSquare className="h-4 w-4 text-gray-500 mr-2" />
               <span>学员专属社群</span>
             </div>

@@ -17,10 +17,10 @@ interface CourseData {
   lecture_count?: number;
   original_price?: number;
   instructor_id?: string;
-  instructor_name?: string; // Added this field
+  instructor_name?: string;
   published_at?: string;
   updated_at?: string;
-  [key: string]: any; // Allow for other properties
+  [key: string]: any;
 }
 
 interface CourseResponse<T> {
@@ -56,10 +56,11 @@ export const saveCourse = async (courseData: Partial<CourseData>): Promise<Cours
     if (!courseData.id && !courseData.title) {
       courseData.title = 'New Course'; // Default title for new courses
     }
-    
+
+    // Fix the type issue with upsert by ensuring courseData is properly typed
     const { data, error } = await supabase
       .from('courses_new')
-      .upsert(courseData)
+      .upsert([courseData as any]) // Use array form to fix the typing issue
       .select()
       .single();
     
@@ -75,7 +76,27 @@ export const saveCourse = async (courseData: Partial<CourseData>): Promise<Cours
   }
 };
 
-// Add the getCoursesByInstructorId function (needed by instructorService)
+// Add the deleteCourse function
+export const deleteCourse = async (courseId: number): Promise<{ success: boolean; error?: Error }> => {
+  try {
+    const { error } = await supabase
+      .from('courses_new')
+      .delete()
+      .eq('id', courseId);
+    
+    if (error) {
+      console.error('[courseService] Error deleting course:', error);
+      return { success: false, error };
+    }
+    
+    return { success: true };
+  } catch (err) {
+    console.error('[courseService] Unexpected error in deleteCourse:', err);
+    return { success: false, error: err as Error };
+  }
+};
+
+// Add the getCoursesByInstructorId function
 export const getCoursesByInstructorId = async (instructorId: string): Promise<CourseResponse<CourseData[]>> => {
   try {
     const { data, error } = await supabase

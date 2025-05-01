@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { CourseWithDetails } from '@/lib/types/course-new';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -119,9 +120,9 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
           </div>
 
           {isOutlineLoading ? (
-            <div className="space-y-4">
+            <div className="space-y-4 animate-pulse">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="border rounded-lg p-4 animate-pulse">
+                <div key={i} className="border rounded-lg p-4">
                   <div className="flex justify-between items-center">
                     <div className="h-6 bg-gray-200 rounded w-1/3"></div>
                     <div className="h-4 bg-gray-200 rounded w-16"></div>
@@ -229,12 +230,14 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
         </CardContent>
       </Card>
 
-      {/* 学习信息栏 - 三栏布局 */}
+      {/* 学习信息栏 - 三栏布局 - Enhanced with better 3D effects */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* 学习目标 */}
-        <Card className="hover:shadow-xl transition-all duration-300 shadow-lg border-2 
-          transform hover:-translate-y-1 ease-in-out
-          animate-in fade-in duration-500">
+        <Card 
+          className="hover:shadow-xl transition-all duration-500 ease-in-out shadow-lg shadow-gray-200/60 border-2 
+            transform hover:-translate-y-1 hover:scale-[1.01] focus:scale-[1.01]
+            animate-in fade-in duration-500"
+        >
           <CardHeader className="pb-0">
             <CardTitle className="text-lg flex items-center gap-2">
               <Target className="h-5 w-5" />
@@ -261,9 +264,11 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
         </Card>
 
         {/* 课程要求 */}
-        <Card className="hover:shadow-xl transition-all duration-300 shadow-lg border-2 
-          transform hover:-translate-y-1 ease-in-out
-          animate-in fade-in duration-500">
+        <Card 
+          className="hover:shadow-xl transition-all duration-500 ease-in-out shadow-lg shadow-gray-200/60 border-2 
+            transform hover:-translate-y-1 hover:scale-[1.01] focus:scale-[1.01]
+            animate-in fade-in duration-500"
+        >
           <CardHeader className="pb-0">
             <CardTitle className="text-lg flex items-center gap-2">
               <Book className="h-5 w-5" />
@@ -290,9 +295,11 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
         </Card>
 
         {/* 适合人群 */}
-        <Card className="hover:shadow-xl transition-all duration-300 shadow-lg border-2 
-          transform hover:-translate-y-1 ease-in-out
-          animate-in fade-in duration-500">
+        <Card 
+          className="hover:shadow-xl transition-all duration-500 ease-in-out shadow-lg shadow-gray-200/60 border-2 
+            transform hover:-translate-y-1 hover:scale-[1.01] focus:scale-[1.01]
+            animate-in fade-in duration-500"
+        >
           <CardHeader className="pb-0">
             <CardTitle className="text-lg flex items-center gap-2">
               <Users className="h-5 w-5" />
