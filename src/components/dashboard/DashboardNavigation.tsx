@@ -9,12 +9,12 @@ export function DashboardNavigation() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(() => {
     const searchParams = new URLSearchParams(location.search);
-    return searchParams.get('tab') || 'overview';
+    return searchParams.get('tab') || 'courses';  // Changed default from 'overview' to 'courses'
   });
 
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
-    const tab = searchParams.get('tab') || 'overview';
+    const tab = searchParams.get('tab') || 'courses';  // Changed default from 'overview' to 'courses'
     setActiveTab(tab);
   }, [location.search]);
 
@@ -35,7 +35,6 @@ export function DashboardNavigation() {
       >
         <Tabs value={activeTab} onValueChange={handleTabChange}>
           <TabsList className="w-full flex justify-between bg-gray-100/80 p-2 rounded-lg">
-            <TabsTrigger value="overview" className="flex-1">概览</TabsTrigger>
             <TabsTrigger value="courses" className="flex-1">我的课程</TabsTrigger>
             <TabsTrigger value="orders" className="flex-1">订单记录</TabsTrigger>
             <TabsTrigger value="subscriptions" className="flex-1">订阅记录</TabsTrigger>

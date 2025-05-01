@@ -9,9 +9,8 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Loader2 } from "lucide-react";
 import { DashboardNavigation } from "@/components/dashboard/DashboardNavigation";
-import { DashboardStats } from "@/components/dashboard/DashboardStats";
 import { EnrolledCoursesNew } from "@/components/dashboard/EnrolledCoursesNew";
-import { OrderHistory } from "@/components/dashboard/OrderHistory";
+import { OrderHistoryView } from "@/components/dashboard/views/OrderHistoryView";
 import { SubscriptionHistory } from "@/components/dashboard/SubscriptionHistory";
 import { ProfileManagement } from "@/components/dashboard/ProfileManagement";
 import { motion } from "framer-motion";
@@ -21,12 +20,12 @@ const Dashboard = () => {
   const { user, loading } = useAuth();
   const [activeTab, setActiveTab] = useState(() => {
     const searchParams = new URLSearchParams(location.search);
-    return searchParams.get('tab') || 'overview';
+    return searchParams.get('tab') || 'courses';  // Changed default from 'overview' to 'courses'
   });
 
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
-    setActiveTab(searchParams.get('tab') || 'overview');
+    setActiveTab(searchParams.get('tab') || 'courses');  // Changed default from 'overview' to 'courses'
   }, [location.search]);
 
   const { data: coursesWithProgress, isLoading: isLoadingCourses } = useQuery({
@@ -74,17 +73,10 @@ const Dashboard = () => {
   // Main content based on active tab
   const renderTabContent = () => {
     switch (activeTab) {
-      case 'overview':
-        return (
-          <div className="space-y-6">
-            <DashboardStats />
-            <EnrolledCoursesNew coursesWithProgress={coursesWithProgress?.slice(0, 6)} />
-          </div>
-        );
       case 'courses':
         return <EnrolledCoursesNew coursesWithProgress={coursesWithProgress} showAll={true} />;
       case 'orders':
-        return <OrderHistory />;
+        return <OrderHistoryView />;
       case 'subscriptions':
         return <SubscriptionHistory />;
       case 'profile':
@@ -130,7 +122,7 @@ const Dashboard = () => {
           animate="animate"
           exit="exit"
         >
-          {isLoadingCourses && activeTab !== 'profile' && activeTab !== 'orders' && activeTab !== 'subscriptions' ? (
+          {isLoadingCourses && activeTab === 'courses' ? (
             <div className="flex justify-center py-10">
               <Loader2 className="h-8 w-8 animate-spin text-knowledge-primary" />
             </div>
