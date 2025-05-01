@@ -1,222 +1,143 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { saveCourse } from './courseService';
+import { toast } from 'sonner';
 
-// Define the return type for table existence check
-interface TableExistsResponse {
-  exists: boolean;
-  error: Error | null;
+/**
+ * Records a migration in the database
+ */
+export async function recordMigration(name: string, description: string, success: boolean): Promise<boolean> {
+  try {
+    console.log(`[MigrationService] Recording migration: ${name}`);
+    
+    const timestamp = new Date().toISOString();
+    
+    // Try to use an RPC call first (preferred)
+    try {
+      // Note: This assumes you have a stored procedure for this
+      // If not, it will fall back to direct insertion
+      const { data, error } = await supabase.rpc('record_migration', {
+        _name: name,
+        _description: description,
+        _success: success,
+        _executed_at: timestamp
+      });
+      
+      if (!error) {
+        return true;
+      }
+      
+      // If RPC fails (likely because the function doesn't exist), fall back to direct insertion
+      console.log(`[MigrationService] RPC call failed, falling back to direct insertion: ${error.message}`);
+    } catch (err) {
+      console.log(`[MigrationService] RPC method not available, using direct insert`);
+    }
+    
+    // Use a direct insert as fallback
+    // This requires permissions to insert into the _migrations table
+    const { error: insertError } = await supabase
+      .from('migrations')
+      .insert({
+        name: name,
+        description: description,
+        success: success,
+        executed_at: timestamp
+      });
+    
+    if (insertError) {
+      console.error(`[MigrationService] Failed to record migration: ${insertError.message}`);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('[MigrationService] Error recording migration:', error);
+    return false;
+  }
 }
 
 /**
- * Record a migration in the database for tracking purposes
+ * Checks if a migration has already been executed
  */
-export const recordMigration = async (
-  name: string,
-  description: string,
-  success: boolean
-): Promise<boolean> => {
+export async function checkMigrationStatus(name: string): Promise<boolean> {
   try {
-    // Check if migrations table exists, create if not
-    const { error: createTableError } = await supabase.rpc('execute_system_sql', {
-      sql_query: `
-        CREATE TABLE IF NOT EXISTS public._migrations (
-          id SERIAL PRIMARY KEY,
-          name TEXT NOT NULL,
-          description TEXT,
-          executed_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
-          success BOOLEAN DEFAULT true
-        );
-      `
-    });
-
-    if (createTableError) {
-      console.error('[migrationService] Error creating migrations table:', createTableError);
+    // First try site_settings table, which is more accessible
+    const { data: settingsData } = await supabase
+      .from('site_settings')
+      .select('value')
+      .eq('key', `migration_${name}_completed`)
+      .single();
+      
+    if (settingsData && settingsData.value === 'true') {
+      return true;
+    }
+    
+    // If not found in site_settings, try migrations table
+    // Note: This might not have appropriate permissions for all users
+    const { data: migrationData, error: migrationError } = await supabase
+      .from('migrations')
+      .select('success')
+      .eq('name', name)
+      .order('executed_at', { ascending: false })
+      .limit(1);
+      
+    if (migrationError) {
+      console.log(`[MigrationService] Could not check migration table: ${migrationError.message}`);
       return false;
     }
-
-    // Insert migration record
-    const { error } = await supabase
-      .from('_migrations')
-      .insert({
-        name,
-        description,
-        success,
-        executed_at: new Date().toISOString()
-      });
-
-    if (error) {
-      console.error('[migrationService] Error recording migration:', error);
-      return false;
-    }
-
-    return true;
-  } catch (err) {
-    console.error('[migrationService] Unexpected error recording migration:', err);
+    
+    return migrationData && migrationData.length > 0 && migrationData[0].success;
+  } catch (error) {
+    console.error('[MigrationService] Error checking migration status:', error);
     return false;
   }
-};
+}
 
 /**
- * Check if a table exists in the database using a safer approach
+ * Run a safe migration that handles any database schema changes
  */
-export const tableExists = async (tableName: string): Promise<TableExistsResponse> => {
+export async function runMigration(
+  name: string,
+  description: string,
+  migrationFn: () => Promise<boolean>
+): Promise<boolean> {
   try {
-    // Use system SQL to check if table exists
-    const { data, error } = await supabase.rpc('execute_system_sql', {
-      sql_query: `
-        SELECT EXISTS (
-          SELECT FROM information_schema.tables 
-          WHERE table_schema = 'public'
-          AND table_name = '${tableName}'
-        );
-      `
-    });
-
-    if (error) {
-      console.error(`[migrationService] Error checking if table ${tableName} exists:`, error);
-      return { exists: false, error };
-    }
-
-    return { exists: !!data?.[0]?.exists, error: null };
-  } catch (err) {
-    console.error(`[migrationService] Unexpected error checking if table ${tableName} exists:`, err);
-    return { exists: false, error: err as Error };
-  }
-};
-
-/**
- * Migrates courses from the old format to the new format
- */
-export const migrateCourses = async (): Promise<{
-  success: boolean;
-  migratedCount: number;
-  error: Error | null;
-}> => {
-  try {
-    // Check if both tables exist
-    const oldTableExists = await tableExists('courses');
-    const newTableExists = await tableExists('courses_new');
-
-    if (oldTableExists.error || !oldTableExists.exists) {
-      console.error('[migrationService] Old courses table does not exist');
-      return { success: false, migratedCount: 0, error: new Error('Old courses table does not exist') };
-    }
-
-    if (newTableExists.error || !newTableExists.exists) {
-      console.error('[migrationService] New courses_new table does not exist');
-      return { success: false, migratedCount: 0, error: new Error('New courses_new table does not exist') };
-    }
-
-    // Get all courses from the old table
-    const { data: oldCourses, error: fetchError } = await supabase
-      .from('courses')
-      .select('*');
-
-    if (fetchError) {
-      console.error('[migrationService] Error fetching old courses:', fetchError);
-      return { success: false, migratedCount: 0, error: fetchError as Error };
-    }
-
-    if (!oldCourses || oldCourses.length === 0) {
-      console.log('[migrationService] No courses to migrate');
-      return { success: true, migratedCount: 0, error: null };
-    }
-
-    // Migrate each course
-    let migratedCount = 0;
-    const migrationPromises = oldCourses.map(async (oldCourse: any) => {
-      // Map old course to new format
-      const newCourse = {
-        title: oldCourse.title,
-        description: oldCourse.description || '',
-        price: oldCourse.price || 0,
-        original_price: oldCourse.originalprice || null,
-        currency: oldCourse.currency || 'cny',
-        category: oldCourse.category || '',
-        status: 'draft',
-        is_featured: oldCourse.featured || false,
-        display_order: oldCourse.display_order || 0,
-        enrollment_count: oldCourse.studentcount || 0,
-        instructor_id: oldCourse.instructor || null,
-        lecture_count: oldCourse.lectures || 0,
-        published_at: oldCourse.published_at || null,
-      };
-
-      // Save the new course
-      const result = await saveCourse(newCourse);
-      if (result.error) {
-        console.error(`[migrationService] Error migrating course ${oldCourse.id}:`, result.error);
-        return false;
-      }
-
-      migratedCount++;
+    console.log(`[MigrationService] Running migration: ${name}`);
+    
+    // Check if migration already completed
+    const alreadyMigrated = await checkMigrationStatus(name);
+    if (alreadyMigrated) {
+      console.log(`[MigrationService] Migration ${name} already completed, skipping.`);
       return true;
-    });
-
-    await Promise.all(migrationPromises);
-
-    console.log(`[migrationService] Successfully migrated ${migratedCount} courses`);
-    return { success: true, migratedCount, error: null };
-  } catch (err) {
-    console.error('[migrationService] Unexpected error during course migration:', err);
-    return { success: false, migratedCount: 0, error: err as Error };
-  }
-};
-
-/**
- * Fixes missing columns or inconsistencies in the database schema
- */
-export const fixDatabaseSchema = async (): Promise<{ success: boolean; error: Error | null }> => {
-  try {
-    // List of queries to run to fix the database schema
-    const fixes = [
-      `ALTER TABLE IF EXISTS courses_new 
-       ADD COLUMN IF NOT EXISTS lecture_count INTEGER DEFAULT 0`,
-      
-      `ALTER TABLE IF EXISTS courses_new 
-       ADD COLUMN IF NOT EXISTS enrollment_count INTEGER DEFAULT 0`,
-      
-      `ALTER TABLE IF EXISTS courses_new 
-       ADD COLUMN IF NOT EXISTS is_featured BOOLEAN DEFAULT false`,
-      
-      `ALTER TABLE IF EXISTS courses_new 
-       ADD COLUMN IF NOT EXISTS display_order INTEGER DEFAULT 0`,
-      
-      `ALTER TABLE IF EXISTS courses_new 
-       ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'draft'`,
-      
-      `ALTER TABLE IF EXISTS courses_new 
-       ADD COLUMN IF NOT EXISTS instructor_id TEXT`,
-      
-      `ALTER TABLE IF EXISTS courses_new 
-       ADD COLUMN IF NOT EXISTS published_at TIMESTAMP WITH TIME ZONE`,
-      
-      `ALTER TABLE IF EXISTS courses_new 
-       ADD COLUMN IF NOT EXISTS currency TEXT DEFAULT 'cny'`
-    ];
-
-    // Run each fix query
-    for (const query of fixes) {
-      const { error } = await supabase.rpc('execute_system_sql', {
-        sql_query: query
+    }
+    
+    // Run the migration function
+    console.log(`[MigrationService] Executing migration ${name}...`);
+    const success = await migrationFn();
+    
+    // Record the result
+    await recordMigration(name, description, success);
+    
+    // Record in site_settings for easier access
+    await supabase
+      .from('site_settings')
+      .upsert({
+        key: `migration_${name}_completed`,
+        value: success ? 'true' : 'false',
+        updated_at: new Date().toISOString()
       });
       
-      if (error) {
-        console.error(`[migrationService] Error running fix query: ${query}`, error);
-        // Continue with other fixes even if one fails
-      }
+    if (success) {
+      console.log(`[MigrationService] Migration ${name} completed successfully.`);
+      toast.success(`Migration ${name} completed successfully`);
+    } else {
+      console.error(`[MigrationService] Migration ${name} failed.`);
+      toast.error(`Migration ${name} failed`);
     }
-
-    return { success: true, error: null };
-  } catch (err) {
-    console.error('[migrationService] Unexpected error during schema fix:', err);
-    return { success: false, error: err as Error };
+    
+    return success;
+  } catch (error) {
+    console.error(`[MigrationService] Error running migration ${name}:`, error);
+    toast.error(`Migration ${name} failed with an error`);
+    return false;
   }
-};
-
-// Safely get a table from the supabase client
-const safeFrom = (tableName: string) => {
-  // Using type assertion to handle dynamic table names
-  return supabase.from(tableName as any);
-};
+}

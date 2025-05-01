@@ -1,10 +1,14 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '@/contexts/authTypes';
-import { SubscriptionPeriod } from '@/lib/types/course-new';
+import { SubscriptionPeriod, SubscriptionPlan } from '@/lib/types/course-new';
+import { SubscriptionItem } from '@/types/dashboard';
+
+// Export SubscriptionPeriod for external use
+export { SubscriptionPeriod };
 
 // Get subscription plans
-export const getSubscriptionPlans = async () => {
+export const getSubscriptionPlans = async (): Promise<SubscriptionPlan[]> => {
   try {
     const { data, error } = await supabase
       .from('subscription_plans')
@@ -43,6 +47,36 @@ export const getUserActiveSubscription = async (userId: string) => {
   }
 };
 
+// Get user's current subscription (alias for getUserActiveSubscription)
+export const getCurrentSubscription = async (userId: string) => {
+  return getUserActiveSubscription(userId);
+};
+
+// Get user's subscription history
+export const getUserSubscriptionHistory = async (userId: string) => {
+  try {
+    const { data, error } = await supabase
+      .from('subscription_history')
+      .select(`
+        *,
+        new_plan:new_plan_id (
+          id, name, description, interval, price, currency, features
+        ),
+        old_plan:old_plan_id (
+          id, name, description, interval, price, currency, features
+        )
+      `)
+      .eq('user_id', userId)
+      .order('effective_date', { ascending: false });
+      
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Error fetching subscription history:', error);
+    return [];
+  }
+};
+
 // Create a new subscription
 export const createSubscription = async (user: User, period: SubscriptionPeriod, paymentMethod: string) => {
   try {
@@ -70,6 +104,10 @@ export const createSubscription = async (user: User, period: SubscriptionPeriod,
       endDate.setMonth(endDate.getMonth() + 3);
     } else if (period === 'yearly') {
       endDate.setFullYear(endDate.getFullYear() + 1);
+    } else if (period === '2years') {
+      endDate.setFullYear(endDate.getFullYear() + 2);
+    } else if (period === '3years') {
+      endDate.setFullYear(endDate.getFullYear() + 3);
     }
     
     // Create subscription
@@ -137,22 +175,34 @@ export const createSubscription = async (user: User, period: SubscriptionPeriod,
 };
 
 // Create a test subscription for the current user
-export const createTestSubscription = async (userId: string) => {
+export const createTestSubscription = async (userId: string, period: SubscriptionPeriod = 'monthly') => {
   try {
     const { data: plans, error: plansError } = await supabase
       .from('subscription_plans')
       .select('*')
-      .eq('interval', 'monthly')
+      .eq('interval', period)
       .eq('is_active', true)
       .single();
       
     if (plansError || !plans) {
-      return { success: false, error: 'No active monthly plan found' };
+      return { success: false, error: 'No active plan found for the specified period' };
     }
     
     const startDate = new Date();
     const endDate = new Date();
-    endDate.setMonth(endDate.getMonth() + 1);
+    
+    // Set end date based on period
+    if (period === 'monthly') {
+      endDate.setMonth(endDate.getMonth() + 1);
+    } else if (period === 'quarterly') {
+      endDate.setMonth(endDate.getMonth() + 3);
+    } else if (period === 'yearly') {
+      endDate.setFullYear(endDate.getFullYear() + 1);
+    } else if (period === '2years') {
+      endDate.setFullYear(endDate.getFullYear() + 2);
+    } else if (period === '3years') {
+      endDate.setFullYear(endDate.getFullYear() + 3);
+    }
     
     const subscriptionId = `test-${Date.now()}`;
     const { error } = await supabase
@@ -173,7 +223,39 @@ export const createTestSubscription = async (userId: string) => {
       return { success: false, error: error.message };
     }
     
+    // Also add a history entry
+    await supabase
+      .from('subscription_history')
+      .insert({
+        user_id: userId,
+        subscription_id: subscriptionId,
+        new_plan_id: plans.id,
+        change_type: 'new',
+        event_type: 'subscription_created',
+        amount: plans.price,
+        currency: plans.currency,
+        effective_date: startDate.toISOString()
+      });
+    
     return { success: true, subscriptionId };
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+  }
+};
+
+// Force delete subscription plan (for admin use only)
+export const forceDeleteSubscriptionPlan = async (planId: string) => {
+  try {
+    const { error } = await supabase
+      .from('subscription_plans')
+      .delete()
+      .eq('id', planId);
+      
+    if (error) {
+      return { success: false, error: error.message };
+    }
+    
+    return { success: true };
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
   }

@@ -17,6 +17,17 @@ interface CourseOtherSettingsProps {
   requirements?: string[];
   targetAudience?: string[];
   onUpdate?: (field: string, value: any) => void;
+  savedSections?: {
+    objectives: boolean;
+    requirements: boolean;
+    audiences: boolean;
+  };
+  sectionVisibility?: {
+    objectives: boolean;
+    requirements: boolean;
+    audiences: boolean;
+    materials: boolean;
+  };
 }
 
 export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({
@@ -25,6 +36,17 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({
   requirements = [],
   targetAudience = [],
   onUpdate,
+  savedSections = {
+    objectives: false,
+    requirements: false,
+    audiences: false
+  },
+  sectionVisibility = {
+    objectives: true,
+    requirements: true,
+    audiences: true,
+    materials: false
+  },
 }) => {
   const [isFeatured, setIsFeatured] = useState<boolean>(false);
   const [isPaidContent, setIsPaidContent] = useState<boolean>(true);

@@ -263,8 +263,6 @@ const CourseNewEditorRefactored = ({
                 <CourseOtherSettings
                   courseId={courseId}
                   key={`settings-${courseId}-${isDataRefresh}`}
-                  savedSections={savedSections}
-                  sectionVisibility={sectionVisibility}
                 />
               ) : (
                 <div className="text-center py-8 bg-yellow-50 border border-yellow-200 rounded-lg">

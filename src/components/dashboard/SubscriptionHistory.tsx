@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getUserSubscriptionHistory, getCurrentSubscription, createTestSubscription, SubscriptionPeriod } from "@/lib/services/subscriptionService";
@@ -52,7 +51,7 @@ export function SubscriptionHistory() {
     
     setIsGeneratingData(true);
     try {
-      const success = await createTestSubscription(user.id, periodOption);
+      const success = await createTestSubscription(user.id);
       
       if (success) {
         toast.success("订阅测试数据已生成", {

@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getUserOrders, generateMockOrder } from "@/lib/services/orderService";
@@ -11,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 export function OrderHistoryView() {
   const { user } = useAuth();
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("all");
   const [isGeneratingData, setIsGeneratingData] = useState(false);
   const queryClient = useQueryClient();
   
@@ -22,11 +21,11 @@ export function OrderHistoryView() {
     refetch,
     isFetching
   } = useQuery({
-    queryKey: ['user-orders', user?.id, statusFilter],
+    queryKey: ['user-orders', user?.id, filterStatus],
     queryFn: async () => {
       if (!user?.id) return { data: [], error: null };
       try {
-        return await getUserOrders(user.id, statusFilter);
+        return await getUserOrders(user.id, filterStatus);
       } catch (err) {
         console.error("Error fetching orders:", err);
         return { data: [], error: err };
@@ -103,18 +102,19 @@ export function OrderHistoryView() {
           <div className="flex flex-col items-center gap-4">
             <div className="flex flex-col sm:flex-row gap-4 items-center max-w-md">
               <Select
-                value={statusFilter}
-                onValueChange={(value) => setStatusFilter(value)}
+                value={filterStatus}
+                onValueChange={setFilterStatus}
                 disabled={isGeneratingData}
               >
-                <SelectTrigger className="w-full sm:w-[200px]">
-                  <SelectValue placeholder="订单状态" />
+                <SelectTrigger>
+                  <SelectValue placeholder="筛选订单状态" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">所有订单</SelectItem>
+                  <SelectItem value="all">全部状态</SelectItem>
                   <SelectItem value="completed">已完成</SelectItem>
                   <SelectItem value="processing">处理中</SelectItem>
-                  <SelectItem value="cancelled">已取消</SelectItem>
+                  <SelectItem value="refunded">已退款</SelectItem>
+                  <SelectItem value="failed">失败</SelectItem>
                 </SelectContent>
               </Select>
               
@@ -141,19 +141,18 @@ export function OrderHistoryView() {
         <div className="space-y-4">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
             <Select
-              value={statusFilter}
-              onValueChange={(value) => setStatusFilter(value)}
+              value={filterStatus}
+              onValueChange={setFilterStatus}
               disabled={isFetching}
               className="w-full sm:w-[200px]"
             >
               <SelectTrigger>
-                <SelectValue placeholder="订单状态筛选" />
+                <SelectValue placeholder="筛选订单状态" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">所有订单</SelectItem>
+                <SelectItem value="all">全部状态</SelectItem>
                 <SelectItem value="completed">已完成</SelectItem>
                 <SelectItem value="processing">处理中</SelectItem>
-                <SelectItem value="cancelled">已取消</SelectItem>
                 <SelectItem value="refunded">已退款</SelectItem>
                 <SelectItem value="failed">失败</SelectItem>
               </SelectContent>
@@ -190,8 +189,8 @@ export function OrderHistoryView() {
           
           <OrderHistory
             orders={orders}
-            statusFilter={statusFilter}
-            onStatusFilterChange={setStatusFilter}
+            statusFilter={filterStatus}
+            onStatusFilterChange={setFilterStatus}
             showAll={true}
           />
         </div>

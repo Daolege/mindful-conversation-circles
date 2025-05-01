@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 // Define specific return types to avoid infinite type instantiation
 interface CourseData {
-  id: number;
+  id?: number;
   title: string;
   description?: string;
   price?: number;
@@ -50,14 +50,13 @@ export const getCourseById = async (courseId: number): Promise<CourseResponse<Co
 };
 
 // Add the saveCourse function
-export const saveCourse = async (courseData: Partial<CourseData>): Promise<CourseResponse<CourseData>> => {
+export const saveCourse = async (courseData: CourseData): Promise<CourseResponse<CourseData>> => {
   try {
     // Ensure title exists when creating a new course
     if (!courseData.id && !courseData.title) {
       courseData.title = 'New Course'; // Default title for new courses
     }
 
-    // Fix the type issue with upsert by ensuring courseData is properly typed
     const { data, error } = await supabase
       .from('courses_new')
       .upsert([courseData])

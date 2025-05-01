@@ -14,7 +14,7 @@ export const executeHomeworkMigration = async () => {
     const migrationName = 'homework_foreign_key_fix';
     
     // Check if migration was already executed by looking at site_settings
-    const { data: settingsData, error: settingsError } = await supabase
+    const { data: settingsData } = await supabase
       .from('site_settings')
       .select('*')
       .eq('key', 'homework_migration_completed');

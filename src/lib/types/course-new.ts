@@ -31,14 +31,16 @@ export interface CourseWithDetails extends Course {
   instructor_bio?: string;
   instructor_avatar?: string;
   original_price?: number;
-  materials?: {
-    id: string;
-    name: string;
-    url: string;
-    position: number;
-    is_visible?: boolean;
-  }[];
+  materials?: CourseMaterial[];
   status?: 'published' | 'draft' | 'archived';
+}
+
+export interface CourseMaterial {
+  id: string;
+  name: string;
+  url: string;
+  position: number;
+  is_visible?: boolean;
 }
 
 // Add the CourseNew interface for admin components
@@ -57,6 +59,7 @@ export interface CourseNew {
   created_at?: string;
   updated_at?: string;
   student_count?: number;
+  enrollment_count?: number;
   thumbnail_url?: string;
 }
 
@@ -83,4 +86,20 @@ export interface ListItem {
 }
 
 // Subscription period type
-export type SubscriptionPeriod = 'monthly' | 'quarterly' | 'yearly';
+export type SubscriptionPeriod = 'monthly' | 'quarterly' | 'yearly' | '2years' | '3years';
+
+// SubscriptionPlan interface for subscription management
+export interface SubscriptionPlan {
+  id: string;
+  name: string;
+  description: string | null;
+  price: number;
+  currency: string;
+  interval: string;
+  display_order: number;
+  is_active: boolean;
+  features?: string[];
+  created_at?: string;
+  updated_at?: string;
+  discount_percentage?: number;
+}
