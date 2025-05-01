@@ -37,10 +37,10 @@ i18n.use({
     try {
       // 首先尝试从数据库加载翻译
       const { data, error } = await supabase
-        .rpc('get_namespace_translations', {
-          p_language_code: language,
-          p_namespace: namespace
-        }) as { data: Array<{key: string, value: string}>, error: any };
+        .from('translations')
+        .select('key, value')
+        .eq('language_code', language)
+        .eq('namespace', namespace);
       
       if (!error && data && data.length > 0) {
         // 转换为键值对

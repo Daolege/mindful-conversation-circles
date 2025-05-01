@@ -29,14 +29,14 @@ export async function getAllLanguages(): Promise<Language[]> {
     const { data, error } = await supabase
       .from('languages')
       .select('*')
-      .order('name', { ascending: true });
+      .order('name', { ascending: true }) as { data: Language[], error: any };
     
     if (error) {
       console.error('Error fetching languages:', error);
       return [];
     }
     
-    return data as Language[] || [];
+    return data || [];
   } catch (error) {
     console.error('Unexpected error in getAllLanguages:', error);
     return [];
@@ -50,14 +50,14 @@ export async function getEnabledLanguages(): Promise<Language[]> {
       .from('languages')
       .select('*')
       .eq('enabled', true)
-      .order('name', { ascending: true });
+      .order('name', { ascending: true }) as { data: Language[], error: any };
     
     if (error) {
       console.error('Error fetching enabled languages:', error);
       return [];
     }
     
-    return data as Language[] || [];
+    return data || [];
   } catch (error) {
     console.error('Unexpected error in getEnabledLanguages:', error);
     return [];
@@ -70,15 +70,14 @@ export async function addLanguage(language: Language): Promise<{ success: boolea
     const { data, error } = await supabase
       .from('languages')
       .insert([language])
-      .select()
-      .single();
+      .select() as { data: Language[] | null, error: any };
     
     if (error) {
       console.error('Error adding language:', error);
       return { success: false, error };
     }
     
-    return { success: true, data };
+    return { success: true, data: data && data.length > 0 ? data[0] : undefined };
   } catch (error) {
     console.error('Unexpected error in addLanguage:', error);
     return { success: false, error: error as Error };
@@ -139,11 +138,15 @@ export async function toggleLanguageStatus(languageId: number, enabled: boolean)
 export async function deleteLanguage(languageId: number): Promise<{ success: boolean; error?: Error }> {
   try {
     // First check if this is a default language that shouldn't be deleted
-    const { data: language } = await supabase
+    const { data: language, error: fetchError } = await supabase
       .from('languages')
       .select('code')
       .eq('id', languageId)
-      .single();
+      .single() as { data: { code: string } | null, error: any };
+    
+    if (fetchError) {
+      return { success: false, error: fetchError };
+    }
     
     if (language && (language.code === 'en' || language.code === 'zh')) {
       return { 
@@ -195,7 +198,7 @@ export async function getTranslationsByLanguage(languageCode: string): Promise<T
     const { data, error } = await supabase
       .from('translations')
       .select('*')
-      .eq('language_code', languageCode);
+      .eq('language_code', languageCode) as { data: TranslationItem[] | null, error: any };
     
     if (error) {
       console.error('Error fetching translations:', error);
