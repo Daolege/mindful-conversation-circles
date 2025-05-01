@@ -1,5 +1,6 @@
+
 import { supabase } from "@/integrations/supabase/client";
-import { CourseData, CourseResponse } from "@/lib/types/course-new";
+import { CourseData, CourseResponse, CourseWithSections } from "@/lib/types/course-new";
 
 // Define a simpler BasicCourseData type that matches the courses_new table structure
 interface BasicCourseData {
@@ -223,7 +224,7 @@ export async function getCourseNewById(courseId: number): Promise<any> {
 }
 
 // Fix the problematic function with proper typing to avoid infinite type instantiation
-export const getCourseWithSections = async (courseId: string): Promise<CourseWithSections | null> => {
+export const getCourseWithSections = async (courseId: number): Promise<CourseWithSections | null> => {
   try {
     const { data: course, error } = await supabase
       .from('courses')

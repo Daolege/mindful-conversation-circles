@@ -1,4 +1,3 @@
-
 import { Course } from "./course";
 
 export interface CourseSection {
@@ -182,4 +181,30 @@ export interface DatabaseFunctions {
   insert_order_item: any;
   get_order_items: any;
   delete_order: any;
+}
+
+// Define the CourseWithSections interface that was missing
+export interface CourseWithSections {
+  id: number;
+  title: string;
+  description?: string;
+  sections?: {
+    id: string;
+    title: string;
+    position: number;
+    lectures?: {
+      id: string;
+      title: string;
+      position: number;
+      video_url?: string;
+      duration?: string;
+      homework_id?: string;
+      description?: string;
+    }[];
+  }[];
+  // Include other course fields that might be needed
+  price?: number;
+  currency?: string;
+  category?: string;
+  [key: string]: any; // Allow other properties
 }
