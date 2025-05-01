@@ -5,7 +5,6 @@ import { supabase } from '@/integrations/supabase/client';
 import CourseCardNew from './CourseCardNew';
 import { motion } from 'framer-motion';
 import { CourseNew } from '@/lib/types/course-new';
-import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface CourseSectionProps {
   title: string;
@@ -22,7 +21,7 @@ const CourseSection = ({
   filterBy,
   filterValue,
 }: CourseSectionProps) => {
-  const { data: courses, isLoading } = useQuery({
+  const { data: courses = [], isLoading } = useQuery({
     queryKey: ['homepage-courses', filterBy, filterValue, limit],
     queryFn: async () => {
       let query = supabase
@@ -43,13 +42,13 @@ const CourseSection = ({
       }
       
       return data as CourseNew[];
-    },
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    }
   });
 
-  const container = {
+  // Animation variants
+  const containerVariants = {
     hidden: { opacity: 0 },
-    show: {
+    visible: {
       opacity: 1,
       transition: {
         staggerChildren: 0.1
@@ -57,62 +56,48 @@ const CourseSection = ({
     }
   };
 
-  const item = {
+  const itemVariants = {
     hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0 }
+    visible: { opacity: 1, y: 0 }
   };
 
   return (
-    <section className="py-12 bg-gray-50">
+    <section className="py-20 bg-gray-50">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-10">
-          <motion.h2 
-            initial={{ opacity: 0, y: -10 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-            className="text-2xl md:text-3xl font-bold mb-2 text-gray-900"
-          >
-            {title}
-          </motion.h2>
-          <motion.p 
-            initial={{ opacity: 0, y: 10 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="text-gray-600 max-w-2xl mx-auto"
-          >
-            {subtitle}
-          </motion.p>
-        </div>
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-12"
+        >
+          <h2 className="text-3xl font-bold mb-3 text-gray-900">{title}</h2>
+          <p className="text-gray-600 max-w-2xl mx-auto">{subtitle}</p>
+        </motion.div>
 
         {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {Array(4).fill(null).map((_, i) => (
-              <div key={i} className="h-[250px] bg-gray-200 animate-pulse rounded-lg"></div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {Array(4).fill(0).map((_, i) => (
+              <div key={i} className="h-[380px] bg-gray-200 animate-pulse rounded-lg"></div>
             ))}
           </div>
-        ) : courses && courses.length > 0 ? (
-          <ScrollArea className="w-full">
-            <motion.div 
-              variants={container}
-              initial="hidden"
-              whileInView="show"
-              viewport={{ once: true }}
-              className="flex flex-nowrap gap-6 pb-4 min-w-full"
-              style={{ width: 'max-content', paddingRight: '2rem' }}
-            >
-              {courses.map((course, index) => (
-                <motion.div 
-                  key={course.id} 
-                  variants={item}
-                  className="w-[320px] flex-shrink-0"
-                >
-                  <CourseCardNew course={course} variantIndex={index % 4} />
-                </motion.div>
-              ))}
-            </motion.div>
-          </ScrollArea>
+        ) : courses.length > 0 ? (
+          <motion.div 
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8"
+          >
+            {courses.map((course, index) => (
+              <motion.div 
+                key={course.id} 
+                variants={itemVariants}
+              >
+                <CourseCardNew course={course} variantIndex={index} />
+              </motion.div>
+            ))}
+          </motion.div>
         ) : (
           <div className="text-center py-12 bg-gray-100/50 rounded-lg">
             <p className="text-gray-500">暂无课程</p>

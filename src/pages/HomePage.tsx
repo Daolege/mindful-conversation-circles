@@ -8,15 +8,15 @@ import { motion } from "framer-motion";
 
 const HomePage = () => {
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className="min-h-screen flex flex-col bg-white">
       <Navbar />
       
       <main className="flex-grow">
         <HeroBanner />
         
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
           transition={{ delay: 0.2, duration: 0.5 }}
         >
           {/* 热门课程模块 */}

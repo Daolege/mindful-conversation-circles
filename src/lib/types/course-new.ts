@@ -1,3 +1,4 @@
+
 import { Course } from "./course";
 
 export interface CourseSection {
@@ -129,11 +130,18 @@ export interface CourseResponse<T> {
   error: Error | null;
 }
 
-// Add additional interfaces needed for the site_settings table
+// Updated SiteSetting interface to fix type issues
 export interface SiteSetting {
   id?: string;
   key: string;  
   value: string;
+  contact_email?: string;
   created_at?: string;
+  enable_registration?: boolean;
+  logo_url?: string;
+  maintenance_mode?: boolean;
+  site_description?: string;
+  site_name?: string;
+  support_phone?: string;
   updated_at?: string;
 }
