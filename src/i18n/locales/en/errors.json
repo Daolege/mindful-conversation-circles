@@ -21,5 +21,9 @@
   "invalidEmail": "Please enter a valid email",
   "errorCode": "Error Code",
   "invalidCourseId": "Invalid course ID",
-  "usingDefaultCourse": "Will use default course"
+  "usingDefaultCourse": "Will use default course",
+  "networkError": "Network Error",
+  "networkOffline": "You are currently offline",
+  "connectionTimeout": "Connection timeout",
+  "checkNetworkConnection": "Please check your network connection and try again"
 }

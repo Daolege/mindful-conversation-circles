@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import { useNavigate } from 'react-router-dom';
 import { SocialLoginButtons } from './SocialLoginButtons';
 import ForgotPasswordForm from './ForgotPasswordForm';
-import { LogIn } from "lucide-react";
+import { LogIn, WifiOff } from "lucide-react";
 import { Captcha } from './Captcha';
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -31,17 +31,43 @@ const AuthSignInForm: React.FC<AuthSignInFormProps> = ({ onSwitch }) => {
   const [failedAttempts, setFailedAttempts] = useState(0);
   const [captchaValue, setCaptchaValue] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
-  const [errorType, setErrorType] = useState<'error' | 'warning' | 'system'>('error');
+  const [errorType, setErrorType] = useState<'error' | 'warning' | 'system' | 'network'>('error');
+  const [isOnline, setIsOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true);
   const { signIn } = useAuth();
   const navigate = useNavigate();
+  
+  // Track network status
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
   
   useEffect(() => {
     console.log("Auth form state:", { 
       failedAttempts, 
       captchaValue, 
-      isButtonDisabled: failedAttempts >= 3 ? !captchaValue : isSubmitting 
+      isButtonDisabled: failedAttempts >= 3 ? !captchaValue : isSubmitting,
+      isOnline
     });
-  }, [failedAttempts, captchaValue, isSubmitting]);
+    
+    // Set network error when offline
+    if (!isOnline) {
+      setErrorMessage('您当前处于离线状态，请检查网络连接后重试。');
+      setErrorType('network');
+    } else if (errorType === 'network') {
+      // Clear network error when back online
+      setErrorMessage('');
+      setErrorType('error');
+    }
+  }, [failedAttempts, captchaValue, isSubmitting, isOnline, errorType]);
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -52,6 +78,13 @@ const AuthSignInForm: React.FC<AuthSignInFormProps> = ({ onSwitch }) => {
   });
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    // Prevent login attempt if offline
+    if (!isOnline) {
+      setErrorMessage('您当前处于离线状态，请检查网络连接后重试。');
+      setErrorType('network');
+      return;
+    }
+    
     console.log("Submit attempt with values:", { 
       email: values.email, 
       passwordLength: values.password.length, 
@@ -79,9 +112,9 @@ const AuthSignInForm: React.FC<AuthSignInFormProps> = ({ onSwitch }) => {
       // 增加超时处理
       const loginPromise = signIn(values.email, values.password);
       
-      // 设置10秒超时
+      // 设置5秒超时 (reduced from 10s)
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error("登录请求超时，请稍后再试")), 10000)
+        setTimeout(() => reject(new Error("登录请求超时，请稍后再试")), 5000)
       );
       
       // 使用Promise.race以避免无限等待
@@ -148,8 +181,16 @@ const AuthSignInForm: React.FC<AuthSignInFormProps> = ({ onSwitch }) => {
     } catch (error: any) {
       console.error("Login system error:", error);
       setFailedAttempts(prev => prev + 1);
-      setErrorMessage("系统错误，请稍后再试或使用下方的演示账户登录");
-      setErrorType('system');
+      
+      // Check if it's a network error
+      if (!navigator.onLine || error.message?.includes('fetch') || error.message?.includes('network')) {
+        setErrorMessage("网络连接错误，请检查您的网络后重试");
+        setErrorType('network');
+      } else {
+        setErrorMessage("系统错误，请稍后再试或使用下方的演示账户登录");
+        setErrorType('system');
+      }
+      
       toast("登录失败", {
         description: "系统错误，请稍后再试或使用下方的演示账户登录",
         duration: 15000 // 增长显示时间
@@ -164,6 +205,7 @@ const AuthSignInForm: React.FC<AuthSignInFormProps> = ({ onSwitch }) => {
   }
 
   const isLoginDisabled = () => {
+    if (!isOnline) return true;
     if (failedAttempts >= 3) {
       return !captchaValue || isSubmitting;
     }
@@ -181,6 +223,8 @@ const AuthSignInForm: React.FC<AuthSignInFormProps> = ({ onSwitch }) => {
         return "border-yellow-500 bg-yellow-50 text-yellow-700";
       case 'system':
         return "border-red-500 bg-red-50 text-red-700";
+      case 'network':
+        return "border-blue-500 bg-blue-50 text-blue-700";
       default:
         return "border-red-200 bg-red-50 text-red-700";
     }
@@ -189,6 +233,14 @@ const AuthSignInForm: React.FC<AuthSignInFormProps> = ({ onSwitch }) => {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+        {/* Network status indicator */}
+        {!isOnline && (
+          <div className="flex items-center justify-center p-2 bg-blue-50 text-blue-700 rounded-md mb-4">
+            <WifiOff className="h-4 w-4 mr-2" />
+            <span className="text-sm">您当前处于离线状态</span>
+          </div>
+        )}
+      
         <FormField
           control={form.control}
           name="email"
@@ -230,7 +282,12 @@ const AuthSignInForm: React.FC<AuthSignInFormProps> = ({ onSwitch }) => {
         {errorMessage && (
           <Alert className={getErrorAlertStyle()}>
             <AlertCircle className="h-4 w-4" />
-            <AlertTitle>{errorType === 'system' ? "系统错误" : (errorType === 'warning' ? "注意" : "登录失败")}</AlertTitle>
+            <AlertTitle>
+              {errorType === 'system' ? "系统错误" : 
+               errorType === 'warning' ? "注意" : 
+               errorType === 'network' ? "网络错误" :
+               "登录失败"}
+            </AlertTitle>
             <AlertDescription>{errorMessage}</AlertDescription>
           </Alert>
         )}

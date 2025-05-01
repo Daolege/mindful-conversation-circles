@@ -20,6 +20,8 @@ const Auth = memo(() => {
   const toastShownRef = useRef(false);
   const redirectedRef = useRef(false);
   const timeoutRef = useRef<number | null>(null);
+  const recoveryAttemptsRef = useRef(0);
+  const maxRecoveryAttempts = 2;
 
   useEffect(() => {
     if (location.state?.loginRequired && !toastShownRef.current) {
@@ -39,7 +41,7 @@ const Auth = memo(() => {
     }
   }, [location.state, t]);
 
-  // Set a timeout to avoid infinite loading state
+  // Set a timeout to avoid infinite loading state - shortened timeout to improve UX
   useEffect(() => {
     if ((loading || isRecoveringSession) && !loadingTimeout) {
       timeoutRef.current = window.setTimeout(() => {
@@ -47,7 +49,7 @@ const Auth = memo(() => {
         setAuthError(t('auth:errors.timeout'));
         setIsRecoveringSession(false);
         console.error("Auth loading timeout reached - possible connection issue");
-      }, 10000); // 10 seconds timeout
+      }, 5000); // 5 seconds timeout (reduced from 10s)
     } else if (!loading && !isRecoveringSession) {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
@@ -67,9 +69,11 @@ const Auth = memo(() => {
   useEffect(() => {
     // 如果没有用户会话，且未处于加载状态，则尝试恢复会话，但要避免无限循环
     const attemptSessionRecovery = async () => {
-      if (!user && !loading && !isRecoveringSession && !loadingTimeout) {
+      if (!user && !loading && !isRecoveringSession && !loadingTimeout && recoveryAttemptsRef.current < maxRecoveryAttempts) {
         console.log("[Auth] Attempting to recover session...");
         setIsRecoveringSession(true);
+        recoveryAttemptsRef.current += 1;
+        
         try {
           const recoveredSession = await recoverSession();
           if (recoveredSession && location.state?.from) {
@@ -80,10 +84,14 @@ const Auth = memo(() => {
             }, 500);
           } else if (!recoveredSession) {
             console.log("[Auth] No session to recover, proceeding to login form");
+            // Automatically display the form if session recovery fails
+            setLoadingTimeout(true);
           }
         } catch (error) {
           console.error("[Auth] Session recovery failed:", error);
           setAuthError(t('auth:errors.recovery'));
+          // Force display the form even if recovery fails
+          setLoadingTimeout(true);
         } finally {
           setIsRecoveringSession(false);
         }
@@ -105,11 +113,23 @@ const Auth = memo(() => {
         >
           {t('common:refresh')}
         </button>
+        
+        {/* Add option to continue to login form even with connection issues */}
+        <button 
+          className="px-4 py-2 mt-3 text-blue-600 hover:underline"
+          onClick={() => {
+            setAuthError(null);
+            setLoadingTimeout(false);
+          }}
+        >
+          继续到登录页面
+        </button>
       </div>
     );
   }
 
-  if (loading || isRecoveringSession) {
+  // Show the form if loading exceeds 5 seconds, even without explicit error
+  if ((loading || isRecoveringSession) && !loadingTimeout) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-white">
         <Loader2 className="h-8 w-8 animate-spin text-violet-500 mb-4" />

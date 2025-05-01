@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { CourseData, CourseResponse, CourseWithSections } from "@/lib/types/course-new";
 
@@ -105,8 +106,8 @@ export async function deleteCourse(courseId: number): Promise<{ success: boolean
   }
 }
 
-// Get courses by instructor ID - use a completely simplified return type
-export async function getCoursesByInstructorId(instructorId: string) {
+// Get courses by instructor ID - use a completely simplified return type with explicit type annotation
+export async function getCoursesByInstructorId(instructorId: string): Promise<{data: any; error: null | Error}> {
   try {
     const { data, error } = await supabase
       .from('courses_new')

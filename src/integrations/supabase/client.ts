@@ -1,4 +1,3 @@
-
 import { createClient } from '@supabase/supabase-js';
 import { toast } from 'sonner';
 import type { Database } from './types';
@@ -23,9 +22,9 @@ const MAX_RETRIES = 3;
 // Custom fetch wrapper for better error handling and retry logic
 const enhancedFetch = async (url: RequestInfo | URL, options?: RequestInit): Promise<Response> => {
   try {
-    // Add timeout to fetch requests
+    // Add reduced timeout to fetch requests to prevent long waiting times
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout (reduced from 10s)
     
     const enhancedOptions = {
       ...(options || {}),
@@ -48,11 +47,17 @@ const enhancedFetch = async (url: RequestInfo | URL, options?: RequestInit): Pro
     if (err.name === 'AbortError') {
       console.error('Request timed out');
       if (connectionAttempts >= MAX_RETRIES) {
-        toast.error('Connection timeout', { 
-          description: 'Unable to connect to the server. Please check your internet connection.',
+        toast.error('连接超时', { 
+          description: '无法连接到服务器，请检查网络连接或稍后再试。',
           duration: 8000
         });
       }
+    } else if (err.name === 'TypeError' && err.message.includes('Failed to fetch')) {
+      console.error('Network error - likely offline');
+      toast.error('网络错误', {
+        description: '您似乎已离线，请检查网络连接。',
+        duration: 8000
+      });
     }
     
     if (connectionAttempts >= MAX_RETRIES) {
@@ -90,20 +95,28 @@ export const supabase = createClient<Database>(
   }
 );
 
-// Add health check function
+// Add health check function with better error handling and network detection
 export async function checkSupabaseConnection(): Promise<boolean> {
   try {
     // Simple query to verify database connection
     const start = performance.now();
-    const { data, error } = await supabase
-      .from('site_settings')
-      .select('site_name')
-      .limit(1)
-      .maybeSingle();
+    
+    // Create a timeout promise to avoid long waits
+    const timeoutPromise = new Promise<{data: null, error: Error}>((_, reject) => {
+      setTimeout(() => reject(new Error("Connection timeout")), 3000);
+    });
+    
+    // Race actual query against timeout
+    const result = await Promise.race([
+      supabase.from('site_settings').select('site_name').limit(1).maybeSingle(),
+      timeoutPromise
+    ]);
+    
     const duration = performance.now() - start;
     
-    if (error) {
-      console.error('Supabase health check failed:', error);
+    // @ts-ignore - TypeScript doesn't understand the Promise.race result correctly
+    if (result.error) {
+      console.error('Supabase health check failed:', result.error);
       return false;
     }
     
@@ -111,6 +124,15 @@ export async function checkSupabaseConnection(): Promise<boolean> {
     return true;
   } catch (err) {
     console.error('Supabase health check exception:', err);
+    
+    // Detect if the user is offline
+    if (!navigator.onLine) {
+      toast.error('网络连接丢失', { 
+        description: '您的设备当前处于离线状态，请检查网络连接。',
+        duration: 8000
+      });
+    }
+    
     return false;
   }
 }
@@ -148,13 +170,16 @@ export async function ensureMigrationsTable() {
 
 // Call this when app initializes - with error handling
 try {
-  checkSupabaseConnection().then(isConnected => {
-    if (isConnected) {
-      ensureMigrationsTable();
-    } else {
-      console.warn('Skipping migrations table check due to connection issues');
-    }
-  });
+  // Set a timeout to prevent blocking app startup if Supabase is slow
+  setTimeout(() => {
+    checkSupabaseConnection().then(isConnected => {
+      if (isConnected) {
+        ensureMigrationsTable();
+      } else {
+        console.warn('Skipping migrations table check due to connection issues');
+      }
+    });
+  }, 100);
 } catch (err) {
   console.error('Error during Supabase initialization:', err);
 }
@@ -492,4 +517,36 @@ export async function createMockHomeworkSubmissions() {
     console.error('创建模拟作业数据出错:', error);
     return { success: false, error };
   }
+}
+
+// 添加网络状态监听器，便于在网络恢复时重连
+export function setupNetworkListeners() {
+  if (typeof window !== 'undefined' && window.addEventListener) {
+    window.addEventListener('online', () => {
+      console.log('Network connection restored');
+      toast.success('网络已恢复', { 
+        description: '网络连接已恢复，请重试之前的操作。' 
+      });
+      checkSupabaseConnection();
+    });
+    
+    window.addEventListener('offline', () => {
+      console.log('Network connection lost');
+      toast.error('网络连接已断开', { 
+        description: '您的设备已离线，某些功能将不可用。' 
+      });
+    });
+  }
+  
+  return () => {
+    if (typeof window !== 'undefined' && window.removeEventListener) {
+      window.removeEventListener('online', () => {});
+      window.removeEventListener('offline', () => {});
+    }
+  };
+}
+
+// 初始化网络监听
+if (typeof window !== 'undefined') {
+  setupNetworkListeners();
 }
