@@ -33,7 +33,7 @@ export function DashboardNavigation() {
 
   return (
     <div className="mb-8">
-      <div className="bg-white/90 backdrop-blur-sm p-2 rounded-2xl border border-gray-100 shadow-sm">
+      <div className="bg-gradient-to-b from-white to-gray-50/95 backdrop-blur-md p-3 rounded-2xl border border-gray-100/80 shadow-[0_6px_16px_-6px_rgba(0,0,0,0.1),0_2px_8px_-2px_rgba(0,0,0,0.05)] relative">
         <Tabs 
           value={activeTab} 
           onValueChange={handleTabChange}
@@ -51,6 +51,11 @@ export function DashboardNavigation() {
             ))}
           </TabsList>
         </Tabs>
+        <div className="absolute inset-0 rounded-2xl bg-white/30 pointer-events-none" style={{ 
+          filter: 'blur(4px)',
+          opacity: 0.5,
+          transform: 'translateZ(-10px)',
+        }}></div>
       </div>
     </div>
   );
