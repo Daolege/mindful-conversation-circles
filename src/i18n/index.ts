@@ -36,10 +36,11 @@ i18n.use({
   read: async (language, namespace, callback) => {
     try {
       // 首先尝试从数据库加载翻译
-      const { data, error } = await supabase.rpc('get_namespace_translations', {
-        p_language_code: language,
-        p_namespace: namespace
-      });
+      const { data, error } = await supabase
+        .from('translations')
+        .select('key, value')
+        .eq('language_code', language)
+        .eq('namespace', namespace);
       
       // 转换为键值对
       if (!error && data && data.length > 0) {

@@ -3,10 +3,6 @@ import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import { TranslationItem } from '@/lib/services/languageService';
 
-interface ExistingTranslation {
-  id: number;
-}
-
 export const useTranslations = () => {
   const { t, i18n } = useTranslation(['common', 'navigation', 'courses', 'auth', 'admin', 'checkout', 'dashboard', 'errors', 'orders']);
   
@@ -20,33 +16,32 @@ export const useTranslations = () => {
     try {
       // 检查翻译是否存在
       const { data: existingTranslation, error: selectError } = await supabase
-        .rpc('check_translation_exists', {
-          p_language_code: language,
-          p_namespace: namespace,
-          p_key: key
-        });
+        .from('translations')
+        .select('id')
+        .eq('language_code', language)
+        .eq('namespace', namespace)
+        .eq('key', key)
+        .maybeSingle();
       
-      const typedExistingTranslation = existingTranslation as ExistingTranslation | null;
+      if (selectError) throw selectError;
       
-      if (selectError && selectError.code !== 'PGRST116') throw selectError;
-      
-      if (typedExistingTranslation && typedExistingTranslation.id) {
+      if (existingTranslation && existingTranslation.id) {
         // 更新已有翻译
         const { error: updateError } = await supabase
-          .rpc('update_translation', {
-            p_id: typedExistingTranslation.id,
-            p_value: value
-          });
+          .from('translations')
+          .update({ value, updated_at: new Date().toISOString() })
+          .eq('id', existingTranslation.id);
           
         if (updateError) throw updateError;
       } else {
         // 添加新翻译
         const { error: insertError } = await supabase
-          .rpc('insert_translation', {
-            p_language_code: language,
-            p_namespace: namespace,
-            p_key: key,
-            p_value: value
+          .from('translations')
+          .insert({
+            language_code: language,
+            namespace: namespace,
+            key: key,
+            value: value
           });
           
         if (insertError) throw insertError;
@@ -69,20 +64,15 @@ export const useTranslations = () => {
   const getTranslations = async (language: string, namespace: string) => {
     try {
       const { data, error } = await supabase
-        .rpc('get_namespace_translations', {
-          p_language_code: language,
-          p_namespace: namespace
-        });
+        .from('translations')
+        .select('id, language_code, namespace, key, value')
+        .eq('language_code', language)
+        .eq('namespace', namespace);
         
       if (error) throw error;
       
-      // Convert the data format to match TranslationItem
-      const translations: TranslationItem[] = (data || []).map((item: any) => ({
-        language_code: language,
-        namespace: namespace,
-        key: item.key,
-        value: item.value
-      }));
+      // Convert the data to match TranslationItem format
+      const translations: TranslationItem[] = data || [];
       
       return { 
         success: true, 

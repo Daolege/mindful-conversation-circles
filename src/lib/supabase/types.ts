@@ -605,13 +605,6 @@ export interface Database {
         }
         Returns: void
       },
-      get_translations: {
-        Args: {
-          p_language_code: string
-          p_namespace: string
-        }
-        Returns: Record<string, unknown>[]
-      },
       get_namespace_translations: {
         Args: {
           p_language_code: string
@@ -619,26 +612,11 @@ export interface Database {
         }
         Returns: {key: string, value: string}[]
       },
-      insert_order_item: {
+      upsert_translations_batch: {
         Args: {
-          p_order_id: string
-          p_course_id: number
-          p_price: number
-          p_currency: string
+          translations_json: Json
         }
-        Returns: {
-          id: number
-          order_id: string
-          course_id: number
-          price: number
-          currency: string
-        }[]
-      },
-      get_order_items: {
-        Args: {
-          order_id_param: string
-        }
-        Returns: unknown
+        Returns: void
       },
       admin_add_course_item: {
         Args: Record<string, unknown>
