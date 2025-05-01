@@ -96,6 +96,9 @@ export const generateMockCourseEnrollments = async (userId: string): Promise<boo
         continue;
       }
       
+      // Generate a random lecture_id for the last watched
+      const lastLectureId = `lecture-${Math.floor(Math.random() * 1000)}`;
+      
       // Insert progress record
       const { error: progressError } = await supabase
         .from('course_progress')
@@ -104,7 +107,8 @@ export const generateMockCourseEnrollments = async (userId: string): Promise<boo
           course_id: course.id,
           progress_percent: progressPercent,
           completed: completed,
-          last_accessed_at: new Date().toISOString()
+          last_watched_at: new Date().toISOString(),
+          lecture_id: lastLectureId
         });
       
       if (progressError) {
@@ -173,7 +177,7 @@ export const generateMockOrders = async (userId: string): Promise<boolean> => {
         .insert({
           id: orderId,
           user_id: userId,
-          total_amount: price,
+          amount: price,  // Using amount instead of total_amount
           currency: 'cny',
           payment_method: paymentMethod,
           status: status,
@@ -309,8 +313,8 @@ export const generateMockSubscriptions = async (userId: string): Promise<boolean
         .from('subscription_history')
         .insert({
           user_id: userId,
-          event_type: eventType,
-          previous_plan_id: i === 1 ? subscriptionPlans[0].id : null,
+          change_type: eventType,
+          old_plan_id: i === 1 ? subscriptionPlans[0].id : null,
           new_plan_id: eventType !== 'subscription_cancelled' ? plan.id : null,
           effective_date: effectiveDate.toISOString(),
           notes: `Mock subscription history record ${i + 1}`
@@ -340,8 +344,8 @@ export const generateMockSubscriptions = async (userId: string): Promise<boolean
         user_id: userId,
         plan_id: subscriptionPlans[0].id,
         status: 'active',
-        current_period_start: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
-        current_period_end: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(),
+        start_date: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
+        end_date: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(),
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       });

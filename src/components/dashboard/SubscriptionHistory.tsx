@@ -1,6 +1,6 @@
+
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getSubscriptionPlans, createTestSubscription } from "@/lib/services/subscriptionService";
 import { useAuth } from "@/contexts/authHooks";
 import { SubscriptionItem } from "@/types/dashboard";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { SubscriptionPeriod } from "@/lib/types/course-new";
 import { supabase } from '@/integrations/supabase/client';
+import { generateMockSubscriptions } from "@/lib/services/mockDataService";
 
 export function SubscriptionHistory() {
   const { user } = useAuth();
@@ -62,8 +63,8 @@ export function SubscriptionHistory() {
           .from('subscription_history')
           .select(`
             *,
-            new_plan:new_plan_id (*),
-            old_plan:old_plan_id (*)
+            new_plan:new_plan_id (id, name, description),
+            old_plan:old_plan_id (id, name, description)
           `)
           .eq('user_id', user.id)
           .order('effective_date', { ascending: false });
@@ -76,6 +77,30 @@ export function SubscriptionHistory() {
     },
     enabled: !!user?.id,
   });
+
+  // 处理生成示例数据
+  const handleGenerateData = async () => {
+    if (!user?.id) {
+      toast.error("需要登录才能生成示例数据");
+      return;
+    }
+    
+    setIsGeneratingData(true);
+    try {
+      const success = await generateMockSubscriptions(user.id);
+      if (success) {
+        toast.success("示例订阅数据已生成");
+        await Promise.all([refetchCurrent(), refetchHistory()]);
+      } else {
+        toast.error("生成示例数据失败");
+      }
+    } catch (error) {
+      console.error("生成示例数据出错:", error);
+      toast.error("生成示例数据时出现错误");
+    } finally {
+      setIsGeneratingData(false);
+    }
+  };
 
   // 格式化日期
   const formatDate = (dateString: string | null | undefined) => {
@@ -113,6 +138,7 @@ export function SubscriptionHistory() {
     }
   };
 
+  const isLoading = isLoadingCurrent || isLoadingHistory;
   const hasSubscriptionData = currentSubscription || (subscriptionHistory && subscriptionHistory.length > 0);
 
   if (isLoading) {
@@ -170,12 +196,7 @@ export function SubscriptionHistory() {
     );
   }
 
-  // Fix the features rendering for currentSubscription
-  const hasFeatures = currentSubscription?.subscription_plans && 
-                      Array.isArray(currentSubscription.subscription_plans.features) && 
-                      currentSubscription.subscription_plans.features.length > 0;
-
-  // Fix the rendering of subscription plans features and description
+  // Handle potentially missing subscription plan data safely
   const renderPlanInfo = (plan: any) => {
     if (!plan) return null;
     
@@ -188,6 +209,12 @@ export function SubscriptionHistory() {
       </>
     );
   };
+
+  // Safely check for features
+  const hasFeatures = currentSubscription?.subscription_plans && 
+                     currentSubscription.subscription_plans.features && 
+                     Array.isArray(currentSubscription.subscription_plans.features) && 
+                     currentSubscription.subscription_plans.features.length > 0;
 
   return (
     <div className="space-y-8">
@@ -223,7 +250,7 @@ export function SubscriptionHistory() {
                 <div className="mt-4">
                   <h5 className="text-sm font-medium mb-2">包含特权</h5>
                   <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
-                    {currentSubscription.subscription_plans.features.map((feature, i) => (
+                    {currentSubscription.subscription_plans.features.map((feature: string, i: number) => (
                       <li key={i}>{feature}</li>
                     ))}
                   </ul>
@@ -250,7 +277,7 @@ export function SubscriptionHistory() {
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
-              {subscriptionHistory.map((item, index) => (
+              {subscriptionHistory.map((item: any, index: number) => (
                 <div key={index} className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b last:border-0 last:pb-0 gap-3">
                   <div className="space-y-1">
                     <div className="flex items-center">
@@ -311,3 +338,4 @@ export function SubscriptionHistory() {
     </div>
   );
 }
+

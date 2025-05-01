@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 // Define possible migration names
@@ -17,7 +18,7 @@ export const recordMigration = async (name: MigrationName, description: string, 
         .from('site_settings')
         .upsert({
           key: `migration_${name}`,
-          setting_value: JSON.stringify({
+          value: JSON.stringify({
             name,
             description,
             executed_at: new Date().toISOString(),
@@ -47,7 +48,7 @@ export const getExchangeRate = async (): Promise<number> => {
   try {
     const { data, error } = await supabase
       .from('site_settings')
-      .select('setting_value')
+      .select('value')
       .eq('key', 'exchange_rate')
       .single();
       
@@ -56,7 +57,7 @@ export const getExchangeRate = async (): Promise<number> => {
       return 7; // Default exchange rate
     }
     
-    return parseFloat(data.setting_value || '7');
+    return parseFloat(data.value || '7');
   } catch (error) {
     console.error('Error getting exchange rate:', error);
     return 7;
@@ -82,7 +83,7 @@ export const updateExchangeRate = async (newRate: number): Promise<boolean> => {
       // Update existing setting
       const { error: updateError } = await supabase
         .from('site_settings')
-        .update({ setting_value: newRate.toString() })
+        .update({ value: newRate.toString() })
         .eq('key', 'exchange_rate');
         
       if (updateError) {
@@ -93,7 +94,7 @@ export const updateExchangeRate = async (newRate: number): Promise<boolean> => {
       // Insert new setting
       const { error: insertError } = await supabase
         .from('site_settings')
-        .insert({ key: 'exchange_rate', setting_value: newRate.toString() });
+        .insert({ key: 'exchange_rate', value: newRate.toString() });
         
       if (insertError) {
         console.error('Error inserting exchange rate:', insertError);
@@ -113,8 +114,8 @@ export const getSiteSetting = async (key: string, defaultValue: string = ''): Pr
   try {
     const { data, error } = await supabase
       .from('site_settings')
-      .select('setting_value')
-      .eq('setting_key', key)
+      .select('value')
+      .eq('key', key)
       .single();
     
     if (error || !data) {
@@ -122,7 +123,7 @@ export const getSiteSetting = async (key: string, defaultValue: string = ''): Pr
       return defaultValue;
     }
     
-    return data.setting_value || defaultValue;
+    return data.value || defaultValue;
   } catch (error) {
     console.error('Error getting site setting:', error);
     return defaultValue;
@@ -140,7 +141,7 @@ export const updateSiteSettings = async (settings: { [key: string]: string }): P
         const { data: existingSetting, error: selectError } = await supabase
           .from('site_settings')
           .select('id')
-          .eq('setting_key', key)
+          .eq('key', key)
           .single();
           
         if (selectError && !selectError.message.includes('No rows found')) {
@@ -152,8 +153,8 @@ export const updateSiteSettings = async (settings: { [key: string]: string }): P
           // Update existing setting
           const { error: updateError } = await supabase
             .from('site_settings')
-            .update({ setting_value: value })
-            .eq('setting_key', key);
+            .update({ value: value })
+            .eq('key', key);
             
           if (updateError) {
             console.error(`Error updating setting ${key}:`, updateError);
@@ -163,7 +164,7 @@ export const updateSiteSettings = async (settings: { [key: string]: string }): P
           // Insert new setting
           const { error: insertError } = await supabase
             .from('site_settings')
-            .insert({ setting_key: key, setting_value: value });
+            .insert({ key: key, value: value });
             
           if (insertError) {
             console.error(`Error inserting setting ${key}:`, insertError);
@@ -179,3 +180,4 @@ export const updateSiteSettings = async (settings: { [key: string]: string }): P
     return false;
   }
 };
+

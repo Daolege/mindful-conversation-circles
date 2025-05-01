@@ -59,7 +59,7 @@ export const getCourseById = async (courseId: number): Promise<CourseResponse<Co
 };
 
 // Add the saveCourse function with simplified types
-export const saveCourse = async (courseData: CourseData): Promise<CourseResponse<CourseData>> => {
+export const saveCourse = async (courseData: BasicCourseData): Promise<CourseResponse<CourseData>> => {
   try {
     // Ensure title exists when creating a new course
     if (!courseData.id && !courseData.title) {
@@ -148,7 +148,7 @@ export const updateCourseOrder = async (courseIds: number[]): Promise<{ success:
 };
 
 // Fix insertCourse function to use a proper type
-export const insertCourse = async (courseData: any) => {
+export const insertCourse = async (courseData: BasicCourseData) => {
   try {
     const { data, error } = await supabase
       .from("courses")
@@ -168,7 +168,7 @@ export const insertCourse = async (courseData: any) => {
 };
 
 // Fix updateMultipleCourses with correct types
-export const updateMultipleCourses = async (coursesData: any[]) => {
+export const updateMultipleCourses = async (coursesData: BasicCourseData[]) => {
   try {
     const { data, error } = await supabase
       .from("courses")

@@ -47,7 +47,7 @@ export interface SubscriptionItem {
   }
 }
 
-// Add UserCourse interface from dashboard.d.ts
+// Add UserCourse interface
 export interface UserCourse {
   course_id: number;
   purchased_at: string;
@@ -59,3 +59,4 @@ export interface UserCourse {
     last_lecture_id: string;
   }[];
 }
+
