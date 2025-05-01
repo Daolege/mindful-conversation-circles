@@ -1,14 +1,23 @@
 
 import { supabase } from '@/integrations/supabase/client';
 
-// 定义返回类型接口，避免无限类型实例化
+// Define specific return types to avoid infinite type instantiation
+interface CourseData {
+  id: number;
+  title: string;
+  description?: string;
+  price?: number;
+  status?: string;
+  [key: string]: any; // Allow for other properties
+}
+
 interface CourseResponse<T> {
   data: T | null;
   error: Error | null;
 }
 
 // Add the getCourseById function
-export const getCourseById = async (courseId: number): Promise<CourseResponse<any>> => {
+export const getCourseById = async (courseId: number): Promise<CourseResponse<CourseData>> => {
   try {
     const { data, error } = await supabase
       .from('courses_new')
@@ -29,7 +38,7 @@ export const getCourseById = async (courseId: number): Promise<CourseResponse<an
 };
 
 // Add the saveCourse function
-export const saveCourse = async (courseData: any): Promise<CourseResponse<any>> => {
+export const saveCourse = async (courseData: Partial<CourseData> & { id?: number }): Promise<CourseResponse<CourseData>> => {
   try {
     const { data, error } = await supabase
       .from('courses_new')
@@ -50,7 +59,7 @@ export const saveCourse = async (courseData: any): Promise<CourseResponse<any>> 
 };
 
 // Add the getCoursesByInstructorId function (needed by instructorService)
-export const getCoursesByInstructorId = async (instructorId: string): Promise<CourseResponse<any[]>> => {
+export const getCoursesByInstructorId = async (instructorId: string): Promise<CourseResponse<CourseData[]>> => {
   try {
     const { data, error } = await supabase
       .from('courses_new')

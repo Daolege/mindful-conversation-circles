@@ -106,13 +106,13 @@ export const hasMigrationExecuted = async (migrationName: string): Promise<boole
       return false;
     }
     
-    // Get the first record
-    const record = data[0] as MigrationRecord;
+    // Get the first record and ensure it's of the expected type
+    const record = data[0] as unknown;
     
-    // 安全地检查record和value属性
-    if (record && typeof record === 'object' && 'value' in record && typeof record.value === 'string') {
+    // Type guard to check if record has the right properties
+    if (record && typeof record === 'object' && 'value' in record && typeof record['value'] === 'string') {
       try {
-        const migrationData = JSON.parse(record.value);
+        const migrationData = JSON.parse((record as any).value);
         return !!migrationData?.success;
       } catch (e) {
         return false;

@@ -1,4 +1,5 @@
-import React, { Suspense } from 'react';
+
+import React, { Suspense, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { getCourseNewById } from '@/lib/services/courseNewService';
@@ -24,6 +25,11 @@ const CourseDetailNew = () => {
     enabled: !!courseIdNum && !isNaN(courseIdNum),
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
+  
+  // Force smooth scrolling to top when page loads
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [courseId]);
 
   if (isLoading) {
     return (
@@ -52,14 +58,14 @@ const CourseDetailNew = () => {
   return (
     <>
       <Navbar />
-      <div className="container mx-auto px-4 py-8 animate-in fade-in slide-in-from-bottom-3 duration-1000">
+      <div className="container mx-auto px-4 py-8 animate-in fade-in duration-500">
         <CourseBreadcrumb course={courseData} />
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className={`${isMobile ? 'order-2' : 'order-1'} lg:col-span-2`}>
             <CourseDetailHeaderNew course={courseData} />
             <Suspense fallback={<div className="space-y-8">
               {[1, 2, 3, 4].map(i => (
-                <div key={i} className="h-40 bg-gray-100 rounded-lg animate-pulse skeleton-wave"></div>
+                <div key={i} className="h-40 bg-gray-100 rounded-lg animate-pulse"></div>
               ))}
             </div>}>
               <CourseDetailContentNew course={courseData} />

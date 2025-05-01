@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { CourseWithDetails } from '@/lib/types/course-new';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,7 +16,7 @@ interface CourseDetailContentNewProps {
 
 export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ course }) => {
   const [openSectionIds, setOpenSectionIds] = useState<{[key: string]: boolean}>(() => {
-    // Default: first three sections are open
+    // Default: first section is open
     const initial: {[key: string]: boolean} = {};
     if (course.sections && course.sections.length > 0) {
       // Open the first section by default
@@ -25,6 +26,17 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
     }
     return initial;
   });
+  
+  const [isOutlineLoading, setIsOutlineLoading] = useState(true);
+  
+  React.useEffect(() => {
+    // Simulate outline loading with a short delay to show loading animation
+    const timer = setTimeout(() => {
+      setIsOutlineLoading(false);
+    }, 800);
+    
+    return () => clearTimeout(timer);
+  }, []);
   
   const navigate = useNavigate();
 
@@ -76,7 +88,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
   return (
     <div className="space-y-8">
       {/* 课程介绍 */}
-      <Card className="hover:shadow-lg transition-shadow duration-500 shadow-sm animate-in fade-in duration-700 delay-200">
+      <Card className="hover:shadow-lg transition-shadow duration-500 shadow-sm animate-in fade-in duration-500">
         <CardHeader className="pb-0">
           <CardTitle className="text-xl flex items-center gap-2">
             <File className="h-5 w-5" />
@@ -95,7 +107,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
       </Card>
 
       {/* 课程大纲 */}
-      <Card className="hover:shadow-lg transition-shadow duration-500 shadow-sm animate-in fade-in duration-700 delay-300">
+      <Card className="hover:shadow-lg transition-shadow duration-500 shadow-sm animate-in fade-in duration-500">
         <CardHeader className="pb-0">
           <CardTitle className="text-xl flex items-center gap-2">
             <BookOpen className="h-5 w-5" />
@@ -107,8 +119,24 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
             {course.sections?.length || 0} 个章节 • {totalLessons} 个课时
           </div>
 
-          {course.sections && course.sections.length > 0 ? (
+          {isOutlineLoading ? (
             <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="border rounded-lg p-4 animate-pulse">
+                  <div className="flex justify-between items-center">
+                    <div className="h-6 bg-gray-200 rounded w-1/3"></div>
+                    <div className="h-4 bg-gray-200 rounded w-16"></div>
+                  </div>
+                  <div className="mt-4 space-y-2">
+                    {[1, 2, 3].map((j) => (
+                      <div key={j} className="h-12 bg-gray-100 rounded-lg"></div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : course.sections && course.sections.length > 0 ? (
+            <div className="space-y-4 animate-in fade-in duration-300">
               {course.sections.map((section, index) => (
                 <AnimatedCollapsible
                   key={section.id}
@@ -164,7 +192,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
       </Card>
 
       {/* 课程附件 */}
-      <Card className="hover:shadow-lg transition-shadow duration-500 shadow-sm animate-in fade-in duration-700 delay-400">
+      <Card className="hover:shadow-lg transition-shadow duration-500 shadow-sm animate-in fade-in duration-500">
         <CardHeader className="pb-0">
           <CardTitle className="text-xl flex items-center gap-2">
             <File className="h-5 w-5" />
@@ -179,9 +207,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
                   key={material.id} 
                   className="flex justify-between items-center p-4 border rounded-lg hover:bg-gray-50 
                     transition-all duration-300 ease-in-out 
-                    shadow-sm hover:shadow-md 
-                    animate-in fade-in slide-in-from-bottom-3 duration-500"
-                  style={{ animationDelay: `${300 + idx * 100}ms` }}
+                    shadow-sm hover:shadow-md animate-in fade-in duration-300"
                 >
                   <div className="flex items-center gap-2">
                     <File size={18} className="text-gray-600" />
@@ -207,7 +233,8 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
       {/* 学习信息栏 - 三栏布局 */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* 学习目标 */}
-        <Card className="hover:shadow-lg transition-shadow duration-500 shadow-sm animate-in fade-in duration-700 delay-500">
+        <Card className="hover:shadow-lg transition-shadow duration-500 shadow-lg border-2 
+          transform hover:-translate-y-1 hover:shadow-xl animate-in fade-in duration-500">
           <CardHeader className="pb-0">
             <CardTitle className="text-lg flex items-center gap-2">
               <Target className="h-5 w-5" />
@@ -220,8 +247,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
                 {learningObjectives.map((objective, index) => (
                   <li 
                     key={index} 
-                    className="flex items-start gap-2 animate-in fade-in slide-in-from-bottom-3 duration-500"
-                    style={{ animationDelay: `${800 + index * 100}ms` }}
+                    className="flex items-start gap-2 animate-in fade-in duration-300"
                   >
                     <Target className="h-4 w-4 text-gray-800 mt-0.5 flex-shrink-0" />
                     <span className="text-sm font-medium text-gray-700">{objective}</span>
@@ -235,7 +261,8 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
         </Card>
 
         {/* 课程要求 */}
-        <Card className="hover:shadow-lg transition-shadow duration-500 shadow-sm animate-in fade-in duration-700 delay-600">
+        <Card className="hover:shadow-lg transition-shadow duration-500 shadow-lg border-2 
+          transform hover:-translate-y-1 hover:shadow-xl animate-in fade-in duration-500">
           <CardHeader className="pb-0">
             <CardTitle className="text-lg flex items-center gap-2">
               <Book className="h-5 w-5" />
@@ -248,8 +275,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
                 {requirements.map((requirement, index) => (
                   <li 
                     key={index} 
-                    className="flex items-start gap-2 animate-in fade-in slide-in-from-bottom-3 duration-500"
-                    style={{ animationDelay: `${1000 + index * 100}ms` }}
+                    className="flex items-start gap-2 animate-in fade-in duration-300"
                   >
                     <Book className="h-4 w-4 text-gray-800 mt-0.5 flex-shrink-0" />
                     <span className="text-sm font-medium text-gray-700">{requirement}</span>
@@ -263,7 +289,8 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
         </Card>
 
         {/* 适合人群 */}
-        <Card className="hover:shadow-lg transition-shadow duration-500 shadow-sm animate-in fade-in duration-700 delay-700">
+        <Card className="hover:shadow-lg transition-shadow duration-500 shadow-lg border-2 
+          transform hover:-translate-y-1 hover:shadow-xl animate-in fade-in duration-500">
           <CardHeader className="pb-0">
             <CardTitle className="text-lg flex items-center gap-2">
               <Users className="h-5 w-5" />
@@ -276,8 +303,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
                 {targetAudience.map((audience, index) => (
                   <li 
                     key={index} 
-                    className="flex items-start gap-2 animate-in fade-in slide-in-from-bottom-3 duration-500"
-                    style={{ animationDelay: `${1200 + index * 100}ms` }}
+                    className="flex items-start gap-2 animate-in fade-in duration-300"
                   >
                     <Users className="h-4 w-4 text-gray-800 mt-0.5 flex-shrink-0" />
                     <span className="text-sm font-medium text-gray-700">{audience}</span>

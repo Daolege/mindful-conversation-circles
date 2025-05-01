@@ -88,6 +88,10 @@ const config = {
           '0%': { opacity: '1' },
           '100%': { opacity: '0' },
         },
+        shimmer: {
+          '0%': { transform: 'translateX(-100%)' },
+          '100%': { transform: 'translateX(100%)' },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -97,7 +101,19 @@ const config = {
       },
     },
   },
-  plugins: [tailwindAnimate],
+  plugins: [
+    tailwindAnimate,
+    function({ addComponents, addUtilities }: any) {
+      addComponents({
+        '.skeleton-wave-shimmer': {
+          background: 'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0) 100%)',
+          animation: 'shimmer 2s infinite',
+          height: '100%',
+          width: '50%',
+        },
+      });
+    },
+  ],
 } satisfies Config;
 
 export default config;

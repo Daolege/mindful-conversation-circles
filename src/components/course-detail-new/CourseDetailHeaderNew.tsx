@@ -12,15 +12,21 @@ interface CourseDetailHeaderNewProps {
 export const CourseDetailHeaderNew: React.FC<CourseDetailHeaderNewProps> = ({ course }) => {
   const isMobile = useIsMobile();
   
+  // Calculate total lectures count
+  const totalLectures = course.sections?.reduce(
+    (count, section) => count + (section.lectures?.length || 0), 
+    0
+  ) || 0;
+  
   return (
-    <div className="mb-10 animate-in fade-in duration-700">
-      <h1 className={`${isMobile ? 'text-2xl' : 'text-3xl md:text-4xl'} font-bold mb-12 animate-in fade-in slide-in-from-left-5 duration-700`}>{course.title}</h1>
+    <div className="mb-10 animate-in fade-in duration-500">
+      <h1 className={`${isMobile ? 'text-2xl' : 'text-3xl md:text-4xl'} font-bold mb-12 animate-in fade-in slide-in-from-left-5 duration-500`}>{course.title}</h1>
       
       <div className="flex flex-wrap gap-4 mb-8">
         {course.category && (
           <Badge 
             variant="courseTag"
-            className="text-sm flex items-center animate-in fade-in slide-in-from-bottom-3 duration-700 delay-100"
+            className="text-sm flex items-center animate-in fade-in slide-in-from-bottom-3 duration-500"
           >
             <BookOpen size={16} className="mr-1" />
             {course.category}
@@ -29,7 +35,7 @@ export const CourseDetailHeaderNew: React.FC<CourseDetailHeaderNewProps> = ({ co
         
         <Badge 
           variant="courseTag"
-          className="text-sm flex items-center animate-in fade-in slide-in-from-bottom-3 duration-700 delay-200"
+          className="text-sm flex items-center animate-in fade-in slide-in-from-bottom-3 duration-500"
         >
           <Users size={16} className="mr-1" />
           {course.enrollment_count || 0} 名学员
@@ -37,16 +43,16 @@ export const CourseDetailHeaderNew: React.FC<CourseDetailHeaderNewProps> = ({ co
         
         <Badge 
           variant="courseTag"
-          className="text-sm flex items-center animate-in fade-in slide-in-from-bottom-3 duration-700 delay-300"
+          className="text-sm flex items-center animate-in fade-in slide-in-from-bottom-3 duration-500"
         >
           <BookOpen size={16} className="mr-1" />
-          {course.sections?.length || 0} 章节 · {course.lecture_count || 0} 课时
+          {course.sections?.length || 0} 章节 · {totalLectures} 课时
         </Badge>
         
         {course.language && (
           <Badge 
             variant="courseTag"
-            className="text-sm flex items-center animate-in fade-in slide-in-from-bottom-3 duration-700 delay-400"
+            className="text-sm flex items-center animate-in fade-in slide-in-from-bottom-3 duration-500"
           >
             <Globe size={16} className="mr-1" />
             {course.language}
@@ -56,7 +62,7 @@ export const CourseDetailHeaderNew: React.FC<CourseDetailHeaderNewProps> = ({ co
         {course.published_at && (
           <Badge 
             variant="courseTag"
-            className="text-sm flex items-center animate-in fade-in slide-in-from-bottom-3 duration-700 delay-500"
+            className="text-sm flex items-center animate-in fade-in slide-in-from-bottom-3 duration-500"
           >
             <Calendar size={16} className="mr-1" />
             {new Date(course.published_at).toLocaleDateString('zh-CN')} 发布
@@ -65,7 +71,7 @@ export const CourseDetailHeaderNew: React.FC<CourseDetailHeaderNewProps> = ({ co
         
         <Badge
           variant="courseTag"
-          className="text-sm animate-in fade-in slide-in-from-bottom-3 duration-700 delay-600"
+          className="text-sm animate-in fade-in slide-in-from-bottom-3 duration-500"
         >
           {course.status === 'published' ? '已发布' : 
            course.status === 'draft' ? '草稿' : '已归档'}
