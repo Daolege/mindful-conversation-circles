@@ -1,15 +1,50 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { CourseNew } from "@/lib/types/course-new";
-import { Book, Play, Clock } from "lucide-react";
+import { Book, Play, Clock, CheckCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { motion } from "framer-motion";
 
 export function SimpleCourseTab() {
   const navigate = useNavigate();
   const [courses] = useState<CourseNew[]>(getSampleCourses());
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Simulate loading
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 800);
+    
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Animation variants for staggered loading
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    show: { 
+      opacity: 1, 
+      y: 0,
+      transition: { 
+        type: "spring",
+        stiffness: 300,
+        damping: 24
+      }
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -19,20 +54,54 @@ export function SimpleCourseTab() {
           onClick={() => navigate('/my-courses')} 
           variant="outline" 
           size="sm"
-          className="shrink-0"
+          className="shrink-0 hover:scale-105 transition-transform duration-200 hover:shadow-md"
         >
           查看全部课程
         </Button>
       </div>
 
-      {courses.length > 0 ? (
+      {isLoading ? (
+        // Loading animation cards
         <div className="space-y-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="border rounded-lg p-4 animate-pulse">
+              <div className="flex flex-col sm:flex-row justify-between">
+                <div className="space-y-3 mb-3 sm:mb-0 w-full sm:w-2/3">
+                  <div className="h-5 bg-gray-200 rounded w-3/4"></div>
+                  <div className="flex gap-2">
+                    <div className="h-4 bg-gray-200 rounded w-20"></div>
+                    <div className="h-4 bg-gray-200 rounded w-24"></div>
+                  </div>
+                  <div className="w-full sm:max-w-xs mt-2">
+                    <div className="h-2 bg-gray-200 rounded w-full"></div>
+                  </div>
+                </div>
+                <div className="flex gap-2 w-full sm:w-auto justify-end">
+                  <div className="h-9 bg-gray-200 rounded w-24"></div>
+                  <div className="h-9 bg-gray-200 rounded w-24"></div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : courses.length > 0 ? (
+        <motion.div
+          className="space-y-4"
+          variants={containerVariants}
+          initial="hidden"
+          animate="show"
+        >
           {courses.map((course) => (
             <CourseListItem key={course.id} course={course} />
           ))}
-        </div>
+        </motion.div>
       ) : (
-        <div className="bg-muted/50 border rounded-lg p-8 text-center">
+        <motion.div 
+          className="bg-muted/50 border rounded-lg p-8 text-center"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.3 }}
+        >
           <h3 className="text-lg font-medium mb-2">暂无已购课程</h3>
           <p className="text-muted-foreground mb-6">
             您还没有购买任何课程，浏览我们的课程库开始您的学习之旅
@@ -40,11 +109,11 @@ export function SimpleCourseTab() {
           
           <Button 
             onClick={() => navigate('/courses')} 
-            className="min-w-[150px]"
+            className="min-w-[150px] hover:scale-105 transition-all duration-300 hover:shadow-lg"
           >
             浏览课程
           </Button>
-        </div>
+        </motion.div>
       )}
     </div>
   );
@@ -65,29 +134,45 @@ const CourseListItem = ({ course }: CourseListItemProps) => {
   // 获取状态标签
   const getStatusBadge = () => {
     if (isCompleted) {
-      return <Badge className="bg-green-500 hover:bg-green-600">已完成</Badge>;
+      return (
+        <Badge className="bg-green-500 hover:bg-green-600 group-hover:animate-pulse flex items-center gap-1">
+          <CheckCircle className="h-3.5 w-3.5" />
+          已完成
+        </Badge>
+      );
     } else if (hasStarted) {
-      return <Badge className="bg-yellow-500 hover:bg-yellow-600">进行中</Badge>;
+      return <Badge className="bg-yellow-500 hover:bg-yellow-600 group-hover:scale-105 transition-transform">进行中</Badge>;
     } else {
-      return <Badge variant="outline">未开始</Badge>;
+      return <Badge variant="outline" className="group-hover:bg-gray-100 transition-colors">未开始</Badge>;
     }
   };
 
   return (
-    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 border rounded-lg hover:bg-gray-50/50 transition-colors">
-      <div className="space-y-2 mb-3 sm:mb-0 w-full sm:w-auto">
-        <h4 className="font-medium text-base">
+    <motion.div
+      variants={{
+        hidden: { opacity: 0, y: 20 },
+        show: { opacity: 1, y: 0 }
+      }}
+      className="group flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 border rounded-lg 
+        hover:bg-gray-50/70 transition-all duration-300 hover:shadow-md relative overflow-hidden"
+    >
+      {/* Shimmer effect on hover */}
+      <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1500 
+        bg-gradient-to-r from-transparent via-white/10 to-transparent z-0 opacity-70"></div>
+      
+      <div className="space-y-2 mb-3 sm:mb-0 w-full sm:w-auto relative z-10">
+        <h4 className="font-medium text-base group-hover:text-gray-800 transition-colors">
           {course.title}
         </h4>
         
         <div className="flex items-center gap-2 flex-wrap">
           {getStatusBadge()}
           
-          <Badge variant="outline">
+          <Badge variant="outline" className="group-hover:bg-gray-100 transition-colors">
             {course.category || "通用课程"}
           </Badge>
           
-          <span className="text-sm text-muted-foreground flex items-center gap-1">
+          <span className="text-sm text-muted-foreground flex items-center gap-1 group-hover:text-gray-700 transition-colors">
             <Clock className="h-3.5 w-3.5" />
             {Math.floor(Math.random() * 10) + 1}小时内容
           </span>
@@ -98,15 +183,31 @@ const CourseListItem = ({ course }: CourseListItemProps) => {
             <span>学习进度</span>
             <span className="font-medium">{progress}%</span>
           </div>
-          <Progress value={progress} className="h-2" />
+          <div className="relative w-full h-2">
+            {/* Background progress bar */}
+            <Progress value={progress} className="h-2 transition-all duration-500 ease-out" />
+            
+            {/* Animated progress pill that shows on hover */}
+            {progress > 0 && (
+              <div 
+                className="absolute top-0 left-0 h-full bg-primary rounded-full transition-all duration-300
+                  opacity-0 group-hover:opacity-100 group-hover:animate-pulse"
+                style={{ 
+                  width: `${progress}%`, 
+                  boxShadow: '0 0 8px rgba(var(--primary), 0.5)' 
+                }}
+              />
+            )}
+          </div>
         </div>
       </div>
       
-      <div className="flex flex-col sm:flex-row gap-2 mt-3 sm:mt-0 w-full sm:w-auto">
+      <div className="flex flex-col sm:flex-row gap-2 mt-3 sm:mt-0 w-full sm:w-auto z-10">
         <Button 
           size="sm" 
           onClick={() => navigate(`/course-learn/${course.id}`)}
-          className="flex-1 sm:flex-none"
+          className="flex-1 sm:flex-none transition-all duration-300 hover:scale-105 hover:shadow-md"
+          variant={hasStarted ? "default" : "success"}
         >
           {hasStarted ? (
             <>
@@ -125,12 +226,13 @@ const CourseListItem = ({ course }: CourseListItemProps) => {
           size="sm"
           variant="outline" 
           onClick={() => navigate(`/course-detail/${course.id}`)}
-          className="flex-1 sm:flex-none"
+          className="flex-1 sm:flex-none transition-all duration-300 hover:scale-105 hover:shadow-md
+            hover:bg-gray-100/80"
         >
           课程详情
         </Button>
       </div>
-    </div>
+    </motion.div>
   );
 };
 
