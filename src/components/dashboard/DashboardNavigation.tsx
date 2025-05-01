@@ -45,88 +45,39 @@ export function DashboardNavigation() {
           onValueChange={handleTabChange}
           className="w-full"
         >
-          <TabsList className="w-full bg-white/80 backdrop-blur-xl shadow-md p-1.5 rounded-2xl border border-gray-100">
+          <TabsList className="w-full grid grid-cols-4 bg-white/80 backdrop-blur-xl shadow-sm p-1.5 rounded-2xl border border-gray-100">
             {tabs.map((tab) => (
               <TabsTrigger
                 key={tab.value}
                 value={tab.value}
-                className="flex-1 relative data-[state=active]:text-gray-900 data-[state=active]:shadow-none py-3.5"
+                className="relative data-[state=active]:text-gray-900 data-[state=active]:shadow-none py-2.5"
+                aria-label={tab.label}
               >
-                {/* Inactive background with gradient */}
-                <div className="absolute inset-0 rounded-xl bg-gradient-to-b from-gray-50/90 to-gray-100/60"></div>
-                
-                {/* Active pill background with subtle gradient and glow */}
+                {/* Active background with subtle gradient */}
                 {activeTab === tab.value && (
                   <motion.div
-                    layoutId="activeTabPill"
-                    className="absolute inset-0 bg-gradient-to-b from-white to-gray-50 rounded-xl shadow-[0_3px_15px_rgba(0,0,0,0.08)] border border-white/80"
+                    layoutId="activeTabBackground"
+                    className="absolute inset-0 bg-gradient-to-b from-white to-gray-50 rounded-xl shadow-[0_2px_10px_rgba(0,0,0,0.06)] border border-white/80"
                     initial={{ borderRadius: 12 }}
                     animate={{ borderRadius: 12 }}
-                    transition={{ 
-                      type: "spring", 
-                      stiffness: 500, 
-                      damping: 30,
-                      layout: { duration: 0.3 }
-                    }}
+                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
                   />
                 )}
 
-                {/* Text content with enhanced hover effects */}
-                <motion.span
-                  className="relative z-10 font-medium"
-                  initial={false}
-                  animate={{ 
-                    scale: activeTab === tab.value ? 1.05 : 1,
-                    fontWeight: activeTab === tab.value ? 600 : 400,
-                  }}
-                  whileHover={{ 
-                    scale: activeTab === tab.value ? 1.05 : 1.03,
-                    transition: { duration: 0.2 }
-                  }}
-                >
+                {/* Text content */}
+                <span className="relative z-10 font-medium">
                   {tab.label}
-                </motion.span>
+                </span>
 
-                {/* Bottom highlight indicator for active tab with gradient */}
+                {/* Bottom indicator for active tab */}
                 {activeTab === tab.value && (
                   <motion.div
                     layoutId="activeBottomIndicator"
-                    className="absolute bottom-1.5 left-0 right-0 mx-auto w-12 h-0.5 bg-gradient-to-r from-gray-400/30 via-gray-700/40 to-gray-400/30 rounded-full"
+                    className="absolute bottom-1 left-0 right-0 mx-auto w-10 h-0.5 bg-gray-700 rounded-full"
                     initial={{ opacity: 0, width: 0 }}
-                    animate={{ opacity: 1, width: 48 }}
-                    transition={{ 
-                      type: "spring",
-                      stiffness: 500,
-                      damping: 30,
-                      delay: 0.05 
-                    }}
+                    animate={{ opacity: 1, width: 40 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
                   />
-                )}
-
-                {/* Enhanced shine effect */}
-                {activeTab === tab.value && (
-                  <motion.div
-                    className="absolute inset-0 bg-gradient-to-b from-white/40 to-transparent rounded-xl pointer-events-none overflow-hidden"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                  >
-                    <motion.div 
-                      className="absolute inset-0 w-full h-full"
-                      initial={{ 
-                        background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.8) 50%, transparent 100%)',
-                        left: '-100%' 
-                      }}
-                      animate={{ 
-                        left: '100%'
-                      }}
-                      transition={{ 
-                        repeat: Infinity, 
-                        repeatDelay: 5,
-                        duration: 1.5, 
-                        ease: "easeInOut" 
-                      }}
-                    />
-                  </motion.div>
                 )}
               </TabsTrigger>
             ))}

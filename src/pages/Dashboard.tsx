@@ -65,28 +65,11 @@ const Dashboard = () => {
     return <Navigate to="/auth" state={{ loginRequired: true, from: location.pathname + location.search }} replace />;
   }
 
-  // Enhanced animation variants
+  // Simplified animation variants
   const containerVariants = {
-    initial: { 
-      opacity: 0,
-      y: 20
-    },
-    animate: { 
-      opacity: 1, 
-      y: 0,
-      transition: { 
-        duration: 0.4,
-        ease: "easeOut"
-      }
-    },
-    exit: { 
-      opacity: 0,
-      y: -20,
-      transition: { 
-        duration: 0.3,
-        ease: "easeIn"
-      }
-    }
+    initial: { opacity: 0, y: 10 },
+    animate: { opacity: 1, y: 0, transition: { duration: 0.3 } },
+    exit: { opacity: 0, y: -10, transition: { duration: 0.2 } }
   };
 
   // Main content based on active tab
@@ -115,9 +98,9 @@ const Dashboard = () => {
       <Navbar />
       <main className="container mx-auto px-4 py-8 flex-grow">
         <motion.div 
-          initial={{ opacity: 0, y: -20 }}
+          initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
+          transition={{ duration: 0.4 }}
           className="mb-8"
         >
           <h1 className="text-3xl font-bold">个人中心</h1>
@@ -137,21 +120,6 @@ const Dashboard = () => {
             exit="exit"
             className="relative"
           >
-            {/* Add subtle page transition effect */}
-            <motion.div 
-              className="absolute inset-0 bg-gradient-to-r from-transparent via-gray-100/30 to-transparent rounded-xl" 
-              initial={{ opacity: 0, scaleX: 0 }}
-              animate={{ 
-                opacity: [0, 0.7, 0], 
-                scaleX: [0, 1, 1],
-                transition: { 
-                  times: [0, 0.5, 1],
-                  duration: 1.5
-                }
-              }}
-              key={`transition-${activeTab}`}
-            />
-
             {renderTabContent()}
           </motion.div>
         </AnimatePresence>
