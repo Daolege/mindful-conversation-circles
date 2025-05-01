@@ -177,4 +177,6 @@ export interface DatabaseFunctions {
   check_table_exists: any;
   execute_sql: any;
   insert_order_item: any;
+  // Add any missing database functions below that appear in the error messages
+  // This is needed to fix TypeScript errors in various service files
 }
