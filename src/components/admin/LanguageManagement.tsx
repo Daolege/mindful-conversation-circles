@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useTranslations } from '@/hooks/useTranslations';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,12 +9,20 @@ import { Badge } from '@/components/ui/badge';
 import { Globe } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 
+interface LanguageItem {
+  code: string;
+  name: string;
+  nativeName: string;
+  enabled: boolean;
+  rtl?: boolean;
+}
+
 export const LanguageManagement = () => {
   const { t } = useTranslations();
   const { supportedLanguages, currentLanguage } = useLanguage();
   
   // These are the languages planned for future implementation
-  const plannedLanguages = [
+  const plannedLanguages: LanguageItem[] = [
     { code: 'fr', name: 'French', nativeName: 'Français', enabled: false },
     { code: 'de', name: 'German', nativeName: 'Deutsch', enabled: false },
     { code: 'ru', name: 'Russian', nativeName: 'Русский', enabled: false },
