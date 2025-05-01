@@ -146,12 +146,9 @@ export interface SiteSetting {
   // Compatibility layer for recordMigration function
   key?: string;
   value?: string;
-
-  // Allow arbitrary fields for backwards compatibility
-  [key: string]: any;
 }
 
-// Add Database Function Types to fix TypeScript errors
+// Database Function Types with fixed type definitions
 export interface DatabaseFunctions {
   create_test_subscription: any;
   has_role: any;
@@ -169,7 +166,7 @@ export interface DatabaseFunctions {
   insert_order_item: any;
 }
 
-// OrderLineItem interface for TypeScript errors
+// OrderLineItem interface with required properties
 export interface OrderLineItem {
   order_id: string;
   course_id: number;

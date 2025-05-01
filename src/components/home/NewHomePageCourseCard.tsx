@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CourseNew } from "@/lib/types/course-new";
+import { Users, Clock, Star } from "lucide-react";
 
 interface NewHomePageCourseCardProps {
   course: CourseNew;
@@ -90,10 +91,17 @@ const NewHomePageCourseCard = ({ course, index }: NewHomePageCourseCardProps) =>
   };
 
   const gradientColors = getGradientColors();
+
+  // Course tags - mock data for visual demonstration
+  const courseTags = [
+    { id: 1, name: course.category || "入门课程", color: "bg-blue-100 text-blue-800" },
+    { id: 2, name: course.is_featured ? "精品课程" : "基础课程", color: "bg-purple-100 text-purple-800" },
+    { id: 3, name: "热门", color: "bg-amber-100 text-amber-800" }
+  ];
   
   return (
     <Link to={`/courses-new/${course.id}`} className="block transform transition-all duration-700 hover:translate-y-[-8px]">
-      <Card className="relative h-[250px] overflow-hidden bg-gradient-to-br from-gray-200/90 to-gray-300/90 backdrop-blur-sm border-0 shadow-lg group cursor-pointer hover:shadow-2xl transition-all duration-1000">
+      <Card className="relative h-[270px] overflow-hidden bg-gradient-to-br from-gray-200/90 to-gray-300/90 backdrop-blur-sm border-0 shadow-lg group cursor-pointer hover:shadow-2xl transition-all duration-1000">
         <div className="absolute inset-0 w-full h-full overflow-hidden">
           <div className="absolute inset-0">
             <div 
@@ -124,40 +132,58 @@ const NewHomePageCourseCard = ({ course, index }: NewHomePageCourseCardProps) =>
           <div className="absolute inset-0 bg-gradient-to-b from-gray-200/40 via-gray-300/40 to-gray-400/60 backdrop-blur-[1px]" />
         </div>
 
-        {/* Category badges */}
-        {course.category && (
-          <div className="absolute top-3 left-3 z-20">
+        {/* Course tags */}
+        <div className="absolute top-3 left-3 z-20 flex flex-wrap gap-2">
+          {courseTags.map((tag, idx) => (
             <Badge 
-              variant="secondary" 
-              className="bg-white/90 text-gray-800 backdrop-blur-sm shadow-sm border border-white/20
-                transform transition-all duration-300 group-hover:scale-105">
-              {course.category}
+              key={tag.id}
+              className={`${tag.color} backdrop-blur-sm shadow-sm border border-white/20
+                transform transition-all duration-300 group-hover:scale-105`}
+            >
+              {tag.name}
             </Badge>
+          ))}
+        </div>
+
+        {/* Course meta info */}
+        <div className="absolute top-3 right-3 z-20">
+          <div className="flex items-center space-x-2 bg-black/40 backdrop-blur-sm rounded-full px-3 py-1 text-white text-xs">
+            <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+            <span>5.0</span>
+            <span className="text-white/70">({course.enrollment_count || 0})</span>
           </div>
-        )}
+        </div>
 
         {/* Content section at bottom */}
         <div className="absolute inset-x-0 bottom-0 z-10 p-5 bg-black/10 backdrop-blur-[2px]">
-          <div className="space-y-2">
-            {course.is_featured && (
-              <Badge 
-                className="bg-white/90 text-gray-800 backdrop-blur-sm
-                  transform transition-all duration-300 group-hover:scale-105">
-                热门课程
-              </Badge>
-            )}
-
+          <div className="space-y-3">
             <h3 className="text-xl font-bold text-black drop-shadow-md
               transform transition-all duration-300 group-hover:scale-[1.02]">
               {course.title}
             </h3>
+            
+            <div className="flex items-center gap-4 text-xs text-gray-700">
+              <div className="flex items-center">
+                <Users className="w-3.5 h-3.5 mr-1" />
+                <span>{course.enrollment_count || 0}人已学习</span>
+              </div>
+              <div className="flex items-center">
+                <Clock className="w-3.5 h-3.5 mr-1" />
+                <span>随时学习</span>
+              </div>
+            </div>
 
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center pt-2">
               <div className="font-bold text-lg text-black">
                 ¥{course.price}
                 {hasDiscount && (
                   <span className="text-sm line-through text-gray-600 ml-2">
                     ¥{course.original_price}
+                  </span>
+                )}
+                {hasDiscount && (
+                  <span className="ml-2 text-xs bg-red-600 text-white px-1.5 py-0.5 rounded">
+                    {discount}% OFF
                   </span>
                 )}
               </div>

@@ -18,7 +18,7 @@ interface CourseSectionProps {
 const CourseSection: React.FC<CourseSectionProps> = ({
   title,
   subtitle,
-  limit = 4,
+  limit = 6,
   filterBy,
   filterValue,
 }) => {
@@ -87,7 +87,7 @@ const CourseSection: React.FC<CourseSectionProps> = ({
         </motion.div>
 
         {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {Array(limit).fill(0).map((_, i) => (
               <div key={i} className="h-[250px] bg-gray-200 animate-pulse rounded-lg">
                 <div className="h-48 bg-gray-300 animate-pulse rounded-t-lg"></div>
@@ -108,7 +108,7 @@ const CourseSection: React.FC<CourseSectionProps> = ({
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
           >
             {courses.map((course, index) => (
               <NewHomePageCourseCard 
