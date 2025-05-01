@@ -1,92 +1,112 @@
 
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
-export const updateOrderStatus = async (orderId: string, status: string): Promise<{ success: boolean; error: Error | null }> => {
+export const updateOrderStatus = async (orderId: string, newStatus: string) => {
   try {
-    if (!orderId || !status) {
-      return { success: false, error: new Error("Missing orderId or status") };
-    }
-    
-    console.log("Updating order status:", orderId, "to", status);
+    console.log(`[orderUpdateService] Updating order ${orderId} to status: ${newStatus}`);
     
     const { error } = await supabase
-      .from("orders")
-      .update({ status })
-      .eq("id", orderId);
-
+      .from('orders')
+      .update({ 
+        status: newStatus, 
+        updated_at: new Date().toISOString() 
+      })
+      .eq('id', orderId);
+    
     if (error) {
-      console.error("Error updating order status:", error);
+      console.error('[orderUpdateService] Error updating order:', error);
       return { success: false, error };
     }
-
-    console.log("Order status updated successfully");
+    
+    console.log(`[orderUpdateService] Successfully updated order ${orderId} to status: ${newStatus}`);
     return { success: true, error: null };
-  } catch (error) {
-    console.error("Error updating order status:", error);
-    return { success: false, error: error as Error };
+  } catch (err) {
+    console.error('[orderUpdateService] Error in updateOrderStatus:', err);
+    return { success: false, error: err };
   }
 };
 
-export const insertSampleOrders = async (count: number = 10): Promise<{ success: boolean; message: string }> => {
+export const deleteOrder = async (orderId: string) => {
   try {
-    console.log(`Inserting ${count} sample orders...`);
-    
-    const { data: users, error: usersError } = await supabase
-      .from('profiles')
-      .select('id')
-      .limit(10);
-    
-    if (usersError || !users || users.length === 0) {
-      console.error("Failed to fetch users:", usersError);
-      return { success: false, message: "Failed to fetch users for sample orders" };
-    }
-    
-    const { data: courses, error: coursesError } = await supabase
-      .from('courses')
-      .select('id, price')
-      .limit(10);
-    
-    if (coursesError || !courses || courses.length === 0) {
-      console.error("Failed to fetch courses:", coursesError);
-      return { success: false, message: "Failed to fetch courses for sample orders" };
-    }
-    
-    const orderStatuses = ['completed', 'pending', 'failed'];
-    const paymentTypes = ['alipay', 'wechat', 'credit_card', 'bank_transfer'];
-    
-    const sampleOrders = Array.from({ length: count }).map((_, i) => {
-      const randomUser = users[Math.floor(Math.random() * users.length)];
-      const randomCourse = courses[Math.floor(Math.random() * courses.length)];
-      const randomStatus = orderStatuses[Math.floor(Math.random() * orderStatuses.length)];
-      const randomPaymentType = paymentTypes[Math.floor(Math.random() * paymentTypes.length)];
-      const orderDate = new Date();
-      orderDate.setDate(orderDate.getDate() - Math.floor(Math.random() * 30));
+    console.log(`[orderUpdateService] Deleting order ${orderId}`);
+
+    // First try to delete related order items if they exist
+    try {
+      // Check if order_items table exists
+      const { data: tableExists } = await supabase.rpc(
+        'check_table_exists',
+        { table_name: 'order_items' }
+      );
       
-      return {
-        user_id: randomUser.id,
-        course_id: randomCourse.id,
-        amount: randomCourse.price,
-        currency: 'cny',
-        status: randomStatus,
-        payment_type: randomPaymentType,
-        order_number: `ORD-${Date.now().toString().slice(-8)}-${i}`,
-        created_at: orderDate.toISOString(),
-        updated_at: orderDate.toISOString()
-      };
-    });
-    
-    const { error: insertError } = await supabase
-      .from('orders')
-      .insert(sampleOrders);
-    
-    if (insertError) {
-      console.error("Error inserting sample orders:", insertError);
-      return { success: false, message: `Failed to insert sample orders: ${insertError.message}` };
+      if (tableExists) {
+        console.log(`[orderUpdateService] Deleting related order items for order ${orderId}`);
+        const { error: itemsDeleteError } = await supabase
+          .from('order_items')
+          .delete()
+          .eq('order_id', orderId);
+        
+        if (itemsDeleteError) {
+          console.warn(`[orderUpdateService] Error deleting order items: ${itemsDeleteError.message}`);
+          // Continue with order deletion even if items deletion fails
+        }
+      }
+    } catch (itemsError) {
+      console.warn(`[orderUpdateService] Could not check for or delete order items:`, itemsError);
+      // Continue with order deletion even if we can't check for items
     }
     
-    return { success: true, message: `Successfully inserted ${count} sample orders` };
-  } catch (error) {
-    console.error("Error inserting sample orders:", error);
-    return { success: false, message: `Error inserting sample orders: ${(error as Error).message}` };
+    // Now delete the order itself
+    const { error } = await supabase
+      .from('orders')
+      .delete()
+      .eq('id', orderId);
+    
+    if (error) {
+      console.error(`[orderUpdateService] Error deleting order: ${error.message}`);
+      return { success: false, error };
+    }
+    
+    console.log(`[orderUpdateService] Successfully deleted order ${orderId}`);
+    return { success: true, error: null };
+  } catch (err) {
+    console.error('[orderUpdateService] Error in deleteOrder:', err);
+    return { success: false, error: err };
+  }
+};
+
+// Add function to check if user has permission to delete the order
+export const canDeleteOrder = async (orderId: string, userId: string) => {
+  try {
+    // Check if user is the owner of the order or has admin role
+    const { data: user } = await supabase.auth.getUser();
+    
+    // Check if user has admin role
+    const isAdmin = user?.user?.app_metadata?.roles?.includes('admin') || 
+                   user?.user?.user_metadata?.roles?.includes('admin') || 
+                   false;
+    
+    if (isAdmin) {
+      return { canDelete: true, error: null };
+    }
+    
+    // Check if user is the owner of the order
+    const { data: order, error } = await supabase
+      .from('orders')
+      .select('user_id')
+      .eq('id', orderId)
+      .single();
+    
+    if (error) {
+      console.error('[orderUpdateService] Error checking order ownership:', error);
+      return { canDelete: false, error };
+    }
+    
+    const canDelete = order.user_id === userId;
+    
+    return { canDelete, error: null };
+  } catch (err) {
+    console.error('[orderUpdateService] Error checking delete permission:', err);
+    return { canDelete: false, error: err };
   }
 };

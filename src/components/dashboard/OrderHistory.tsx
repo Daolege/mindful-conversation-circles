@@ -11,6 +11,7 @@ import { useNavigate } from "react-router-dom";
 const orderStatusMap: Record<string, { label: string; className: string }> = {
   completed: { label: "已完成", className: "bg-gray-700 text-white hover:bg-gray-800" },
   processing: { label: "处理中", className: "bg-gray-400 text-white hover:bg-gray-500" },
+  pending: { label: "处理中", className: "bg-gray-400 text-white hover:bg-gray-500" },
   cancelled: { label: "已取消", className: "bg-gray-500 text-white hover:bg-gray-600" },
   failed: { label: "失败", className: "bg-gray-600 text-white hover:bg-gray-700" },
 };

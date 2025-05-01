@@ -177,4 +177,5 @@ export interface DatabaseFunctions {
   check_table_exists: any;
   execute_sql: any;
   insert_order_item: any;
+  delete_order: any;
 }

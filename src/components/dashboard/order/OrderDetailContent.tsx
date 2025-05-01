@@ -82,7 +82,7 @@ export const OrderDetailContent = ({ order: initialOrder }: OrderDetailContentPr
                 <CardTitle className="text-xl font-semibold">订单操作</CardTitle>
               </CardHeader>
               <CardContent className="p-6">
-                <OrderActions order={order} />
+                <OrderActions order={order} onOrderUpdated={handleOrderUpdate} />
               </CardContent>
             </Card>
           </div>
