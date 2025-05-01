@@ -49,14 +49,6 @@ export function SimpleCourseTab() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4">
         <h3 className="text-xl font-medium">我的课程 <span className="text-muted-foreground text-sm">({courses.length})</span></h3>
-        <Button 
-          onClick={() => navigate('/my-courses')} 
-          variant="outline" 
-          size="sm"
-          className="shrink-0 hover:scale-105 transition-transform duration-200 hover:shadow-md"
-        >
-          查看全部课程
-        </Button>
       </div>
 
       {isLoading ? (
@@ -73,7 +65,6 @@ export function SimpleCourseTab() {
                   </div>
                 </div>
                 <div className="flex gap-2 w-full sm:w-auto justify-end">
-                  <div className="h-9 bg-gray-200 rounded w-24"></div>
                   <div className="h-9 bg-gray-200 rounded w-24"></div>
                 </div>
               </div>
@@ -130,15 +121,23 @@ const CourseListItem = ({ course }: CourseListItemProps) => {
   const getStatusBadge = () => {
     if (isCompleted) {
       return (
-        <Badge variant="success" className="group-hover:animate-pulse flex items-center gap-1">
+        <Badge variant="courseTag" className="group-hover:bg-gray-100 transition-colors flex items-center gap-1">
           <CheckCircle className="h-3.5 w-3.5" />
           已完成
         </Badge>
       );
     } else if (hasStarted) {
-      return <Badge variant="warning" className="group-hover:scale-105 transition-transform">进行中</Badge>;
+      return (
+        <Badge variant="courseTag" className="group-hover:bg-gray-100 transition-colors">
+          进行中
+        </Badge>
+      );
     } else {
-      return <Badge variant="outline" className="group-hover:bg-gray-100 transition-colors">未开始</Badge>;
+      return (
+        <Badge variant="courseTag" className="group-hover:bg-gray-100 transition-colors">
+          未开始
+        </Badge>
+      );
     }
   };
 
@@ -179,34 +178,14 @@ const CourseListItem = ({ course }: CourseListItemProps) => {
         </div>
       </div>
       
-      <div className="flex flex-col sm:flex-row gap-2 mt-3 sm:mt-0 w-full sm:w-auto z-10">
+      <div className="mt-3 sm:mt-0 w-full sm:w-auto z-10">
         <Button 
           size="sm" 
           onClick={() => navigate(`/course-learn/${course.id}`)}
-          className="flex-1 sm:flex-none transition-all duration-300 hover:scale-105 hover:shadow-md"
-          variant={hasStarted ? "default" : "success"}
+          className="w-full sm:w-auto transition-all duration-300 hover:scale-105 hover:shadow-md"
         >
-          {hasStarted ? (
-            <>
-              <Play className="h-4 w-4 mr-1" />
-              继续学习
-            </>
-          ) : (
-            <>
-              <Book className="h-4 w-4 mr-1" />
-              开始学习
-            </>
-          )}
-        </Button>
-        
-        <Button 
-          size="sm"
-          variant="outline" 
-          onClick={() => navigate(`/course-detail/${course.id}`)}
-          className="flex-1 sm:flex-none transition-all duration-300 hover:scale-105 hover:shadow-md
-            hover:bg-gray-100/80"
-        >
-          课程详情
+          <Book className="h-4 w-4 mr-1" />
+          开始学习
         </Button>
       </div>
     </motion.div>
