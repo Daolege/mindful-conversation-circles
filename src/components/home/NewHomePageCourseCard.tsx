@@ -28,7 +28,7 @@ const NewHomePageCourseCard = ({ course, index }: NewHomePageCourseCardProps) =>
     }, 0);
   }, [course.sections]);
   
-  // Dynamic gradient variants based on index for static state (monochromatic)
+  // Dynamic gradient variants based on index for static state
   const getGradientClass = (index: number) => {
     // Using more subtle grayscale gradients
     const gradientVariants = [
@@ -40,20 +40,20 @@ const NewHomePageCourseCard = ({ course, index }: NewHomePageCourseCardProps) =>
     return gradientVariants[index % gradientVariants.length];
   };
   
-  // Enhanced hover effect classes with more intensity
+  // Enhanced hover effect classes with more intensity - Fixed with stronger color transitions
   const getHoverEffect = (index: number) => {
     const hoverEffects = [
-      'hover:from-gray-200 hover:via-gray-300 hover:to-gray-400 hover:shadow-lg',
-      'hover:from-gray-300 hover:via-gray-200 hover:to-gray-300 hover:shadow-lg',
-      'hover:from-gray-150 hover:via-gray-250 hover:to-gray-350 hover:shadow-lg',
-      'hover:from-gray-200 hover:via-gray-300 hover:to-gray-200 hover:shadow-lg',
+      'group-hover:from-gray-300 group-hover:via-gray-400 group-hover:to-gray-500',
+      'group-hover:from-gray-400 group-hover:via-gray-300 group-hover:to-gray-400',
+      'group-hover:from-gray-200 group-hover:via-gray-300 group-hover:to-gray-400',
+      'group-hover:from-gray-300 group-hover:via-gray-400 group-hover:to-gray-300',
     ];
     return hoverEffects[index % hoverEffects.length];
   };
 
   return (
-    <Link to={`/courses-new/${course.id}`} className="block transform transition-all duration-500 hover:translate-y-[-8px]">
-      <Card className="overflow-hidden h-[320px] relative border border-gray-200 shadow-sm hover:shadow-xl transition-all duration-300">
+    <Link to={`/courses-new/${course.id}`} className="block transform transition-all duration-500 hover:translate-y-[-8px] group">
+      <Card className="overflow-hidden h-[320px] relative border border-gray-200 shadow-sm group-hover:shadow-xl transition-all duration-300">
         {/* Enhanced background with improved static and hover states */}
         <div className={`absolute inset-0 bg-gradient-to-br ${getGradientClass(index)} ${getHoverEffect(index)} transition-all duration-300`}></div>
         
