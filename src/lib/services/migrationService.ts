@@ -8,6 +8,15 @@ export type MigrationName =
   | 'add_course_materials'
   | 'homework_foreign_key_fix';
 
+// Create a custom site settings interface to match the actual table structure
+interface SiteSetting {
+  id?: string;
+  key: string;
+  value: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
 // Track migrations in a migrations table
 export const recordMigration = async (name: MigrationName, description: string, success: boolean = true) => {
   try {
@@ -25,7 +34,7 @@ export const recordMigration = async (name: MigrationName, description: string, 
             success
           }),
           updated_at: new Date().toISOString()
-        });
+        } as SiteSetting);
       
       if (error) {
         console.error('Error recording migration:', error);
@@ -83,7 +92,7 @@ export const updateExchangeRate = async (newRate: number): Promise<boolean> => {
       // Update existing setting
       const { error: updateError } = await supabase
         .from('site_settings')
-        .update({ value: newRate.toString() })
+        .update({ value: newRate.toString() } as Partial<SiteSetting>)
         .eq('key', 'exchange_rate');
         
       if (updateError) {
@@ -94,7 +103,7 @@ export const updateExchangeRate = async (newRate: number): Promise<boolean> => {
       // Insert new setting
       const { error: insertError } = await supabase
         .from('site_settings')
-        .insert({ key: 'exchange_rate', value: newRate.toString() });
+        .insert({ key: 'exchange_rate', value: newRate.toString() } as SiteSetting);
         
       if (insertError) {
         console.error('Error inserting exchange rate:', insertError);
@@ -153,7 +162,7 @@ export const updateSiteSettings = async (settings: { [key: string]: string }): P
           // Update existing setting
           const { error: updateError } = await supabase
             .from('site_settings')
-            .update({ value: value })
+            .update({ value: value } as Partial<SiteSetting>)
             .eq('key', key);
             
           if (updateError) {
@@ -164,7 +173,7 @@ export const updateSiteSettings = async (settings: { [key: string]: string }): P
           // Insert new setting
           const { error: insertError } = await supabase
             .from('site_settings')
-            .insert({ key: key, value: value });
+            .insert({ key: key, value: value } as SiteSetting);
             
           if (insertError) {
             console.error(`Error inserting setting ${key}:`, insertError);
@@ -180,4 +189,3 @@ export const updateSiteSettings = async (settings: { [key: string]: string }): P
     return false;
   }
 };
-

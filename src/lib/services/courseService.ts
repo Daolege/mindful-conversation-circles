@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { CourseData, CourseResponse } from "@/lib/types/course-new";
 
 // Define a simpler type to avoid excessive type instantiation
-type BasicCourseData = {
+interface BasicCourseData {
   id?: number;
   title: string;
   description?: string;
@@ -12,11 +12,11 @@ type BasicCourseData = {
   category?: string | null;
   display_order?: number;
   status?: string;
-  featured?: boolean;
+  is_featured?: boolean;
   thumbnail_url?: string;
   created_at?: string;
   updated_at?: string;
-};
+}
 
 // Use more specific types to avoid deep instantiation issues
 export const getCourses = async () => {
@@ -59,7 +59,7 @@ export const getCourseById = async (courseId: number): Promise<CourseResponse<Co
 };
 
 // Add the saveCourse function with simplified types
-export const saveCourse = async (courseData: BasicCourseData): Promise<CourseResponse<CourseData>> => {
+export const saveCourse = async (courseData: CourseData): Promise<CourseResponse<CourseData>> => {
   try {
     // Ensure title exists when creating a new course
     if (!courseData.id && !courseData.title) {
@@ -147,11 +147,11 @@ export const updateCourseOrder = async (courseIds: number[]): Promise<{ success:
   }
 };
 
-// Fix insertCourse function to use a proper type
+// Fix insertCourse function to use the right table
 export const insertCourse = async (courseData: BasicCourseData) => {
   try {
     const { data, error } = await supabase
-      .from("courses")
+      .from("courses_new")
       .insert(courseData)
       .select()
       .single();
@@ -168,10 +168,10 @@ export const insertCourse = async (courseData: BasicCourseData) => {
 };
 
 // Fix updateMultipleCourses with correct types
-export const updateMultipleCourses = async (coursesData: BasicCourseData[]) => {
+export const updateMultipleCourses = async (coursesData: CourseData[]) => {
   try {
     const { data, error } = await supabase
-      .from("courses")
+      .from("courses_new")
       .upsert(coursesData)
       .select();
 

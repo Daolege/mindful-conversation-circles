@@ -33,7 +33,7 @@ export interface CourseWithDetails extends Course {
   original_price?: number;
   materials?: CourseMaterial[];
   status?: 'published' | 'draft' | 'archived';
-  thumbnail_url?: string; // Added thumbnail_url here
+  thumbnail_url?: string;
 }
 
 export interface CourseMaterial {
@@ -89,7 +89,7 @@ export interface ListItem {
 // Properly export SubscriptionPeriod type
 export type SubscriptionPeriod = 'monthly' | 'quarterly' | 'yearly' | '2years' | '3years';
 
-// Properly export SubscriptionPlan interface
+// Update SubscriptionPlan interface to ensure features is correctly typed
 export interface SubscriptionPlan {
   id: string;
   name: string;
@@ -99,7 +99,7 @@ export interface SubscriptionPlan {
   interval: string;
   display_order: number;
   is_active: boolean;
-  features?: string[];
+  features?: string[]; // Make sure features is properly defined
   created_at?: string;
   updated_at?: string;
   discount_percentage?: number;
@@ -110,6 +110,11 @@ export interface CourseData {
   id?: number;
   title: string;
   description?: string;
+  price?: number;
+  currency?: string;
+  display_order?: number;
+  status?: 'draft' | 'published' | 'archived';
+  is_featured?: boolean;
   [key: string]: any;
 }
 

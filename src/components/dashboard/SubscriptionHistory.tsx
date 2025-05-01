@@ -246,13 +246,14 @@ export function SubscriptionHistory() {
                 </div>
               </div>
               
-              {hasFeatures && (
+              {hasFeatures && currentSubscription.subscription_plans && (
                 <div className="mt-4">
                   <h5 className="text-sm font-medium mb-2">包含特权</h5>
                   <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
-                    {currentSubscription.subscription_plans.features.map((feature: string, i: number) => (
-                      <li key={i}>{feature}</li>
-                    ))}
+                    {Array.isArray(currentSubscription.subscription_plans.features) && 
+                      currentSubscription.subscription_plans.features.map((feature: string, i: number) => (
+                        <li key={i}>{feature}</li>
+                      ))}
                   </ul>
                 </div>
               )}
@@ -338,4 +339,3 @@ export function SubscriptionHistory() {
     </div>
   );
 }
-
