@@ -1,4 +1,3 @@
-
 import { Course } from "./course";
 
 export interface CourseSection {
@@ -130,11 +129,21 @@ export interface CourseResponse<T> {
   error: Error | null;
 }
 
-// Updated SiteSetting interface - consistent across the application
+// Updated SiteSetting interface to match the site_settings table structure
+// This is the critical part to fix TypeScript errors
 export interface SiteSetting {
   id?: string;
-  key: string;
-  value: string;
-  updated_at?: string;
+  site_name?: string;
+  site_description?: string;
+  logo_url?: string;
+  support_phone?: string;
+  contact_email?: string;
+  maintenance_mode?: boolean;
+  enable_registration?: boolean;
   created_at?: string;
+  updated_at?: string;
+  
+  // For compatibility with recordMigration function
+  key?: string;
+  value?: string;
 }

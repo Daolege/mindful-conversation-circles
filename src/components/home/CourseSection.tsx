@@ -2,10 +2,9 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import CourseCardNew from './CourseCardNew';
 import { motion } from 'framer-motion';
-import { CourseNew } from '@/lib/types/course-new';
 import { toast } from 'sonner';
+import HomePageCourseCard from './HomePageCourseCard';
 
 interface CourseSectionProps {
   title: string;
@@ -22,7 +21,7 @@ const CourseSection: React.FC<CourseSectionProps> = ({
   filterBy,
   filterValue,
 }) => {
-  const fetchCourses = async (): Promise<CourseNew[]> => {
+  const fetchCourses = async () => {
     try {
       let query = supabase
         .from('courses_new')
@@ -47,7 +46,7 @@ const CourseSection: React.FC<CourseSectionProps> = ({
         return [];
       }
       
-      return data as CourseNew[];
+      return data;
     } catch (e) {
       console.error('Exception in fetchCourses:', e);
       toast.error('加载课程信息失败');
@@ -55,8 +54,8 @@ const CourseSection: React.FC<CourseSectionProps> = ({
     }
   };
 
-  // Use the query with proper type annotations
-  const { data: courses = [], isLoading, isError } = useQuery<CourseNew[]>({
+  // Use the query with explicit typing
+  const { data: courses = [], isLoading, isError } = useQuery({
     queryKey: ['homepage-courses', filterBy, filterValue, limit],
     queryFn: fetchCourses
   });
@@ -72,13 +71,8 @@ const CourseSection: React.FC<CourseSectionProps> = ({
     }
   };
 
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0 }
-  };
-
   return (
-    <section className="py-20 bg-gray-50">
+    <section className="py-16 bg-gray-50">
       <div className="container mx-auto px-4">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
@@ -94,7 +88,7 @@ const CourseSection: React.FC<CourseSectionProps> = ({
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {Array(limit).fill(0).map((_, i) => (
-              <div key={i} className="h-[400px] bg-gray-200 animate-pulse rounded-lg">
+              <div key={i} className="h-[300px] bg-gray-200 animate-pulse rounded-lg">
                 <div className="h-48 bg-gray-300 animate-pulse rounded-t-lg"></div>
                 <div className="p-4 space-y-3">
                   <div className="h-6 bg-gray-300 animate-pulse rounded w-3/4"></div>
@@ -118,12 +112,11 @@ const CourseSection: React.FC<CourseSectionProps> = ({
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8"
           >
             {courses.map((course, index) => (
-              <motion.div 
+              <HomePageCourseCard 
                 key={course.id} 
-                variants={itemVariants}
-              >
-                <CourseCardNew course={course} variantIndex={index} />
-              </motion.div>
+                course={course}
+                index={index}
+              />
             ))}
           </motion.div>
         ) : (

@@ -123,6 +123,16 @@
       background-position: 0 50%;
     }
   }
+
+  /* Custom perspective for 3D cards */
+  .perspective-1000 {
+    perspective: 1000px;
+  }
+  
+  /* Custom transition duration */
+  .duration-2000 {
+    transition-duration: 2000ms;
+  }
 }
 
 /* 身份认证页面样式 */
