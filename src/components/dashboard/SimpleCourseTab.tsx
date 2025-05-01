@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { CourseNew } from "@/lib/types/course-new";
-import { Book, Play, CheckCircle, Globe } from "lucide-react";
+import { Book, Play, CheckCircle, Globe, Eye } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
 
@@ -65,6 +65,7 @@ export function SimpleCourseTab() {
                   </div>
                 </div>
                 <div className="flex gap-2 w-full sm:w-auto justify-end">
+                  <div className="h-9 bg-gray-200 rounded w-24"></div>
                   <div className="h-9 bg-gray-200 rounded w-24"></div>
                 </div>
               </div>
@@ -178,14 +179,25 @@ const CourseListItem = ({ course }: CourseListItemProps) => {
         </div>
       </div>
       
-      <div className="mt-3 sm:mt-0 w-full sm:w-auto z-10">
+      <div className="flex flex-col sm:flex-row gap-2 mt-3 sm:mt-0 w-full sm:w-auto z-10">
         <Button 
           size="sm" 
           onClick={() => navigate(`/course-learn/${course.id}`)}
-          className="w-full sm:w-auto transition-all duration-300 hover:scale-105 hover:shadow-md"
+          className="flex-1 sm:flex-none transition-all duration-300 hover:scale-105 hover:shadow-md"
         >
           <Book className="h-4 w-4 mr-1" />
           开始学习
+        </Button>
+        
+        <Button 
+          size="sm"
+          variant="outline" 
+          onClick={() => navigate(`/course-detail/${course.id}`)}
+          className="flex-1 sm:flex-none transition-all duration-300 hover:scale-105 hover:shadow-md
+            hover:bg-gray-100/80"
+        >
+          <Eye className="h-4 w-4 mr-1" />
+          查看课程
         </Button>
       </div>
     </motion.div>
