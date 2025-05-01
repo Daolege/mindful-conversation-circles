@@ -3,7 +3,9 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Shield, Home } from "lucide-react";
 import { NavbarSearch } from "./NavbarSearch";
-import React from "react"; // 添加 React 导入，使用 memo
+import React from "react";
+import LanguageSwitcher from "./LanguageSwitcher";
+import { useTranslations } from "@/hooks/useTranslations";
 
 interface MobileNavbarMenuProps {
   user: any;
@@ -22,6 +24,7 @@ export const MobileNavbarMenu = React.memo(({
   showAboutLink = true,
 }: MobileNavbarMenuProps) => {
   const navigate = useNavigate();
+  const { t } = useTranslations();
 
   const handleLinkClick = React.useCallback(() => {
     setIsMenuOpen(false);
@@ -45,7 +48,7 @@ export const MobileNavbarMenu = React.memo(({
         onClick={handleLinkClick}
       >
         <Home size={18} className="mr-2" />
-        首页
+        {t('navigation:home')}
       </Link>
       
       <Link 
@@ -53,7 +56,7 @@ export const MobileNavbarMenu = React.memo(({
         className="block py-2 px-4 hover:bg-knowledge-soft rounded"
         onClick={handleLinkClick}
       >
-        全部课程
+        {t('navigation:allCourses')}
       </Link>
       
       {showAboutLink && (
@@ -62,7 +65,7 @@ export const MobileNavbarMenu = React.memo(({
           className="block py-2 px-4 hover:bg-knowledge-soft rounded"
           onClick={handleLinkClick}
         >
-          关于我们
+          {t('navigation:aboutUs')}
         </Link>
       )}
       {user && isAdmin && (
@@ -72,7 +75,7 @@ export const MobileNavbarMenu = React.memo(({
           onClick={handleLinkClick}
         >
           <Shield size={18} />
-          管理后台
+          {t('navigation:adminPanel')}
         </Link>
       )}
       {user && (
@@ -81,9 +84,14 @@ export const MobileNavbarMenu = React.memo(({
           className="block py-2 px-4 hover:bg-knowledge-soft rounded"
           onClick={handleLinkClick}
         >
-          账号管理
+          {t('navigation:accountManagement')}
         </Link>
       )}
+
+      <div className="px-4 pt-2">
+        <LanguageSwitcher mobile={true} className="mt-2" />
+      </div>
+
       <div className="relative mt-3 px-4">
         <NavbarSearch inputClassName="w-full" />
       </div>
@@ -94,7 +102,7 @@ export const MobileNavbarMenu = React.memo(({
             onClick={handleLoginClick}
             className="w-full border-knowledge-primary text-knowledge-primary hover:bg-knowledge-primary hover:text-white"
           >
-            登录
+            {t('navigation:login')}
           </Button>
         )}
         {!user && (
@@ -102,7 +110,7 @@ export const MobileNavbarMenu = React.memo(({
             onClick={handleLoginClick}
             className="w-full bg-knowledge-primary hover:bg-knowledge-secondary text-white"
           >
-            注册
+            {t('navigation:register')}
           </Button>
         )}
         {user && (
@@ -111,7 +119,7 @@ export const MobileNavbarMenu = React.memo(({
             onClick={handleSignOutClick}
             className="w-full border-knowledge-primary text-knowledge-primary hover:bg-knowledge-primary hover:text-white"
           >
-            退出
+            {t('navigation:logout')}
           </Button>
         )}
       </div>

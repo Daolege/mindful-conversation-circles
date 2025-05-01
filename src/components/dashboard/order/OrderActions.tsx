@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { FileText, Loader2, CreditCard, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { PaymentReceiptModal } from './PaymentReceiptModal';
+import { useTranslations } from '@/hooks/useTranslations';
 
 interface OrderActionsProps {
   order: Order;
@@ -19,20 +20,37 @@ export const OrderActions = ({ order, onOrderUpdated }: OrderActionsProps) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [receiptModalOpen, setReceiptModalOpen] = useState(false);
   const navigate = useNavigate();
+  const { t, currentLanguage } = useTranslations();
 
   const handleStatusUpdate = async (newStatus: string) => {
     setIsUpdating(true);
     try {
       const result = await setOrderStatus(order.id, newStatus);
       if (result.success) {
-        toast.success(`订单状态已更新为 ${newStatus}`);
+        const statusText = newStatus === 'completed' ? 
+          (currentLanguage === 'en' ? 'completed' : '已完成') : 
+          (currentLanguage === 'en' ? newStatus : newStatus === 'cancelled' ? '已取消' : '处理中');
+        
+        toast.success(
+          currentLanguage === 'en' 
+            ? `Order status updated to ${statusText}` 
+            : `订单状态已更新为 ${statusText}`
+        );
         if (onOrderUpdated) onOrderUpdated();
       } else {
-        toast.error('更新订单状态失败');
+        toast.error(
+          currentLanguage === 'en' 
+            ? 'Failed to update order status' 
+            : '更新订单状态失败'
+        );
         console.error('Error updating order status:', result.error);
       }
     } catch (err) {
-      toast.error('更新订单状态时发生错误');
+      toast.error(
+        currentLanguage === 'en' 
+          ? 'Error occurred while updating order status' 
+          : '更新订单状态时发生错误'
+      );
       console.error('Error in status update:', err);
     } finally {
       setIsUpdating(false);
@@ -44,15 +62,27 @@ export const OrderActions = ({ order, onOrderUpdated }: OrderActionsProps) => {
     try {
       const result = await deleteOrder(order.id);
       if (result.success) {
-        toast.success('订单已成功删除');
+        toast.success(
+          currentLanguage === 'en' 
+            ? 'Order successfully deleted' 
+            : '订单已成功删除'
+        );
         // Navigate back to the orders list
         navigate('/dashboard?tab=orders');
       } else {
-        toast.error('删除订单失败');
+        toast.error(
+          currentLanguage === 'en' 
+            ? 'Failed to delete order' 
+            : '删除订单失败'
+        );
         console.error('Error deleting order:', result.error);
       }
     } catch (err) {
-      toast.error('删除订单时发生错误');
+      toast.error(
+        currentLanguage === 'en' 
+          ? 'Error occurred while deleting order' 
+          : '删除订单时发生错误'
+      );
       console.error('Error in order deletion:', err);
     } finally {
       setIsDeleting(false);
@@ -61,7 +91,11 @@ export const OrderActions = ({ order, onOrderUpdated }: OrderActionsProps) => {
 
   const handleCompletePayment = () => {
     // 显示成功消息
-    toast.success('正在处理支付请求...');
+    toast.success(
+      currentLanguage === 'en' 
+        ? 'Processing payment request...' 
+        : '正在处理支付请求...'
+    );
     
     // 在实际应用中，这里会重定向到支付网关
     // 为了演示，我们使用定时器模拟支付流程
@@ -76,6 +110,18 @@ export const OrderActions = ({ order, onOrderUpdated }: OrderActionsProps) => {
   const isCancellable = order.status !== 'completed' && order.status !== 'cancelled';
   const isAdminMarkable = isPending && order.payment_type === 'admin';
 
+  const viewReceiptText = currentLanguage === 'en' ? 'View Payment Receipt' : '查看支付凭证';
+  const completePaymentText = currentLanguage === 'en' ? 'Complete Payment' : '完成支付';
+  const markCompletedText = currentLanguage === 'en' ? 'Mark as Completed' : '标记为已完成';
+  const cancelOrderText = currentLanguage === 'en' ? 'Cancel Order' : '取消此订单';
+  const deleteOrderText = currentLanguage === 'en' ? 'Delete Order' : '删除订单';
+  const confirmDeleteText = currentLanguage === 'en' ? 'Confirm Delete' : '确认删除';
+  const cancelText = currentLanguage === 'en' ? 'Cancel' : '取消';
+  const confirmDeleteTitleText = currentLanguage === 'en' ? 'Confirm Order Deletion' : '确认删除订单';
+  const confirmDeleteDescText = currentLanguage === 'en' 
+    ? 'This action is irreversible. The order and all related order items will be permanently deleted.'
+    : '此操作不可逆，删除后订单将永久消失，所有相关订单项目也将被删除。';
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col space-y-2">
@@ -86,7 +132,7 @@ export const OrderActions = ({ order, onOrderUpdated }: OrderActionsProps) => {
             onClick={() => setReceiptModalOpen(true)}
           >
             <FileText className="mr-2 h-4 w-4" />
-            查看支付凭证
+            {viewReceiptText}
           </Button>
         )}
         
@@ -103,7 +149,7 @@ export const OrderActions = ({ order, onOrderUpdated }: OrderActionsProps) => {
             ) : (
               <CreditCard className="mr-2 h-4 w-4" />
             )}
-            完成支付
+            {completePaymentText}
           </Button>
         )}
         
@@ -116,7 +162,7 @@ export const OrderActions = ({ order, onOrderUpdated }: OrderActionsProps) => {
             onClick={() => handleStatusUpdate('completed')}
           >
             {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            标记为已完成
+            {markCompletedText}
           </Button>
         )}
         
@@ -129,7 +175,7 @@ export const OrderActions = ({ order, onOrderUpdated }: OrderActionsProps) => {
             onClick={() => handleStatusUpdate('cancelled')}
           >
             {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            取消此订单
+            {cancelOrderText}
           </Button>
         )}
         
@@ -146,23 +192,23 @@ export const OrderActions = ({ order, onOrderUpdated }: OrderActionsProps) => {
               ) : (
                 <Trash2 className="mr-2 h-4 w-4" />
               )}
-              删除订单
+              {deleteOrderText}
             </Button>
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>确认删除订单</AlertDialogTitle>
+              <AlertDialogTitle>{confirmDeleteTitleText}</AlertDialogTitle>
               <AlertDialogDescription>
-                此操作不可逆，删除后订单将永久消失，所有相关订单项目也将被删除。
+                {confirmDeleteDescText}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>取消</AlertDialogCancel>
+              <AlertDialogCancel>{cancelText}</AlertDialogCancel>
               <AlertDialogAction 
                 onClick={handleDeleteOrder}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
-                确认删除
+                {confirmDeleteText}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

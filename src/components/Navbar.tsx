@@ -11,10 +11,13 @@ import { MobileNavbarMenu } from "./MobileNavbarMenu";
 import Logo from "@/components/Logo";
 import { handleAboutPageQueryError } from "@/lib/supabaseUtils";
 import { motion } from "framer-motion";
+import LanguageSwitcher from "./LanguageSwitcher";
+import { useTranslations } from "@/hooks/useTranslations";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, signOut } = useAuth();
+  const { t } = useTranslations();
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -89,7 +92,7 @@ const Navbar = () => {
               className="flex items-center space-x-1 text-gray-600 hover:text-knowledge-primary transition-all duration-200 relative group"
             >
               <Home size={18} />
-              <span>首页</span>
+              <span>{t('navigation:home')}</span>
               <motion.div
                 className="absolute -bottom-1 left-0 w-0 h-0.5 bg-knowledge-primary group-hover:w-full transition-all duration-200"
                 whileHover={{ width: "100%" }}
@@ -100,7 +103,7 @@ const Navbar = () => {
               to="/courses" 
               className="text-gray-600 hover:text-knowledge-primary transition-all duration-200 relative group"
             >
-              全部课程
+              {t('navigation:allCourses')}
               <motion.div
                 className="absolute -bottom-1 left-0 w-0 h-0.5 bg-knowledge-primary group-hover:w-full transition-all duration-200"
                 whileHover={{ width: "100%" }}
@@ -112,7 +115,7 @@ const Navbar = () => {
                 to="/about" 
                 className="text-gray-600 hover:text-knowledge-primary transition-all duration-200 relative group"
               >
-                关于我们
+                {t('navigation:aboutUs')}
                 <motion.div
                   className="absolute -bottom-1 left-0 w-0 h-0.5 bg-knowledge-primary group-hover:w-full transition-all duration-200"
                   whileHover={{ width: "100%" }}
@@ -125,7 +128,7 @@ const Navbar = () => {
                 className="flex items-center space-x-1 text-knowledge-primary font-medium hover:text-knowledge-secondary transition-all duration-200 relative group"
               >
                 <Shield size={18} />
-                <span>管理后台</span>
+                <span>{t('navigation:adminPanel')}</span>
                 <motion.div
                   className="absolute -bottom-1 left-0 w-0 h-0.5 bg-knowledge-secondary group-hover:w-full transition-all duration-200"
                   whileHover={{ width: "100%" }}
@@ -136,6 +139,7 @@ const Navbar = () => {
           </div>
 
           <div className="hidden md:flex items-center space-x-4">
+            <LanguageSwitcher />
             {user ? (
               <div className="flex items-center space-x-4">
                 <Link 
@@ -143,7 +147,7 @@ const Navbar = () => {
                   className="flex items-center space-x-2 text-gray-600 hover:text-knowledge-primary transition-all duration-200 relative group"
                 >
                   <User size={20} />
-                  <span>{user.name || '个人中心'}</span>
+                  <span>{user.name || t('navigation:userCenter')}</span>
                   <motion.div
                     className="absolute -bottom-1 left-0 w-0 h-0.5 bg-knowledge-primary group-hover:w-full transition-all duration-200"
                     whileHover={{ width: "100%" }}
@@ -153,7 +157,7 @@ const Navbar = () => {
                   to="/auth" 
                   className="text-gray-600 hover:text-knowledge-primary transition-all duration-200 relative group"
                 >
-                  账号管理
+                  {t('navigation:accountManagement')}
                   <motion.div
                     className="absolute -bottom-1 left-0 w-0 h-0.5 bg-knowledge-primary group-hover:w-full transition-all duration-200"
                     whileHover={{ width: "100%" }}
@@ -164,7 +168,7 @@ const Navbar = () => {
                   onClick={handleSignOut}
                   className="border-knowledge-primary text-knowledge-primary hover:bg-knowledge-primary hover:text-white transition-all duration-200"
                 >
-                  退出
+                  {t('navigation:logout')}
                 </Button>
               </div>
             ) : (
@@ -174,13 +178,13 @@ const Navbar = () => {
                   onClick={() => navigate("/auth")}
                   className="border-knowledge-primary text-knowledge-primary hover:bg-knowledge-primary hover:text-white transition-all duration-200"
                 >
-                  登录
+                  {t('navigation:login')}
                 </Button>
                 <Button 
                   onClick={() => navigate("/auth")}
                   className="bg-knowledge-primary hover:bg-knowledge-secondary text-white transition-all duration-200"
                 >
-                  注册
+                  {t('navigation:register')}
                 </Button>
               </div>
             )}

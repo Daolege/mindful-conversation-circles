@@ -3,10 +3,12 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from "framer-motion";
+import { useTranslations } from '@/hooks/useTranslations';
 
 export function DashboardNavigation() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { t } = useTranslations();
   const [activeTab, setActiveTab] = useState(() => {
     const searchParams = new URLSearchParams(location.search);
     return searchParams.get('tab') || 'courses';
@@ -26,10 +28,10 @@ export function DashboardNavigation() {
 
   // Tabs data for easier management
   const tabs = [
-    { value: 'courses', label: '我的课程' },
-    { value: 'orders', label: '订单记录' },
-    { value: 'subscriptions', label: '订阅记录' },
-    { value: 'profile', label: '个人信息' }
+    { value: 'courses', label: t('navigation:allCourses') },
+    { value: 'orders', label: t('checkout:orderDetails') },
+    { value: 'subscriptions', label: t('admin:subscriptionsManagement') },
+    { value: 'profile', label: t('navigation:accountManagement') }
   ];
 
   // Match the same animation variants from Admin.tsx

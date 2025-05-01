@@ -1,0 +1,44 @@
+
+{
+  "app": {
+    "name": "知识平台",
+    "description": "学习优质课程"
+  },
+  "actions": {
+    "save": "保存",
+    "cancel": "取消",
+    "submit": "提交",
+    "delete": "删除",
+    "edit": "编辑",
+    "view": "查看",
+    "search": "搜索",
+    "loading": "加载中...",
+    "back": "返回",
+    "next": "下一步",
+    "confirm": "确认",
+    "yes": "是",
+    "no": "否"
+  },
+  "errors": {
+    "general": "发生错误",
+    "notFound": "未找到",
+    "unauthorized": "未授权访问",
+    "forbidden": "访问被禁止",
+    "fieldRequired": "此字段为必填项",
+    "invalidEmail": "请输入有效的电子邮件"
+  },
+  "dates": {
+    "today": "今天",
+    "yesterday": "昨天",
+    "tomorrow": "明天",
+    "days": "天",
+    "weeks": "周",
+    "months": "月",
+    "years": "年"
+  },
+  "footer": {
+    "copyright": "© {{year}} 知识平台。保留所有权利。",
+    "termsOfService": "服务条款",
+    "privacyPolicy": "隐私政策"
+  }
+}

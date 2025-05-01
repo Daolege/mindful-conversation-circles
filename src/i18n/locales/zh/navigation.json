@@ -1,0 +1,14 @@
+
+{
+  "home": "首页",
+  "allCourses": "全部课程",
+  "aboutUs": "关于我们",
+  "adminPanel": "管理后台",
+  "userCenter": "个人中心",
+  "accountManagement": "账号管理",
+  "logout": "退出",
+  "login": "登录",
+  "register": "注册",
+  "language": "语言",
+  "dashboard": "控制面板"
+}
