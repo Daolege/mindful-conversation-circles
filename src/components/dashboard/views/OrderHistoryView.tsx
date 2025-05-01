@@ -4,10 +4,16 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getUserOrders, generateMockOrder } from "@/lib/services/orderService";
 import { useAuth } from "@/contexts/authHooks";
 import { OrderHistory } from "../OrderHistory";
-import { Loader2, Plus, RefreshCcw } from "lucide-react";
+import { Loader2, Plus, RefreshCcw, Filter, Calendar } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export function OrderHistoryView() {
   const { user } = useAuth();
@@ -102,6 +108,70 @@ export function OrderHistoryView() {
 
   const orders = ordersResponse?.data || [];
 
+  // Filter component shared between empty and populated views
+  const FilterControls = () => (
+    <div className="flex flex-wrap items-center gap-4 mb-4">
+      <div className="flex items-center gap-2">
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>选择时间范围</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+        
+        <Select
+          value={timeFilter}
+          onValueChange={setTimeFilter}
+        >
+          <SelectTrigger className="w-[140px] h-10 px-3">
+            <SelectValue placeholder="时间范围" />
+          </SelectTrigger>
+          <SelectContent className="bg-white/95 z-50">
+            <SelectItem value="all">所有时间</SelectItem>
+            <SelectItem value="3days">近三天</SelectItem>
+            <SelectItem value="month">近一个月</SelectItem>
+            <SelectItem value="halfyear">近半年</SelectItem>
+            <SelectItem value="year">近一年</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      
+      <div className="flex items-center gap-2">
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Filter className="h-4 w-4 text-muted-foreground" />
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>筛选订单状态</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+        
+        <Select
+          value={filterStatus}
+          onValueChange={handleStatusFilterChange}
+        >
+          <SelectTrigger className="w-[140px] h-10 px-3">
+            <SelectValue placeholder="订单状态" />
+          </SelectTrigger>
+          <SelectContent className="bg-white/95 z-50">
+            <SelectItem value="all">全部状态</SelectItem>
+            <SelectItem value="completed">已完成</SelectItem>
+            <SelectItem value="processing">处理中</SelectItem>
+            <SelectItem value="cancelled">已取消</SelectItem>
+            <SelectItem value="failed">失败</SelectItem>
+            <SelectItem value="refunded">已退款</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+    </div>
+  );
+
   return (
     <div className="space-y-6">
       {orders.length === 0 ? (
@@ -111,22 +181,7 @@ export function OrderHistoryView() {
           
           <div className="flex flex-col items-center gap-4">
             <div className="flex flex-col sm:flex-row gap-4 items-center max-w-md">
-              <Select
-                value={timeFilter}
-                onValueChange={setTimeFilter}
-                disabled={isLoading}
-              >
-                <SelectTrigger className="w-full sm:w-[200px] h-10">
-                  <SelectValue placeholder="选择时间范围" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">所有时间</SelectItem>
-                  <SelectItem value="3days">近三天</SelectItem>
-                  <SelectItem value="month">近一个月</SelectItem>
-                  <SelectItem value="halfyear">近半年</SelectItem>
-                  <SelectItem value="year">近一年</SelectItem>
-                </SelectContent>
-              </Select>
+              <FilterControls />
               
               <Button 
                 onClick={handleGenerateData} 
@@ -149,31 +204,15 @@ export function OrderHistoryView() {
         </div>
       ) : (
         <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-            <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
-              <Select
-                value={timeFilter}
-                onValueChange={setTimeFilter}
-              >
-                <SelectTrigger className="w-full sm:w-[200px] h-10 px-4">
-                  <SelectValue placeholder="时间范围" />
-                </SelectTrigger>
-                <SelectContent className="bg-white/95">
-                  <SelectItem value="all">所有时间</SelectItem>
-                  <SelectItem value="3days">近三天</SelectItem>
-                  <SelectItem value="month">近一个月</SelectItem>
-                  <SelectItem value="halfyear">近半年</SelectItem>
-                  <SelectItem value="year">近一年</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <FilterControls />
             
             <div className="flex flex-row items-center gap-2">
               <Button 
                 onClick={handleRefresh} 
                 variant="outline" 
                 size="icon" 
-                className="h-9 w-9"
+                className="h-10 w-10"
                 disabled={isFetching}
               >
                 <RefreshCcw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
@@ -185,7 +224,7 @@ export function OrderHistoryView() {
                 variant="outline" 
                 size="sm" 
                 disabled={isGeneratingData}
-                className="h-9"
+                className="h-10"
               >
                 {isGeneratingData ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

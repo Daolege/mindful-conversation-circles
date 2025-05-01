@@ -5,21 +5,8 @@ import { Badge } from "../ui/badge";
 import { format } from "date-fns";
 import { OrderItem } from "@/types/dashboard";
 import { Button } from "../ui/button";
-import { Eye, Filter } from "lucide-react";
+import { Eye } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 const orderStatusMap: Record<string, { label: string; className: string }> = {
   completed: { label: "已完成", className: "bg-green-500 hover:bg-green-600" },
@@ -93,36 +80,6 @@ export function OrderHistory({
 
   return (
     <div>
-      <div className="flex items-center gap-3 mb-4">
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Filter className="h-4 w-4 text-muted-foreground" />
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>筛选订单状态</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-        
-        <Select
-          value={statusFilter}
-          onValueChange={onStatusFilterChange}
-        >
-          <SelectTrigger className="w-[120px]">
-            <SelectValue placeholder="订单状态" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">全部状态</SelectItem>
-            <SelectItem value="completed">已完成</SelectItem>
-            <SelectItem value="processing">处理中</SelectItem>
-            <SelectItem value="cancelled">已取消</SelectItem>
-            <SelectItem value="failed">失败</SelectItem>
-            <SelectItem value="refunded">已退款</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
       {orders.length > 0 ? (
         <div className="border rounded-lg overflow-hidden">
           <Table>
