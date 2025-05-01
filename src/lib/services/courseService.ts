@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { CourseData, CourseResponse } from "@/lib/types/course-new";
 
@@ -222,3 +221,30 @@ export async function getCourseNewById(courseId: number): Promise<any> {
     return { data: null, error: err };
   }
 }
+
+// Fix the problematic function with proper typing to avoid infinite type instantiation
+export const getCourseWithSections = async (courseId: string): Promise<CourseWithSections | null> => {
+  try {
+    const { data: course, error } = await supabase
+      .from('courses')
+      .select(`
+        *,
+        sections:course_sections(
+          *,
+          lectures:course_lectures(*)
+        )
+      `)
+      .eq('id', courseId)
+      .single();
+
+    if (error) {
+      console.error('Error fetching course with sections:', error);
+      return null;
+    }
+
+    return course as CourseWithSections;
+  } catch (error) {
+    console.error('Exception fetching course with sections:', error);
+    return null;
+  }
+};

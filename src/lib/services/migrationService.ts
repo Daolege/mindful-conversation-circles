@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { SiteSetting } from "@/lib/types/course-new"; // Import the proper type
 
@@ -119,5 +118,45 @@ export const updateExchangeRate = async (newRate: number): Promise<boolean> => {
   } catch (error) {
     console.error('Error updating exchange rate:', error);
     return false;
+  }
+};
+
+// Fix the problematic function with proper typing to avoid infinite type instantiation
+export const migrateHomeworkData = async () => {
+  try {
+    // Fetch all lectures with homework
+    const { data: lectures, error: lecturesError } = await supabase
+      .from('course_lectures')
+      .select('id, homework_id')
+      .not('homework_id', 'is', null);
+
+    if (lecturesError) {
+      console.error('Error fetching lectures with homework:', lecturesError);
+      return { success: false, error: lecturesError };
+    }
+
+    // Process each lecture
+    const results = [];
+    for (const lecture of lectures || []) {
+      // Check if homework exists
+      const { data: homework, error: homeworkError } = await supabase
+        .from('homeworks')
+        .select('*')
+        .eq('id', lecture.homework_id)
+        .single();
+
+      if (homeworkError || !homework) {
+        console.error(`Homework ${lecture.homework_id} not found for lecture ${lecture.id}`);
+        results.push({ lectureId: lecture.id, success: false, error: homeworkError });
+        continue;
+      }
+
+      results.push({ lectureId: lecture.id, success: true });
+    }
+
+    return { success: true, results };
+  } catch (error) {
+    console.error('Exception migrating homework data:', error);
+    return { success: false, error };
   }
 };

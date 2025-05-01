@@ -5,79 +5,79 @@ import { toast } from 'sonner';
 import type { Session } from '@supabase/supabase-js';
 import type { AuthContextType, User } from './authTypes';
 
-// 创建稳定的上下文
+// Create the auth context
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// 使用带有稳定性优化的提供者
+// Use provider with stability optimizations
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  // 避免状态冲突的ref
+  // State for user information
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [loading, setLoading] = useState(true);
+  
+  // Create refs inside the component function body
   const userRef = React.useRef<User | null>(null);
   const sessionRef = React.useRef<Session | null>(null);
   const initializedRef = React.useRef(false);
   const authListenerRef = React.useRef<{ data: { subscription: { unsubscribe: () => void } } } | null>(null);
   const updatingStateRef = React.useRef(false);
   const sessionCheckInProgressRef = React.useRef(false);
-  
-  // 最小化UI状态，仅用于必要渲染
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
 
-  // 会话恢复机制
+  // Session recovery mechanism
   const recoverSession = useCallback(async () => {
     if (sessionCheckInProgressRef.current) return null;
     
     try {
       sessionCheckInProgressRef.current = true;
-      console.log("[AuthProvider] 尝试恢复会话...");
+      console.log("[AuthProvider] Attempting to recover session...");
       
       const { data, error } = await supabase.auth.getSession();
       
       if (error) {
-        console.error("[AuthProvider] 恢复会话错误:", error);
+        console.error("[AuthProvider] Session recovery error:", error);
         return null;
       }
       
       if (data?.session) {
-        console.log("[AuthProvider] 会话恢复成功");
+        console.log("[AuthProvider] Session recovered successfully");
         return data.session;
       } else {
-        console.log("[AuthProvider] 无有效会话可恢复");
+        console.log("[AuthProvider] No valid session to recover");
         return null;
       }
     } catch (err) {
-      console.error("[AuthProvider] 会话恢复异常:", err);
+      console.error("[AuthProvider] Session recovery exception:", err);
       return null;
     } finally {
       sessionCheckInProgressRef.current = false;
     }
   }, []);
 
-  // 高性能的会话更新函数，使用稳定的引用避免闭包问题
+  // High-performance session update function with stable reference to avoid closure issues
   const updateSessionState = useCallback(async (newSession: Session | null) => {
-    // 避免状态竞争
+    // Avoid race conditions
     if (updatingStateRef.current) return;
     updatingStateRef.current = true;
 
     try {
-      // 用户登出情况
+      // User logout case
       if (!newSession || !newSession.user) {
-        // 尝试恢复会话，避免无效登出
+        // Try to recover the session to avoid invalid logouts
         if (userRef.current !== null) {
           const recoveredSession = await recoverSession();
           if (recoveredSession) {
-            console.log("[AuthProvider] 会话恢复成功，阻止无效登出");
+            console.log("[AuthProvider] Session recovered successfully, preventing invalid logout");
             updateSessionState(recoveredSession);
             return;
           }
         }
         
         if (userRef.current !== null || sessionRef.current !== null) {
-          console.log("[AuthProvider] 用户登出，清除状态");
+          console.log("[AuthProvider] User logged out, clearing state");
           userRef.current = null;
           sessionRef.current = null;
           
-          // 异步更新UI状态减少渲染次数
+          // Asynchronously update UI state to reduce renders
           setTimeout(() => {
             setUser(null);
             setSession(null);
@@ -86,14 +86,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
       
-      // 提取用户信息
+      // Extract user information
       const newUser = {
         id: newSession.user.id,
         email: newSession.user.email!,
         name: newSession.user.user_metadata?.name || newSession.user.email!.split('@')[0]
       };
       
-      // 仅在必要时更新状态
+      // Only update state when necessary
       const userChanged = !userRef.current || 
                           userRef.current.id !== newUser.id || 
                           userRef.current.email !== newUser.email || 
@@ -101,10 +101,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                           
       const sessionChanged = sessionRef.current !== newSession;
       
-      // 新增：检查用户是否已被禁用
+      // Check if user is disabled
       setTimeout(async () => {
         try {
-          // 异步查询用户状态
+          // Async query for user status
           const { data: profile, error } = await supabase
             .from('profiles')
             .select('is_active')
@@ -113,7 +113,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             
           if (!error && profile && profile.is_active === false) {
             console.log("[AuthProvider] User is disabled, signing out:", newUser.email);
-            // 用户已被禁用，执行登出
+            // User has been disabled, execute logout
             await supabase.auth.signOut();
             userRef.current = null;
             sessionRef.current = null;
@@ -126,11 +126,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.error("[AuthProvider] Error checking user status:", error);
         }
         
-        // 更新引用状态
+        // Update reference state
         userRef.current = newUser;
         sessionRef.current = newSession;
         
-        // 仅在需要时异步更新UI状态
+        // Only update UI state when needed
         if (userChanged || sessionChanged) {
           setTimeout(() => {
             if (userChanged) setUser(newUser);
@@ -139,18 +139,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }, 0);
     } finally {
-      // 延迟解锁状态更新，避免快速连续更新导致问题
+      // Delay unlocking state updates to prevent rapid consecutive updates
       setTimeout(() => {
         updatingStateRef.current = false;
       }, 0);
     }
   }, [recoverSession]);
 
-  // 登录方法，稳定的引用以避免不必要的重渲染
+  // Login method, stable reference to avoid unnecessary re-renders
   const signIn = useCallback(async (email: string, password: string) => {
     console.log("[AuthProvider] signIn called for:", email);
     try {
-      // 先尝试登录
+      // First try to login
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       
       if (error) {
@@ -158,7 +158,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw error;
       }
       
-      // 登录成功后检查用户是否被禁用
+      // After successful login, check if user is disabled
       if (data?.session && data.user) {
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
@@ -170,11 +170,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.error("[AuthProvider] Error checking user profile:", profileError);
         }
         
-        // 如果用户被禁用，立即登出并返回错误
+        // If user is disabled, immediately log out and return an error
         if (profile && profile.is_active === false) {
           console.log("[AuthProvider] User is disabled, preventing login:", email);
           
-          // 立即登出用户
+          // Log out the user immediately
           await supabase.auth.signOut();
           
           return { 
@@ -185,7 +185,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
         
         console.log("[AuthProvider] signIn successful:", data.user?.email);
-        // 只在真正成功登录时才显示成功提示
+        // Only show success toast when login is truly successful
         setTimeout(() => {
           toast.success('登录成功！');
         }, 0);
@@ -198,7 +198,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // 注册方法，同样优化引用稳定性
+  // Registration method, also optimizes reference stability
   const signUp = useCallback(async (email: string, password: string, name: string) => {
     try {
       const { data, error } = await supabase.auth.signUp({
@@ -241,35 +241,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // 登出方法，优化状态更新
+  // Logout method, optimizes state updates
   const signOut = useCallback(async () => {
     try {
-      console.log("[AuthProvider] 执行登出流程");
-      // 先更新内部状态，避免状态不一致
+      console.log("[AuthProvider] Executing logout process");
+      // Update internal state first to avoid inconsistencies
       userRef.current = null;
       sessionRef.current = null;
       
-      // 异步更新UI状态，避免状态不同步
+      // Asynchronously update UI state to avoid state desync
       setTimeout(() => {
         setUser(null);
         setSession(null);
       }, 0);
       
-      // 执行实际的登出操作，但不依赖其完成
+      // Execute the actual logout operation, but don't depend on its completion
       await supabase.auth.signOut();
       
       toast.success('已退出登录');
       
-      // 导航到登录页，由调用方处理
+      // Navigation to login page handled by caller
       return Promise.resolve(true);
     } catch (error: any) {
-      console.error("[AuthProvider] 登出失败:", error);
+      console.error("[AuthProvider] Logout failed:", error);
       toast.error('退出登录失败', { description: error.message });
       return Promise.reject(error);
     }
   }, []);
 
-  // 设置管理员方法，同样确保引用稳定性
+  // Admin setting method, also ensures reference stability
   const setAdmin = useCallback(async () => {
     if (!userRef.current) {
       setTimeout(() => {
@@ -305,7 +305,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // 创建记忆化的上下文值
+  // Create memoized context value
   const contextValue = React.useMemo<AuthContextType>(() => ({
     user,
     session,
@@ -317,84 +317,84 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     recoverSession
   }), [user, session, loading, signIn, signUp, signOut, setAdmin, recoverSession]);
 
-  // 一次性初始化认证状态，特别优化为异步模式避免阻塞
+  // One-time auth state initialization, specially optimized for async mode to avoid blocking
   useEffect(() => {
-    // 防止重复初始化
+    // Prevent duplicate initialization
     if (initializedRef.current) return;
     
-    console.log("[Auth] 开始初始化认证状态...");
+    console.log("[Auth] Starting auth state initialization...");
     
-    // 异步初始化流程
+    // Async initialization process
     const initAuth = async () => {
       try {
         setLoading(true);
         
-        // 使用宏任务延迟执行避免阻塞UI
+        // Use macrotask to delay execution and avoid blocking UI
         setTimeout(async () => {
           try {
-            // 首先获取当前会话以减少闪烁
+            // First get current session to reduce flashing
             const { data: sessionData } = await supabase.auth.getSession();
-            console.log("[Auth] 初始会话状态:", sessionData.session ? "已登录" : "未登录");
+            console.log("[Auth] Initial session state:", sessionData.session ? "logged in" : "not logged in");
             
-            // 更新初始状态
+            // Update initial state
             updateSessionState(sessionData.session);
             
-            // 然后设置认证状态监听器，使用更稳健的错误处理
+            // Then set auth state listener with more robust error handling
             try {
               const authListener = supabase.auth.onAuthStateChange((event, newSession) => {
-                console.log("[Auth] 认证状态变化:", event);
-                // 异步更新以避免引起渲染问题
+                console.log("[Auth] Auth state changed:", event);
+                // Async update to avoid rendering issues
                 setTimeout(() => {
                   updateSessionState(newSession);
                 }, 0);
               });
               
-              // 存储订阅引用用于清理
+              // Store subscription reference for cleanup
               authListenerRef.current = authListener;
             } catch (listenerError) {
-              console.error("[Auth] 设置认证状态监听器失败:", listenerError);
+              console.error("[Auth] Failed to set auth state listener:", listenerError);
             }
             
-            // 标记为已初始化
+            // Mark as initialized
             initializedRef.current = true;
-            console.log("[Auth] 认证状态初始化完成");
+            console.log("[Auth] Auth state initialization complete");
             
-            // 完成加载
+            // Complete loading
             setLoading(false);
           } catch (error) {
-            console.error("[Auth] 认证初始化错误:", error);
-            // 即使发生错误也要结束加载状态，避免无限加载
+            console.error("[Auth] Auth initialization error:", error);
+            // End loading state even on error to avoid infinite loading
             setLoading(false);
-            initializedRef.current = true; // 标记为已初始化，避免重复尝试
+            initializedRef.current = true; // Mark as initialized to avoid retry
           }
         }, 0);
       } catch (error) {
-        console.error("[Auth] 外部初始化错误:", error);
+        console.error("[Auth] External initialization error:", error);
         setLoading(false);
         initializedRef.current = true;
       }
     };
     
-    // 启动初始化流程
+    // Start initialization process
     initAuth();
     
-    // 组件卸载时的清理函数
+    // Cleanup function when component unmounts
     return () => {
-      console.log("[Auth] 清理认证监听器");
+      console.log("[Auth] Cleaning up auth listener");
       if (authListenerRef.current) {
         try {
           authListenerRef.current.data.subscription.unsubscribe();
         } catch (error) {
-          console.error("[Auth] 清理监听器失败:", error);
+          console.error("[Auth] Failed to clean up listener:", error);
         }
       }
     };
   }, [updateSessionState]);
 
-  // 防止子组件频繁重新渲染
+  // Prevent frequent re-rendering of child components
   const memoizedChildren = React.useMemo(() => children, [children]);
 
-  // 确保渲染不会带来副作用
+  // Ensure rendering has no side effects
   return (
     <AuthContext.Provider value={contextValue}>
       {memoizedChildren}
