@@ -37,14 +37,14 @@ i18n.use({
     try {
       // 首先尝试从数据库加载翻译
       const { data, error } = await supabase
-        .from('translations')
-        .select('key, value')
-        .eq('language_code', language)
-        .eq('namespace', namespace);
+        .rpc('get_namespace_translations', {
+          p_language_code: language,
+          p_namespace: namespace
+        });
       
       if (!error && data && data.length > 0) {
         // 转换为键值对
-        const translations = data.reduce((acc: Record<string, string>, item) => {
+        const translations = data.reduce((acc: Record<string, string>, item: any) => {
           acc[item.key] = item.value;
           return acc;
         }, {});

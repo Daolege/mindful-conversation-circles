@@ -16,36 +16,31 @@ export const useTranslations = () => {
     try {
       // 检查翻译是否存在
       const { data: existingTranslation, error: selectError } = await supabase
-        .from('translations')
-        .select('*')
-        .eq('language_code', language)
-        .eq('namespace', namespace)
-        .eq('key', key)
-        .maybeSingle();
+        .rpc('check_translation_exists', {
+          p_language_code: language,
+          p_namespace: namespace,
+          p_key: key
+        });
       
       if (selectError) throw selectError;
       
-      if (existingTranslation) {
+      if (existingTranslation && existingTranslation.id) {
         // 更新已有翻译
         const { error: updateError } = await supabase
-          .from('translations')
-          .update({ 
-            value,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', existingTranslation.id);
+          .rpc('update_translation', {
+            p_id: existingTranslation.id,
+            p_value: value
+          });
           
         if (updateError) throw updateError;
       } else {
         // 添加新翻译
         const { error: insertError } = await supabase
-          .from('translations')
-          .insert({
-            language_code: language,
-            namespace,
-            key,
-            value,
-            created_at: new Date().toISOString()
+          .rpc('insert_translation', {
+            p_language_code: language,
+            p_namespace: namespace,
+            p_key: key,
+            p_value: value
           });
           
         if (insertError) throw insertError;
@@ -68,10 +63,10 @@ export const useTranslations = () => {
   const getTranslations = async (language: string, namespace: string) => {
     try {
       const { data, error } = await supabase
-        .from('translations')
-        .select('*')
-        .eq('language_code', language)
-        .eq('namespace', namespace);
+        .rpc('get_translations', {
+          p_language_code: language,
+          p_namespace: namespace
+        });
         
       if (error) throw error;
       
