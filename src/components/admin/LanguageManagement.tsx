@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useTranslations } from '@/hooks/useTranslations';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -36,7 +35,7 @@ export const LanguageManagement = () => {
   ];
 
   // Combine current and planned languages
-  const allLanguages = [
+  const allLanguages: LanguageItem[] = [
     ...supportedLanguages.map(lang => ({ ...lang, enabled: true })),
     ...plannedLanguages
   ];
