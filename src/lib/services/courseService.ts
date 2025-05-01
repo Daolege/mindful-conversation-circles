@@ -254,15 +254,7 @@ export const getCourseWithSections = async (courseId: number): Promise<CourseWit
         sections:course_sections(
           id,
           title,
-          position,
-          lectures:course_lectures(
-            id, 
-            title, 
-            position, 
-            video_url, 
-            duration,
-            description
-          )
+          position
         )
       `)
       .eq('id', courseId)
@@ -278,14 +270,26 @@ export const getCourseWithSections = async (courseId: number): Promise<CourseWit
       return null;
     }
 
-    // Type-safe casting of sections
-    const sections: CourseSectionWithLectures[] = Array.isArray(courseData.sections) ? 
-      courseData.sections.map(section => ({
-        id: section.id,
-        title: section.title,
-        position: section.position,
-        lectures: Array.isArray(section.lectures) ? section.lectures : []
-      })) : [];
+    // Get lectures separately to avoid column not exists error
+    const sections: CourseSectionWithLectures[] = [];
+    
+    if (Array.isArray(courseData.sections)) {
+      for (const section of courseData.sections) {
+        // For each section, fetch lectures separately
+        const { data: lecturesData } = await supabase
+          .from('course_lectures')
+          .select('id, title, position, video_url, duration, description')
+          .eq('section_id', section.id)
+          .order('position', { ascending: true });
+          
+        sections.push({
+          id: section.id,
+          title: section.title,
+          position: section.position,
+          lectures: lecturesData || []
+        });
+      }
+    }
 
     // Create a properly typed result object
     const result: CourseWithSections = {
