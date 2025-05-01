@@ -1,4 +1,3 @@
-
 export type Json =
   | string
   | number
@@ -20,22 +19,37 @@ export interface Database {
       site_settings: {
         Row: {
           id?: string
-          key: string
-          value: string
+          site_name?: string
+          site_description?: string
+          logo_url?: string
+          contact_email?: string
+          support_phone?: string
+          maintenance_mode?: boolean
+          enable_registration?: boolean
           created_at?: string
           updated_at?: string
         }
         Insert: {
           id?: string
-          key: string
-          value: string
+          site_name?: string
+          site_description?: string
+          logo_url?: string
+          contact_email?: string
+          support_phone?: string
+          maintenance_mode?: boolean
+          enable_registration?: boolean
           created_at?: string
           updated_at?: string
         }
         Update: {
           id?: string
-          key?: string
-          value?: string
+          site_name?: string
+          site_description?: string
+          logo_url?: string
+          contact_email?: string
+          support_phone?: string
+          maintenance_mode?: boolean
+          enable_registration?: boolean
           created_at?: string
           updated_at?: string
         }

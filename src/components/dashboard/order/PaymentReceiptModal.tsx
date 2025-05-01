@@ -324,7 +324,6 @@ export const PaymentReceiptModal = ({ order, open, onOpenChange }: PaymentReceip
         </div>
       </DialogContent>
 
-      {/* Fix: Changed to regular style tag without jsx/global props */}
       <style>
         {`
         @media print {
