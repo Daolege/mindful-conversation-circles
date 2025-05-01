@@ -41,5 +41,6 @@
   "dark": "Dark",
   "light": "Light",
   "system": "System",
-  "all": "All"
+  "all": "All",
+  "refresh": "Refresh"
 }

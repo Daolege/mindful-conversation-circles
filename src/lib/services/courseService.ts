@@ -233,9 +233,9 @@ interface CourseSectionWithLectures {
     id: string;
     title: string;
     position: number;
-    video_url?: string;
-    duration?: string;
-    description?: string;
+    video_url?: string | null;
+    duration?: string | null;
+    description?: string | null;
   }[];
 }
 
@@ -282,11 +282,22 @@ export const getCourseWithSections = async (courseId: number): Promise<CourseWit
           .eq('section_id', section.id)
           .order('position', { ascending: true });
           
+        // Ensure we have valid lecture data that matches our expected interface
+        const typedLectures = lecturesData && Array.isArray(lecturesData) ? 
+          lecturesData.map(lecture => ({
+            id: lecture.id,
+            title: lecture.title,
+            position: lecture.position,
+            video_url: lecture.video_url || null,
+            duration: lecture.duration || null,
+            description: lecture.description || null
+          })) : [];
+          
         sections.push({
           id: section.id,
           title: section.title,
           position: section.position,
-          lectures: lecturesData || []
+          lectures: typedLectures
         });
       }
     }

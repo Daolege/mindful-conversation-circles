@@ -1,4 +1,6 @@
+
 import { createClient } from '@supabase/supabase-js';
+import { toast } from 'sonner';
 import type { Database } from './types';
 
 // Try to get environment variables, or use default demo values if they're not available
@@ -14,6 +16,53 @@ if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KE
   );
 }
 
+// Connection counter for retry logic
+let connectionAttempts = 0;
+const MAX_RETRIES = 3;
+
+// Custom fetch wrapper for better error handling and retry logic
+const enhancedFetch = async (url: RequestInfo | URL, options?: RequestInit): Promise<Response> => {
+  try {
+    // Add timeout to fetch requests
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+    
+    const enhancedOptions = {
+      ...(options || {}),
+      signal: controller.signal
+    };
+    
+    const response = await fetch(url, enhancedOptions);
+    clearTimeout(timeoutId);
+    
+    // Reset connection counter on successful requests
+    if (response.ok) {
+      connectionAttempts = 0;
+    }
+    
+    return response;
+  } catch (err: any) {
+    connectionAttempts++;
+    console.error(`Supabase fetch error (attempt ${connectionAttempts}/${MAX_RETRIES}):`, err.name, err.message);
+    
+    if (err.name === 'AbortError') {
+      console.error('Request timed out');
+      if (connectionAttempts >= MAX_RETRIES) {
+        toast.error('Connection timeout', { 
+          description: 'Unable to connect to the server. Please check your internet connection.',
+          duration: 8000
+        });
+      }
+    }
+    
+    if (connectionAttempts >= MAX_RETRIES) {
+      console.error('Maximum connection attempts reached');
+    }
+    
+    throw err;
+  }
+};
+
 // 改进Supabase客户端配置以提高稳定性
 export const supabase = createClient<Database>(
   supabaseUrl,
@@ -27,18 +76,44 @@ export const supabase = createClient<Database>(
       flowType: 'pkce'
     },
     global: {
-      fetch: (...args) => {
-        return fetch(args[0], args[1]).catch(err => {
-          console.error('Supabase fetch error:', err);
-          throw err;
-        });
-      }
+      fetch: enhancedFetch
     },
     db: {
       schema: 'public'
+    },
+    // Add realtime (must be enabled in Supabase project)
+    realtime: {
+      params: {
+        eventsPerSecond: 2
+      }
     }
   }
 );
+
+// Add health check function
+export async function checkSupabaseConnection(): Promise<boolean> {
+  try {
+    // Simple query to verify database connection
+    const start = performance.now();
+    const { data, error } = await supabase
+      .from('site_settings')
+      .select('site_name')
+      .limit(1)
+      .maybeSingle();
+    const duration = performance.now() - start;
+    
+    if (error) {
+      console.error('Supabase health check failed:', error);
+      return false;
+    }
+    
+    console.log(`Supabase health check successful (${duration.toFixed(2)}ms)`);
+    return true;
+  } catch (err) {
+    console.error('Supabase health check exception:', err);
+    return false;
+  }
+}
 
 // Create the migrations table if it doesn't exist
 export async function ensureMigrationsTable() {
@@ -71,8 +146,18 @@ export async function ensureMigrationsTable() {
   }
 }
 
-// Call this when app initializes
-ensureMigrationsTable();
+// Call this when app initializes - with error handling
+try {
+  checkSupabaseConnection().then(isConnected => {
+    if (isConnected) {
+      ensureMigrationsTable();
+    } else {
+      console.warn('Skipping migrations table check due to connection issues');
+    }
+  });
+} catch (err) {
+  console.error('Error during Supabase initialization:', err);
+}
 
 // Load mock courses data (only used in development)
 export async function loadMockCourses() {

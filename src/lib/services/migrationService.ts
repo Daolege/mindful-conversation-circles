@@ -21,6 +21,11 @@ interface OldHomeworkData {
   status: string;
   created_at: string;
   updated_at: string;
+  answer?: string;
+  course_id?: number;
+  lecture_id?: string;
+  submitted_at?: string;
+  file_url?: string;
   [key: string]: any;
 }
 
@@ -83,30 +88,29 @@ export async function migrateHomeworkData(userId: string): Promise<MigrationResu
       return { success: true, count: 0 };
     }
     
-    // Step 2: Transform the data to the new schema format
-    // Using proper typing for the oldHomeworkData
-    const newHomeworkData = (oldHomeworkData as OldHomeworkData[]).map((submission) => ({
-      user_id: submission.user_id,
-      assignment_id: submission.homework_id, // Map to new field name
-      submission_content: submission.content, // Map to new field name
-      status: submission.status,
-      created_at: submission.created_at,
-      // Add any additional fields required in the new schema
-      feedback: null,
-      grade: null,
-      version: 1
-    }));
+    // Ensure we transform the data correctly regardless of the schema
+    const transformedData = oldHomeworkData.map((submission: any) => {
+      // Handle various field formats
+      return {
+        user_id: submission.user_id,
+        homework_id: submission.homework_id, 
+        content: submission.content || submission.answer || "", 
+        status: submission.status || "submitted",
+        created_at: submission.created_at || submission.submitted_at || new Date().toISOString(),
+        updated_at: submission.updated_at || new Date().toISOString(),
+        feedback: submission.feedback || submission.teacher_comment || null,
+        grade: submission.grade || submission.score || null,
+        version: 1
+      };
+    });
     
-    // Step 3: Insert the transformed data into the new schema table
-    // Use a "safe" table name that we know exists in the system
-    const { data: insertedData, error: insertError } = await supabase
-      .from('homework_submissions') // Use existing table instead of "assignment_submissions_new"
-      .insert(newHomeworkData.map(item => ({
-        ...item,
-        // Add any required fields from the original table structure
-        homework_id: item.assignment_id, // Map back to match the existing table
-        content: item.submission_content, // Map back to match the existing table
-      })));
+    // Step 3: Insert or update the data in the homework_submissions table
+    const { error: insertError } = await supabase
+      .from('homework_submissions')
+      .upsert(transformedData, { 
+        onConflict: 'user_id,homework_id',
+        ignoreDuplicates: false
+      });
     
     if (insertError) {
       console.error("Error inserting transformed homework data:", insertError);
@@ -114,18 +118,15 @@ export async function migrateHomeworkData(userId: string): Promise<MigrationResu
     }
     
     // Step 4: Update migration tracking using site_settings instead of data_migrations
-    await supabase
-      .from('site_settings')
-      .insert({
-        site_name: `migration_homework_${userId}`,
-        site_description: `Migrated ${newHomeworkData.length} homework records for user ${userId}`,
-        maintenance_mode: false,
-        updated_at: new Date().toISOString()
-      });
+    await recordMigration(
+      `homework_${userId}`,
+      `Migrated ${transformedData.length} homework records for user ${userId}`,
+      true
+    );
     
     return { 
       success: true, 
-      count: newHomeworkData.length 
+      count: transformedData.length 
     };
     
   } catch (error) {
