@@ -1,3 +1,4 @@
+
 import { Course } from "./course";
 
 export interface CourseSection {
@@ -53,7 +54,7 @@ export interface CourseNew {
   currency: string;
   category?: string | null;
   display_order: number;
-  status: 'draft' | 'published' | 'archived';
+  status: 'published' | 'draft' | 'archived';
   is_featured: boolean;
   sections?: CourseSection[];
   created_at?: string;
@@ -72,7 +73,7 @@ export interface CourseFormValues {
   currency: string;
   category?: string | null;
   display_order: number;
-  status: 'draft' | 'published' | 'archived';
+  status: 'published' | 'draft' | 'archived';
   is_featured: boolean;
 }
 
@@ -112,7 +113,7 @@ export interface CourseData {
   price?: number;
   currency?: string;
   display_order?: number;
-  status?: 'draft' | 'published' | 'archived';
+  status?: 'published' | 'draft' | 'archived';
   is_featured?: boolean;
   category?: string | null;
   created_at?: string;
@@ -129,8 +130,7 @@ export interface CourseResponse<T> {
   error: Error | null;
 }
 
-// Updated SiteSetting interface to match the site_settings table structure
-// This is the critical part to fix TypeScript errors
+// Updated SiteSetting interface to include both database structure and compatibility with migration functions
 export interface SiteSetting {
   id?: string;
   site_name?: string;
@@ -143,7 +143,37 @@ export interface SiteSetting {
   created_at?: string;
   updated_at?: string;
   
-  // For compatibility with recordMigration function
+  // Compatibility layer for recordMigration function
   key?: string;
   value?: string;
+
+  // Allow arbitrary fields for backwards compatibility
+  [key: string]: any;
+}
+
+// Add Database Function Types to fix TypeScript errors
+export interface DatabaseFunctions {
+  create_test_subscription: any;
+  has_role: any;
+  update_exchange_rate: any;
+  update_site_settings: any;
+  user_has_course_access: any;
+  enroll_user_in_course: any;
+  update_course_progress: any;
+  admin_add_course_item: any;
+  get_dashboard_stats: any;
+  get_financial_stats: any;
+  get_payment_method_stats: any;
+  check_table_exists: any;
+  execute_sql: any;
+  insert_order_item: any;
+}
+
+// OrderLineItem interface for TypeScript errors
+export interface OrderLineItem {
+  order_id: string;
+  course_id: number;
+  price: number;
+  currency: string;
+  [key: string]: any;
 }

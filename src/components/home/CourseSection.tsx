@@ -4,7 +4,8 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
-import HomePageCourseCard from './HomePageCourseCard';
+import NewHomePageCourseCard from './NewHomePageCourseCard';
+import { CourseNew } from '@/lib/types/course-new';
 
 interface CourseSectionProps {
   title: string;
@@ -46,7 +47,7 @@ const CourseSection: React.FC<CourseSectionProps> = ({
         return [];
       }
       
-      return data;
+      return data as CourseNew[];
     } catch (e) {
       console.error('Exception in fetchCourses:', e);
       toast.error('加载课程信息失败');
@@ -54,7 +55,7 @@ const CourseSection: React.FC<CourseSectionProps> = ({
     }
   };
 
-  // Use the query with explicit typing
+  // Use the query
   const { data: courses = [], isLoading, isError } = useQuery({
     queryKey: ['homepage-courses', filterBy, filterValue, limit],
     queryFn: fetchCourses
@@ -88,13 +89,11 @@ const CourseSection: React.FC<CourseSectionProps> = ({
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {Array(limit).fill(0).map((_, i) => (
-              <div key={i} className="h-[300px] bg-gray-200 animate-pulse rounded-lg">
+              <div key={i} className="h-[250px] bg-gray-200 animate-pulse rounded-lg">
                 <div className="h-48 bg-gray-300 animate-pulse rounded-t-lg"></div>
                 <div className="p-4 space-y-3">
                   <div className="h-6 bg-gray-300 animate-pulse rounded w-3/4"></div>
                   <div className="h-4 bg-gray-300 animate-pulse rounded w-1/2"></div>
-                  <div className="h-4 bg-gray-300 animate-pulse rounded w-2/3"></div>
-                  <div className="h-10 bg-gray-300 animate-pulse rounded mt-6"></div>
                 </div>
               </div>
             ))}
@@ -112,7 +111,7 @@ const CourseSection: React.FC<CourseSectionProps> = ({
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8"
           >
             {courses.map((course, index) => (
-              <HomePageCourseCard 
+              <NewHomePageCourseCard 
                 key={course.id} 
                 course={course}
                 index={index}

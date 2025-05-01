@@ -16,7 +16,7 @@ const HomePage = () => {
         {/* Database initialization for fixing homework issues */}
         <DatabaseFixInitializer />
         
-        {/* 现代化Banner，带3D交互效果 */}
+        {/* 现代化Banner */}
         <ModernBanner />
         
         <motion.div
