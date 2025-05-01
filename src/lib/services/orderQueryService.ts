@@ -41,12 +41,13 @@ export const getOrderById = async (
       return null;
     }
     
-    // Get order items directly using RPC for safety
+    // Get order items directly from the order_items table
     let orderItems = [];
     try {
-      // Directly get items from the database using a safer approach
       const { data: items, error: itemsError } = await supabase
-        .rpc('get_order_items', { order_id_param: orderId });
+        .from('order_items')
+        .select('*')
+        .eq('order_id', orderId);
 
       if (itemsError) {
         console.warn('[orderQueryService] Error fetching order items:', itemsError);

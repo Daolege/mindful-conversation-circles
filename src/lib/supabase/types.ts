@@ -1,3 +1,4 @@
+
 export type Json =
   | string
   | number
@@ -441,6 +442,12 @@ export interface Database {
           currency: string
         }[]
       },
+      get_order_items: {
+        Args: {
+          order_id_param: string
+        }
+        Returns: unknown
+      },
       admin_add_course_item: {
         Args: Record<string, unknown>
         Returns: unknown
@@ -482,6 +489,10 @@ export interface Database {
         Returns: unknown
       },
       user_has_course_access: {
+        Args: Record<string, unknown>
+        Returns: unknown
+      },
+      delete_order: {
         Args: Record<string, unknown>
         Returns: unknown
       }
