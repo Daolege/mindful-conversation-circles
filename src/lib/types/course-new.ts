@@ -155,6 +155,9 @@ export interface OrderLineItem {
   course_id: number;
   price: number;
   currency: string;
+  id?: string;
+  created_at?: string;
+  updated_at?: string;
   [key: string]: any;
 }
 
