@@ -105,8 +105,8 @@ export async function deleteCourse(courseId: number): Promise<{ success: boolean
   }
 }
 
-// Get courses by instructor ID - use a simpler explicit return type
-export async function getCoursesByInstructorId(instructorId: string): Promise<{ data: any[] | null; error: Error | null }> {
+// Get courses by instructor ID - use a completely simplified return type
+export async function getCoursesByInstructorId(instructorId: string) {
   try {
     const { data, error } = await supabase
       .from('courses_new')
