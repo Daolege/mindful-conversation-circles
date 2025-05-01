@@ -43,5 +43,17 @@
     "music": "音乐",
     "health": "健康"
   },
-  "searchCourses": "搜索课程..."
+  "searchCourses": "搜索课程...",
+  "notFound": "未找到课程",
+  "backToMyCourses": "返回我的课程",
+  "viewCourse": "查看课程",
+  "unknownCourse": "未知课程",
+  "noDescription": "暂无课程描述",
+  "onlineCourse": "在线课程",
+  "explorePopularCourses": "探索热门课程",
+  "carefullySelectedCoursesHelp": "我们精心挑选的课程，帮助您掌握新技能，拓展职业发展空间",
+  "instructorRecommendedCourses": "导师推荐课程",
+  "expertTeamRecommendations": "来自各学科专家团队的优质课程推荐，助力您的学习之路",
+  "highRatedCourses": "高分爆款课程",
+  "selectedBasedOnUserRatings": "根据用户评价和学习人数精选高分热卖好课"
 }

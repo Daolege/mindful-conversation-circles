@@ -25,5 +25,6 @@
   "settings": "设置",
   "general": "常规",
   "appearance": "外观",
-  "permissions": "权限"
+  "permissions": "权限",
+  "contentManagement": "内容管理"
 }

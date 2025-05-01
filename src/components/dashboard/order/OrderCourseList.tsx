@@ -4,12 +4,15 @@ import { formatCurrency } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 import { ExternalLink } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useTranslations } from "@/hooks/useTranslations";
 
 interface OrderCourseListProps {
   order: Order;
 }
 
 export const OrderCourseList = ({ order }: OrderCourseListProps) => {
+  const { t } = useTranslations();
+  
   // 确保总是得到一个数组，即使 courses 是单个对象或可能为 null
   const orderCourses = Array.isArray(order.courses) 
     ? order.courses 
@@ -27,18 +30,18 @@ export const OrderCourseList = ({ order }: OrderCourseListProps) => {
               <div className="w-full sm:w-24 h-24 overflow-hidden rounded-md shadow-sm">
                 <img
                   src={course?.imageUrl || '/placeholder.svg'}
-                  alt={course?.title || '未知课程'}
+                  alt={course?.title || t('courses:unknownCourse')}
                   className="w-full h-full object-cover"
                 />
               </div>
               <div className="flex-grow">
-                <h3 className="text-lg font-medium">{course?.title || '未知课程'}</h3>
-                <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{course?.description || '暂无课程描述'}</p>
+                <h3 className="text-lg font-medium">{course?.title || t('courses:unknownCourse')}</h3>
+                <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{course?.description || t('courses:noDescription')}</p>
                 <div className="mt-3 flex flex-wrap items-center gap-4">
                   <span className="font-semibold">{formatCurrency(course?.price || 0, order.currency || 'USD')}</span>
                   {course?.id && (
                     <Link to={`/courses/${course.id}`} className="text-knowledge-primary hover:underline flex items-center gap-1">
-                      <span>查看课程</span>
+                      <span>{t('courses:viewCourse')}</span>
                       <ExternalLink className="h-3.5 w-3.5" />
                     </Link>
                   )}
@@ -48,7 +51,7 @@ export const OrderCourseList = ({ order }: OrderCourseListProps) => {
           ))
         ) : (
           <div className="text-center py-8">
-            <p className="text-muted-foreground">没有购买任何课程</p>
+            <p className="text-muted-foreground">{t('checkout:noCoursePurchased')}</p>
           </div>
         )}
       </div>

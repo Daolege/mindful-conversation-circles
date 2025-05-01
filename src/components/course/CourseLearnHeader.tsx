@@ -1,6 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
+import { useTranslations } from "@/hooks/useTranslations";
 
 interface CourseLearnHeaderProps {
   title: string;
@@ -8,6 +9,8 @@ interface CourseLearnHeaderProps {
 }
 
 export const CourseLearnHeader = ({ title, onBack }: CourseLearnHeaderProps) => {
+  const { t } = useTranslations();
+  
   return (
     <div className="mb-6">
       <Button 
@@ -16,7 +19,7 @@ export const CourseLearnHeader = ({ title, onBack }: CourseLearnHeaderProps) => 
         onClick={onBack}
       >
         <ArrowLeft className="mr-2 h-4 w-4" />
-        返回我的课程
+        {t('courses:backToMyCourses')}
       </Button>
       <h1 className="text-2xl font-bold">{title}</h1>
     </div>

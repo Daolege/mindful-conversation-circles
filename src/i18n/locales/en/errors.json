@@ -9,5 +9,21 @@
   "invalidEmail": "Please enter a valid email",
   "serverError": "Server error occurred",
   "networkError": "Network error. Please check your connection",
-  "tryAgainLater": "Please try again later"
+  "tryAgainLater": "Please try again later",
+  "pageDoesNotExistOrWasRemoved": "The page you tried to access does not exist or has been removed.",
+  "orderIdNotFound": "Order ID does not exist",
+  "userNotLoggedInCantGetOrder": "User not logged in, cannot get order",
+  "pleaseLoginToViewOrderDetails": "Please log in to view order details",
+  "orderDataNotFound": "Order data not found, Order ID:",
+  "orderNotFoundOrNoPermission": "Order data not found or you don't have permission to view this order",
+  "orderNotFound": "Order not found",
+  "errorFetchingOrderDetails": "Error fetching order details:",
+  "failedToGetOrderDetails": "Failed to get order details",
+  "tryAgainLaterOrContactAdmin": "Please try again later, or contact administrator to check database associations",
+  "checkingAdminRoleError": "Error checking admin role:",
+  "adminRoleCheckError": "Error in admin role check:",
+  "insufficientPermissions": "Insufficient Permissions",
+  "adminAccessRequired": "You don't have admin permissions to access this page",
+  "adminOnlyPage": "Only administrators can access this page",
+  "notLoggedInRedirectToLogin": "User not logged in, redirecting to login page"
 }

@@ -6,8 +6,11 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { handleCoursesQueryError } from "@/lib/supabaseUtils";
+import { useTranslations } from "@/hooks/useTranslations";
 
 export const ContentManagement = () => {
+  const { t } = useTranslations();
+  
   const { data: courses, isLoading } = useQuery({
     queryKey: ["content"],
     queryFn: async () => {
@@ -22,7 +25,7 @@ export const ContentManagement = () => {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold">内容管理</h2>
+      <h2 className="text-2xl font-bold">{t('admin:contentManagement')}</h2>
       
       {isLoading ? (
         <div className="flex justify-center py-10">
@@ -47,7 +50,7 @@ export const ContentManagement = () => {
                     window.open(`/courses/${course.id}`, '_blank');
                   }}
                 >
-                  查看课程
+                  {t('courses:viewCourse')}
                 </Button>
               </CardFooter>
             </Card>
@@ -55,7 +58,7 @@ export const ContentManagement = () => {
         </div>
       ) : (
         <div className="text-center py-10">
-          <p className="text-gray-500">未找到内容</p>
+          <p className="text-gray-500">{t('common:noContentFound')}</p>
         </div>
       )}
     </div>

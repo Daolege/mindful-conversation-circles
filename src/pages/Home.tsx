@@ -9,6 +9,7 @@ import FeaturedCourses from "@/components/FeaturedCourses";
 import CTASection from "@/components/CTASection";
 import { memo } from "react";
 import HomeFAQSection from "@/components/HomeFAQSection";
+import { useTranslations } from "@/hooks/useTranslations";
 
 // 课程模块包装组件 - 添加标题和描述
 const CourseSection = ({
@@ -30,6 +31,8 @@ const CourseSection = ({
 );
 
 const Index = memo(() => {
+  const { t } = useTranslations();
+  
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -38,16 +41,16 @@ const Index = memo(() => {
 
         {/* 三个不同的课程推荐模块 */}
         <CourseSection
-          title="探索热门课程"
-          description="我们精心挑选的课程，帮助您掌握新技能，拓展职业发展空间"
+          title={t('courses:explorePopularCourses')}
+          description={t('courses:carefullySelectedCoursesHelp')}
         />
         <CourseSection
-          title="导师推荐课程"
-          description="来自各学科专家团队的优质课程推荐，助力您的学习之路"
+          title={t('courses:instructorRecommendedCourses')}
+          description={t('courses:expertTeamRecommendations')}
         />
         <CourseSection
-          title="高分爆款课程"
-          description="根据用户评价和学习人数精选高分热卖好课"
+          title={t('courses:highRatedCourses')}
+          description={t('courses:selectedBasedOnUserRatings')}
         />
 
         <HomeFAQSection />

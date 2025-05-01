@@ -9,5 +9,21 @@
   "invalidEmail": "请输入有效的电子邮件",
   "serverError": "服务器错误",
   "networkError": "网络错误，请检查您的连接",
-  "tryAgainLater": "请稍后再试"
+  "tryAgainLater": "请稍后再试",
+  "pageDoesNotExistOrWasRemoved": "您尝试访问的页面不存在或已被移除。",
+  "orderIdNotFound": "订单ID不存在",
+  "userNotLoggedInCantGetOrder": "用户未登录，无法获取订单",
+  "pleaseLoginToViewOrderDetails": "请先登录再查看订单详情",
+  "orderDataNotFound": "未找到订单数据，订单ID:",
+  "orderNotFoundOrNoPermission": "未找到订单数据或您没有权限查看该订单",
+  "orderNotFound": "未找到订单",
+  "errorFetchingOrderDetails": "获取订单详情时出错:",
+  "failedToGetOrderDetails": "获取订单详情失败",
+  "tryAgainLaterOrContactAdmin": "请稍后重试，或联系管理员检查数据库关联",
+  "checkingAdminRoleError": "检查管理员角色时出错:",
+  "adminRoleCheckError": "管理员角色检查错误:",
+  "insufficientPermissions": "权限不足",
+  "adminAccessRequired": "您没有管理员权限，无法访问此页面",
+  "adminOnlyPage": "只有管理员才能访问此页面",
+  "notLoggedInRedirectToLogin": "用户未登录，重定向到登录页面"
 }

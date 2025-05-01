@@ -43,5 +43,17 @@
     "music": "Music",
     "health": "Health"
   },
-  "searchCourses": "Search courses..."
+  "searchCourses": "Search courses...",
+  "notFound": "Course not found",
+  "backToMyCourses": "Back to My Courses",
+  "viewCourse": "View Course",
+  "unknownCourse": "Unknown Course",
+  "noDescription": "No course description available",
+  "onlineCourse": "Online Course",
+  "explorePopularCourses": "Explore Popular Courses",
+  "carefullySelectedCoursesHelp": "Our carefully selected courses to help you master new skills and expand career opportunities",
+  "instructorRecommendedCourses": "Instructor Recommended Courses",
+  "expertTeamRecommendations": "Quality course recommendations from our expert team across disciplines to help your learning journey",
+  "highRatedCourses": "Highly Rated Courses",
+  "selectedBasedOnUserRatings": "Selected best-selling courses based on user ratings and enrollment numbers"
 }

@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
@@ -5,6 +6,7 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { BookOpen, Users, Award, Target, Heart, Globe, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useTranslations } from "@/hooks/useTranslations";
 
 type TeamMember = {
   name: string;
@@ -32,6 +34,7 @@ type AboutPageSettings = {
 
 const About = () => {
   const navigate = useNavigate();
+  const { t } = useTranslations();
   
   const { data: settings, isLoading } = useQuery({
     queryKey: ["about-page-public"],
@@ -92,7 +95,7 @@ const About = () => {
                     <Target className="h-8 w-8 text-knowledge-primary" />
                   </div>
                 </div>
-                <h2 className="text-2xl font-bold mb-3">我们的使命</h2>
+                <h2 className="text-2xl font-bold mb-3">{t('common:ourMission')}</h2>
                 <p className="text-gray-600">{settings.mission}</p>
               </div>
               
@@ -102,7 +105,7 @@ const About = () => {
                     <Heart className="h-8 w-8 text-knowledge-primary" />
                   </div>
                 </div>
-                <h2 className="text-2xl font-bold mb-3">我们的愿景</h2>
+                <h2 className="text-2xl font-bold mb-3">{t('common:ourVision')}</h2>
                 <p className="text-gray-600">{settings.vision}</p>
               </div>
             </div>
@@ -112,7 +115,7 @@ const About = () => {
         <section className="py-16 bg-knowledge-gray">
           <div className="container mx-auto px-4">
             <div className="max-w-3xl mx-auto text-center">
-              <h2 className="text-3xl font-bold mb-6">我们的故事</h2>
+              <h2 className="text-3xl font-bold mb-6">{t('common:ourStory')}</h2>
               <p className="text-gray-600 whitespace-pre-wrap">{settings.story}</p>
             </div>
           </div>
@@ -133,7 +136,7 @@ const About = () => {
         
         <section className="py-16">
           <div className="container mx-auto px-4">
-            <h2 className="text-3xl font-bold mb-10 text-center">创始团队</h2>
+            <h2 className="text-3xl font-bold mb-10 text-center">{t('common:foundingTeam')}</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {settings.team_members.map((member, index) => (
                 <div key={index} className="text-center">

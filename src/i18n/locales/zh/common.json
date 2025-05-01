@@ -40,5 +40,11 @@
     "copyright": "© {{year}} 知识平台。保留所有权利。",
     "termsOfService": "服务条款",
     "privacyPolicy": "隐私政策"
-  }
+  },
+  "backToHome": "返回主页",
+  "ourMission": "我们的使命",
+  "ourVision": "我们的愿景",
+  "ourStory": "我们的故事",
+  "foundingTeam": "创始团队",
+  "noContentFound": "未找到内容"
 }

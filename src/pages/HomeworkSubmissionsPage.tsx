@@ -9,10 +9,12 @@ import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import HomeworkSubmissionsView from "@/components/admin/homework/HomeworkSubmissionsView";
+import { useTranslations } from "@/hooks/useTranslations";
 
 const HomeworkSubmissionsPage = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslations();
 
   const { data: isAdmin, isLoading } = useQuery({
     queryKey: ['admin-role', user?.id],
@@ -22,12 +24,12 @@ const HomeworkSubmissionsPage = () => {
       try {
         const { data, error } = await supabase.rpc('has_role', { role: 'admin' });
         if (error) {
-          console.error('Error checking admin role:', error);
+          console.error(t('errors:checkingAdminRoleError'), error);
           return false;
         }
         return !!data;
       } catch (err) {
-        console.error('Error in admin role check:', err);
+        console.error(t('errors:adminRoleCheckError'), err);
         return false;
       }
     },
@@ -41,7 +43,7 @@ const HomeworkSubmissionsPage = () => {
   // 如果不是管理员，重定向到首页
   React.useEffect(() => {
     if (!loading && !isLoading && !isAdmin) {
-      toast.error("权限不足", { description: "您没有管理员权限，无法访问此页面" });
+      toast.error(t('errors:insufficientPermissions'), { description: t('errors:adminAccessRequired') });
       navigate('/');
     }
   }, [isAdmin, isLoading, loading, navigate]);
@@ -63,7 +65,7 @@ const HomeworkSubmissionsPage = () => {
       <div className="min-h-screen flex flex-col">
         <Navbar />
         <div className="flex-grow flex items-center justify-center">
-          <div className="text-xl text-gray-600">只有管理员才能访问此页面</div>
+          <div className="text-xl text-gray-600">{t('errors:adminOnlyPage')}</div>
         </div>
         <Footer />
       </div>

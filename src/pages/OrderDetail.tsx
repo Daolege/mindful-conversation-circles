@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { OrderDetailSkeleton } from '@/components/dashboard/order/OrderDetailSkeleton';
 import { OrderDetailError } from '@/components/dashboard/order/OrderDetailError';
 import { OrderDetailContent } from '@/components/dashboard/order/OrderDetailContent';
+import { useTranslations } from '@/hooks/useTranslations';
 
 const OrderDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -22,6 +23,7 @@ const OrderDetail = () => {
   const location = useLocation();
   const { toast } = useToast();
   const orderFetchAttemptedRef = useRef(false);
+  const { t } = useTranslations();
 
   // 添加状态来追踪是否已经尝试过重定向到登录页面
   const [redirectedToLogin, setRedirectedToLogin] = useState(false);
@@ -31,7 +33,7 @@ const OrderDetail = () => {
     if (!authLoading) {
       // If user isn't logged in and not already redirected
       if (!user && !redirectedToLogin) {
-        console.log("用户未登录，重定向到登录页面");
+        console.log(t('errors:notLoggedInRedirectToLogin'));
         setRedirectedToLogin(true);
         navigate('/auth', { 
           state: { 
@@ -52,53 +54,53 @@ const OrderDetail = () => {
 
   const fetchOrderDetails = async () => {
     if (!id) {
-      setError('订单ID不存在');
+      setError(t('errors:orderIdNotFound'));
       setLoading(false);
       return;
     }
 
     try {
       if (!user) {
-        console.error("用户未登录，无法获取订单");
-        setError('请先登录再查看订单详情');
+        console.error(t('errors:userNotLoggedInCantGetOrder'));
+        setError(t('errors:pleaseLoginToViewOrderDetails'));
         setLoading(false);
         return;
       }
 
-      console.log("正在获取订单详情，订单ID:", id, "用户ID:", user?.id);
+      console.log(t('checkout:fetchingOrderDetails'), id, t('checkout:userId'), user?.id);
       
       // Check if user has admin role - safely access user_metadata
       const isAdmin = user?.user_metadata?.roles?.includes('admin') || false;
-      console.log("用户是管理员:", isAdmin);
+      console.log(t('checkout:userIsAdmin'), isAdmin);
       
       // For admin users, pass null as userId to allow access to any order
       const orderData = await getOrderById(id, isAdmin ? null : user?.id);
-      console.log("获取的订单数据:", orderData);
+      console.log(t('checkout:retrievedOrderData'), orderData);
 
       if (!orderData) {
-        console.error("未找到订单数据，订单ID:", id);
-        setError('未找到订单数据或您没有权限查看该订单');
+        console.error(t('errors:orderDataNotFound'), id);
+        setError(t('errors:orderNotFoundOrNoPermission'));
         setLoading(false);
         
         toast({
-          title: "未找到订单",
-          description: "未找到订单数据或您没有权限查看该订单",
+          title: t('errors:orderNotFound'),
+          description: t('errors:orderNotFoundOrNoPermission'),
           variant: "destructive"
         });
         return;
       }
 
-      console.log("成功获取订单详情:", orderData);
+      console.log(t('checkout:successfullyRetrievedOrderDetails'), orderData);
       setOrder(orderData);
       setLoading(false);
     } catch (err: any) {
-      console.error('获取订单详情时出错:', err);
-      setError(err.message || '获取订单详情失败, 可能是数据库关联查询问题');
+      console.error(t('errors:errorFetchingOrderDetails'), err);
+      setError(err.message || t('errors:failedToGetOrderDetails'));
       setLoading(false);
       
       toast({
-        title: "获取订单详情失败",
-        description: err.message || "请稍后重试，或联系管理员检查数据库关联",
+        title: t('errors:failedToGetOrderDetails'),
+        description: err.message || t('errors:tryAgainLaterOrContactAdmin'),
         variant: "destructive"
       });
     }
@@ -135,7 +137,7 @@ const OrderDetail = () => {
           className="inline-flex items-center text-sm mb-6 text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
-          返回我的订单
+          {t('checkout:backToMyOrders')}
         </button>
 
         {loading ? (
@@ -143,7 +145,7 @@ const OrderDetail = () => {
         ) : error ? (
           <OrderDetailError error={error} onBack={handleBackClick} />
         ) : !order ? (
-          <OrderDetailError error="未找到订单" onBack={handleBackClick} />
+          <OrderDetailError error={t('errors:orderNotFound')} onBack={handleBackClick} />
         ) : (
           <OrderDetailContent order={order} />
         )}

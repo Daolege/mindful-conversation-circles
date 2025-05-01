@@ -40,5 +40,11 @@
     "copyright": "© {{year}} Knowledge Platform. All rights reserved.",
     "termsOfService": "Terms of Service",
     "privacyPolicy": "Privacy Policy"
-  }
+  },
+  "backToHome": "Back to Home",
+  "ourMission": "Our Mission",
+  "ourVision": "Our Vision",
+  "ourStory": "Our Story",
+  "foundingTeam": "Founding Team",
+  "noContentFound": "No content found"
 }

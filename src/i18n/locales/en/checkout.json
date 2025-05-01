@@ -49,5 +49,12 @@
     "yearly": "Yearly",
     "2years": "Two Years",
     "3years": "Three Years"
-  }
+  },
+  "backToMyOrders": "Back to My Orders",
+  "fetchingOrderDetails": "Getting order details, Order ID:",
+  "userId": "User ID:",
+  "userIsAdmin": "User is admin:",
+  "retrievedOrderData": "Retrieved order data:",
+  "successfullyRetrievedOrderDetails": "Successfully retrieved order details:",
+  "noCoursePurchased": "No courses purchased"
 }
