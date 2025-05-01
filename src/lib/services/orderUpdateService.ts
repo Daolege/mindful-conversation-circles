@@ -1,112 +1,101 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+import { Order } from '@/lib/types/order';
 
-export const updateOrderStatus = async (orderId: string, newStatus: string) => {
+/**
+ * Updates an order in the database
+ * @param order Order data to update
+ * @returns Promise<boolean>
+ */
+export const updateOrder = async (order: Partial<Order>): Promise<boolean> => {
   try {
-    console.log(`[orderUpdateService] Updating order ${orderId} to status: ${newStatus}`);
-    
+    if (!order.id) {
+      console.error('Order ID is required for update');
+      return false;
+    }
+
     const { error } = await supabase
       .from('orders')
-      .update({ 
-        status: newStatus, 
-        updated_at: new Date().toISOString() 
-      })
-      .eq('id', orderId);
-    
+      .update(order)
+      .eq('id', order.id);
+
     if (error) {
-      console.error('[orderUpdateService] Error updating order:', error);
-      return { success: false, error };
+      console.error('Error updating order:', error);
+      return false;
     }
-    
-    console.log(`[orderUpdateService] Successfully updated order ${orderId} to status: ${newStatus}`);
-    return { success: true, error: null };
+
+    return true;
   } catch (err) {
-    console.error('[orderUpdateService] Error in updateOrderStatus:', err);
-    return { success: false, error: err };
+    console.error('Error in updateOrder:', err);
+    return false;
   }
 };
 
-export const deleteOrder = async (orderId: string) => {
+/**
+ * Deletes an order and its related items
+ * @param orderId The ID of the order to delete
+ * @returns Promise<boolean>
+ */
+export const deleteOrder = async (orderId: string): Promise<boolean> => {
   try {
-    console.log(`[orderUpdateService] Deleting order ${orderId}`);
-
-    // First try to delete related order items if they exist
-    try {
-      // Check if order_items table exists
-      const { data: tableExists } = await supabase.rpc(
-        'check_table_exists',
-        { table_name: 'order_items' }
-      );
-      
-      if (tableExists) {
-        console.log(`[orderUpdateService] Deleting related order items for order ${orderId}`);
-        const { error: itemsDeleteError } = await supabase
-          .from('order_items')
-          .delete()
-          .eq('order_id', orderId);
-        
-        if (itemsDeleteError) {
-          console.warn(`[orderUpdateService] Error deleting order items: ${itemsDeleteError.message}`);
-          // Continue with order deletion even if items deletion fails
-        }
+    // Using direct REST API fetch to avoid type issues
+    const url = `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/order_items?order_id=eq.${orderId}`;
+    
+    // Delete order items first
+    const deleteItemsResponse = await fetch(url, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY || '',
+        'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY || ''}`,
+        'Prefer': 'return=minimal'
       }
-    } catch (itemsError) {
-      console.warn(`[orderUpdateService] Could not check for or delete order items:`, itemsError);
-      // Continue with order deletion even if we can't check for items
+    });
+    
+    if (!deleteItemsResponse.ok) {
+      console.error('Failed to delete order items:', deleteItemsResponse.statusText);
+      return false;
     }
     
-    // Now delete the order itself
+    // Then delete the order
     const { error } = await supabase
       .from('orders')
       .delete()
       .eq('id', orderId);
-    
+
     if (error) {
-      console.error(`[orderUpdateService] Error deleting order: ${error.message}`);
-      return { success: false, error };
+      console.error('Error deleting order:', error);
+      return false;
     }
-    
-    console.log(`[orderUpdateService] Successfully deleted order ${orderId}`);
-    return { success: true, error: null };
+
+    return true;
   } catch (err) {
-    console.error('[orderUpdateService] Error in deleteOrder:', err);
-    return { success: false, error: err };
+    console.error('Error in deleteOrder:', err);
+    return false;
   }
 };
 
-// Add function to check if user has permission to delete the order
-export const canDeleteOrder = async (orderId: string, userId: string) => {
+/**
+ * Sets an order status
+ * @param orderId The order ID
+ * @param status The new status
+ * @returns Promise<boolean>
+ */
+export const setOrderStatus = async (orderId: string, status: string): Promise<boolean> => {
   try {
-    // Check if user is the owner of the order or has admin role
-    const { data: user } = await supabase.auth.getUser();
-    
-    // Check if user has admin role
-    const isAdmin = user?.user?.app_metadata?.roles?.includes('admin') || 
-                   user?.user?.user_metadata?.roles?.includes('admin') || 
-                   false;
-    
-    if (isAdmin) {
-      return { canDelete: true, error: null };
-    }
-    
-    // Check if user is the owner of the order
-    const { data: order, error } = await supabase
+    const { error } = await supabase
       .from('orders')
-      .select('user_id')
-      .eq('id', orderId)
-      .single();
-    
+      .update({ status })
+      .eq('id', orderId);
+
     if (error) {
-      console.error('[orderUpdateService] Error checking order ownership:', error);
-      return { canDelete: false, error };
+      console.error('Error updating order status:', error);
+      return false;
     }
-    
-    const canDelete = order.user_id === userId;
-    
-    return { canDelete, error: null };
+
+    return true;
   } catch (err) {
-    console.error('[orderUpdateService] Error checking delete permission:', err);
-    return { canDelete: false, error: err };
+    console.error('Error in setOrderStatus:', err);
+    return false;
   }
 };
