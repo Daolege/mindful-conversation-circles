@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -202,29 +201,26 @@ export function SystemSettings({ activeTab }: SystemSettingsProps) {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white p-1 rounded-xl shadow-sm border">
-        <Tabs 
-          value={activeSettingTab} 
-          onValueChange={setActiveSettingTab}
-          className="w-full"
-        >
-          <TabsList className="w-full flex flex-wrap justify-start gap-1 bg-muted/20 p-1 rounded-lg">
+      <div className="bg-white rounded-xl shadow-sm border">
+        <div className="p-4">
+          <div className="grid grid-cols-6 gap-0">
             {settingsTabs.map((tab) => (
-              <TabsTrigger 
+              <div 
                 key={tab.id}
-                value={tab.id} 
-                className="flex items-center gap-2 px-4 py-2.5 data-[state=active]:bg-white"
+                onClick={() => setActiveSettingTab(tab.id)}
+                className={`flex flex-col items-center justify-center p-4 cursor-pointer transition-all
+                           ${activeSettingTab === tab.id ? 'text-gray-900' : 'text-gray-500'}`}
               >
-                <tab.icon className="h-4 w-4" />
-                <span>{tab.label}</span>
-              </TabsTrigger>
+                <tab.icon className={`h-5 w-5 mb-2 ${activeSettingTab === tab.id ? 'text-primary' : 'text-gray-400'}`} />
+                <span className="text-sm font-medium">{tab.label}</span>
+              </div>
             ))}
-          </TabsList>
-          
-          <div className="mt-4">
-            {renderContent()}
           </div>
-        </Tabs>
+        </div>
+          
+        <div className="mt-4 p-4">
+          {renderContent()}
+        </div>
       </div>
 
       <div className="flex justify-end">
