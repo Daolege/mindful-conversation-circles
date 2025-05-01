@@ -33,23 +33,25 @@ export function DashboardNavigation() {
 
   return (
     <div className="mb-8">
-      <Tabs 
-        value={activeTab} 
-        onValueChange={handleTabChange}
-        className="w-full"
-      >
-        <TabsList className="w-full grid grid-cols-4">
-          {tabs.map((tab) => (
-            <TabsTrigger
-              key={tab.value}
-              value={tab.value}
-              className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm"
-            >
-              {tab.label}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-      </Tabs>
+      <div className="bg-white/90 backdrop-blur-sm p-2 rounded-2xl border border-gray-100 shadow-sm">
+        <Tabs 
+          value={activeTab} 
+          onValueChange={handleTabChange}
+          className="w-full"
+        >
+          <TabsList className="w-full grid grid-cols-4">
+            {tabs.map((tab) => (
+              <TabsTrigger
+                key={tab.value}
+                value={tab.value}
+                className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm"
+              >
+                {tab.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
+      </div>
     </div>
   );
 }
