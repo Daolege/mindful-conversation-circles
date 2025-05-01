@@ -14,7 +14,7 @@ export const useTranslations = () => {
     value: string
   ) => {
     try {
-      // 检查翻译是否存在，由于类型系统限制，我们使用原始SQL查询
+      // 检查翻译是否存在
       const { data: existingTranslation, error: selectError } = await supabase
         .from('translations')
         .select('*')
@@ -28,22 +28,24 @@ export const useTranslations = () => {
       if (existingTranslation) {
         // 更新已有翻译
         const { error: updateError } = await supabase
-          .rpc('update_translation', {
-            p_id: existingTranslation.id,
-            p_value: value,
-            p_updated_at: new Date().toISOString()
-          });
+          .from('translations')
+          .update({ 
+            value,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', existingTranslation.id);
           
         if (updateError) throw updateError;
       } else {
-        // 添加新翻译，使用RPC调用避免类型问题
+        // 添加新翻译
         const { error: insertError } = await supabase
-          .rpc('insert_translation', {
-            p_language_code: language,
-            p_namespace: namespace,
-            p_key: key,
-            p_value: value,
-            p_created_at: new Date().toISOString()
+          .from('translations')
+          .insert({
+            language_code: language,
+            namespace,
+            key,
+            value,
+            created_at: new Date().toISOString()
           });
           
         if (insertError) throw insertError;
@@ -65,12 +67,11 @@ export const useTranslations = () => {
   // 获取指定语言和命名空间的所有翻译
   const getTranslations = async (language: string, namespace: string) => {
     try {
-      // 使用原始SQL查询来避免类型问题
       const { data, error } = await supabase
-        .rpc('get_translations', {
-          p_language_code: language,
-          p_namespace: namespace
-        });
+        .from('translations')
+        .select('*')
+        .eq('language_code', language)
+        .eq('namespace', namespace);
         
       if (error) throw error;
       
