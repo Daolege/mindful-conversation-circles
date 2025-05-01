@@ -14,10 +14,14 @@ export const executeHomeworkMigration = async () => {
     const migrationName = 'homework_foreign_key_fix';
     
     // Check if migration was already executed by looking at site_settings
-    const { data: settingsResult } = await supabase.rpc(
-      'execute_sql',
-      { sql_statement: "SELECT * FROM site_settings WHERE key = 'homework_migration_completed'" }
-    );
+    const { data: settingsResult, error: settingsError } = await supabase
+      .from('site_settings')
+      .select('*')
+      .eq('key', 'homework_migration_completed');
+    
+    if (settingsError) {
+      console.error('[executeHomeworkMigration] Error checking migration status:', settingsError);
+    }
     
     if (Array.isArray(settingsResult) && settingsResult.length > 0) {
       console.log('[executeHomeworkMigration] Migration already executed successfully');
@@ -30,10 +34,13 @@ export const executeHomeworkMigration = async () => {
     console.log('[executeHomeworkMigration] Executing migration');
     
     // 2. Check for orphaned homework records using direct DB query
-    const { data: homeworkResult } = await supabase.rpc(
-      'execute_sql',
-      { sql_statement: 'SELECT * FROM homework' }
-    );
+    const { data: homeworkResult, error: homeworkError } = await supabase
+      .from('homework')
+      .select('*');
+      
+    if (homeworkError) {
+      console.error('[executeHomeworkMigration] Error querying homework:', homeworkError);
+    }
     
     // Safely handle the homework data
     const homeworks = Array.isArray(homeworkResult) ? homeworkResult : [];
@@ -48,34 +55,44 @@ export const executeHomeworkMigration = async () => {
       
       const uniqueCourseIds = [...new Set(courseIds)];
       
-      // Check which ones are orphaned by checking course existence
-      const { data: coursesResult } = await supabase.rpc(
-        'execute_sql',
-        { sql_statement: `SELECT id FROM courses_new WHERE id IN (${uniqueCourseIds.join(',')})` }
-      );
-      
-      const courses = Array.isArray(coursesResult) ? coursesResult : [];
-      
-      if (courses) {
-        const validCourseIds = courses.map(c => c.id);
-        const orphanedHomeworks = homeworks.filter(hw => hw.course_id && !validCourseIds.includes(hw.course_id));
+      if (uniqueCourseIds.length > 0) {
+        // Check which ones are orphaned by checking course existence
+        const { data: coursesResult, error: coursesError } = await supabase
+          .from('courses_new')
+          .select('id')
+          .in('id', uniqueCourseIds);
+          
+        if (coursesError) {
+          console.error('[executeHomeworkMigration] Error checking courses:', coursesError);
+        }
         
-        if (orphanedHomeworks.length > 0) {
-          console.log(`[executeHomeworkMigration] Found ${orphanedHomeworks.length} orphaned homework records`);
+        const courses = Array.isArray(coursesResult) ? coursesResult : [];
+        
+        if (courses) {
+          const validCourseIds = courses.map(c => c.id);
+          const orphanedHomeworks = homeworks.filter(hw => hw.course_id && !validCourseIds.includes(hw.course_id));
           
-          // Delete orphaned records
-          for (const hw of orphanedHomeworks) {
-            if (hw && hw.id) {
-              await supabase.rpc(
-                'execute_sql',
-                { sql_statement: `DELETE FROM homework WHERE id = ${hw.id}` }
-              );
+          if (orphanedHomeworks.length > 0) {
+            console.log(`[executeHomeworkMigration] Found ${orphanedHomeworks.length} orphaned homework records`);
+            
+            // Delete orphaned records
+            for (const hw of orphanedHomeworks) {
+              if (hw && hw.id) {
+                const { error: deleteError } = await supabase
+                  .from('homework')
+                  .delete()
+                  .eq('id', hw.id);
+                  
+                if (deleteError) {
+                  console.error(`[executeHomeworkMigration] Error deleting homework ${hw.id}:`, deleteError);
+                }
+              }
             }
+            
+            console.log(`[executeHomeworkMigration] Deleted ${orphanedHomeworks.length} orphaned homework records`);
+          } else {
+            console.log('[executeHomeworkMigration] No orphaned homework records found');
           }
-          
-          console.log(`[executeHomeworkMigration] Deleted ${orphanedHomeworks.length} orphaned homework records`);
-        } else {
-          console.log('[executeHomeworkMigration] No orphaned homework records found');
         }
       }
     } else {
@@ -90,15 +107,12 @@ export const executeHomeworkMigration = async () => {
     );
     
     // 4. Update site settings to remember migration was completed
-    await supabase.rpc(
-      'execute_sql',
-      { 
-        sql_statement: `
-          INSERT INTO site_settings (key, value)
-          VALUES ('homework_migration_completed', 'true')
-        ` 
-      }
-    );
+    await supabase
+      .from('site_settings')
+      .insert({
+        key: 'homework_migration_completed',
+        value: 'true'
+      });
     
     console.log('[executeHomeworkMigration] Migration completed successfully');
     

@@ -55,19 +55,10 @@ export function OrderHistory({
         .filter(item => item.courses)
         .map(item => item.courses?.title || '未知课程')
         .join(", ");
-    } else if (order.courses) {
-      // Handle if courses are directly on the order object
-      if (Array.isArray(order.courses)) {
-        return order.courses
-          .filter(course => course && course.title)
-          .map(course => course.title)
-          .join(", ");
-      } else if (order.courses.title) {
-        return order.courses.title;
-      }
     }
     
-    return "未知课程";
+    // If no course items found, return order ID
+    return `订单 ${order.order_number || order.id.substring(0, 8)}`;
   };
   
   // Function to get appropriate amount field from order
@@ -97,15 +88,6 @@ export function OrderHistory({
           >
             全部
           </button>
-          {Object.keys(orderStatusMap).map(status => (
-            <button
-              key={status}
-              className={`px-4 py-2 rounded-md ${statusFilter === status ? 'bg-knowledge-primary text-white' : 'bg-gray-100'}`}
-              onClick={() => onStatusFilterChange(status)}
-            >
-              {orderStatusMap[status].label}
-            </button>
-          ))}
         </div>
       </div>
 

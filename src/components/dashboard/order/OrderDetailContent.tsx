@@ -5,8 +5,7 @@ import { OrderDetailHeader } from '@/components/dashboard/order/OrderDetailHeade
 import { OrderActions } from '@/components/dashboard/order/OrderActions';
 import { useState } from 'react';
 import { Separator } from '@/components/ui/separator';
-import { UserIcon, CreditCard } from 'lucide-react';
-import { OrderPaymentDetails } from '@/components/dashboard/order/OrderPaymentDetails';
+import { UserIcon } from 'lucide-react';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { format } from "date-fns";
 
@@ -40,17 +39,6 @@ export const OrderDetailContent = ({ order: initialOrder }: OrderDetailContentPr
                   <OrderDetailHeader order={order} onOrderUpdate={handleOrderUpdate} />
                 </div>
 
-                <Separator />
-                
-                {/* 支付信息区块 */}
-                <div>
-                  <h3 className="text-lg font-semibold mb-4 flex items-center">
-                    <CreditCard className="h-5 w-5 mr-2" />
-                    支付信息
-                  </h3>
-                  <OrderPaymentDetails order={order} />
-                </div>
-                
                 <Separator />
                 
                 {/* 客户信息区块 */}

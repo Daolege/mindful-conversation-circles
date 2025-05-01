@@ -20,16 +20,13 @@ export const recordMigration = async (name: MigrationName, description: string, 
         success
       };
       
-      // Use SQL directly to insert the record
-      const { error } = await supabase.rpc(
-        'execute_sql',
-        { 
-          sql_statement: `
-            INSERT INTO site_settings (key, value)
-            VALUES ('migration_${name}', '${JSON.stringify(migrationData)}')
-          `
-        }
-      );
+      // Use direct database insert instead of RPC calls
+      const { error } = await supabase
+        .from('site_settings')
+        .insert({
+          key: `migration_${name}`,
+          value: JSON.stringify(migrationData)
+        });
       
       if (error) {
         console.error('Error recording migration:', error);
@@ -50,20 +47,21 @@ export const recordMigration = async (name: MigrationName, description: string, 
 // Get the current exchange rate from site settings
 export const getExchangeRate = async (): Promise<number> => {
   try {
-    // Use SQL query to avoid type issues
-    const { data, error } = await supabase.rpc(
-      'execute_sql',
-      { sql_statement: `SELECT value FROM site_settings WHERE key = 'exchange_rate'` }
-    );
+    // Use direct query instead of RPC calls
+    const { data, error } = await supabase
+      .from('site_settings')
+      .select('value')
+      .eq('key', 'exchange_rate')
+      .single();
       
     if (error) {
       console.error('Error fetching exchange rate:', error);
       return 7; // Default exchange rate
     }
     
-    // Handle the result from SQL query
-    if (Array.isArray(data) && data.length > 0 && data[0].value) {
-      return parseFloat(data[0].value || '7');
+    // Handle the result
+    if (data && data.value) {
+      return parseFloat(data.value || '7');
     }
     
     return 7; // Default if no data
@@ -76,11 +74,11 @@ export const getExchangeRate = async (): Promise<number> => {
 // Update the exchange rate in site settings
 export const updateExchangeRate = async (newRate: number): Promise<boolean> => {
   try {
-    // Check if the exchange rate setting exists using SQL
-    const { data: existingSettings, error: selectError } = await supabase.rpc(
-      'execute_sql',
-      { sql_statement: `SELECT id FROM site_settings WHERE key = 'exchange_rate'` }
-    );
+    // Check if the exchange rate setting exists
+    const { data: existingSettings, error: selectError } = await supabase
+      .from('site_settings')
+      .select('id')
+      .eq('key', 'exchange_rate');
       
     if (selectError) {
       console.error('Error checking existing exchange rate setting:', selectError);
@@ -90,33 +88,24 @@ export const updateExchangeRate = async (newRate: number): Promise<boolean> => {
     const settingsExist = Array.isArray(existingSettings) && existingSettings.length > 0;
     
     if (settingsExist) {
-      // Update existing setting using SQL
-      const { error: updateError } = await supabase.rpc(
-        'execute_sql',
-        { 
-          sql_statement: `
-            UPDATE site_settings 
-            SET value = '${newRate.toString()}' 
-            WHERE key = 'exchange_rate'
-          `
-        }
-      );
+      // Update existing setting
+      const { error: updateError } = await supabase
+        .from('site_settings')
+        .update({ value: newRate.toString() })
+        .eq('key', 'exchange_rate');
         
       if (updateError) {
         console.error('Error updating exchange rate:', updateError);
         return false;
       }
     } else {
-      // Create new setting using SQL
-      const { error: insertError } = await supabase.rpc(
-        'execute_sql',
-        { 
-          sql_statement: `
-            INSERT INTO site_settings (key, value)
-            VALUES ('exchange_rate', '${newRate.toString()}')
-          `
-        }
-      );
+      // Create new setting
+      const { error: insertError } = await supabase
+        .from('site_settings')
+        .insert({
+          key: 'exchange_rate',
+          value: newRate.toString()
+        });
         
       if (insertError) {
         console.error('Error inserting exchange rate:', insertError);
