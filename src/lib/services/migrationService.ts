@@ -1,6 +1,5 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { SiteSetting } from "@/lib/types/course-new";
 
 // Define possible migration names
 export type MigrationName = 
@@ -18,14 +17,13 @@ export const recordMigration = async (name: MigrationName, description: string, 
       const { error } = await supabase
         .from('site_settings')
         .upsert({
-          setting_key: `migration_${name}`,
-          setting_value: JSON.stringify({
+          key: `migration_${name}`,
+          value: JSON.stringify({
             name,
             description,
             executed_at: new Date().toISOString(),
             success
-          }),
-          updated_at: new Date().toISOString()
+          })
         });
       
       if (error) {
@@ -49,8 +47,8 @@ export const getExchangeRate = async (): Promise<number> => {
   try {
     const { data, error } = await supabase
       .from('site_settings')
-      .select('setting_value')
-      .eq('setting_key', 'exchange_rate')
+      .select('value')
+      .eq('key', 'exchange_rate')
       .single();
       
     if (error) {
@@ -58,11 +56,11 @@ export const getExchangeRate = async (): Promise<number> => {
       return 7; // Default exchange rate
     }
     
-    if (!data || !data.setting_value) {
+    if (!data || !data.value) {
       return 7; // Default if no data
     }
     
-    return parseFloat(data.setting_value || '7');
+    return parseFloat(data.value || '7');
   } catch (error) {
     console.error('Error getting exchange rate:', error);
     return 7;
@@ -76,7 +74,7 @@ export const updateExchangeRate = async (newRate: number): Promise<boolean> => {
     const { data: existingSetting, error: selectError } = await supabase
       .from('site_settings')
       .select('id')
-      .eq('setting_key', 'exchange_rate')
+      .eq('key', 'exchange_rate')
       .single();
       
     if (selectError && !selectError.message?.includes('No rows found')) {
@@ -88,8 +86,8 @@ export const updateExchangeRate = async (newRate: number): Promise<boolean> => {
       // Update existing setting
       const { error: updateError } = await supabase
         .from('site_settings')
-        .update({ setting_value: newRate.toString() })
-        .eq('setting_key', 'exchange_rate');
+        .update({ value: newRate.toString() })
+        .eq('key', 'exchange_rate');
         
       if (updateError) {
         console.error('Error updating exchange rate:', updateError);
@@ -100,8 +98,8 @@ export const updateExchangeRate = async (newRate: number): Promise<boolean> => {
       const { error: insertError } = await supabase
         .from('site_settings')
         .insert({
-          setting_key: 'exchange_rate',
-          setting_value: newRate.toString()
+          key: 'exchange_rate',
+          value: newRate.toString()
         });
         
       if (insertError) {

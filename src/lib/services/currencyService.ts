@@ -1,9 +1,11 @@
+
 /**
  * Currency Service
  * Provides utility functions for working with currencies, formatting amounts, and exchange rates
  */
 
 import { Order } from '@/lib/types/order';
+import { getExchangeRate } from './migrationService';
 
 /**
  * Format a monetary amount with the appropriate currency symbol
@@ -112,4 +114,53 @@ export const getActualPaymentAmount = (order: Order): { amount: number; currency
     amount: order.amount || order.total_amount || 0, 
     currency: order.currency || 'cny' 
   };
+};
+
+/**
+ * Get default exchange rate for USD to CNY conversion
+ * Used when system exchange rate is not available
+ */
+export const getDefaultExchangeRate = (): number => {
+  return 7.0; // Default USD to CNY exchange rate
+};
+
+/**
+ * Convert currency based on exchange rate
+ * @param amount - The amount to convert
+ * @param fromCurrency - Source currency code
+ * @param toCurrency - Target currency code
+ * @param exchangeRate - Exchange rate to use (optional, will use default if not provided)
+ */
+export const convertCurrency = async (
+  amount: number, 
+  fromCurrency: string = 'usd', 
+  toCurrency: string = 'cny', 
+  exchangeRate?: number
+): Promise<number> => {
+  // If currencies are the same, no conversion needed
+  if (fromCurrency.toLowerCase() === toCurrency.toLowerCase()) {
+    return amount;
+  }
+  
+  // If no exchange rate provided, try to get from system settings
+  if (!exchangeRate) {
+    try {
+      exchangeRate = await getExchangeRate();
+    } catch (error) {
+      console.error('Error getting exchange rate, using default:', error);
+      exchangeRate = getDefaultExchangeRate();
+    }
+  }
+  
+  // Basic conversion - only supporting USD to CNY for now
+  // For more complex conversions, we'd need a full rate table
+  if (fromCurrency.toLowerCase() === 'usd' && toCurrency.toLowerCase() === 'cny') {
+    return amount * exchangeRate;
+  } else if (fromCurrency.toLowerCase() === 'cny' && toCurrency.toLowerCase() === 'usd') {
+    return amount / exchangeRate;
+  }
+  
+  // If we don't know how to convert, return original amount
+  console.warn(`Unsupported currency conversion from ${fromCurrency} to ${toCurrency}`);
+  return amount;
 };
