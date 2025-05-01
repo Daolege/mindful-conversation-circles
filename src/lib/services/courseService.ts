@@ -106,7 +106,7 @@ export async function deleteCourse(courseId: number): Promise<{ success: boolean
   }
 }
 
-// Get courses by instructor ID with simplified return type
+// Get courses by instructor ID with simple return type to avoid excessive type instantiation
 export async function getCoursesByInstructorId(instructorId: string): Promise<{data: any[] | null, error: Error | null}> {
   try {
     const { data, error } = await supabase
@@ -223,7 +223,7 @@ export async function getCourseNewById(courseId: number): Promise<any> {
   }
 }
 
-// Completely rewritten getCourseWithSections function to avoid type issues
+// Simplified getCourseWithSections function to avoid type issues
 export const getCourseWithSections = async (courseId: number): Promise<CourseWithSections | null> => {
   try {
     // Query for the course

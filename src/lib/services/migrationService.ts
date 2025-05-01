@@ -26,6 +26,8 @@ interface OldHomeworkData {
   updated_at?: string;
   submitted_at?: string;
   file_url?: string;
+  feedback?: string | null;
+  grade?: number | null;
   [key: string]: any;
 }
 
@@ -34,12 +36,12 @@ interface HomeworkSubmissionDB {
   id?: string;
   user_id: string;
   homework_id: string;
-  answer?: string;
+  answer?: string | null;
   course_id: number;
   lecture_id: string;
-  submitted_at?: string;
-  file_url?: string;
-  status?: string;
+  submitted_at?: string | null;
+  file_url?: string | null;
+  status?: string | null;
   feedback?: string | null;
   grade?: number | null;
   version?: number;
@@ -108,7 +110,8 @@ export async function migrateHomeworkData(userId: string): Promise<MigrationResu
     let successCount = 0;
     
     // Process each homework submission individually, as the batch upsert was causing type errors
-    for (const submission of oldHomeworkData) {
+    for (const submission of oldHomeworkData as OldHomeworkData[]) {
+      // Use specific fields and provide defaults to ensure the data matches the expected schema
       const transformedData: HomeworkSubmissionDB = {
         user_id: submission.user_id,
         homework_id: submission.homework_id,
@@ -116,7 +119,7 @@ export async function migrateHomeworkData(userId: string): Promise<MigrationResu
         course_id: submission.course_id || 0, // Fallback value
         lecture_id: submission.lecture_id || "", // Fallback value
         status: submission.status || "submitted",
-        submitted_at: submission.created_at || submission.submitted_at || new Date().toISOString(),
+        submitted_at: submission.submitted_at || submission.created_at || new Date().toISOString(),
         file_url: submission.file_url || null,
         feedback: submission.feedback || null,
         grade: submission.grade || null,
