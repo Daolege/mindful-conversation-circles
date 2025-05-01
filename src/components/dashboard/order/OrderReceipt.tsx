@@ -6,6 +6,7 @@ import { format } from 'date-fns';
 import { CheckCircle, CreditCard, FileText } from 'lucide-react';
 import Logo from '@/components/Logo';
 import { siteConfig } from '@/config/site';
+import { calculateSavings, getSavingsPercentage } from '@/lib/services/currencyService';
 
 interface OrderReceiptProps {
   order: Order;
@@ -34,10 +35,10 @@ export const OrderReceipt = ({ order }: OrderReceiptProps) => {
     return order.courses.description || '';
   };
   
-  // Calculate savings amount if original price exists and is higher
-  const savingsAmount = order.original_amount && order.original_amount > (order.amount || 0)
-    ? order.original_amount - (order.amount || 0)
-    : 0;
+  // Calculate savings amount
+  const savingsAmount = calculateSavings(order);
+  const savingsPercentage = getSavingsPercentage(order);
+  const hasSavings = savingsAmount > 0;
   
   // Format credit card number if available (show only last 4 digits)
   const formatCardNumber = () => {
@@ -78,7 +79,7 @@ export const OrderReceipt = ({ order }: OrderReceiptProps) => {
   };
   
   return (
-    <div className="bg-white rounded-lg max-w-4xl mx-auto">
+    <div className="bg-white rounded-lg max-w-4xl mx-auto print:w-full print:mx-0 print:p-0">
       <div className="flex justify-between items-start mb-8 border-b pb-6">
         <div>
           <h1 className="text-3xl font-bold mb-1">支付凭证</h1>
@@ -182,14 +183,14 @@ export const OrderReceipt = ({ order }: OrderReceiptProps) => {
       </div>
 
       <div className="space-y-2 text-sm ml-auto w-full max-w-xs">
-        {order.original_amount && order.original_amount > (order.amount || 0) && (
+        {hasSavings && (
           <>
             <div className="flex justify-between">
               <span>原价</span>
-              <span>{formatCurrency(order.original_amount, order.currency)}</span>
+              <span>{formatCurrency(order.original_amount || 0, order.currency)}</span>
             </div>
             <div className="flex justify-between text-green-600 font-medium">
-              <span>节省金额</span>
+              <span>节省金额 ({savingsPercentage}%)</span>
               <span>-{formatCurrency(savingsAmount, order.currency)}</span>
             </div>
           </>
@@ -227,7 +228,8 @@ export const OrderReceipt = ({ order }: OrderReceiptProps) => {
         <p className="mt-2 text-xs text-gray-400">本凭证作为支付证明，非正式发票</p>
       </div>
 
-      <style jsx global>{`
+      <style jsx global>
+        {`
         @media print {
           body * {
             visibility: hidden;
@@ -245,7 +247,8 @@ export const OrderReceipt = ({ order }: OrderReceiptProps) => {
             display: none !important;
           }
         }
-      `}</style>
+      `}
+      </style>
     </div>
   );
 };
