@@ -17,6 +17,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { useTranslations } from "@/hooks/useTranslations"
 
 interface OrderFilterBarProps {
   dateRange: DateRange | undefined
@@ -43,6 +44,8 @@ export const OrderFilterBar = ({
   onClearFilters,
   hasActiveFilters,
 }: OrderFilterBarProps) => {
+  const { t } = useTranslations();
+  
   return (
     <div className="flex flex-wrap gap-2">
       <div className="flex items-center">
@@ -52,7 +55,7 @@ export const OrderFilterBar = ({
               <Filter className="h-4 w-4 text-muted-foreground mr-2" />
             </TooltipTrigger>
             <TooltipContent>
-              <p>筛选订单类型</p>
+              <p>{t('orders:filterByStatus')}</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
@@ -61,12 +64,12 @@ export const OrderFilterBar = ({
           onValueChange={(value) => setOrderTypeFilter(value)}
         >
           <SelectTrigger className="w-[120px]">
-            <SelectValue placeholder="订单类型" />
+            <SelectValue placeholder={t('orders:orderType')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">全部类型</SelectItem>
-            <SelectItem value="single">单次购买</SelectItem>
-            <SelectItem value="subscription">订阅服务</SelectItem>
+            <SelectItem value="all">{t('orders:allStatuses')}</SelectItem>
+            <SelectItem value="single">{t('orders:typeSingle')}</SelectItem>
+            <SelectItem value="subscription">{t('orders:typeSubscription')}</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -78,7 +81,7 @@ export const OrderFilterBar = ({
               <Calendar className="h-4 w-4 text-muted-foreground mr-2" />
             </TooltipTrigger>
             <TooltipContent>
-              <p>选择日期范围</p>
+              <p>{t('orders:filterByTime')}</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
@@ -93,7 +96,7 @@ export const OrderFilterBar = ({
         <Search className="h-4 w-4 text-muted-foreground mr-2" />
         <Input
           type="search"
-          placeholder="搜索订单号或课程..."
+          placeholder={t('checkout:searchOrdersOrCourses')}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 px-0"
@@ -106,7 +109,7 @@ export const OrderFilterBar = ({
           size="sm"
           onClick={onClearFilters}
         >
-          清除筛选
+          {t('orders:clearFilters')}
         </Button>
       )}
     </div>

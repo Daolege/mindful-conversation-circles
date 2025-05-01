@@ -48,14 +48,14 @@ export const OrderDetailContent = ({ order: initialOrder }: OrderDetailContentPr
         <div className="md:col-span-2">
           <Card className="bg-white shadow">
             <CardHeader className="pb-2">
-              <CardTitle className="text-2xl font-bold">{t('checkout:orderDetails')}</CardTitle>
+              <CardTitle className="text-2xl font-bold">{t('orders:orderDetails')}</CardTitle>
             </CardHeader>
             <CardContent className="p-6">
               <div className="space-y-8">
                 {/* 基本信息区块 */}
                 <div>
                   <h3 className="text-lg font-semibold mb-4 flex items-center">
-                    {t('checkout:basicInformation')}
+                    {t('orders:basicInformation')}
                   </h3>
                   <OrderDetailHeader order={order} onOrderUpdate={handleOrderUpdate} />
                 </div>
@@ -66,7 +66,7 @@ export const OrderDetailContent = ({ order: initialOrder }: OrderDetailContentPr
                 <div>
                   <h3 className="text-lg font-semibold mb-4 flex items-center">
                     <CreditCard className="h-5 w-5 mr-2" />
-                    {t('checkout:paymentInformation')}
+                    {t('orders:paymentInformation')}
                   </h3>
                   <OrderPaymentDetails order={order} />
 
@@ -75,8 +75,8 @@ export const OrderDetailContent = ({ order: initialOrder }: OrderDetailContentPr
                     <div className="mt-4 p-3 bg-green-50 rounded-lg border border-green-100">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-sm font-medium text-green-700">{t('checkout:discountSavings')}</p>
-                          <p className="text-xs text-green-600">{t('checkout:savedComparedToOriginal', { percentage: savingsPercentage })}</p>
+                          <p className="text-sm font-medium text-green-700">{t('orders:discountSavings')}</p>
+                          <p className="text-xs text-green-600">{t('orders:savedComparedToOriginal', { percentage: savingsPercentage })}</p>
                         </div>
                         <p className="text-green-700 font-semibold">
                           {formatCurrency(savingsAmount, order.currency)}
@@ -92,26 +92,26 @@ export const OrderDetailContent = ({ order: initialOrder }: OrderDetailContentPr
                 <div>
                   <h3 className="text-lg font-semibold mb-4 flex items-center">
                     <UserIcon className="h-5 w-5 mr-2" />
-                    {t('checkout:customerInformation')}
+                    {t('orders:customerInformation')}
                   </h3>
                   <div className="space-y-3 p-4 bg-gray-50 rounded-lg">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <p className="text-sm text-muted-foreground">{t('checkout:customerId')}</p>
+                        <p className="text-sm text-muted-foreground">{t('orders:customerId')}</p>
                         <p className="font-medium">{order.user_id}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground">{t('checkout:emailAddress')}</p>
-                        <p className="font-medium">{order.profiles?.email || t('checkout:unknown')}</p>
+                        <p className="text-sm text-muted-foreground">{t('orders:emailAddress')}</p>
+                        <p className="font-medium">{order.profiles?.email || t('orders:unknown')}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground">{t('checkout:name')}</p>
-                        <p className="font-medium">{order.profiles?.full_name || t('checkout:notProvided')}</p>
+                        <p className="text-sm text-muted-foreground">{t('orders:name')}</p>
+                        <p className="font-medium">{order.profiles?.full_name || t('orders:notProvided')}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground">{t('checkout:orderDate')}</p>
+                        <p className="text-sm text-muted-foreground">{t('orders:orderDate')}</p>
                         <p className="font-medium">
-                          {order.created_at ? format(new Date(order.created_at), 'yyyy-MM-dd HH:mm:ss') : t('checkout:unknown')}
+                          {order.created_at ? format(new Date(order.created_at), 'yyyy-MM-dd HH:mm:ss') : t('orders:unknown')}
                         </p>
                       </div>
                     </div>
@@ -126,7 +126,7 @@ export const OrderDetailContent = ({ order: initialOrder }: OrderDetailContentPr
           <div className="sticky top-20 space-y-4">
             <Card className="bg-white shadow">
               <CardHeader className="pb-2">
-                <CardTitle className="text-xl font-semibold">{t('checkout:orderActions')}</CardTitle>
+                <CardTitle className="text-xl font-semibold">{t('orders:orderActions')}</CardTitle>
               </CardHeader>
               <CardContent className="p-6">
                 <OrderActions order={order} onOrderUpdated={handleOrderUpdate} />

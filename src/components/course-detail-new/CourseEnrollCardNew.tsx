@@ -6,14 +6,17 @@ import { CourseWithDetails } from '@/lib/types/course-new';
 import { Clock, Calendar, Globe, CheckCircle, Download, Users, MessageSquare, Video, BookOpen } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useNavigate } from 'react-router-dom';
+import { useTranslations } from '@/hooks/useTranslations';
 
 interface CourseEnrollCardNewProps {
   course: CourseWithDetails;
 }
 
 export const CourseEnrollCardNew: React.FC<CourseEnrollCardNewProps> = ({ course }) => {
+  const { t } = useTranslations();
+  
   // Format price with currency symbol
-  const formattedPrice = course.price === 0 ? '免费' : `¥${course.price.toFixed(2)}`;
+  const formattedPrice = course.price === 0 ? t('courses:free') : `¥${course.price.toFixed(2)}`;
   const formattedOriginalPrice = course.original_price && course.price !== 0
     ? `¥${course.original_price.toFixed(2)}`
     : null;
@@ -71,7 +74,7 @@ export const CourseEnrollCardNew: React.FC<CourseEnrollCardNewProps> = ({ course
             )}
             {discountPercentage && (
               <div className="ml-3 bg-green-100 text-green-700 px-2 py-1 text-sm rounded-full font-medium">
-                省{discountPercentage}%
+                {t('courses:save', { percentage: discountPercentage })}
               </div>
             )}
           </div>
@@ -82,26 +85,26 @@ export const CourseEnrollCardNew: React.FC<CourseEnrollCardNewProps> = ({ course
             variant="knowledge"
             onClick={handleEnrollClick}
           >
-            {course.price === 0 ? '免费学习' : '立即报名学习'}
+            {course.price === 0 ? t('courses:freeAccess') : t('courses:enrollAndStart')}
           </Button>
 
           {/* Course features */}
           <div className={`space-y-3 text-sm ${isMobile ? 'grid grid-cols-2 gap-2' : ''}`}>
             <div className="flex items-center animate-in fade-in duration-300">
               <Video className="h-4 w-4 text-gray-500 mr-2" />
-              <span>高清视频课程</span>
+              <span>{t('courses:hdVideo')}</span>
             </div>
             <div className="flex items-center animate-in fade-in duration-300">
               <Clock className="h-4 w-4 text-gray-500 mr-2" />
-              <span>随时随地学习</span>
+              <span>{t('courses:learnAnytime')}</span>
             </div>
             <div className="flex items-center animate-in fade-in duration-300">
               <BookOpen className="h-4 w-4 text-gray-500 mr-2" />
-              <span>0门槛学习</span>
+              <span>{t('courses:noBarrier')}</span>
             </div>
             <div className="flex items-center animate-in fade-in duration-300">
               <Globe className="h-4 w-4 text-gray-500 mr-2" />
-              <span>课程语言：{course.language || '中文'}</span>
+              <span>{t('courses:courseLanguage', { language: course.language || '中文' })}</span>
             </div>
           </div>
         </div>

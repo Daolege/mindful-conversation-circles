@@ -12,6 +12,7 @@ import enAdmin from './locales/en/admin.json';
 import enCheckout from './locales/en/checkout.json';
 import enDashboard from './locales/en/dashboard.json';
 import enErrors from './locales/en/errors.json';
+import enOrders from './locales/en/orders.json';
 
 import zhCommon from './locales/zh/common.json';
 import zhCourses from './locales/zh/courses.json';
@@ -21,6 +22,7 @@ import zhAdmin from './locales/zh/admin.json';
 import zhCheckout from './locales/zh/checkout.json';
 import zhDashboard from './locales/zh/dashboard.json';
 import zhErrors from './locales/zh/errors.json';
+import zhOrders from './locales/zh/orders.json';
 
 // Configure i18next
 i18n
@@ -36,7 +38,8 @@ i18n
         admin: enAdmin,
         checkout: enCheckout,
         dashboard: enDashboard,
-        errors: enErrors
+        errors: enErrors,
+        orders: enOrders
       },
       zh: {
         common: zhCommon,
@@ -46,7 +49,8 @@ i18n
         admin: zhAdmin,
         checkout: zhCheckout,
         dashboard: zhDashboard,
-        errors: zhErrors
+        errors: zhErrors,
+        orders: zhOrders
       },
     },
     supportedLngs: ['en', 'zh'],

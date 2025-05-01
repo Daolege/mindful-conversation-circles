@@ -9,12 +9,15 @@ import {
   getExchangeRateDisplay,
   getActualPaymentAmount
 } from '@/lib/services/currencyService';
+import { useTranslations } from '@/hooks/useTranslations';
 
 interface OrderPaymentDetailsProps {
   order: Order;
 }
 
 export const OrderPaymentDetails = ({ order }: OrderPaymentDetailsProps) => {
+  const { t } = useTranslations();
+  
   // 处理支付方式图标
   const getPaymentMethodIcon = () => {
     switch(order.payment_type) {
@@ -34,10 +37,10 @@ export const OrderPaymentDetails = ({ order }: OrderPaymentDetailsProps) => {
   // 格式化支付方式名称
   const getPaymentMethodName = () => {
     if (order.payment_type?.includes('subscription-')) {
-      return '订阅付款';
+      return t('orders:typeSubscription');
     }
     
-    return getPaymentMethodDisplay(order.payment_type);
+    return getPaymentMethodDisplay(order.payment_type, t);
   };
 
   // 获取实际支付的金额和币种
@@ -71,30 +74,27 @@ export const OrderPaymentDetails = ({ order }: OrderPaymentDetailsProps) => {
       <div className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
           <div>
-            <p className="text-sm text-muted-foreground">交易状态</p>
+            <p className="text-sm text-muted-foreground">{t('orders:transactionStatus')}</p>
             <div className="mt-1">
               <Badge variant={order.status === 'completed' ? 'success' : 
                           order.status === 'pending' ? 'warning' : 
                           'destructive'}>
-                {order.status === 'completed' ? '成功' : 
-                 order.status === 'pending' ? '待处理' : 
-                 order.status === 'failed' ? '失败' : 
-                 order.status === 'cancelled' ? '已取消' : order.status}
+                {t(`orders:status${order.status.charAt(0).toUpperCase() + order.status.slice(1)}`)}
               </Badge>
             </div>
           </div>
           
           <div>
-            <p className="text-sm text-muted-foreground">订单编号</p>
+            <p className="text-sm text-muted-foreground">{t('orders:orderNumber')}</p>
             <p className="font-medium">{order.order_number || order.id}</p>
           </div>
         </div>
 
         <div className="p-4 bg-gray-50 rounded-lg space-y-3">
-          <h3 className="font-medium">支付细节</h3>
+          <h3 className="font-medium">{t('orders:paymentDetails')}</h3>
           
           <div className="flex justify-between items-center font-medium">
-            <span>支付金额</span>
+            <span>{t('orders:paymentAmount')}</span>
             <span>{formatAmount(displayAmount, displayCurrency)}</span>
           </div>
           
@@ -105,7 +105,7 @@ export const OrderPaymentDetails = ({ order }: OrderPaymentDetailsProps) => {
                 order.currency,
                 order.exchange_rate
               )}</p>
-              <p>原始金额: {formatAmount(order.original_amount, order.original_currency)}</p>
+              <p>{t('orders:originalAmount')}: {formatAmount(order.original_amount, order.original_currency)}</p>
             </div>
           )}
         </div>
@@ -118,10 +118,10 @@ export const OrderPaymentDetails = ({ order }: OrderPaymentDetailsProps) => {
           )}
           <span className="text-sm">
             {order.is_paid || order.status === 'completed' 
-              ? '此订单已完成支付' 
+              ? t('orders:paymentCompleted')
               : order.status === 'pending'
-                ? '此订单正在处理中'
-                : '此订单支付失败'}
+                ? t('orders:paymentPending')
+                : t('orders:paymentFailed')}
           </span>
         </div>
       </div>

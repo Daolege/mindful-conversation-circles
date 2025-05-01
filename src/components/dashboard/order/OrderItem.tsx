@@ -17,6 +17,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { toast } from "@/components/ui/use-toast"
+import { useTranslations } from "@/hooks/useTranslations"
 
 interface OrderItemProps {
   order: Order;
@@ -35,6 +36,8 @@ export const OrderItem = ({
   getOrderTypeBadgeVariant,
   getOrderCourseTitle,
 }: OrderItemProps) => {
+  const { t } = useTranslations();
+  
   // 获取订单状态图标
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -81,24 +84,26 @@ export const OrderItem = ({
               <Badge variant="outline" className={getStatusBadgeVariant(order.status)}>
                 <span className="flex items-center gap-1">
                   {getStatusIcon(order.status)}
-                  {getStatusName(order.status)}
+                  {t(`orders:status${order.status.charAt(0).toUpperCase() + order.status.slice(1)}`)}
                 </span>
               </Badge>
             </TooltipTrigger>
             <TooltipContent>
-              <p>订单状态: {getStatusName(order.status)}</p>
+              <p>{t('orders:orderStatus')}: {t(`orders:status${order.status.charAt(0).toUpperCase() + order.status.slice(1)}`)}</p>
               <p className="text-xs text-muted-foreground">
-                最后更新: {order.updated_at ? format(new Date(order.updated_at), 'yyyy-MM-dd HH:mm') : '未知'}
+                {t('common:lastUpdated')}: {order.updated_at ? format(new Date(order.updated_at), 'yyyy-MM-dd HH:mm') : t('common:unknown')}
               </p>
             </TooltipContent>
           </Tooltip>
           
           <Badge variant="outline" className={getOrderTypeBadgeVariant(orderType)}>
-            {orderType}
+            {orderType === 'Single Purchase' ? t('orders:typeSingle') : 
+             orderType === 'Subscription' ? t('orders:typeSubscription') : 
+             orderType}
           </Badge>
           
           <Badge variant="outline">
-            {getPaymentMethodDisplay(order.payment_type)}
+            {getPaymentMethodDisplay(order.payment_type, t)}
           </Badge>
           
           <span className="text-sm text-muted-foreground">
@@ -122,8 +127,8 @@ export const OrderItem = ({
                 </span>
               </TooltipTrigger>
               <TooltipContent>
-                <p>原始金额: {formatAmount(order.original_amount, order.original_currency)}</p>
-                <p>汇率: {order.exchange_rate}</p>
+                <p>{t('orders:originalAmount')}: {formatAmount(order.original_amount, order.original_currency)}</p>
+                <p>{t('orders:exchangeRate')}: {order.exchange_rate}</p>
               </TooltipContent>
             </Tooltip>
           )}
@@ -134,7 +139,7 @@ export const OrderItem = ({
         className="inline-flex items-center justify-center gap-1 px-4 py-2 text-sm font-medium transition-colors border rounded-md shadow-sm hover:bg-accent hover:text-accent-foreground border-input bg-background"
       >
         <Eye className="h-4 w-4" />
-        订单详情
+        {t('orders:viewDetails')}
       </Link>
     </div>
   );

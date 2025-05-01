@@ -9,12 +9,15 @@ import {
   Lock, BookOpen, 
   Download, File, Target, Award, Users, Bookmark, GraduationCap, Book, CheckCircle
 } from 'lucide-react';
+import { useTranslations } from '@/hooks/useTranslations';
 
 interface CourseDetailContentNewProps {
   course: CourseWithDetails;
 }
 
 export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ course }) => {
+  const { t } = useTranslations();
+  
   const [openSectionIds, setOpenSectionIds] = useState<{[key: string]: boolean}>(() => {
     // Default: first section is open
     const initial: {[key: string]: boolean} = {};
@@ -92,7 +95,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
         <CardHeader className="pb-0">
           <CardTitle className="text-xl flex items-center gap-2">
             <File className="h-5 w-5" />
-            课程介绍
+            {t('courses:courseIntroduction')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -100,7 +103,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
             {course.description ? (
               <div className="whitespace-pre-wrap">{course.description}</div>
             ) : (
-              <div className="text-gray-500">暂无详细介绍</div>
+              <div className="text-gray-500">{t('courses:noDescription')}</div>
             )}
           </div>
         </CardContent>
@@ -111,12 +114,12 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
         <CardHeader className="pb-0">
           <CardTitle className="text-xl flex items-center gap-2">
             <BookOpen className="h-5 w-5" />
-            课程大纲
+            {t('courses:courseOutline')}
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-4">
           <div className="text-sm text-gray-500 mb-4">
-            {course.sections?.length || 0} 个章节 • {totalLessons} 个课时
+            {course.sections?.length || 0} {t('courses:sections')} • {t('courses:lessons', { count: totalLessons })}
           </div>
 
           {isOutlineLoading ? (
@@ -145,7 +148,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
                     <div className="flex justify-between w-full items-center">
                       <span className="text-lg">{section.title}</span>
                       <span className="text-xs text-gray-500">
-                        {section.lectures?.length || 0} 课时
+                        {t('courses:lessons', { count: section.lectures?.length || 0 })}
                       </span>
                     </div>
                   }
@@ -173,7 +176,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
                               className="text-xs py-2 px-3 h-8 flex items-center gap-1"
                               onClick={() => handleFreeLearnClick(lecture.id)}
                             >
-                              免费学习
+                              {t('courses:freeAccess')}
                             </Button>
                           ) : (
                             <Lock size={16} className="text-gray-400" />
@@ -186,7 +189,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
               ))}
             </div>
           ) : (
-            <div className="text-center py-8 text-gray-500">该课程暂无章节内容</div>
+            <div className="text-center py-8 text-gray-500">{t('courses:noSections')}</div>
           )}
         </CardContent>
       </Card>
@@ -196,7 +199,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
         <CardHeader className="pb-0">
           <CardTitle className="text-xl flex items-center gap-2">
             <File className="h-5 w-5" />
-            课程附件
+            {t('courses:courseAttachments')}
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-4">
@@ -219,13 +222,13 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
                     className="text-xs py-2 px-3 h-8 flex items-center gap-1"
                   >
                     <Download size={14} />
-                    下载
+                    {t('courses:download')}
                   </Button>
                 </li>
               ))}
             </ul>
           ) : (
-            <div className="text-gray-500">暂无课程附件</div>
+            <div className="text-gray-500">{t('courses:noAttachments')}</div>
           )}
         </CardContent>
       </Card>
@@ -241,7 +244,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
           <CardHeader className="pb-0">
             <CardTitle className="text-lg flex items-center gap-2">
               <Target className="h-5 w-5" />
-              学习目标
+              {t('courses:learningObjectives')}
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-4">
@@ -258,7 +261,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
                 ))}
               </ul>
             ) : (
-              <div className="text-gray-500">暂无学习目标</div>
+              <div className="text-gray-500">{t('courses:noObjectives')}</div>
             )}
           </CardContent>
         </Card>
@@ -272,7 +275,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
           <CardHeader className="pb-0">
             <CardTitle className="text-lg flex items-center gap-2">
               <Book className="h-5 w-5" />
-              课程要求
+              {t('courses:requirements')}
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-4">
@@ -289,7 +292,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
                 ))}
               </ul>
             ) : (
-              <div className="text-gray-500">本课程没有特殊要求</div>
+              <div className="text-gray-500">{t('courses:noRequirements')}</div>
             )}
           </CardContent>
         </Card>
@@ -303,7 +306,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
           <CardHeader className="pb-0">
             <CardTitle className="text-lg flex items-center gap-2">
               <Users className="h-5 w-5" />
-              适合人群
+              {t('courses:targetAudience')}
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-4">
@@ -320,7 +323,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
                 ))}
               </ul>
             ) : (
-              <div className="text-gray-500">适合所有人学习</div>
+              <div className="text-gray-500">{t('courses:suitableForEveryone')}</div>
             )}
           </CardContent>
         </Card>
