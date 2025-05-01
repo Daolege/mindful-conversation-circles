@@ -583,7 +583,7 @@ const CourseManagement = () => {
                           <TableCell>{course.title}</TableCell>
                           <TableCell>{course.price}</TableCell>
                           <TableCell>{course.category}</TableCell>
-                          <TableCell>{course.instructor_name || '未知讲师'}</TableCell>
+                          <TableCell>{course.instructor || course.instructor_id || '未知讲师'}</TableCell>
                           <TableCell>
                             <Button
                               variant="secondary"

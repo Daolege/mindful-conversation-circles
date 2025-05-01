@@ -325,6 +325,15 @@ export const CourseMaterialsEditor = ({ courseId }: CourseMaterialsEditorProps) 
     }
   };
   
+  const setSectionVisibility = (key, value) => {
+    if (setSectionVisibility) {
+      setSectionVisibility({
+        ...sectionVisibility,
+        [key]: value
+      });
+    }
+  };
+  
   const handleVisibilityChange = async (checked: boolean) => {
     // Update visibility in CourseEditorContext first for responsive UI
     setSectionVisibility('materials', checked);

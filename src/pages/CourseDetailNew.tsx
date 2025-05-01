@@ -1,4 +1,3 @@
-
 import React, { Suspense } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -31,7 +30,7 @@ const CourseDetailNew = () => {
       <>
         <Navbar />
         <div className="container mx-auto px-4 py-8">
-          <DetailPageSkeleton className="animate-pulse transition-all duration-500" />
+          <DetailPageSkeleton />
         </div>
         <Footer />
       </>

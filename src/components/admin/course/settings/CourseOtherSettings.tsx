@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
@@ -7,9 +8,21 @@ import { toast } from 'sonner';
 import { getObjectives, getRequirements, getAudiences } from '@/lib/services/courseSettingsService';
 import { Loader2 } from 'lucide-react';
 import { useCourseEditor } from '@/hooks/useCourseEditor';
+import { supabase } from '@/integrations/supabase/client';
 
 interface CourseOtherSettingsProps {
   courseId: number;
+  savedSections?: {
+    objectives: boolean;
+    requirements: boolean;
+    audiences: boolean;
+  };
+  sectionVisibility?: {
+    objectives: boolean;
+    requirements: boolean;
+    audiences: boolean;
+    materials: boolean;
+  };
 }
 
 // Create a separate function to handle section visibility updates
@@ -49,7 +62,8 @@ const updateSectionVisibility = async ({ courseId, section, isVisible }: {
   }
 };
 
-const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({ courseId }) => {
+// Export BOTH as default and named export to fix import issues
+export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({ courseId, savedSections, sectionVisibility }) => {
   const [loading, setLoading] = useState(true);
   const [objectivesVisible, setObjectivesVisible] = useState(true);
   const [requirementsVisible, setRequirementsVisible] = useState(true);
@@ -206,4 +220,5 @@ const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({ courseId }) =
   );
 };
 
+// Also export as default for flexibility
 export default CourseOtherSettings;

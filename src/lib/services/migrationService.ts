@@ -10,19 +10,8 @@ export const setupMigrationTable = async (): Promise<{ success: boolean; message
   try {
     console.log('[migrationService] Setting up migration tracking table');
     
-    // Try to create _migrations table using direct SQL
-    const createTableSQL = `
-      CREATE TABLE IF NOT EXISTS _migrations (
-        id serial primary key,
-        name text,
-        executed_at timestamptz default now(),
-        sql text,
-        success boolean default true
-      );
-    `;
-    
+    // Try to create tracking entry in site_settings
     try {
-      // Instead of using RPC, try direct table manipulation
       const { error: tableError } = await supabase
         .from('site_settings')
         .insert({
@@ -110,13 +99,20 @@ export const hasMigrationExecuted = async (migrationName: string): Promise<boole
       return false;
     }
     
-    // Try to parse the value
-    try {
-      const migrationData = JSON.parse(data[0].value);
-      return !!migrationData?.success;
-    } catch (e) {
-      return false;
+    // Get the first record
+    const record = data[0];
+    
+    // Check if it has a string value that can be parsed
+    if (typeof record.value === 'string') {
+      try {
+        const migrationData = JSON.parse(record.value);
+        return !!migrationData?.success;
+      } catch (e) {
+        return false;
+      }
     }
+    
+    return false;
   } catch (err) {
     console.error('[migrationService] Error in hasMigrationExecuted:', err);
     return false;
