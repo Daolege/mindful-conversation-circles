@@ -5,20 +5,32 @@ import { getUserOrders } from "@/lib/services/orderService";
 import { useAuth } from "@/contexts/authHooks";
 import { OrderHistory } from "../OrderHistory";
 import { Loader2 } from "lucide-react";
-import { Card } from "@/components/ui/card";
+import { toast } from "sonner";
 
 export function OrderHistoryView() {
   const { user } = useAuth();
   const [statusFilter, setStatusFilter] = useState("all");
   
-  const { data: ordersResponse, isLoading } = useQuery({
+  const { data: ordersResponse, isLoading, error } = useQuery({
     queryKey: ['user-orders', user?.id, statusFilter],
     queryFn: async () => {
       if (!user?.id) return { data: [], error: null };
-      return await getUserOrders(user.id);
+      try {
+        return await getUserOrders(user.id);
+      } catch (err) {
+        console.error("Error fetching orders:", err);
+        return { data: [], error: err };
+      }
     },
     enabled: !!user?.id,
   });
+
+  if (error) {
+    console.error("Error loading orders:", error);
+    toast.error("加载订单记录失败", {
+      description: "请稍后再试"
+    });
+  }
 
   if (isLoading) {
     return (
@@ -28,19 +40,9 @@ export function OrderHistoryView() {
     );
   }
 
-  if (!ordersResponse?.data || ordersResponse.data.length === 0) {
-    return (
-      <OrderHistory
-        orders={[]}
-        statusFilter={statusFilter}
-        onStatusFilterChange={setStatusFilter}
-      />
-    );
-  }
-
   return (
     <OrderHistory
-      orders={ordersResponse.data}
+      orders={ordersResponse?.data || []}
       statusFilter={statusFilter}
       onStatusFilterChange={setStatusFilter}
       showAll={true}

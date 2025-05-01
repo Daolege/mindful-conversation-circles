@@ -6,12 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Book, RefreshCcw, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/authHooks";
-import { enrollUserInSampleCourses } from "@/lib/services/userEnrollmentService";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { EnrolledCourseCard } from "./EnrolledCourseCard";
 import { Link } from "react-router-dom";
 import { PaginatedContent } from "./common/PaginatedContent";
 import { motion } from "framer-motion";
+import { generateAllMockData } from "@/lib/services/mockDataService";
 
 const COURSES_PER_PAGE = 6;
 
@@ -26,6 +26,7 @@ export const EnrolledCoursesNew = memo(({
 }: EnrolledCoursesNewProps) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [isGeneratingData, setIsGeneratingData] = useState(false);
   const { user } = useAuth();
   
   const totalPages = coursesWithProgress ? Math.ceil(coursesWithProgress.length / COURSES_PER_PAGE) : 0;
@@ -51,19 +52,31 @@ export const EnrolledCoursesNew = memo(({
       return;
     }
     
+    setIsGeneratingData(true);
     toast.loading('正在生成示例数据...');
+    
     try {
-      await enrollUserInSampleCourses(user.id);
-      toast.success('已添加示例数据', {
-        description: '请刷新页面查看',
-        action: {
-          label: '刷新',
-          onClick: () => window.location.reload()
-        }
-      });
+      // Use our new mock data service
+      const result = await generateAllMockData(user.id);
+      
+      if (result.success) {
+        toast.success('已添加示例数据', {
+          description: '请刷新页面查看',
+          action: {
+            label: '刷新',
+            onClick: () => window.location.reload()
+          }
+        });
+      } else {
+        toast.error('生成示例数据失败', {
+          description: result.message
+        });
+      }
     } catch (error) {
       console.error('Error generating sample data:', error);
       toast.error('生成示例数据失败');
+    } finally {
+      setIsGeneratingData(false);
     }
   }, [user]);
 
@@ -77,6 +90,11 @@ export const EnrolledCoursesNew = memo(({
     }
   };
 
+  useEffect(() => {
+    // Console log for debugging
+    console.log("Courses with progress:", coursesWithProgress);
+  }, [coursesWithProgress]);
+
   return (
     <Card className="shadow-md border-gray-200 hover:shadow-lg transition-all duration-300 enrolled-courses-container">
       <CardHeader className="flex flex-row items-center justify-between">
@@ -84,17 +102,25 @@ export const EnrolledCoursesNew = memo(({
           <Book className="h-5 w-5 text-knowledge-primary" />
           我报名的课程
         </CardTitle>
-        {(!displayCourses || displayCourses.length === 0) && (
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={handleGenerateSampleData}
-            className="flex items-center gap-2 hover:bg-knowledge-primary hover:text-white transition-all duration-200"
-          >
-            <RefreshCcw className="h-4 w-4" />
-            <span>添加示例数据</span>
-          </Button>
-        )}
+        <Button 
+          variant="outline" 
+          size="sm"
+          onClick={handleGenerateSampleData}
+          disabled={isGeneratingData}
+          className="flex items-center gap-2 hover:bg-knowledge-primary hover:text-white transition-all duration-200"
+        >
+          {isGeneratingData ? (
+            <>
+              <RefreshCcw className="h-4 w-4 animate-spin" />
+              <span>生成中...</span>
+            </>
+          ) : (
+            <>
+              <RefreshCcw className="h-4 w-4" />
+              <span>添加示例数据</span>
+            </>
+          )}
+        </Button>
       </CardHeader>
       <CardContent>
         <TooltipProvider>
@@ -138,7 +164,7 @@ export const EnrolledCoursesNew = memo(({
               className="text-center py-12"
             >
               <p className="text-muted-foreground mb-4">暂无报名课程</p>
-              <p className="text-sm text-muted-foreground mb-6">您可以浏览课程列表，找到感兴趣的课程进行报名</p>
+              <p className="text-sm text-muted-foreground mb-6">您可以点击上方"添加示例数据"按钮生成演示数据</p>
               <div className="flex justify-center gap-4">
                 <Link to="/courses">
                   <Button variant="outline" className="hover:bg-knowledge-primary hover:text-white transition-all duration-200">

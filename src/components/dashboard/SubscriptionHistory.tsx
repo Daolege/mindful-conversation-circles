@@ -5,22 +5,55 @@ import { PaginatedContent } from "./common/PaginatedContent";
 import { useQuery } from "@tanstack/react-query";
 import { getUserSubscriptionHistory } from "@/lib/services/subscriptionService";
 import { useAuth } from "@/contexts/authHooks";
-import { Loader2 } from "lucide-react";
+import { Loader2, RefreshCcw } from "lucide-react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { format } from "date-fns";
 import { zhCN } from "date-fns/locale";
+import { generateMockSubscriptions } from "@/lib/services/mockDataService";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 const SUBSCRIPTIONS_PER_PAGE = 5;
 
 export const SubscriptionHistory = memo(() => {
   const [currentPage, setCurrentPage] = useState(1);
+  const [isGeneratingData, setIsGeneratingData] = useState(false);
   const { user } = useAuth();
   
-  const { data: subscriptions, isLoading } = useQuery({
+  const { data: subscriptions, isLoading, refetch } = useQuery({
     queryKey: ['subscription-history', user?.id],
     queryFn: () => getUserSubscriptionHistory(user?.id || ''),
     enabled: !!user?.id
   });
+
+  const handleGenerateData = async () => {
+    if (!user?.id) {
+      toast.error('请先登录');
+      return;
+    }
+    
+    setIsGeneratingData(true);
+    toast.loading('正在生成订阅记录示例数据...');
+    
+    try {
+      const result = await generateMockSubscriptions(user.id);
+      
+      if (result.success) {
+        toast.success('已添加订阅记录示例数据');
+        // Refetch subscription data
+        refetch();
+      } else {
+        toast.error('生成订阅记录示例数据失败', {
+          description: result.message
+        });
+      }
+    } catch (error) {
+      console.error('Error generating subscription data:', error);
+      toast.error('生成订阅记录示例数据失败');
+    } finally {
+      setIsGeneratingData(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -58,13 +91,32 @@ export const SubscriptionHistory = memo(() => {
       'renew': '续订',
       'cancel': '取消订阅'
     };
-    return types[changeType] || '计划变更';
+    return types[changeType as keyof typeof types] || '计划变更';
   };
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between">
         <h3 className="text-lg font-semibold">订阅历史</h3>
+        <Button 
+          variant="outline" 
+          size="sm"
+          onClick={handleGenerateData}
+          disabled={isGeneratingData}
+          className="flex items-center gap-2 hover:bg-knowledge-primary hover:text-white transition-all duration-200"
+        >
+          {isGeneratingData ? (
+            <>
+              <RefreshCcw className="h-4 w-4 animate-spin" />
+              <span>生成中...</span>
+            </>
+          ) : (
+            <>
+              <RefreshCcw className="h-4 w-4" />
+              <span>添加示例订阅数据</span>
+            </>
+          )}
+        </Button>
       </CardHeader>
       <CardContent>
         <TooltipProvider>
@@ -100,8 +152,9 @@ export const SubscriptionHistory = memo(() => {
               </div>
             </PaginatedContent>
           ) : (
-            <div className="text-center py-8 text-gray-500">
-              暂无订阅历史记录
+            <div className="text-center py-8">
+              <p className="text-muted-foreground mb-6">暂无订阅历史记录</p>
+              <p className="text-sm text-muted-foreground mb-6">点击上方"添加示例订阅数据"按钮生成演示数据</p>
             </div>
           )}
         </TooltipProvider>
