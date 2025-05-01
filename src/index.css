@@ -232,4 +232,78 @@
   .print-hide {
     display: none !important;
   }
+  
+  /* Special class for print-focused elements */
+  body.printing-receipt .receipt-print-container,
+  body.printing-receipt .receipt-print-container * {
+    visibility: visible !important;
+    color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  
+  /* Position the print container properly */
+  body.printing-receipt .receipt-print-container {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    padding: 20px !important;
+    background-color: white !important;
+  }
+  
+  /* Hide unnecessary elements during print */
+  .print-hide {
+    display: none !important;
+  }
+  
+  /* Reset all font colors for print */
+  body.printing-receipt .receipt-print-container p,
+  body.printing-receipt .receipt-print-container h1,
+  body.printing-receipt .receipt-print-container h2,
+  body.printing-receipt .receipt-print-container h3,
+  body.printing-receipt .receipt-print-container span,
+  body.printing-receipt .receipt-print-container div,
+  body.printing-receipt .receipt-print-container table {
+    color: black !important;
+  }
+  
+  /* Exception for green (savings) text */
+  body.printing-receipt .receipt-print-container .green {
+    color: #16a34a !important;
+  }
+}
+
+/* Print Receipt specific styles */
+.receipt-for-print {
+  display: none;
+}
+
+@media print {
+  .receipt-for-print {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto;
+  }
+  
+  .receipt-print-header {
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+  }
+  
+  .receipt-print-content {
+    padding: 20px 0;
+  }
+  
+  .receipt-print-footer {
+    margin-top: 30px;
+    text-align: center;
+    font-size: 12px;
+    color: #666;
+  }
 }

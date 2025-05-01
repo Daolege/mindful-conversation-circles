@@ -72,25 +72,37 @@ export const OrderReceipt = ({ order }: OrderReceiptProps) => {
       case 'credit-card': return '信用卡';
       case 'paypal': return 'PayPal';
       case 'stripe': return 'Stripe';
+      case 'admin': return '管理员手动标记';
       default: 
         if (order.payment_type?.includes('subscription')) return '订阅付款';
         return order.payment_method || '在线支付';
     }
   };
+
+  // 记录计算信息到控制台以便调试
+  React.useEffect(() => {
+    console.log('OrderReceipt - Savings info:', { 
+      originalAmount: order.original_amount, 
+      amount: order.amount,
+      savingsAmount,
+      savingsPercentage,
+      hasSavings
+    });
+  }, [order, savingsAmount, savingsPercentage, hasSavings]);
   
   return (
-    <div className="bg-white rounded-lg max-w-4xl mx-auto print:w-full print:mx-0 print:p-0">
+    <div className="bg-white rounded-lg max-w-4xl mx-auto">
       <div className="flex justify-between items-start mb-8 border-b pb-6">
         <div>
           <h1 className="text-3xl font-bold mb-1">支付凭证</h1>
           <p className="text-sm text-muted-foreground">Payment Receipt</p>
         </div>
-        <div className="print:grayscale">
+        <div>
           <Logo showText={false} size="small" />
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-8 mb-8 text-sm">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 mb-8 text-sm">
         <div>
           <h3 className="font-semibold mb-3">商家信息</h3>
           <div className="space-y-1 text-muted-foreground">
@@ -120,7 +132,7 @@ export const OrderReceipt = ({ order }: OrderReceiptProps) => {
           <h3 className="font-medium">支付方式: {getPaymentMethodName()}</h3>
         </div>
         
-        <div className="grid grid-cols-2 gap-4 text-sm">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
           <div>
             <p className="text-muted-foreground">支付时间</p>
             <p>{order.created_at ? format(new Date(order.created_at), 'yyyy-MM-dd HH:mm:ss') : '未知'}</p>
@@ -170,9 +182,7 @@ export const OrderReceipt = ({ order }: OrderReceiptProps) => {
               </td>
               <td className="text-center py-4 px-4">1</td>
               <td className="text-right py-4 px-4">
-                {order.original_amount 
-                  ? formatCurrency(order.original_amount, order.currency)
-                  : formatCurrency(order.amount || 0, order.currency)}
+                {formatCurrency(order.original_amount || order.amount || 0, order.currency)}
               </td>
               <td className="text-right py-4 px-4">
                 {formatCurrency(order.amount || 0, order.currency)}
@@ -210,7 +220,7 @@ export const OrderReceipt = ({ order }: OrderReceiptProps) => {
       </div>
 
       <div className="mt-12 pt-4 border-t text-sm text-center text-muted-foreground">
-        {order.status === 'completed' ? (
+        {order.status === 'completed' || order.is_paid ? (
           <div className="flex items-center justify-center gap-1">
             <CheckCircle className="h-4 w-4 text-green-500" />
             <p>此订单已完成支付 - {format(new Date(order.updated_at || order.created_at), 'yyyy-MM-dd HH:mm:ss')}</p>
@@ -226,29 +236,8 @@ export const OrderReceipt = ({ order }: OrderReceiptProps) => {
         )}
         
         <p className="mt-2 text-xs text-gray-400">本凭证作为支付证明，非正式发票</p>
+        <p className="mt-1 text-xs text-gray-400">生成时间: {format(new Date(), 'yyyy-MM-dd HH:mm:ss')}</p>
       </div>
-
-      <style>
-        {`
-          @media print {
-            body * {
-              visibility: hidden;
-            }
-            .print-receipt, .print-receipt * {
-              visibility: visible;
-            }
-            .print-receipt {
-              position: absolute;
-              left: 0;
-              top: 0;
-              width: 100%;
-            }
-            .print-hide {
-              display: none !important;
-            }
-          }
-        `}
-      </style>
     </div>
   );
 };
