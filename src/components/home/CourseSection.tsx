@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
-import HomeCourseCard from './HomeCourseCard';
+import NewHomePageCourseCard from './NewHomePageCourseCard';
 import { CourseNew } from '@/lib/types/course-new';
 
 interface CourseSectionProps {
@@ -111,7 +111,7 @@ const CourseSection: React.FC<CourseSectionProps> = ({
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
           >
             {courses.map((course, index) => (
-              <HomeCourseCard 
+              <NewHomePageCourseCard 
                 key={course.id} 
                 course={course}
                 index={index}
