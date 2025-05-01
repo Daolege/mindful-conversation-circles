@@ -1,7 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import i18n from "@/i18n";
-import { Database } from "@/lib/supabase/types";
 
 export interface Language {
   id?: number;
@@ -37,7 +36,7 @@ export async function getAllLanguages(): Promise<Language[]> {
       return [];
     }
     
-    return (data as Language[]) || [];
+    return data as Language[] || [];
   } catch (error) {
     console.error('Unexpected error in getAllLanguages:', error);
     return [];
@@ -58,7 +57,7 @@ export async function getEnabledLanguages(): Promise<Language[]> {
       return [];
     }
     
-    return (data as Language[]) || [];
+    return data as Language[] || [];
   } catch (error) {
     console.error('Unexpected error in getEnabledLanguages:', error);
     return [];
@@ -75,7 +74,7 @@ export async function addLanguage(language: Language): Promise<{ success: boolea
     
     if (error) {
       console.error('Error adding language:', error);
-      return { success: false, error };
+      return { success: false, error: error as unknown as Error };
     }
     
     return { success: true, data: data && data.length > 0 ? (data[0] as Language) : undefined };
@@ -105,7 +104,7 @@ export async function updateLanguage(language: Language): Promise<{ success: boo
     
     if (error) {
       console.error('Error updating language:', error);
-      return { success: false, error };
+      return { success: false, error: error as unknown as Error };
     }
     
     return { success: true };
@@ -125,7 +124,7 @@ export async function toggleLanguageStatus(languageId: number, enabled: boolean)
     
     if (error) {
       console.error('Error toggling language status:', error);
-      return { success: false, error };
+      return { success: false, error: error as unknown as Error };
     }
     
     return { success: true };
@@ -146,7 +145,7 @@ export async function deleteLanguage(languageId: number): Promise<{ success: boo
       .single();
     
     if (fetchError) {
-      return { success: false, error: fetchError };
+      return { success: false, error: fetchError as unknown as Error };
     }
     
     const lang = language as { code: string } | null;
@@ -166,7 +165,7 @@ export async function deleteLanguage(languageId: number): Promise<{ success: boo
     
     if (error) {
       console.error('Error deleting language:', error);
-      return { success: false, error };
+      return { success: false, error: error as unknown as Error };
     }
     
     return { success: true };
@@ -179,13 +178,15 @@ export async function deleteLanguage(languageId: number): Promise<{ success: boo
 // 导入翻译
 export async function importTranslations(translations: TranslationItem[]): Promise<{ success: boolean; error?: Error }> {
   try {
-    const { error } = await supabase
-      .from('translations')
-      .upsert(translations);
-    
-    if (error) {
-      console.error('Error importing translations:', error);
-      return { success: false, error };
+    // Use batch inserts with replacements
+    for (const batch of chunkArray(translations, 100)) {
+      const { error } = await supabase
+        .rpc('upsert_translations_batch', { translations_json: JSON.stringify(batch) });
+      
+      if (error) {
+        console.error('Error importing translations batch:', error);
+        return { success: false, error: error as unknown as Error };
+      }
     }
     
     return { success: true };
@@ -208,7 +209,7 @@ export async function getTranslationsByLanguage(languageCode: string): Promise<T
       return [];
     }
     
-    return (data as TranslationItem[]) || [];
+    return data as TranslationItem[] || [];
   } catch (error) {
     console.error('Unexpected error in getTranslationsByLanguage:', error);
     return [];
@@ -224,4 +225,13 @@ export function reloadLanguageResources(callback?: () => void): void {
   } catch (error) {
     console.error('Error reloading language resources:', error);
   }
+}
+
+// Utility function to split array into chunks
+function chunkArray<T>(array: T[], size: number): T[][] {
+  const result = [];
+  for (let i = 0; i < array.length; i += size) {
+    result.push(array.slice(i, i + size));
+  }
+  return result;
 }

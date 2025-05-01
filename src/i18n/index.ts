@@ -36,17 +36,14 @@ i18n.use({
   read: async (language, namespace, callback) => {
     try {
       // 首先尝试从数据库加载翻译
-      const { data, error } = await supabase
-        .from('translations')
-        .select('key, value')
-        .eq('language_code', language)
-        .eq('namespace', namespace);
+      const { data, error } = await supabase.rpc('get_namespace_translations', {
+        p_language_code: language,
+        p_namespace: namespace
+      });
       
-      const typedData = data as Array<{key: string, value: string}> | null;
-      
-      if (!error && typedData && typedData.length > 0) {
-        // 转换为键值对
-        const translations = typedData.reduce((acc: Record<string, string>, item: {key: string, value: string}) => {
+      // 转换为键值对
+      if (!error && data && data.length > 0) {
+        const translations = data.reduce((acc: Record<string, string>, item: {key: string, value: string}) => {
           acc[item.key] = item.value;
           return acc;
         }, {});

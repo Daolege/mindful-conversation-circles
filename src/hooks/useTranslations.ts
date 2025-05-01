@@ -20,12 +20,11 @@ export const useTranslations = () => {
     try {
       // 检查翻译是否存在
       const { data: existingTranslation, error: selectError } = await supabase
-        .from('translations')
-        .select('id')
-        .eq('language_code', language)
-        .eq('namespace', namespace)
-        .eq('key', key)
-        .single();
+        .rpc('check_translation_exists', {
+          p_language_code: language,
+          p_namespace: namespace,
+          p_key: key
+        });
       
       const typedExistingTranslation = existingTranslation as ExistingTranslation | null;
       
@@ -34,20 +33,20 @@ export const useTranslations = () => {
       if (typedExistingTranslation && typedExistingTranslation.id) {
         // 更新已有翻译
         const { error: updateError } = await supabase
-          .from('translations')
-          .update({ value: value, updated_at: new Date().toISOString() })
-          .eq('id', typedExistingTranslation.id);
+          .rpc('update_translation', {
+            p_id: typedExistingTranslation.id,
+            p_value: value
+          });
           
         if (updateError) throw updateError;
       } else {
         // 添加新翻译
         const { error: insertError } = await supabase
-          .from('translations')
-          .insert({
-            language_code: language,
-            namespace: namespace,
-            key: key,
-            value: value
+          .rpc('insert_translation', {
+            p_language_code: language,
+            p_namespace: namespace,
+            p_key: key,
+            p_value: value
           });
           
         if (insertError) throw insertError;
@@ -70,16 +69,24 @@ export const useTranslations = () => {
   const getTranslations = async (language: string, namespace: string) => {
     try {
       const { data, error } = await supabase
-        .from('translations')
-        .select('*')
-        .eq('language_code', language)
-        .eq('namespace', namespace);
+        .rpc('get_namespace_translations', {
+          p_language_code: language,
+          p_namespace: namespace
+        });
         
       if (error) throw error;
       
+      // Convert the data format to match TranslationItem
+      const translations: TranslationItem[] = (data || []).map((item: any) => ({
+        language_code: language,
+        namespace: namespace,
+        key: item.key,
+        value: item.value
+      }));
+      
       return { 
         success: true, 
-        data: (data as TranslationItem[]) || []
+        data: translations
       };
     } catch (error) {
       console.error('Error fetching translations:', error);
