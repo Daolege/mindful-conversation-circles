@@ -108,7 +108,7 @@ export const executeHomeworkMigration = async () => {
     );
     
     // 4. Update site settings to remember migration was completed
-    // Use properties that actually exist in the site_settings table
+    // Use only properties that actually exist in the site_settings table
     await supabase
       .from('site_settings')
       .insert({
