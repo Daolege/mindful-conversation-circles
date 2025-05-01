@@ -35,6 +35,10 @@ export function OrderHistoryView() {
     enabled: !!user?.id,
   });
 
+  const handleStatusFilterChange = (status: string) => {
+    setFilterStatus(status);
+  };
+
   const handleGenerateData = async () => {
     if (!user?.id || isGeneratingData) return;
     
@@ -112,7 +116,7 @@ export function OrderHistoryView() {
                 onValueChange={setTimeFilter}
                 disabled={isLoading}
               >
-                <SelectTrigger>
+                <SelectTrigger className="w-full sm:w-[200px] h-10">
                   <SelectValue placeholder="选择时间范围" />
                 </SelectTrigger>
                 <SelectContent>
@@ -146,15 +150,15 @@ export function OrderHistoryView() {
       ) : (
         <div className="space-y-4">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-            <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
+            <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
               <Select
                 value={timeFilter}
                 onValueChange={setTimeFilter}
               >
-                <SelectTrigger className="w-full sm:w-[200px]">
+                <SelectTrigger className="w-full sm:w-[200px] h-10 px-4">
                   <SelectValue placeholder="时间范围" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white/95">
                   <SelectItem value="all">所有时间</SelectItem>
                   <SelectItem value="3days">近三天</SelectItem>
                   <SelectItem value="month">近一个月</SelectItem>
@@ -196,7 +200,7 @@ export function OrderHistoryView() {
           <OrderHistory
             orders={orders}
             statusFilter={filterStatus}
-            onStatusFilterChange={setFilterStatus}
+            onStatusFilterChange={handleStatusFilterChange}
             showAll={true}
           />
         </div>
