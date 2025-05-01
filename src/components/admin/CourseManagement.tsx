@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,10 +40,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import {
-  getCourses,
-  createCourse,
-  updateCourse,
-  deleteCourse,
+  getCourseById,
+  saveCourse,
   updateCourseOrder,
 } from "@/lib/services/courseService";
 import { toast } from "sonner";
@@ -54,6 +53,77 @@ import {
   Draggable,
   DropResult,
 } from "react-beautiful-dnd";
+import { supabase } from "@/integrations/supabase/client";
+
+// Function to get all courses
+const getCourses = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('courses_new')
+      .select('*')
+      .order('display_order', { ascending: true });
+    
+    if (error) {
+      throw error;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Error fetching courses:', error);
+    throw error;
+  }
+};
+
+// Function to create a new course
+const createCourse = async (courseData) => {
+  try {
+    const { data, error } = await saveCourse(courseData);
+    
+    if (error) {
+      throw error;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Error creating course:', error);
+    throw error;
+  }
+};
+
+// Function to update a course
+const updateCourse = async (courseData) => {
+  try {
+    const { data, error } = await saveCourse(courseData);
+    
+    if (error) {
+      throw error;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Error updating course:', error);
+    throw error;
+  }
+};
+
+// Function to delete a course
+const deleteCourse = async (courseId) => {
+  try {
+    const { data, error } = await supabase
+      .from('courses_new')
+      .delete()
+      .eq('id', courseId);
+    
+    if (error) {
+      throw error;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Error deleting course:', error);
+    throw error;
+  }
+};
 
 const courseSchema = z.object({
   title: z.string().min(2, {
@@ -103,7 +173,7 @@ const CourseManagement = () => {
     queryFn: getCourses,
   });
 
-  const { mutate: addCourse, isLoading: isAdding } = useMutation({
+  const { mutate: addCourse, isPending: isAdding } = useMutation({
     mutationFn: createCourse,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["courses"] });
@@ -117,7 +187,7 @@ const CourseManagement = () => {
     },
   });
 
-  const { mutate: changeCourse, isLoading: isChanging } = useMutation({
+  const { mutate: changeCourse, isPending: isChanging } = useMutation({
     mutationFn: updateCourse,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["courses"] });
@@ -132,7 +202,7 @@ const CourseManagement = () => {
     },
   });
 
-  const { mutate: removeCourse, isLoading: isRemoving } = useMutation({
+  const { mutate: removeCourse, isPending: isRemoving } = useMutation({
     mutationFn: deleteCourse,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["courses"] });
@@ -198,7 +268,7 @@ const CourseManagement = () => {
     }
 
     const items = reorder(
-      courses,
+      courses || [],
       result.source.index,
       result.destination.index
     );
@@ -411,7 +481,18 @@ const CourseManagement = () => {
                   <FormItem>
                     <FormLabel>特色</FormLabel>
                     <FormControl>
-                      <Input type="boolean" placeholder="特色课程" {...field} />
+                      <Select
+                        onValueChange={(value) => field.onChange(value === 'true')}
+                        defaultValue={field.value ? 'true' : 'false'}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="选择是否特色" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="true">是</SelectItem>
+                          <SelectItem value="false">否</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -482,47 +563,45 @@ const CourseManagement = () => {
                 <TableHead>操作</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody>
-              <Droppable droppableId="courses">
-                {(provided) => (
-                  <div {...provided.droppableProps} ref={provided.innerRef}>
-                    {courses.map((course, index) => (
-                      <Draggable
-                        key={course.id}
-                        draggableId={String(course.id)}
-                        index={index}
-                      >
-                        {(provided) => (
-                          <TableRow
-                            ref={provided.innerRef}
-                            {...provided.draggableProps}
-                            {...provided.dragHandleProps}
-                          >
-                            <TableCell className="text-center">
-                              <GripVertical className="cursor-move" />
-                            </TableCell>
-                            <TableCell>{course.title}</TableCell>
-                            <TableCell>{course.price}</TableCell>
-                            <TableCell>{course.category}</TableCell>
-                            <TableCell>{course.instructor}</TableCell>
-                            <TableCell>
-                              <Button
-                                variant="secondary"
-                                size="sm"
-                                onClick={() => setEditCourse(course)}
-                              >
-                                编辑
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </Draggable>
-                    ))}
-                    {provided.placeholder}
-                  </div>
-                )}
-              </Droppable>
-            </TableBody>
+            <Droppable droppableId="courses">
+              {(provided) => (
+                <TableBody {...provided.droppableProps} ref={provided.innerRef}>
+                  {courses.map((course, index) => (
+                    <Draggable
+                      key={course.id}
+                      draggableId={String(course.id)}
+                      index={index}
+                    >
+                      {(provided) => (
+                        <TableRow
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          {...provided.dragHandleProps}
+                        >
+                          <TableCell className="text-center">
+                            <GripVertical className="cursor-move" />
+                          </TableCell>
+                          <TableCell>{course.title}</TableCell>
+                          <TableCell>{course.price}</TableCell>
+                          <TableCell>{course.category}</TableCell>
+                          <TableCell>{course.instructor}</TableCell>
+                          <TableCell>
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => setEditCourse(course)}
+                            >
+                              编辑
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </Draggable>
+                  ))}
+                  {provided.placeholder}
+                </TableBody>
+              )}
+            </Droppable>
           </Table>
         </DragDropContext>
       ) : (
