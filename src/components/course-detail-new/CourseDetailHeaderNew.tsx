@@ -2,7 +2,7 @@
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { CourseWithDetails } from '@/lib/types/course-new';
-import { BookOpen, Users, Clock, Globe, Calendar } from 'lucide-react';
+import { BookOpen, Users, Clock, Globe } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 interface CourseDetailHeaderNewProps {
@@ -56,16 +56,6 @@ export const CourseDetailHeaderNew: React.FC<CourseDetailHeaderNewProps> = ({ co
           >
             <Globe size={16} className="mr-1" />
             {course.language}
-          </Badge>
-        )}
-        
-        {course.published_at && (
-          <Badge 
-            variant="courseTag"
-            className="text-sm flex items-center animate-in fade-in slide-in-from-bottom-3 duration-500 delay-[400ms]"
-          >
-            <Calendar size={16} className="mr-1" />
-            {new Date(course.published_at).toLocaleDateString('zh-CN')} 发布
           </Badge>
         )}
         

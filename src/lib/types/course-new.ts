@@ -1,4 +1,3 @@
-
 import { Course } from "./course";
 
 export interface CourseSection {
