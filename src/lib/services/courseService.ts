@@ -23,7 +23,7 @@ interface BasicCourseData {
 export async function getCourses(): Promise<any[]> {
   try {
     const { data, error } = await supabase
-      .from("courses_new") // Changed to courses_new
+      .from("courses_new")
       .select("*")
       .order("display_order", { ascending: true });
 
@@ -106,8 +106,8 @@ export async function deleteCourse(courseId: number): Promise<{ success: boolean
   }
 }
 
-// Get courses by instructor ID - use a completely simplified return type with explicit type annotation
-export async function getCoursesByInstructorId(instructorId: string): Promise<{data: any; error: null | Error}> {
+// Simplified courses by instructor with explicit return type to avoid deep instantiation
+export async function getCoursesByInstructorId(instructorId: string) {
   try {
     const { data, error } = await supabase
       .from('courses_new')
@@ -115,14 +115,12 @@ export async function getCoursesByInstructorId(instructorId: string): Promise<{d
       .eq('instructor_id', instructorId);
     
     if (error) {
-      console.error('[courseService] Error getting courses by instructor ID:', error);
       return { data: null, error };
     }
     
     return { data: data || [], error: null };
   } catch (err) {
-    console.error('[courseService] Unexpected error in getCoursesByInstructorId:', err);
-    return { data: null, error: err as Error };
+    return { data: null, error: err };
   }
 }
 
@@ -224,7 +222,7 @@ export async function getCourseNewById(courseId: number): Promise<any> {
 }
 
 // Simplified getCourseWithSections function to avoid type issues
-export const getCourseWithSections = async (courseId: number): Promise<CourseWithSections | null> => {
+export const getCourseWithSections = async (courseId: number) => {
   try {
     // Query for the course
     const { data: courseData, error: courseError } = await supabase
@@ -305,8 +303,7 @@ export const getCourseWithSections = async (courseId: number): Promise<CourseWit
       }
     }
 
-    // Create a properly typed result object
-    const result: CourseWithSections = {
+    return {
       id: courseData.id,
       title: courseData.title,
       description: courseData.description,
@@ -315,8 +312,6 @@ export const getCourseWithSections = async (courseId: number): Promise<CourseWit
       category: courseData.category,
       sections: sections
     };
-
-    return result;
   } catch (error) {
     console.error('Exception fetching course with sections:', error);
     return null;

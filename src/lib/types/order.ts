@@ -51,6 +51,10 @@ export interface Order {
   last_status_update?: string;
   is_processing?: boolean;
   can_be_cancelled?: boolean;
+  
+  // For backward compatibility with some currency service functions
+  price?: number;
+  original_price?: number;
 }
 
 // Order status type

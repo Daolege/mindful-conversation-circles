@@ -41,11 +41,6 @@ export const formatPrePaymentAmount = (amount?: number): string => {
  * Calculate the savings amount (discount)
  */
 export const calculateSavings = (order: Order): number => {
-  // If there is an original price and a (lower) discounted price
-  if (order.original_price && order.price && order.price < order.original_price) {
-    return order.original_price - order.price;
-  }
-  
   // If there is an original amount and a (lower) final amount
   if (order.original_amount && order.amount && order.amount < order.original_amount) {
     return order.original_amount - order.amount;
@@ -59,10 +54,6 @@ export const calculateSavings = (order: Order): number => {
  * Get the savings percentage
  */
 export const getSavingsPercentage = (order: Order): number => {
-  if (order.original_price && order.price && order.price < order.original_price) {
-    return Math.round(((order.original_price - order.price) / order.original_price) * 100);
-  }
-  
   if (order.original_amount && order.amount && order.amount < order.original_amount) {
     return Math.round(((order.original_amount - order.amount) / order.original_amount) * 100);
   }
@@ -130,14 +121,6 @@ export const getActualPaymentAmount = (order: Order): { amount: number, currency
   if (order.total_amount !== undefined && order.total_amount !== null) {
     return {
       amount: order.total_amount,
-      currency: defaultCurrency
-    };
-  }
-  
-  // If we have price, use that
-  if (order.price !== undefined && order.price !== null) {
-    return {
-      amount: order.price,
       currency: defaultCurrency
     };
   }

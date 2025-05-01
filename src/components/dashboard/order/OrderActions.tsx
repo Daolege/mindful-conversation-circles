@@ -147,8 +147,8 @@ export const OrderActions = ({ order, onOrderUpdated }: OrderActionsProps) => {
       </AlertDialog>
       
       <PaymentReceiptModal 
-        isOpen={receiptModalOpen} 
-        setIsOpen={setReceiptModalOpen} 
+        open={receiptModalOpen} 
+        onOpenChange={setReceiptModalOpen} 
         order={order} 
       />
     </div>
