@@ -13,7 +13,7 @@ export const CourseDetailHeaderNew: React.FC<CourseDetailHeaderNewProps> = ({ co
   const isMobile = useIsMobile();
   
   return (
-    <div className="mb-10 animate-in fade-in duration-500">
+    <div className="mb-10 animate-in fade-in duration-700">
       <h1 className={`${isMobile ? 'text-2xl' : 'text-3xl md:text-4xl'} font-bold mb-12 animate-in fade-in slide-in-from-left-5 duration-700`}>{course.title}</h1>
       
       <div className="flex flex-wrap gap-4 mb-8">

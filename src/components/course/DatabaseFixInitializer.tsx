@@ -1,8 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
-import { executeHomeworkMigration } from '@/api/executeHomeworkMigration';
-import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 /**
  * This component automatically fixes database foreign key relationships
@@ -47,41 +46,89 @@ export const DatabaseFixInitializer: React.FC = () => {
           console.error('[DatabaseFixInitializer] Error checking courses_new table:', err);
         }
         
-        // Execute the actual migration
-        console.log('[DatabaseFixInitializer] Calling executeHomeworkMigration()');
-        const result = await executeHomeworkMigration();
-        
-        setMigrationExecuted(true);
-        
-        if (result.success) {
-          console.log('[DatabaseFixInitializer] Migration successful:', result.message);
-          localStorage.setItem(storageKey, 'true');
-          setMigrationSuccess(true);
-          
-          // Also store in site_settings for server-side checks
-          const { error: settingsError } = await supabase
+        // Execute database migration to fix homework foreign keys
+        try {
+          // Check if migration has already been completed in site_settings
+          const { data: settingsData } = await supabase
             .from('site_settings')
-            .upsert({
-              key: 'homework_migration_completed',
-              value: 'true',
-              updated_at: new Date().toISOString()
+            .select('value')
+            .eq('key', 'homework_migration_completed')
+            .maybeSingle();
+          
+          if (settingsData && settingsData.value === 'true') {
+            console.log('[DatabaseFixInitializer] Migration already recorded in site_settings');
+            localStorage.setItem(storageKey, 'true');
+            setMigrationExecuted(true);
+            setMigrationSuccess(true);
+            return;
+          }
+          
+          // Execute SQL to fix foreign key constraints
+          const migrationSQL = `
+            DO $$
+            DECLARE
+              constraint_name text;
+            BEGIN
+              -- Find if there's an existing foreign key constraint on homework.course_id
+              SELECT conname INTO constraint_name
+              FROM pg_constraint
+              WHERE conrelid = 'public.homework'::regclass
+              AND conname LIKE '%course_id%'
+              AND contype = 'f'
+              LIMIT 1;
+              
+              -- If constraint exists, drop it
+              IF constraint_name IS NOT NULL THEN
+                EXECUTE 'ALTER TABLE public.homework DROP CONSTRAINT ' || constraint_name;
+                RAISE NOTICE 'Dropped constraint: %', constraint_name;
+              END IF;
+              
+              -- Add the correct foreign key constraint to courses_new
+              ALTER TABLE public.homework 
+                ADD CONSTRAINT homework_course_id_fkey 
+                FOREIGN KEY (course_id) 
+                REFERENCES public.courses_new(id) 
+                ON DELETE CASCADE;
+                
+              -- Create an index to improve query performance
+              CREATE INDEX IF NOT EXISTS idx_homework_course_id 
+                ON public.homework(course_id);
+            END $$;
+          `;
+          
+          // For the execute_sql RPC call, we need to wrap this in a try-catch
+          // since it's a custom function that might not exist in all environments
+          try {
+            await supabase.rpc('execute_sql', {
+              sql_query: migrationSQL
             });
             
-          if (settingsError) {
-            console.warn('[DatabaseFixInitializer] Error recording migration status to site_settings:', settingsError);
-          }
-          
-          // Show success toast only once
-          if (!hasExecuted) {
+            // Record successful execution in site_settings
+            await supabase
+              .from('site_settings')
+              .upsert({
+                key: 'homework_migration_completed',
+                value: 'true',
+                updated_at: new Date().toISOString()
+              });
+              
+            localStorage.setItem(storageKey, 'true');
+            setMigrationExecuted(true);
+            setMigrationSuccess(true);
+            
+            // Show success toast
             toast.success('数据库关系已自动修复，作业功能现可正常使用');
-          }
-        } else {
-          console.error('[DatabaseFixInitializer] Migration failed:', result.message);
-          // Only show error toast for non-already-executed migrations
-          if (!hasExecuted) {
+          } catch (sqlError) {
+            console.error('[DatabaseFixInitializer] Error executing SQL migration:', sqlError);
+            // If execute_sql RPC fails, try direct SQL execution through our backend API
+            // This is just a placeholder; in a real app you'd have an API endpoint for this
+            setMigrationSuccess(false);
             toast.error('数据库关系修复失败，部分功能可能无法正常工作');
           }
-          // Don't set localStorage flag when migration fails
+        } catch (migrationError) {
+          console.error('[DatabaseFixInitializer] Migration error:', migrationError);
+          setMigrationSuccess(false);
+          toast.error('数据库关系修复过程中出错，请刷新页面重试');
         }
       } catch (error: any) {
         console.error('[DatabaseFixInitializer] Migration error:', error);

@@ -1,6 +1,6 @@
 
 import React, { Suspense } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { getCourseNewById } from '@/lib/services/courseNewService';
 import { CourseDetailHeaderNew } from '@/components/course-detail-new/CourseDetailHeaderNew';
@@ -17,6 +17,7 @@ const CourseDetailNew = () => {
   const { courseId } = useParams<{ courseId: string }>();
   const courseIdNum = parseInt(courseId || '0', 10);
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
 
   const { data: course, isLoading, error } = useQuery({
     queryKey: ['course-new', courseIdNum],
@@ -30,7 +31,7 @@ const CourseDetailNew = () => {
       <>
         <Navbar />
         <div className="container mx-auto px-4 py-8">
-          <DetailPageSkeleton />
+          <DetailPageSkeleton className="animate-pulse transition-all duration-500" />
         </div>
         <Footer />
       </>
@@ -52,7 +53,7 @@ const CourseDetailNew = () => {
   return (
     <>
       <Navbar />
-      <div className="container mx-auto px-4 py-8 animate-in fade-in slide-in-from-bottom-3 duration-700">
+      <div className="container mx-auto px-4 py-8 animate-in fade-in slide-in-from-bottom-3 duration-1000">
         <CourseBreadcrumb course={courseData} />
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className={`${isMobile ? 'order-2' : 'order-1'} lg:col-span-2`}>
