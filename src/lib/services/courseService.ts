@@ -11,7 +11,7 @@ interface BasicCourseData {
   currency?: string;
   category?: string | null;
   display_order?: number;
-  status?: 'draft' | 'published' | 'archived'; // Changed to match CourseData
+  status?: 'draft' | 'published' | 'archived';
   is_featured?: boolean;
   thumbnail_url?: string;
   created_at?: string;
@@ -228,7 +228,7 @@ export const getCourseWithSections = async (courseId: number): Promise<CourseWit
   try {
     // Query for the course
     const { data: courseData, error } = await supabase
-      .from('courses')
+      .from('courses_new') // Changed from 'courses' to 'courses_new' which has the required fields
       .select(`
         id,
         title,

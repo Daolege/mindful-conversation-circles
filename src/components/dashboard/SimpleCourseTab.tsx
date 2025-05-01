@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -206,11 +205,35 @@ const CourseListItem = ({ course }: CourseListItemProps) => {
   );
 };
 
-// Sample course data function
+// Fixed sample course data function with all required properties
 function getSampleCourses(): CourseNew[] {
   return [
-    { id: 1, title: 'Advanced React Development', price: 299, status: 'published' },
-    { id: 2, title: 'Full Stack Development with Node.js', price: 349, status: 'published' },
-    { id: 3, title: 'Machine Learning Fundamentals', price: 399, status: 'published' }
+    { 
+      id: 1, 
+      title: 'Advanced React Development', 
+      price: 299, 
+      status: 'published', 
+      currency: 'USD', 
+      display_order: 1, 
+      is_featured: true 
+    },
+    { 
+      id: 2, 
+      title: 'Full Stack Development with Node.js', 
+      price: 349, 
+      status: 'published', 
+      currency: 'USD', 
+      display_order: 2, 
+      is_featured: false 
+    },
+    { 
+      id: 3, 
+      title: 'Machine Learning Fundamentals', 
+      price: 399, 
+      status: 'published', 
+      currency: 'USD', 
+      display_order: 3, 
+      is_featured: true 
+    }
   ];
 }
