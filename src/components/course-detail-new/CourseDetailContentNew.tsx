@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { CourseWithDetails } from '@/lib/types/course-new';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -233,8 +232,9 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
       {/* 学习信息栏 - 三栏布局 */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* 学习目标 */}
-        <Card className="hover:shadow-lg transition-shadow duration-500 shadow-lg border-2 
-          transform hover:-translate-y-1 hover:shadow-xl animate-in fade-in duration-500">
+        <Card className="hover:shadow-xl transition-all duration-300 shadow-lg border-2 
+          transform hover:-translate-y-1 ease-in-out
+          animate-in fade-in duration-500">
           <CardHeader className="pb-0">
             <CardTitle className="text-lg flex items-center gap-2">
               <Target className="h-5 w-5" />
@@ -261,8 +261,9 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
         </Card>
 
         {/* 课程要求 */}
-        <Card className="hover:shadow-lg transition-shadow duration-500 shadow-lg border-2 
-          transform hover:-translate-y-1 hover:shadow-xl animate-in fade-in duration-500">
+        <Card className="hover:shadow-xl transition-all duration-300 shadow-lg border-2 
+          transform hover:-translate-y-1 ease-in-out
+          animate-in fade-in duration-500">
           <CardHeader className="pb-0">
             <CardTitle className="text-lg flex items-center gap-2">
               <Book className="h-5 w-5" />
@@ -289,8 +290,9 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
         </Card>
 
         {/* 适合人群 */}
-        <Card className="hover:shadow-lg transition-shadow duration-500 shadow-lg border-2 
-          transform hover:-translate-y-1 hover:shadow-xl animate-in fade-in duration-500">
+        <Card className="hover:shadow-xl transition-all duration-300 shadow-lg border-2 
+          transform hover:-translate-y-1 ease-in-out
+          animate-in fade-in duration-500">
           <CardHeader className="pb-0">
             <CardTitle className="text-lg flex items-center gap-2">
               <Users className="h-5 w-5" />

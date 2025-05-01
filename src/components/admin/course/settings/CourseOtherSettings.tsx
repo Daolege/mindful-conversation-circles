@@ -1,225 +1,206 @@
 
-import React, { useState, useEffect } from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
-import { toast } from 'sonner';
-import { getObjectives, getRequirements, getAudiences } from '@/lib/services/courseSettingsService';
-import { Loader2 } from 'lucide-react';
-import { useCourseEditor } from '@/hooks/useCourseEditor';
+import React, { useEffect, useState } from 'react';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { EditableListComponent } from './EditableListComponent';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
-interface CourseOtherSettingsProps {
-  courseId: number;
-  savedSections?: {
-    objectives: boolean;
-    requirements: boolean;
-    audiences: boolean;
-  };
-  sectionVisibility?: {
-    objectives: boolean;
-    requirements: boolean;
-    audiences: boolean;
-    materials: boolean;
-  };
+// Define specific types for our lists to avoid deep nesting
+interface ListItem {
+  id: string;
+  text: string;
 }
 
-// Create a separate function to handle section visibility updates
-const updateSectionVisibility = async ({ courseId, section, isVisible }: { 
-  courseId: number;
-  section: string;
-  isVisible: boolean;
-}) => {
-  try {
-    // 使用直接的数据表操作而不是RPC方法，避免RPC不存在的问题
-    let tableName = '';
-    switch (section) {
-      case 'objectives':
-        tableName = 'course_objectives';
-        break;
-      case 'requirements':
-        tableName = 'course_requirements';
-        break;
-      case 'audiences':
-        tableName = 'course_audiences';
-        break;
-      default:
-        throw new Error(`Unknown section: ${section}`);
-    }
-    
-    // 使用直接的数据表更新操作
-    const { data, error } = await supabase
-      .from(tableName)
-      .update({ is_visible: isVisible })
-      .eq('course_id', courseId);
-    
-    if (error) throw error;
-    
-    return { data, error: null };
-  } catch (error) {
-    console.error(`Error updating ${section} visibility:`, error);
-    return { data: null, error };
-  }
-};
+// Define props for the CourseOtherSettings component
+interface CourseOtherSettingsProps {
+  courseId?: number;
+  learningObjectives?: string[];
+  requirements?: string[];
+  targetAudience?: string[];
+  onUpdate?: (field: string, value: any) => void;
+}
 
-// Export BOTH as default and named export to fix import issues
-export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({ courseId, savedSections, sectionVisibility }) => {
-  const [loading, setLoading] = useState(true);
-  const [objectivesVisible, setObjectivesVisible] = useState(true);
-  const [requirementsVisible, setRequirementsVisible] = useState(true);
-  const [audiencesVisible, setAudiencesVisible] = useState(true);
-  const courseEditor = useCourseEditor();
+export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({
+  courseId,
+  learningObjectives = [],
+  requirements = [],
+  targetAudience = [],
+  onUpdate,
+}) => {
+  const [isFeatured, setIsFeatured] = useState<boolean>(false);
+  const [isPaidContent, setIsPaidContent] = useState<boolean>(true);
+  const [courseVisibility, setCourseVisibility] = useState<string>("published");
   
+  // Convert string arrays to object arrays with IDs for the editable lists
+  const formatArrayToListItems = (arr: string[]): ListItem[] => {
+    return arr.map((item, index) => ({
+      id: `item-${index}`,
+      text: item,
+    }));
+  };
+
+  const [learningObjectivesList, setLearningObjectivesList] = useState<ListItem[]>(
+    formatArrayToListItems(learningObjectives)
+  );
+  const [requirementsList, setRequirementsList] = useState<ListItem[]>(
+    formatArrayToListItems(requirements)
+  );
+  const [targetAudienceList, setTargetAudienceList] = useState<ListItem[]>(
+    formatArrayToListItems(targetAudience)
+  );
+
+  // Load course information
   useEffect(() => {
-    const loadInitialVisibility = async () => {
-      setLoading(true);
+    async function loadCourseSettings() {
+      if (!courseId) return;
+
       try {
-        const [objectivesRes, requirementsRes, audiencesRes] = await Promise.all([
-          getObjectives(courseId),
-          getRequirements(courseId),
-          getAudiences(courseId)
-        ]);
-        
-        setObjectivesVisible(objectivesRes.data && objectivesRes.data.length > 0 ? objectivesRes.data[0].is_visible !== false : true);
-        setRequirementsVisible(requirementsRes.data && requirementsRes.data.length > 0 ? requirementsRes.data[0].is_visible !== false : true);
-        setAudiencesVisible(audiencesRes.data && audiencesRes.data.length > 0 ? audiencesRes.data[0].is_visible !== false : true);
+        const { data, error } = await supabase
+          .from('courses_new')
+          .select('is_featured, price, status')
+          .eq('id', courseId)
+          .single();
+
+        if (error) throw error;
+
+        if (data) {
+          setIsFeatured(data.is_featured || false);
+          setIsPaidContent((data.price || 0) > 0);
+          setCourseVisibility(data.status || "published");
+        }
       } catch (error) {
-        console.error("Failed to load initial visibility:", error);
-        toast.error("Failed to load initial visibility");
-      } finally {
-        setLoading(false);
+        console.error("Error loading course settings:", error);
+        toast.error("无法加载课程设置");
       }
-    };
-    
-    loadInitialVisibility();
+    }
+
+    loadCourseSettings();
   }, [courseId]);
-  
-  const handleUpdateVisibility = async (section: string, isVisible: boolean) => {
-    try {
-      if (!courseId) {
-        throw new Error("Course ID is missing");
-      }
-      
-      const { data, error } = await updateSectionVisibility({ 
-        courseId, 
-        section, 
-        isVisible 
-      });
-      
-      if (error) {
-        console.error(`Failed to update ${section} visibility:`, error);
-        toast.error(`Failed to update ${section} visibility`);
-        return;
-      }
-      
-      toast.success(`Successfully updated ${section} visibility`);
-      
-      // Update local state
-      switch (section) {
-        case 'objectives':
-          setObjectivesVisible(isVisible);
-          break;
-        case 'requirements':
-          setRequirementsVisible(isVisible);
-          break;
-        case 'audiences':
-          setAudiencesVisible(isVisible);
-          break;
-        default:
-          break;
-      }
-      
-      // Update context if available
-      if (courseEditor.setSectionVisibility) {
-        courseEditor.setSectionVisibility({
-          ...courseEditor.sectionVisibility,
-          [section]: isVisible
-        });
-      }
-      
-      // Save to localStorage
-      const visibilityStorageKey = `course_${courseId}_section_visibility`;
-      const visibilityData = JSON.parse(localStorage.getItem(visibilityStorageKey) || '{}');
-      localStorage.setItem(visibilityStorageKey, JSON.stringify({
-        ...visibilityData,
-        [section]: isVisible
-      }));
-      
-    } catch (error: any) {
-      console.error(`Failed to update ${section} visibility:`, error);
-      toast.error(`Failed to update ${section} visibility: ${error.message}`);
+
+  // Convert list items back to string arrays for saving
+  const formatListItemsToArray = (items: ListItem[]): string[] => {
+    return items.map(item => item.text);
+  };
+
+  const handleLearningObjectivesChange = (newItems: ListItem[]) => {
+    setLearningObjectivesList(newItems);
+    if (onUpdate) {
+      onUpdate('learning_objectives', formatListItemsToArray(newItems));
     }
   };
-  
-  if (loading) {
-    return (
-      <Card className="shadow-sm">
-        <CardHeader>
-          <CardTitle>其他设置</CardTitle>
+
+  const handleRequirementsChange = (newItems: ListItem[]) => {
+    setRequirementsList(newItems);
+    if (onUpdate) {
+      onUpdate('requirements', formatListItemsToArray(newItems));
+    }
+  };
+
+  const handleTargetAudienceChange = (newItems: ListItem[]) => {
+    setTargetAudienceList(newItems);
+    if (onUpdate) {
+      onUpdate('target_audience', formatListItemsToArray(newItems));
+    }
+  };
+
+  const handleFeaturedChange = async (checked: boolean) => {
+    setIsFeatured(checked);
+    if (courseId && onUpdate) {
+      onUpdate('is_featured', checked);
+    }
+  };
+
+  const handlePaidContentChange = async (checked: boolean) => {
+    setIsPaidContent(checked);
+    // This is just a UI toggle, actual price changes would be managed elsewhere
+  };
+
+  const handleVisibilityChange = async (value: string) => {
+    setCourseVisibility(value);
+    if (courseId && onUpdate) {
+      onUpdate('status', value);
+    }
+  };
+
+  return (
+    <div className="space-y-8 py-4">
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle>课程可见性</CardTitle>
         </CardHeader>
-        <CardContent className="py-6 flex justify-center">
-          <Loader2 className="h-6 w-6 animate-spin" />
+        <CardContent>
+          <RadioGroup 
+            value={courseVisibility}
+            onValueChange={handleVisibilityChange}
+            className="flex flex-col space-y-2 mt-2"
+          >
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="published" id="published" />
+              <Label htmlFor="published">已发布 - 所有用户可见</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="draft" id="draft" />
+              <Label htmlFor="draft">草稿 - 仅管理员可见</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="archived" id="archived" />
+              <Label htmlFor="archived">已归档 - 不显示在课程列表</Label>
+            </div>
+          </RadioGroup>
         </CardContent>
       </Card>
-    );
-  }
-  
-  return (
-    <Card className="shadow-sm">
-      <CardHeader>
-        <CardTitle>其他设置</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-2">
+
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle>课程特性</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
-            <Label htmlFor="objectives-visibility">显示学习目标</Label>
+            <Label htmlFor="featured-course">精选课程</Label>
             <Switch
-              id="objectives-visibility"
-              checked={objectivesVisible}
-              onCheckedChange={(checked) => handleUpdateVisibility('objectives', checked)}
+              id="featured-course"
+              checked={isFeatured}
+              onCheckedChange={handleFeaturedChange}
             />
           </div>
-          <p className="text-sm text-muted-foreground">
-            在课程详情页显示或隐藏学习目标
-          </p>
-        </div>
-        
-        <Separator />
-        
-        <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <Label htmlFor="requirements-visibility">显示学习前提</Label>
+            <Label htmlFor="paid-content">付费内容</Label>
             <Switch
-              id="requirements-visibility"
-              checked={requirementsVisible}
-              onCheckedChange={(checked) => handleUpdateVisibility('requirements', checked)}
+              id="paid-content"
+              checked={isPaidContent}
+              onCheckedChange={handlePaidContentChange}
             />
           </div>
-          <p className="text-sm text-muted-foreground">
-            在课程详情页显示或隐藏学习前提
-          </p>
-        </div>
-        
-        <Separator />
-        
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="audiences-visibility">显示适合人群</Label>
-            <Switch
-              id="audiences-visibility"
-              checked={audiencesVisible}
-              onCheckedChange={(checked) => handleUpdateVisibility('audiences', checked)}
-            />
-          </div>
-          <p className="text-sm text-muted-foreground">
-            在课程详情页显示或隐藏适合人群
-          </p>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+
+      <EditableListComponent
+        title="学习目标"
+        description="列出学习者完成课程后将获得的技能"
+        items={learningObjectivesList}
+        onChange={handleLearningObjectivesChange}
+        placeholder="例如: 掌握基础Python语法"
+      />
+
+      <EditableListComponent
+        title="课程要求"
+        description="列出参加课程所需的先决条件"
+        items={requirementsList}
+        onChange={handleRequirementsChange}
+        placeholder="例如: 基本计算机操作技能"
+      />
+
+      <EditableListComponent
+        title="适合人群"
+        description="说明这门课程适合哪类学习者"
+        items={targetAudienceList}
+        onChange={handleTargetAudienceChange}
+        placeholder="例如: 初学者, 想转行的专业人士"
+      />
+    </div>
   );
 };
-
-// Also export as default for flexibility
-export default CourseOtherSettings;

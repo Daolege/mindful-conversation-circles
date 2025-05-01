@@ -1,4 +1,3 @@
-
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
@@ -64,19 +63,23 @@ const CourseDetail = () => {
     );
   }
 
+  // Fix the type conversion here
+  const courseData = {
+    ...course.data!,
+    price: course.data!.price ?? 0  // Ensure price is always defined
+  } as Course;
+
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-gray-50 pb-16">
-        <CourseDetailHeader course={course} />
-        <div className="container mx-auto px-4 py-8">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2">
-              <CourseDetailContent course={course} />
-            </div>
-            <div className="lg:col-span-1">
-              <CourseEnrollCard course={course} />
-            </div>
+      <div className="container mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2">
+            <CourseDetailHeader course={courseData} />
+            <CourseDetailContent course={courseData} />
+          </div>
+          <div className="lg:col-span-1">
+            <CourseEnrollCard course={courseData} />
           </div>
         </div>
       </div>

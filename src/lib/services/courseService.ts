@@ -8,6 +8,18 @@ interface CourseData {
   description?: string;
   price?: number;
   status?: string;
+  category?: string;
+  created_at?: string;
+  currency?: string;
+  display_order?: number;
+  enrollment_count?: number;
+  is_featured?: boolean;
+  lecture_count?: number;
+  original_price?: number;
+  instructor_id?: string;
+  instructor_name?: string; // Added this field
+  published_at?: string;
+  updated_at?: string;
   [key: string]: any; // Allow for other properties
 }
 
@@ -38,11 +50,16 @@ export const getCourseById = async (courseId: number): Promise<CourseResponse<Co
 };
 
 // Add the saveCourse function
-export const saveCourse = async (courseData: Partial<CourseData> & { id?: number }): Promise<CourseResponse<CourseData>> => {
+export const saveCourse = async (courseData: Partial<CourseData>): Promise<CourseResponse<CourseData>> => {
   try {
+    // Ensure title exists when creating a new course
+    if (!courseData.id && !courseData.title) {
+      courseData.title = 'New Course'; // Default title for new courses
+    }
+    
     const { data, error } = await supabase
       .from('courses_new')
-      .upsert(courseData, { onConflict: 'id' })
+      .upsert(courseData)
       .select()
       .single();
     
