@@ -9,11 +9,10 @@ import { Eye } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const orderStatusMap: Record<string, { label: string; className: string }> = {
-  completed: { label: "已完成", className: "bg-green-500 hover:bg-green-600" },
-  processing: { label: "处理中", className: "bg-yellow-500 hover:bg-yellow-600" },
-  cancelled: { label: "已取消", className: "bg-gray-500 hover:bg-gray-600" },
-  failed: { label: "失败", className: "bg-red-500 hover:bg-red-600" },
-  refunded: { label: "已退款", className: "bg-blue-500 hover:bg-blue-600" },
+  completed: { label: "已完成", className: "bg-gray-700 text-white hover:bg-gray-800" },
+  processing: { label: "处理中", className: "bg-gray-400 text-white hover:bg-gray-500" },
+  cancelled: { label: "已取消", className: "bg-gray-500 text-white hover:bg-gray-600" },
+  failed: { label: "失败", className: "bg-gray-600 text-white hover:bg-gray-700" },
 };
 
 interface OrderHistoryProps {
@@ -32,7 +31,7 @@ export function OrderHistory({
   const navigate = useNavigate();
   
   const getStatusBadge = useCallback((status: string) => {
-    const statusInfo = orderStatusMap[status] || { label: status, className: "bg-gray-500 hover:bg-gray-600" };
+    const statusInfo = orderStatusMap[status] || { label: status, className: "bg-gray-500 text-white hover:bg-gray-600" };
     
     return (
       <Badge className={statusInfo.className}>

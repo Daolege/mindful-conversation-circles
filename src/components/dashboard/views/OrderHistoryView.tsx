@@ -110,25 +110,22 @@ export function OrderHistoryView() {
 
   // Filter component shared between empty and populated views
   const FilterControls = () => (
-    <div className="flex flex-wrap items-center gap-4 mb-4">
-      <div className="flex items-center gap-2">
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>选择时间范围</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+    <div className="flex items-center gap-4 mb-4">
+      <div className="flex items-center gap-3">
+        <div className="flex items-center cursor-pointer select-none" onClick={() => document.getElementById('timeFilter')?.click()}>
+          <Calendar className="h-4 w-4 text-muted-foreground mr-1.5" />
+          <span className="text-sm text-muted-foreground mr-1">时间范围:</span>
+        </div>
         
         <Select
           value={timeFilter}
           onValueChange={setTimeFilter}
         >
-          <SelectTrigger className="w-[140px] h-10 px-3">
-            <SelectValue placeholder="时间范围" />
+          <SelectTrigger 
+            id="timeFilter"
+            className="w-[140px] h-10 px-3 cursor-pointer"
+          >
+            <SelectValue placeholder="所有时间" />
           </SelectTrigger>
           <SelectContent className="bg-white/95 z-50">
             <SelectItem value="all">所有时间</SelectItem>
@@ -140,24 +137,21 @@ export function OrderHistoryView() {
         </Select>
       </div>
       
-      <div className="flex items-center gap-2">
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Filter className="h-4 w-4 text-muted-foreground" />
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>筛选订单状态</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+      <div className="flex items-center gap-3">
+        <div className="flex items-center cursor-pointer select-none" onClick={() => document.getElementById('statusFilter')?.click()}>
+          <Filter className="h-4 w-4 text-muted-foreground mr-1.5" />
+          <span className="text-sm text-muted-foreground mr-1">订单状态:</span>
+        </div>
         
         <Select
           value={filterStatus}
           onValueChange={handleStatusFilterChange}
         >
-          <SelectTrigger className="w-[140px] h-10 px-3">
-            <SelectValue placeholder="订单状态" />
+          <SelectTrigger 
+            id="statusFilter"
+            className="w-[140px] h-10 px-3 cursor-pointer"
+          >
+            <SelectValue placeholder="全部状态" />
           </SelectTrigger>
           <SelectContent className="bg-white/95 z-50">
             <SelectItem value="all">全部状态</SelectItem>
@@ -165,7 +159,6 @@ export function OrderHistoryView() {
             <SelectItem value="processing">处理中</SelectItem>
             <SelectItem value="cancelled">已取消</SelectItem>
             <SelectItem value="failed">失败</SelectItem>
-            <SelectItem value="refunded">已退款</SelectItem>
           </SelectContent>
         </Select>
       </div>
