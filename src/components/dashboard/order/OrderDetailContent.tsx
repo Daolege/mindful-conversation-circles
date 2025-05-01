@@ -9,6 +9,8 @@ import { CreditCard, ShoppingBag, UserIcon } from 'lucide-react';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { format } from "date-fns";
 import { OrderPaymentDetails } from './OrderPaymentDetails';
+import { calculateSavings, getSavingsPercentage } from '@/lib/services/currencyService';
+import { formatCurrency } from '@/lib/utils';
 
 interface OrderDetailContentProps {
   order: Order;
@@ -21,6 +23,11 @@ export const OrderDetailContent = ({ order: initialOrder }: OrderDetailContentPr
     // Reload the page to get fresh data
     window.location.reload();
   };
+
+  // Calculate savings amount
+  const savingsAmount = calculateSavings(order);
+  const savingsPercentage = getSavingsPercentage(order);
+  const hasSavings = savingsAmount > 0;
 
   return (
     <TooltipProvider>
@@ -49,6 +56,21 @@ export const OrderDetailContent = ({ order: initialOrder }: OrderDetailContentPr
                     支付信息
                   </h3>
                   <OrderPaymentDetails order={order} />
+
+                  {/* 添加节省金额信息 */}
+                  {hasSavings && (
+                    <div className="mt-4 p-3 bg-green-50 rounded-lg border border-green-100">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-green-700">优惠节省</p>
+                          <p className="text-xs text-green-600">相比原价节省 {savingsPercentage}%</p>
+                        </div>
+                        <p className="text-green-700 font-semibold">
+                          {formatCurrency(savingsAmount, order.currency)}
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <Separator />
