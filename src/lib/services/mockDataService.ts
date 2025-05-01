@@ -169,17 +169,17 @@ export const generateMockOrders = async (userId: string): Promise<boolean> => {
       // Generate unique order ID
       const orderId = `order-${Date.now()}-${i}`;
       const status = statuses[i % statuses.length];
-      const paymentMethod = paymentMethods[i % paymentMethods.length];
+      const paymentType = paymentMethods[i % paymentMethods.length];
       
-      // Insert the order
+      // Insert the order - using amount instead of total_amount to match DB
       const { error: orderError } = await supabase
         .from('orders')
         .insert({
           id: orderId,
           user_id: userId,
-          amount: price,  // Using amount instead of total_amount
+          amount: price,
           currency: 'cny',
-          payment_method: paymentMethod,
+          payment_type: paymentType, // Using payment_type instead of payment_method
           status: status,
           created_at: orderDate.toISOString(),
           updated_at: orderDate.toISOString()
@@ -190,19 +190,24 @@ export const generateMockOrders = async (userId: string): Promise<boolean> => {
         continue;
       }
       
-      // Insert an order item for this order
-      const { error: itemError } = await supabase
-        .from('order_items')
-        .insert({
-          order_id: orderId,
-          course_id: course.id,
-          price: price,
-          currency: 'cny',
-          created_at: orderDate.toISOString()
-        });
-      
-      if (itemError) {
-        console.error('[mockDataService] Error creating mock order item:', itemError);
+      // Check if order_items table exists and insert items
+      try {
+        // Insert an order item for this order
+        const { error: itemError } = await supabase
+          .from('order_items')
+          .insert({
+            order_id: orderId,
+            course_id: course.id,
+            price: price,
+            currency: 'cny',
+            created_at: orderDate.toISOString()
+          });
+        
+        if (itemError) {
+          console.error('[mockDataService] Error creating mock order item:', itemError);
+        }
+      } catch (err) {
+        console.warn('[mockDataService] Could not insert into order_items, table may not exist:', err);
       }
       
       console.log(`[mockDataService] Created order ${orderId} for course ${course.id} with status ${status}`);
@@ -308,16 +313,21 @@ export const generateMockSubscriptions = async (userId: string): Promise<boolean
       const eventType = i === 0 ? 'subscription_created' : 
                        i === 1 ? 'plan_changed' : 'subscription_cancelled';
       
-      // Insert subscription history record
+      // Generate subscription ID for reference
+      const subscriptionId = `sub-mock-${Date.now()}-${i}`;
+      
+      // Insert subscription history record - use previous_plan_id instead of old_plan_id
       const { error: historyError } = await supabase
         .from('subscription_history')
         .insert({
           user_id: userId,
           change_type: eventType,
-          old_plan_id: i === 1 ? subscriptionPlans[0].id : null,
+          previous_plan_id: i === 1 ? subscriptionPlans[0].id : null, // Use previous_plan_id
           new_plan_id: eventType !== 'subscription_cancelled' ? plan.id : null,
-          effective_date: effectiveDate.toISOString(),
-          notes: `Mock subscription history record ${i + 1}`
+          subscription_id: subscriptionId, // Add required subscription_id field
+          amount: plan.price,
+          currency: 'cny',
+          effective_date: effectiveDate.toISOString()
         });
       
       if (historyError) {

@@ -49,13 +49,17 @@ export const getExchangeRate = async (): Promise<number> => {
   try {
     const { data, error } = await supabase
       .from('site_settings')
-      .select('setting_value') // Changed from value to setting_value
-      .eq('setting_key', 'exchange_rate') // Changed from key to setting_key
+      .select('setting_value')
+      .eq('setting_key', 'exchange_rate')
       .single();
       
     if (error) {
       console.error('Error fetching exchange rate:', error);
       return 7; // Default exchange rate
+    }
+    
+    if (!data) {
+      return 7; // Default if no data
     }
     
     return parseFloat(data.setting_value || '7');
@@ -72,7 +76,7 @@ export const updateExchangeRate = async (newRate: number): Promise<boolean> => {
     const { data: existingSetting, error: selectError } = await supabase
       .from('site_settings')
       .select('id')
-      .eq('setting_key', 'exchange_rate') // Changed from key to setting_key
+      .eq('setting_key', 'exchange_rate')
       .single();
       
     if (selectError && !selectError.message.includes('No rows found')) {
@@ -85,7 +89,7 @@ export const updateExchangeRate = async (newRate: number): Promise<boolean> => {
       const { error: updateError } = await supabase
         .from('site_settings')
         .update({ setting_value: newRate.toString() } as Partial<SiteSetting>)
-        .eq('setting_key', 'exchange_rate'); // Changed from key to setting_key
+        .eq('setting_key', 'exchange_rate');
         
       if (updateError) {
         console.error('Error updating exchange rate:', updateError);
@@ -115,8 +119,8 @@ export const getSiteSetting = async (settingKey: string, defaultValue: string = 
   try {
     const { data, error } = await supabase
       .from('site_settings')
-      .select('setting_value') // Changed from value to setting_value
-      .eq('setting_key', settingKey) // Changed from key to setting_key
+      .select('setting_value')
+      .eq('setting_key', settingKey)
       .single();
     
     if (error || !data) {
@@ -142,7 +146,7 @@ export const updateSiteSettings = async (settings: { [key: string]: string }): P
         const { data: existingSetting, error: selectError } = await supabase
           .from('site_settings')
           .select('id')
-          .eq('setting_key', key) // Changed from key to setting_key
+          .eq('setting_key', key)
           .single();
           
         if (selectError && !selectError.message.includes('No rows found')) {
@@ -155,7 +159,7 @@ export const updateSiteSettings = async (settings: { [key: string]: string }): P
           const { error: updateError } = await supabase
             .from('site_settings')
             .update({ setting_value: value } as Partial<SiteSetting>)
-            .eq('setting_key', key); // Changed from key to setting_key
+            .eq('setting_key', key);
             
           if (updateError) {
             console.error(`Error updating setting ${key}:`, updateError);

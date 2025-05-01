@@ -51,6 +51,18 @@ export function OrderHistory({
     
     return order.order_items.map(item => item.courses?.title || '未知课程').join(", ");
   };
+  
+  // Function to get appropriate amount field from order
+  const getOrderAmount = (order: OrderItem) => {
+    // Use total_amount if available, otherwise fall back to amount
+    return order.total_amount !== undefined ? order.total_amount : order.amount;
+  };
+  
+  // Function to get payment method consistently
+  const getPaymentMethod = (order: OrderItem) => {
+    // Return payment_method if available, otherwise fall back to payment_type
+    return order.payment_method || order.payment_type || '未知';
+  };
 
   return (
     <div>
@@ -97,13 +109,13 @@ export function OrderHistory({
                     {getOrderItemsText(order)}
                   </TableCell>
                   <TableCell>
-                    {order.total_amount} {order.currency.toUpperCase()}
+                    {getOrderAmount(order)} {order.currency.toUpperCase()}
                   </TableCell>
                   <TableCell>
-                    {order.payment_method === 'wechat' ? '微信支付' : 
-                     order.payment_method === 'alipay' ? '支付宝' : 
-                     order.payment_method === 'creditcard' ? '信用卡' : 
-                     order.payment_method}
+                    {getPaymentMethod(order) === 'wechat' ? '微信支付' : 
+                     getPaymentMethod(order) === 'alipay' ? '支付宝' : 
+                     getPaymentMethod(order) === 'creditcard' ? '信用卡' : 
+                     getPaymentMethod(order)}
                   </TableCell>
                   <TableCell>
                     {getStatusBadge(order.status)}

@@ -1,12 +1,15 @@
 
 import { Course } from "@/lib/types/course";
 
+// Update OrderItem to make it compatible with the orders table structure
 export interface OrderItem {
   id: string;
   user_id: string;
-  total_amount: number;
+  amount: number; // Changed from total_amount to amount based on DB structure
+  total_amount?: number; // Keep for backward compatibility
   currency: string;
-  payment_method: string;
+  payment_method?: string;
+  payment_type?: string; // Added for compatibility with DB
   status: string;
   created_at: string;
   updated_at?: string;
@@ -43,7 +46,7 @@ export interface SubscriptionItem {
     description?: string;
     price?: number;
     interval?: string;
-    features?: string[];
+    features?: string[] | null; // Make features nullable to match DB
   }
 }
 
@@ -60,3 +63,11 @@ export interface UserCourse {
   }[];
 }
 
+// Add DashboardStatItem interface
+export interface DashboardStatItem {
+  label: string;
+  value: string | number;
+  icon: React.ReactNode;
+  change?: number;
+  changeLabel?: string;
+}

@@ -99,7 +99,7 @@ export interface SubscriptionPlan {
   interval: string;
   display_order: number;
   is_active: boolean;
-  features?: string[]; // Make sure features is properly defined
+  features?: string[] | null; // Make features optional and nullable to match database
   created_at?: string;
   updated_at?: string;
   discount_percentage?: number;
@@ -133,8 +133,8 @@ export interface CourseResponse<T> {
 // Add additional interfaces needed for the site_settings table
 export interface SiteSetting {
   id?: string;
-  setting_key: string;  // Changed from 'key' to 'setting_key'
-  setting_value: string; // Changed from 'value' to 'setting_value'
+  setting_key: string;  
+  setting_value: string;
   created_at?: string;
   updated_at?: string;
 }

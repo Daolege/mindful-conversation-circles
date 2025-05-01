@@ -1,342 +1,283 @@
 
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/contexts/authHooks";
-import { SubscriptionItem } from "@/types/dashboard";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { getUserSubscriptionHistory, getUserActiveSubscription, getSubscriptionPlans, createTestSubscription } from "@/lib/services/subscriptionService";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { Button } from "../ui/button";
+import { Separator } from "../ui/separator";
 import { format } from "date-fns";
-import { CalendarIcon, Clock, Loader2, Plus, CreditCard } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ArrowRightCircle, CheckCircle, AlertCircle, Clock, Loader2, Plus } from "lucide-react";
+import { Badge } from "../ui/badge";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { SubscriptionPeriod } from "@/lib/types/course-new";
-import { supabase } from '@/integrations/supabase/client';
-import { generateMockSubscriptions } from "@/lib/services/mockDataService";
 
 export function SubscriptionHistory() {
   const { user } = useAuth();
-  const [isGeneratingData, setIsGeneratingData] = useState(false);
-  const [periodOption, setPeriodOption] = useState<SubscriptionPeriod>("monthly");
+  const queryClient = useQueryClient();
+  const [isCreatingTest, setIsCreatingTest] = useState(false);
   
-  // 查询当前订阅
-  const { 
-    data: currentSubscription,
-    isLoading: isLoadingCurrent,
-    refetch: refetchCurrent
-  } = useQuery({
-    queryKey: ['current-subscription', user?.id],
-    queryFn: async () => {
-      if (!user?.id) return null;
-      try {
-        const { data } = await supabase
-          .from('user_subscriptions')
-          .select(`
-            *,
-            subscription_plans (*)
-          `)
-          .eq('user_id', user.id)
-          .eq('status', 'active')
-          .lte('start_date', new Date().toISOString())
-          .gte('end_date', new Date().toISOString())
-          .single();
-        return data || null;
-      } catch (error) {
-        console.error('Error fetching user subscription:', error);
-        return null;
-      }
-    },
-    enabled: !!user?.id,
-  });
-
-  // 查询订阅历史
-  const { 
-    data: subscriptionHistory = [],
-    isLoading: isLoadingHistory,
-    refetch: refetchHistory
-  } = useQuery({
+  const { data: history, isLoading: historyLoading } = useQuery({
     queryKey: ['subscription-history', user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
-      try {
-        const { data } = await supabase
-          .from('subscription_history')
-          .select(`
-            *,
-            new_plan:new_plan_id (id, name, description),
-            old_plan:old_plan_id (id, name, description)
-          `)
-          .eq('user_id', user.id)
-          .order('effective_date', { ascending: false });
-        
-        return data || [];
-      } catch (error) {
-        console.error('Error fetching subscription history:', error);
-        return [];
-      }
+      return await getUserSubscriptionHistory(user.id);
     },
-    enabled: !!user?.id,
+    enabled: !!user
+  });
+  
+  const { data: currentSubscription, isLoading: subscriptionLoading } = useQuery({
+    queryKey: ['current-subscription', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      return await getUserActiveSubscription(user.id);
+    },
+    enabled: !!user
+  });
+  
+  const { data: allPlans, isLoading: plansLoading } = useQuery({
+    queryKey: ['subscription-plans'],
+    queryFn: async () => {
+      return await getSubscriptionPlans();
+    }
   });
 
-  // 处理生成示例数据
-  const handleGenerateData = async () => {
-    if (!user?.id) {
-      toast.error("需要登录才能生成示例数据");
-      return;
-    }
+  const isLoading = historyLoading || subscriptionLoading || plansLoading;
+  
+  // Get the current plan's details
+  const currentPlan = useMemo(() => {
+    if (!currentSubscription || !allPlans) return null;
+    return allPlans.find(plan => plan.id === currentSubscription.plan_id);
+  }, [currentSubscription, allPlans]);
+  
+  const handleCreateTestSub = async () => {
+    if (!user?.id || isCreatingTest) return;
     
-    setIsGeneratingData(true);
+    setIsCreatingTest(true);
     try {
-      const success = await generateMockSubscriptions(user.id);
-      if (success) {
-        toast.success("示例订阅数据已生成");
-        await Promise.all([refetchCurrent(), refetchHistory()]);
+      const result = await createTestSubscription(user.id);
+      
+      if (result.success) {
+        toast.success('测试订阅已创建', {
+          description: '刷新页面可以查看订阅详情'
+        });
+        
+        // Invalidate queries to refresh data
+        await queryClient.invalidateQueries({ queryKey: ['current-subscription'] });
+        await queryClient.invalidateQueries({ queryKey: ['subscription-history'] });
+        
       } else {
-        toast.error("生成示例数据失败");
+        toast.error('创建测试订阅失败', {
+          description: result.error || '请稍后重试'
+        });
       }
-    } catch (error) {
-      console.error("生成示例数据出错:", error);
-      toast.error("生成示例数据时出现错误");
+    } catch (err) {
+      console.error('Error creating test subscription:', err);
+      toast.error('创建测试订阅时发生错误');
     } finally {
-      setIsGeneratingData(false);
+      setIsCreatingTest(false);
     }
   };
 
-  // 格式化日期
-  const formatDate = (dateString: string | null | undefined) => {
-    if (!dateString) return "未知日期";
-    return format(new Date(dateString), 'yyyy年MM月dd日');
+  // Helper function to safely access features with null check
+  const getFeatures = (plan: any) => {
+    return plan?.features || [];
   };
-
-  // 渲染订阅状态徽章
-  const renderStatusBadge = (status?: string) => {
-    switch (status) {
-      case 'active':
-        return <Badge className="bg-green-500">有效</Badge>;
-      case 'canceled':
-        return <Badge variant="secondary">已取消</Badge>;
-      case 'expired':
-        return <Badge variant="outline" className="border-amber-500 text-amber-700">已过期</Badge>;
-      default:
-        return <Badge variant="outline">未知状态</Badge>;
-    }
-  };
-
-  // 渲染事件类型
-  const renderEventType = (type?: string) => {
-    switch (type) {
-      case 'subscription_created':
-        return '新订阅';
-      case 'plan_changed':
-        return '更改计划';
-      case 'subscription_cancelled':
-        return '取消订阅';
-      case 'subscription_renewed':
-        return '续订';
-      default:
-        return '状态变更';
-    }
-  };
-
-  const isLoading = isLoadingCurrent || isLoadingHistory;
-  const hasSubscriptionData = currentSubscription || (subscriptionHistory && subscriptionHistory.length > 0);
 
   if (isLoading) {
     return (
-      <div className="flex justify-center py-10">
+      <div className="h-[300px] w-full flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-knowledge-primary" />
       </div>
     );
   }
 
-  if (!hasSubscriptionData) {
+  if (!currentSubscription && (!history || history.length === 0)) {
     return (
       <div className="bg-muted/50 border rounded-lg p-8 text-center">
-        <h3 className="text-lg font-medium mb-2">暂无订阅记录</h3>
-        <p className="text-muted-foreground mb-6">您尚未购买任何订阅计划</p>
+        <h3 className="text-lg font-medium mb-2">无订阅记录</h3>
+        <p className="text-muted-foreground mb-6">您尚未订阅任何内容</p>
         
-        <div className="flex flex-col items-center gap-4">
-          <div className="flex flex-col sm:flex-row gap-4 items-center max-w-md">
-            <Select
-              value={periodOption}
-              onValueChange={(value) => setPeriodOption(value as SubscriptionPeriod)}
-              disabled={isGeneratingData}
-            >
-              <SelectTrigger className="w-full sm:w-[200px]">
-                <SelectValue placeholder="请选择订阅类型" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="monthly">月度订阅</SelectItem>
-                <SelectItem value="quarterly">季度订阅</SelectItem>
-                <SelectItem value="yearly">年度订阅</SelectItem>
-                <SelectItem value="2years">两年订阅</SelectItem>
-                <SelectItem value="3years">三年订阅</SelectItem>
-              </SelectContent>
-            </Select>
-            
-            <Button 
-              onClick={handleGenerateData} 
-              disabled={isGeneratingData}
-              className="w-full sm:w-auto"
-            >
-              {isGeneratingData ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Plus className="mr-2 h-4 w-4" />
-              )}
-              添加示例数据
-            </Button>
-          </div>
-          
-          <p className="text-xs text-muted-foreground mt-2">
-            添加示例数据后可查看订阅功能
-          </p>
+        <div className="flex justify-center">
+          <Button 
+            onClick={handleCreateTestSub} 
+            disabled={isCreatingTest}
+            className="inline-flex items-center"
+          >
+            {isCreatingTest ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Plus className="mr-2 h-4 w-4" />
+            )}
+            添加测试订阅
+          </Button>
         </div>
       </div>
     );
   }
 
-  // Handle potentially missing subscription plan data safely
-  const renderPlanInfo = (plan: any) => {
-    if (!plan) return null;
-    
-    return (
-      <>
-        <h4 className="font-medium">{plan.name || "未知计划"}</h4>
-        <p className="text-sm text-muted-foreground">
-          {plan.description || ""}
-        </p>
-      </>
-    );
-  };
-
-  // Safely check for features
-  const hasFeatures = currentSubscription?.subscription_plans && 
-                     typeof currentSubscription.subscription_plans === 'object' && 
-                     currentSubscription.subscription_plans.features && 
-                     Array.isArray(currentSubscription.subscription_plans.features) && 
-                     currentSubscription.subscription_plans.features.length > 0;
-
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {currentSubscription && (
-        <Card className="border-knowledge-primary/20">
-          <CardHeader className="bg-gradient-to-r from-knowledge-primary/5 to-knowledge-secondary/5">
-            <CardTitle className="flex items-center justify-between">
-              <span>当前订阅</span>
-              {renderStatusBadge(currentSubscription.status)}
-            </CardTitle>
-            <CardDescription>
-              您当前的订阅计划信息
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="pt-6">
-            <div className="space-y-4">
-              <div>
-                {renderPlanInfo(currentSubscription.subscription_plans)}
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                <div className="flex items-center gap-2">
-                  <CalendarIcon className="h-4 w-4 text-muted-foreground" />
-                  <span>开始日期：{formatDate(currentSubscription.start_date)}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-muted-foreground" />
-                  <span>到期日期：{formatDate(currentSubscription.end_date)}</span>
-                </div>
-              </div>
-              
-              {hasFeatures && (
-                <div className="mt-4">
-                  <h5 className="text-sm font-medium mb-2">包含特权</h5>
-                  <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
-                    {Array.isArray(currentSubscription.subscription_plans.features) && 
-                      currentSubscription.subscription_plans.features.map((feature: string, i: number) => (
-                        <li key={i}>{feature}</li>
-                      ))}
-                  </ul>
-                </div>
-              )}
-              
-              {!currentSubscription.auto_renew && (
-                <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-md text-sm">
-                  此订阅将在当前计费周期结束后自动取消
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {subscriptionHistory && subscriptionHistory.length > 0 && (
         <Card>
-          <CardHeader>
-            <CardTitle>订阅历史记录</CardTitle>
-            <CardDescription>
-              您的订阅变更历史记录
-            </CardDescription>
+          <CardHeader className="pb-2">
+            <CardTitle>当前订阅</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-6">
-              {subscriptionHistory.map((item: any, index: number) => (
-                <div key={index} className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b last:border-0 last:pb-0 gap-3">
-                  <div className="space-y-1">
-                    <div className="flex items-center">
-                      <Badge variant="outline" className="mr-2">{renderEventType(item.change_type)}</Badge>
-                      <h4 className="font-medium">
-                        {item.new_plan?.name || "未知计划"}
-                      </h4>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      {item.new_plan?.description || (item.change_type === 'subscription_cancelled' ? "订阅已取消" : "")}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm whitespace-nowrap">
-                    <CalendarIcon className="h-4 w-4 text-muted-foreground" />
-                    <span>{formatDate(item.effective_date)}</span>
-                  </div>
+          <CardContent className="pt-4">
+            <div className="space-y-4">
+              <div className="flex flex-col md:flex-row justify-between items-start gap-4">
+                <div>
+                  <h3 className="text-xl font-semibold">{currentPlan?.name || '标准订阅'}</h3>
+                  <p className="text-muted-foreground">{currentPlan?.description || '所有课程的完整访问权限'}</p>
                 </div>
-              ))}
-            </div>
+                <Badge variant="success" className="px-3 py-1.5 text-base">
+                  当前激活
+                </Badge>
+              </div>
 
-            <div className="mt-8">
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <p className="text-sm text-muted-foreground">需要添加更多示例数据？</p>
-                <Select
-                  value={periodOption}
-                  onValueChange={(value) => setPeriodOption(value as SubscriptionPeriod)}
-                  disabled={isGeneratingData}
-                >
-                  <SelectTrigger className="w-full sm:w-[200px]">
-                    <SelectValue placeholder="请选择订阅类型" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="monthly">月度订阅</SelectItem>
-                    <SelectItem value="quarterly">季度订阅</SelectItem>
-                    <SelectItem value="yearly">年度订阅</SelectItem>
-                    <SelectItem value="2years">两年订阅</SelectItem>
-                    <SelectItem value="3years">三年订阅</SelectItem>
-                  </SelectContent>
-                </Select>
-                
-                <Button 
-                  variant="outline"
-                  onClick={handleGenerateData}
-                  disabled={isGeneratingData}
-                >
-                  {isGeneratingData ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : (
-                    <CreditCard className="mr-2 h-4 w-4" />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">订阅价格</p>
+                  <p className="font-medium">
+                    {currentPlan?.price || '?'} {currentPlan?.currency?.toUpperCase() || 'CNY'}/{currentPlan?.interval || '月'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">到期时间</p>
+                  <p className="font-medium">
+                    {currentSubscription.end_date ? format(new Date(currentSubscription.end_date), 'yyyy-MM-dd') : '未知'}
+                  </p>
+                </div>
+              </div>
+
+              <Separator />
+
+              <div>
+                <h4 className="font-medium mb-2">包含功能</h4>
+                <ul className="space-y-1">
+                  {getFeatures(currentPlan).map((feature: string, index: number) => (
+                    <li key={index} className="flex items-center">
+                      <CheckCircle className="h-4 w-4 mr-2 text-green-500" />
+                      {feature}
+                    </li>
+                  ))}
+                  {getFeatures(currentPlan).length === 0 && (
+                    <li className="text-muted-foreground">无详细功能信息</li>
                   )}
-                  {isGeneratingData ? '添加中...' : '添加更多示例'}
-                </Button>
+                </ul>
               </div>
             </div>
           </CardContent>
         </Card>
       )}
+      
+      {history && history.length > 0 ? (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle>订阅历史记录</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-4">
+            <div className="relative space-y-4">
+              {history.map((record, index) => {
+                // Find plan details if available
+                const oldPlan = record.old_plan || record.previous_plan;
+                const newPlan = record.new_plan;
+                
+                return (
+                  <div key={index} className="relative pl-6 pb-6">
+                    {index < history.length - 1 && (
+                      <div className="absolute left-2.5 top-3 w-px bg-gray-200 h-full"></div>
+                    )}
+                    
+                    <div className="flex flex-col">
+                      <div className="flex items-center">
+                        <div className={cn(
+                          "absolute left-0 w-5 h-5 rounded-full flex items-center justify-center",
+                          record.event_type === 'subscription_created' ? "bg-green-100" : 
+                          record.event_type === 'subscription_cancelled' ? "bg-red-100" : "bg-blue-100"
+                        )}>
+                          {record.event_type === 'subscription_created' ? 
+                            <CheckCircle className="h-3 w-3 text-green-600" /> : 
+                            record.event_type === 'subscription_cancelled' ? 
+                            <AlertCircle className="h-3 w-3 text-red-600" /> : 
+                            <Clock className="h-3 w-3 text-blue-600" />
+                          }
+                        </div>
+                        
+                        <h4 className="font-medium">
+                          {record.event_type === 'subscription_created' ? '订阅开始' : 
+                           record.event_type === 'subscription_cancelled' ? '订阅取消' : 
+                           record.event_type === 'plan_changed' ? '更改订阅计划' : '订阅变更'}
+                        </h4>
+                        
+                        <span className="ml-auto text-sm text-muted-foreground">
+                          {record.effective_date ? format(new Date(record.effective_date), 'yyyy-MM-dd') : ''}
+                        </span>
+                      </div>
+                      
+                      <div className="mt-2 pl-2">
+                        {record.event_type === 'plan_changed' && oldPlan && newPlan ? (
+                          <div className="flex flex-col md:flex-row items-start md:items-center gap-2">
+                            <div className="px-3 py-1.5 bg-muted rounded-md">
+                              <p className="text-sm font-medium">{oldPlan?.name || '旧计划'}</p>
+                              <p className="text-xs text-muted-foreground">{getFeatures(oldPlan).join(', ') || '无详情'}</p>
+                            </div>
+                            <ArrowRightCircle className="hidden md:block h-4 w-4 mx-1 text-muted-foreground" />
+                            <div className="px-3 py-1.5 bg-green-50 border border-green-100 rounded-md">
+                              <p className="text-sm font-medium">{newPlan?.name || '新计划'}</p>
+                              <p className="text-xs text-muted-foreground">{getFeatures(newPlan).join(', ') || '无详情'}</p>
+                            </div>
+                          </div>
+                        ) : record.event_type === 'subscription_created' && newPlan ? (
+                          <div className="px-3 py-1.5 bg-green-50 border border-green-100 rounded-md inline-block">
+                            <p className="text-sm font-medium">{newPlan?.name || '订阅计划'}</p>
+                            <p className="text-xs text-muted-foreground">{getFeatures(newPlan).join(', ') || '无详情'}</p>
+                          </div>
+                        ) : (
+                          <p className="text-sm text-muted-foreground">
+                            {record.notes || '无详细信息'}
+                          </p>
+                        )}
+                        
+                        {record.amount && (
+                          <p className="mt-1 text-sm">
+                            金额: {record.amount} {record.currency?.toUpperCase() || 'CNY'}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle>订阅历史记录</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-4 text-center py-8">
+            <p className="text-muted-foreground">暂无订阅历史记录</p>
+          </CardContent>
+        </Card>
+      )}
+      
+      <div className="flex justify-center mt-4">
+        <Button 
+          onClick={handleCreateTestSub} 
+          variant="outline"
+          disabled={isCreatingTest}
+          className="inline-flex items-center"
+        >
+          {isCreatingTest ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <Plus className="mr-2 h-4 w-4" />
+          )}
+          添加更多测试数据
+        </Button>
+      </div>
     </div>
   );
 }

@@ -16,15 +16,17 @@ export interface UserCourse {
 export interface OrderItem {
   id: string;
   user_id: string;
-  total_amount: number;
+  amount: number; // Primary field from database
+  total_amount?: number; // For backward compatibility
   currency: string;
-  payment_method: string;
+  payment_method?: string;
+  payment_type?: string;
   status: string;
   created_at: string;
-  order_items: {
+  order_items?: {
     course_id: number;
     price: number;
-    courses: {
+    courses?: {
       id: number;
       title: string;
       [key: string]: any;

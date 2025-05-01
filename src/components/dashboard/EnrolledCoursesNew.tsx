@@ -25,23 +25,33 @@ export function EnrolledCoursesNew({ coursesWithProgress, showAll = false }: {
     if (!user?.id || isGeneratingData) return;
     
     setIsGeneratingData(true);
+    toast.loading('正在生成示例数据...', { id: 'generating-data' });
+    
     try {
       const result = await generateMockData(user.id);
       
+      toast.dismiss('generating-data');
+      
       if (result.success && result.courses) {
         toast.success("示例数据已生成", {
-          description: "课程数据已添加到您的账户，请刷新页面查看"
+          description: "课程数据已添加到您的账户，请刷新页面查看",
+          action: {
+            label: '刷新',
+            onClick: () => window.location.reload()
+          }
         });
-        // Reload the page to see the new data
-        window.location.reload();
       } else {
         toast.error("生成示例数据失败", {
-          description: "请稍后再试"
+          description: "请稍后再试或联系管理员"
         });
+        console.error('Mock data generation failed:', result);
       }
     } catch (err) {
+      toast.dismiss('generating-data');
       console.error("Error generating mock data:", err);
-      toast.error("生成示例数据时发生错误");
+      toast.error("生成示例数据时发生错误", {
+        description: err instanceof Error ? err.message : "未知错误"
+      });
     } finally {
       setIsGeneratingData(false);
     }
@@ -114,7 +124,7 @@ export function EnrolledCoursesNew({ coursesWithProgress, showAll = false }: {
             <Card key={course?.id} className="overflow-hidden hover:shadow-md transition-shadow">
               <div 
                 className="h-40 bg-cover bg-center" 
-                style={{ backgroundImage: `url(${course?.imageurl || '/placeholder-course.jpg'})` }}
+                style={{ backgroundImage: `url(${course?.thumbnail_url || course?.imageurl || '/placeholder-course.jpg'})` }}
               />
               <CardContent className="pt-4">
                 <h4 className="font-medium mb-2 h-14 line-clamp-2">{course?.title}</h4>

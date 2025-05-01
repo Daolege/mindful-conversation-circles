@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getUserOrders, generateMockOrder } from "@/lib/services/orderService";
@@ -39,39 +40,51 @@ export function OrderHistoryView() {
     if (!user?.id || isGeneratingData) return;
     
     setIsGeneratingData(true);
+    toast.loading('正在生成示例订单...', { id: 'generating-order' });
+    
     try {
-      // 生成状态随机的订单
+      // Generate random status order
       const statuses = ['completed', 'processing', 'cancelled'];
       const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
       
       const result = await generateMockOrder(user.id, randomStatus);
       
+      toast.dismiss('generating-order');
+      
       if (result.success) {
         toast.success("示例订单已生成", {
-          description: "订单记录已添加到您的账户"
+          description: "订单记录已添加到您的账户",
+          action: {
+            label: '刷新',
+            onClick: () => refetch()
+          }
         });
         
-        // 使用 invalidateQueries 来刷新订单数据
+        // Refresh order data
         await queryClient.invalidateQueries({
           queryKey: ['user-orders', user.id]
         });
         
-        // 手动触发重新加载当前筛选状态的数据
+        // Manually trigger reload with current filter
         refetch();
       } else {
         toast.error("生成示例订单失败", {
-          description: "请稍后再试"
+          description: "请稍后再试或联系管理员"
         });
+        console.error("Failed to generate mock order:", result.error);
       }
     } catch (err) {
+      toast.dismiss('generating-order');
       console.error("Error generating mock order:", err);
-      toast.error("生成示例数据时发生错误");
+      toast.error("生成示例数据时发生错误", {
+        description: err instanceof Error ? err.message : "未知错误"
+      });
     } finally {
       setIsGeneratingData(false);
     }
   };
   
-  // 手动刷新订单列表
+  // Manually refresh order list
   const handleRefresh = useCallback(() => {
     refetch();
   }, [refetch]);
