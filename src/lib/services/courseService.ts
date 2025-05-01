@@ -20,7 +20,7 @@ interface BasicCourseData {
 }
 
 // Get all courses (simplified to avoid deep type instantiation)
-export const getCourses = async (): Promise<any[]> {
+export async function getCourses(): Promise<any[]> {
   try {
     const { data, error } = await supabase
       .from("courses_new") // Changed to courses_new
@@ -36,10 +36,10 @@ export const getCourses = async (): Promise<any[]> {
     console.error("Error fetching courses:", error);
     return [];
   }
-};
+}
 
 // Get course by ID using courses_new table
-export const getCourseById = async (courseId: number): Promise<CourseResponse<CourseData>> {
+export async function getCourseById(courseId: number): Promise<CourseResponse<CourseData>> {
   try {
     const { data, error } = await supabase
       .from('courses_new')
@@ -58,10 +58,10 @@ export const getCourseById = async (courseId: number): Promise<CourseResponse<Co
     console.error('[courseService] Unexpected error in getCourseById:', err);
     return { data: null, error: err as Error };
   }
-};
+}
 
 // Save course with proper types
-export const saveCourse = async (courseData: CourseData): Promise<CourseResponse<CourseData>> {
+export async function saveCourse(courseData: CourseData): Promise<CourseResponse<CourseData>> {
   try {
     // Ensure title exists when creating a new course
     if (!courseData.id && !courseData.title) {
@@ -84,10 +84,10 @@ export const saveCourse = async (courseData: CourseData): Promise<CourseResponse
     console.error('[courseService] Unexpected error in saveCourse:', err);
     return { data: null, error: err as Error };
   }
-};
+}
 
 // Delete course (simplified)
-export const deleteCourse = async (courseId: number): Promise<{ success: boolean; error?: Error }> {
+export async function deleteCourse(courseId: number): Promise<{ success: boolean; error?: Error }> {
   try {
     const { error } = await supabase
       .from('courses_new')
@@ -104,10 +104,10 @@ export const deleteCourse = async (courseId: number): Promise<{ success: boolean
     console.error('[courseService] Unexpected error in deleteCourse:', err);
     return { success: false, error: err as Error };
   }
-};
+}
 
 // Get courses by instructor ID with simplified return type
-export const getCoursesByInstructorId = async (instructorId: string): Promise<CourseResponse<any[]>> {
+export async function getCoursesByInstructorId(instructorId: string): Promise<CourseResponse<any[]>> {
   try {
     const { data, error } = await supabase
       .from('courses_new')
@@ -124,10 +124,10 @@ export const getCoursesByInstructorId = async (instructorId: string): Promise<Co
     console.error('[courseService] Unexpected error in getCoursesByInstructorId:', err);
     return { data: null, error: err as Error };
   }
-};
+}
 
 // Update course order
-export const updateCourseOrder = async (courseIds: number[]): Promise<{ success: boolean; error?: any }> {
+export async function updateCourseOrder(courseIds: number[]): Promise<{ success: boolean; error?: any }> {
   try {
     console.log('[courseService] Updating course display order:', courseIds);
     
@@ -147,10 +147,10 @@ export const updateCourseOrder = async (courseIds: number[]): Promise<{ success:
     console.error('[courseService] Error updating course order:', error);
     return { success: false, error };
   }
-};
+}
 
 // Insert course with proper types
-export const insertCourse = async (courseData: BasicCourseData) => {
+export async function insertCourse(courseData: BasicCourseData) {
   try {
     // Ensure status is a valid enum value
     if (courseData.status && typeof courseData.status === 'string') {
@@ -174,10 +174,10 @@ export const insertCourse = async (courseData: BasicCourseData) => {
     console.error("Error inserting course:", error);
     throw error;
   }
-};
+}
 
 // Fix updateMultipleCourses with correct types
-export const updateMultipleCourses = async (coursesData: BasicCourseData[]) => {
+export async function updateMultipleCourses(coursesData: BasicCourseData[]) {
   try {
     // Ensure all courses have valid status values
     coursesData.forEach(course => {
@@ -202,10 +202,10 @@ export const updateMultipleCourses = async (coursesData: BasicCourseData[]) => {
     console.error("Error updating multiple courses:", error);
     throw error;
   }
-};
+}
 
 // Add getCourseNewById for the new system
-export const getCourseNewById = async (courseId: number): Promise<any> {
+export async function getCourseNewById(courseId: number): Promise<any> {
   try {
     const { data, error } = await supabase
       .from('courses_new')
@@ -221,4 +221,4 @@ export const getCourseNewById = async (courseId: number): Promise<any> {
   } catch (err) {
     return { data: null, error: err };
   }
-};
+}
