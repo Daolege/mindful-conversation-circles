@@ -22,21 +22,21 @@ const HomePage = () => {
           {/* 热门课程模块 */}
           <CourseSection 
             title="精选热门课程" 
-            subtitle="发现最受欢迎的优质课程，快速提升核心技能" 
+            subtitle="发现跨境电商领域最受欢迎的优质课程，快速掌握全球贸易技能" 
           />
           
           {/* 入门课程模块 */}
           <CourseSection 
-            title="零基础入门课程" 
-            subtitle="专为初学者设计的系统化学习内容" 
+            title="跨境电商入门课程" 
+            subtitle="专为初学者设计的跨境电商系统化学习内容" 
             filterBy="category"
             filterValue="beginner"
           />
           
           {/* 高级课程模块 */}
           <CourseSection 
-            title="进阶实战课程" 
-            subtitle="深度学习与高级案例分析，提升专业水平" 
+            title="跨境电商实战课程" 
+            subtitle="深度学习与高级案例分析，成为跨境贸易专家" 
             filterBy="category"
             filterValue="advanced"
           />

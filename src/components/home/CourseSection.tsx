@@ -21,8 +21,7 @@ const CourseSection: React.FC<CourseSectionProps> = ({
   filterBy,
   filterValue,
 }) => {
-  // Define explicit return type to avoid deep type instantiation issues
-  const fetchCourses = async (): Promise<CourseNew[]> => {
+  const fetchCourses = async () => {
     let query = supabase
       .from('courses_new')
       .select('*')
@@ -40,10 +39,10 @@ const CourseSection: React.FC<CourseSectionProps> = ({
       return [];
     }
     
-    return data || [];
+    return data as CourseNew[];
   };
 
-  // Use the query with explicit typed function
+  // Use the query with explicitly typed function
   const { data: courses = [], isLoading } = useQuery({
     queryKey: ['homepage-courses', filterBy, filterValue, limit],
     queryFn: fetchCourses

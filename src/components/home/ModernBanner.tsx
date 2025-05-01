@@ -65,15 +65,13 @@ const ModernBanner = () => {
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, [mouseX, mouseY]);
 
-  // Transform values for parallax effect
+  // Transform values for parallax effect - ONLY for images
   const xTransform = useTransform(smoothMouseX, [-1, 1], [-20, 20]);
   const yTransform = useTransform(smoothMouseY, [-1, 1], [-20, 20]);
   const rotateTransform = useTransform(smoothMouseX, [-1, 1], [-2, 2]);
   const scaleTransform = useTransform(smoothMouseY, [-1, 1], [0.98, 1.02]);
 
-  // Text and shape positions
-  const textX = useTransform(smoothMouseX, [-1, 1], [-10, 10]);
-  const textY = useTransform(smoothMouseY, [-1, 1], [-5, 5]);
+  // These are NOT affected by mouse movements - fixed positions for text
   const shape1X = useTransform(smoothMouseX, [-1, 1], [-15, 15]);
   const shape1Y = useTransform(smoothMouseY, [-1, 1], [-10, 10]);
   const shape2X = useTransform(smoothMouseX, [-1, 1], [-25, 25]);
@@ -120,20 +118,17 @@ const ModernBanner = () => {
       {/* Main content container */}
       <div className="relative z-10 container mx-auto h-full flex items-center px-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center h-full">
-          {/* Text content */}
-          <motion.div 
-            className="text-white space-y-4 md:space-y-6"
-            style={{ x: textX, y: textY }}
-          >
+          {/* Text content - NOT affected by mouse movement */}
+          <div className="text-white space-y-4 md:space-y-6">
             <motion.h1 
               className="text-4xl md:text-5xl font-bold leading-tight"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
             >
-              知识<span className="text-gray-300">传递价值</span>
+              开启<span className="text-gray-300">跨境电商</span>
               <br />
-              <span className="text-gray-300">经验</span>创造未来
+              <span className="text-gray-300">全球</span>商机
             </motion.h1>
             
             <motion.p 
@@ -142,11 +137,20 @@ const ModernBanner = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
             >
-              探索我们精心设计的课程，开启属于你的知识之旅，随时随地学习成长
+              突破地域限制，接触全球买家，掌握跨境电商核心技能，拓展无限商机
             </motion.p>
-          </motion.div>
 
-          {/* Image carousel */}
+            <motion.p 
+              className="text-md text-gray-300 max-w-md"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+            >
+              我们的专业课程助您从零起步，轻松进入全球市场
+            </motion.p>
+          </div>
+
+          {/* Image carousel - WITH mouse interaction effects */}
           <motion.div
             className="relative hidden md:block h-[350px] w-full"
             style={{ 

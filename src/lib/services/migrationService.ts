@@ -64,9 +64,10 @@ export const getExchangeRate = async (): Promise<number> => {
       return 7; // Default exchange rate
     }
     
-    // Handle the result using the value field from data
-    if (data && data.value) {
-      return parseFloat(data.value);
+    // Access value property from the data (which should be a SiteSetting)
+    const siteSettingData = data as unknown as SiteSetting;
+    if (siteSettingData && siteSettingData.value) {
+      return parseFloat(siteSettingData.value);
     }
     
     return 7; // Default if no data
@@ -96,7 +97,7 @@ export const updateExchangeRate = async (newRate: number): Promise<boolean> => {
       // Update existing setting
       const { error: updateError } = await supabase
         .from('site_settings')
-        .update({ value: newRate.toString() })
+        .update({ value: newRate.toString() } as SiteSetting)
         .eq('key', 'exchange_rate');
         
       if (updateError) {
