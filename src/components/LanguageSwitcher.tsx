@@ -9,7 +9,12 @@ import {
 } from "@/components/ui/popover";
 import { useTranslations } from "@/hooks/useTranslations";
 
-const LanguageSwitcher = () => {
+interface LanguageSwitcherProps {
+  mobile?: boolean;
+  className?: string;
+}
+
+const LanguageSwitcher = ({ mobile, className }: LanguageSwitcherProps) => {
   const { currentLanguage, changeLanguage } = useTranslations();
   const [open, setOpen] = useState(false);
 
@@ -29,13 +34,13 @@ const LanguageSwitcher = () => {
         <Button
           variant="outline"
           size="sm"
-          className="flex items-center gap-2 h-9 px-3 text-gray-600"
+          className={`flex items-center gap-2 h-9 px-3 text-gray-600 ${className || ''}`}
         >
           <Globe className="h-4 w-4" />
           <span>{languages.find((l) => l.code === currentLanguage)?.name || "Language"}</span>
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-40 p-0">
+      <PopoverContent className={`${mobile ? 'w-full' : 'w-40'} p-0`}>
         <div className="grid">
           {languages.map((language) => (
             <Button

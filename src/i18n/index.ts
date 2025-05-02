@@ -31,6 +31,12 @@ import zhOrders from './locales/zh/orders.json';
 import zhActions from './locales/zh/actions.json';
 import zhHome from './locales/zh/home.json';
 
+// Define a translation item type for better type safety
+interface TranslationItem {
+  key: string;
+  value: string;
+}
+
 // 动态加载翻译的 backend
 i18n.use(Backend);
 
@@ -50,9 +56,10 @@ i18n.use({
       // 转换为键值对
       if (!error && data && data.length > 0) {
         const translations = data.reduce((acc, item) => {
-          acc[item.key] = item.value;
+          const translationItem = item as unknown as TranslationItem;
+          acc[translationItem.key] = translationItem.value;
           return acc;
-        }, {});
+        }, {} as Record<string, string>);
         
         callback(null, translations);
         return;
