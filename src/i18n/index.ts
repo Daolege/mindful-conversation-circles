@@ -50,10 +50,11 @@ i18n.use({
       // 转换为键值对
       if (!error && data && data.length > 0) {
         const translations = data.reduce((acc, item) => {
-          // 使用简单的 JavaScript，避免 TypeScript 类型问题
-          acc[item.key] = item.value;
+          // Fixed: Explicitly type the accumulator and properly cast the item
+          const translationItem = item as { key: string; value: string };
+          acc[translationItem.key] = translationItem.value;
           return acc;
-        }, {});
+        }, {} as Record<string, string>);
         
         callback(null, translations);
         return;
