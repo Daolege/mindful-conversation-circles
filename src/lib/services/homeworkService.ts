@@ -1,4 +1,3 @@
-
 /**
  * Homework System Services
  * This file contains safe utilities for interacting with the homework system
@@ -192,6 +191,129 @@ export async function createDefaultHomework(courseId: number, lectureId: string,
     return { success: true, homework: data?.[0] };
   } catch (error) {
     console.error('Error in createDefaultHomework:', error);
+    return { success: false, error };
+  }
+}
+
+/**
+ * Get homework by lecture ID
+ * This function is used for the HomeworkPanel component
+ */
+export async function getHomeworksByLectureId(lectureId: string) {
+  try {
+    console.log(`[homeworkService] Fetching homework for lecture ${lectureId}`);
+    
+    // @ts-ignore - Bypass TypeScript's strict checking
+    const { data, error } = await supabase
+      .from('homework')
+      .select('*')
+      .eq('lecture_id', lectureId);
+    
+    if (error) {
+      console.error('Error fetching homework by lecture ID:', error);
+      return { error, data: [] };
+    }
+    
+    return { data: data || [], error: null };
+  } catch (error) {
+    console.error('Error in getHomeworksByLectureId:', error);
+    return { 
+      error,
+      data: []
+    };
+  }
+}
+
+/**
+ * Save homework (create or update)
+ */
+export async function saveHomework(homeworkData: HomeworkData) {
+  try {
+    // Validate course ID
+    if (isNaN(homeworkData.course_id) || homeworkData.course_id <= 0) {
+      throw new Error(`Invalid course ID: ${homeworkData.course_id}`);
+    }
+    
+    // Check if homework exists
+    let existingHomework = null;
+    
+    if (homeworkData.id) {
+      // @ts-ignore - Bypass TypeScript's strict checking
+      const { data, error } = await supabase
+        .from('homework')
+        .select('id')
+        .eq('id', homeworkData.id)
+        .maybeSingle();
+      
+      if (error) {
+        console.error('Error checking homework existence:', error);
+        throw error;
+      }
+      
+      existingHomework = data;
+    }
+    
+    // Add timestamps
+    const now = new Date().toISOString();
+    const updatedData = {
+      ...homeworkData,
+      updated_at: now
+    };
+    
+    if (!existingHomework) {
+      updatedData.created_at = now;
+    }
+    
+    let result;
+    
+    if (existingHomework) {
+      // Update existing homework
+      // @ts-ignore - Bypass TypeScript's strict checking
+      result = await supabase
+        .from('homework')
+        .update(updatedData)
+        .eq('id', homeworkData.id)
+        .select('*');
+    } else {
+      // Create new homework
+      // @ts-ignore - Bypass TypeScript's strict checking
+      result = await supabase
+        .from('homework')
+        .insert(updatedData)
+        .select('*');
+    }
+    
+    if (result.error) {
+      console.error('Error saving homework:', result.error);
+      return { error: result.error, data: null };
+    }
+    
+    return { data: result.data?.[0] || null, error: null };
+  } catch (error) {
+    console.error('Error in saveHomework:', error);
+    return { error, data: null };
+  }
+}
+
+/**
+ * Delete homework by ID
+ */
+export async function deleteHomework(homeworkId: string) {
+  try {
+    // @ts-ignore - Bypass TypeScript's strict checking
+    const { error } = await supabase
+      .from('homework')
+      .delete()
+      .eq('id', homeworkId);
+    
+    if (error) {
+      console.error('Error deleting homework:', error);
+      return { success: false, error };
+    }
+    
+    return { success: true, error: null };
+  } catch (error) {
+    console.error('Error in deleteHomework:', error);
     return { success: false, error };
   }
 }

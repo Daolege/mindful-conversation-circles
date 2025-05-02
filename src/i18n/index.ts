@@ -43,7 +43,7 @@ i18n.use({
   read: async (language, namespace, callback) => {
     try {
       // 首先尝试从数据库加载翻译
-      // @ts-ignore - Bypass TypeScript's strict checking
+      // @ts-ignore - Bypass TypeScript's strict checking for database table access
       const { data, error } = await supabase
         .from('translations')
         .select('key, value')

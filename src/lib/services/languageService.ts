@@ -6,6 +6,9 @@ import { TranslationItem } from "@/hooks/useTranslations";
 
 export type Language = Tables<'languages'>;
 
+// Re-export TranslationItem for other modules to use
+export type { TranslationItem };
+
 // 获取所有支持的语言
 export async function getAllLanguages(): Promise<Language[]> {
   try {
