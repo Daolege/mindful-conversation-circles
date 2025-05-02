@@ -31,19 +31,6 @@ const Navbar = () => {
     setIsMenuOpen(prev => !prev);
   }, []);
 
-  const { data: aboutPageSettings } = useQuery({
-    queryKey: ['about-page-visibility'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("about_page_settings")
-        .select("is_visible")
-        .single();
-
-      return handleAboutPageQueryError(data, error);
-    },
-    staleTime: 1000 * 60 * 5, // 5分钟缓存
-  });
-
   const { data: isAdmin = false } = useQuery({
     queryKey: ['admin-role', user?.id],
     queryFn: async () => {
@@ -65,15 +52,13 @@ const Navbar = () => {
     return null;
   }
 
-  const showAboutLink = aboutPageSettings?.is_visible !== false;
-
   const mobileMenuProps = useMemo(() => ({
     user,
     isAdmin,
     setIsMenuOpen,
     handleSignOut,
-    showAboutLink
-  }), [user, isAdmin, handleSignOut, showAboutLink]);
+    showAboutLink: false // 不再显示关于我们链接
+  }), [user, isAdmin, handleSignOut]);
 
   return (
     <motion.nav 
@@ -110,18 +95,8 @@ const Navbar = () => {
               />
             </Link>
             
-            {showAboutLink && (
-              <Link 
-                to="/about" 
-                className="text-gray-600 hover:text-knowledge-primary transition-all duration-200 relative group"
-              >
-                {t('navigation:aboutUs')}
-                <motion.div
-                  className="absolute -bottom-1 left-0 w-0 h-0.5 bg-knowledge-primary group-hover:w-full transition-all duration-200"
-                  whileHover={{ width: "100%" }}
-                />
-              </Link>
-            )}
+            {/* 移除了"关于我们"链接 */}
+            
             {user && isAdmin && (
               <Link 
                 to="/admin" 

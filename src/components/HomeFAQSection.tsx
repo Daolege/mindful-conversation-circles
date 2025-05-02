@@ -55,7 +55,7 @@ const HomeFAQSection = () => {
           </div>
         ) : faqs.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {faqs.map((faq, i) => {
+            {faqs.map((faq) => {
               const isOpen = openFaqIds.has(faq.id);
               
               return (

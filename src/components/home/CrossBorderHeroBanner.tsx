@@ -64,19 +64,6 @@ const CrossBorderHeroBanner = () => {
                   <ChevronRight className="ml-2 h-5 w-5" />
                 </Button>
               </motion.div>
-              
-              <motion.div
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <Button 
-                  variant="outline"
-                  onClick={() => navigate('/auth')}
-                  className="border-2 border-white text-white hover:bg-white/10 px-8 py-6 text-lg rounded-md"
-                >
-                  {t('home:joinCommunity')}
-                </Button>
-              </motion.div>
             </div>
             
             {/* Stats and social proof */}

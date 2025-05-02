@@ -23,6 +23,10 @@ import OrderDetail from './pages/OrderDetail';
 import HomeworkSubmissionsPage from './pages/HomeworkSubmissionsPage';
 import { LanguageProvider } from './contexts/LanguageContext';
 import './i18n';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsOfUse from './pages/TermsOfUse';
+import CookiePolicy from './pages/CookiePolicy';
+import FAQ from './pages/FAQ';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -61,6 +65,10 @@ function App() {
                 <Route path="/admin/courses-new/:courseId" element={<CourseNewEditor />} />
                 <Route path="/admin/courses-new/:courseId/homework" element={<HomeworkSubmissionsPage />} />
                 <Route path="/orders/:id" element={<OrderDetail />} />
+                <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                <Route path="/terms-of-use" element={<TermsOfUse />} />
+                <Route path="/cookie-policy" element={<CookiePolicy />} />
+                <Route path="/faq" element={<FAQ />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
               <Toaster richColors position="top-right" />

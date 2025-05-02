@@ -44,7 +44,7 @@ const Logo = ({
           }}
         >
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(160,160,160,0.3),rgba(255,255,255,0))]" />
-          <span className="relative z-10 text-white font-black tracking-wider">C</span>
+          <span className="relative z-10 text-white font-black tracking-wider">S</span>
         </motion.div>
         {showText && (
           <motion.span 
@@ -53,7 +53,7 @@ const Logo = ({
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.2, duration: 0.3 }}
           >
-            Clique
+            SecondRise
           </motion.span>
         )}
       </motion.div>
