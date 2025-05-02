@@ -105,7 +105,8 @@ const Footer = () => {
       if (error) throw error;
       return data as ContactMethod[];
     },
-    onError: handleContactMethodsQueryError,
+    // Remove the onError property and use meta.onError if needed
+    // onError: handleContactMethodsQueryError,
   });
 
   const renderContactIcon = (type: string) => {
@@ -191,7 +192,7 @@ const Footer = () => {
           <div>
             <h3 className="text-lg font-medium mb-4 text-white">{t('common:language')}</h3>
             <div className="mb-6">
-              <LanguageSwitcher variant="footer" />
+              <LanguageSwitcher className="bg-[#333333] text-white border-[#404040]" />
             </div>
             
             <h3 className="text-lg font-medium mb-4 text-white">{t('common:acceptedPaymentMethods')}</h3>
@@ -212,3 +213,4 @@ const Footer = () => {
 };
 
 export default Footer;
+
