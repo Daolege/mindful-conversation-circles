@@ -1,6 +1,6 @@
+
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import CrossBorderHeroBanner from "@/components/home/CrossBorderHeroBanner";
 import FeaturedCourses from "@/components/FeaturedCourses";
 import HomeFAQSection from "@/components/HomeFAQSection";
 import { memo } from "react";
@@ -42,6 +42,7 @@ const Index = memo(() => {
           description={t('courses:expertTeamRecommendations')}
         />
 
+        {/* Enhanced FAQ section */}
         <HomeFAQSection />
       </main>
       <Footer />

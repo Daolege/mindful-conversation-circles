@@ -182,7 +182,7 @@ const Footer = () => {
   
   const usefulLinks: FooterLink[] = [
     { href: '/courses', label: t('navigation:allCourses'), translationKey: 'navigation:allCourses' },
-    { href: '/faq', label: t('common:faq'), translationKey: 'common:faq' },
+    // FAQ link removed since it's now integrated into the homepage
   ];
 
   const { data: contactMethods = [] } = useQuery({
@@ -211,7 +211,7 @@ const Footer = () => {
   const whatsapp2 = "+1(202)2099688";
 
   return (
-    <footer className="bg-gray-800 text-white">
+    <footer className="text-white" style={{ backgroundColor: '#262626' }}>
       <div className="container mx-auto py-12 px-4">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
           {/* Company & Brand */}
@@ -349,7 +349,7 @@ const Footer = () => {
         </div>
         
         {/* Copyright Row */}
-        <div className="border-t border-gray-700 mt-10 pt-6">
+        <div className="border-t border-gray-700/50 mt-10 pt-6">
           <div className="flex flex-col md:flex-row md:justify-between items-center space-y-4 md:space-y-0">
             <p className="text-gray-400 text-sm">© {new Date().getFullYear()} SecondRise. Mandarin (Hong Kong) International Limited. {t('common:allRightsReserved')}</p>
             <div className="flex items-center space-x-4">
