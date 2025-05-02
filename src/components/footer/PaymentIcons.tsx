@@ -3,7 +3,7 @@ import React from 'react';
 
 export const PaymentIcons: React.FC = () => {
   return (
-    <div className="flex flex-wrap gap-3 mt-4">
+    <div className="flex flex-nowrap overflow-x-auto gap-3 mt-2">
       {/* Visa */}
       <div className="bg-white rounded-md p-1 h-8 flex items-center justify-center">
         <svg viewBox="0 0 24 24" width="28" height="28" fill="#1434CB">

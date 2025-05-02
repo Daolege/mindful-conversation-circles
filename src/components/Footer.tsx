@@ -4,7 +4,6 @@ import { useTranslations } from "@/hooks/useTranslations";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { siteConfig } from "@/config/site";
-import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 import Logo from "@/components/Logo";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
@@ -15,7 +14,7 @@ import LegalLinks from './footer/LegalLinks';
 import SocialLinks from './footer/SocialLinks';
 import GlobalOffices from './footer/GlobalOffices';
 
-// Simple type for site settings data
+// 新的站点设置类型
 type SiteSettings = {
   contact_email?: string;
   support_phone?: string;
@@ -25,7 +24,7 @@ type SiteSettings = {
 const Footer = () => {
   const { t } = useTranslations();
   
-  // Use a direct, simplified query to avoid type depth issues
+  // 使用简化的查询
   const { data } = useQuery({
     queryKey: ['site-settings'],
     queryFn: async () => {
@@ -49,39 +48,42 @@ const Footer = () => {
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
-  // Safely access data with fallbacks
-  const siteSettings = data || {};
+  // 安全访问数据并设置联系信息
+  const emails = ["secondrise@secondrise.com", "info@secondrise.com"];
+  const phones = ["+85298211389", "+1(202)2099688"];
+  const location = "Hong Kong";
   
   return (
-    <footer className="bg-[#262626] text-white pt-12 pb-6">
+    <footer className="bg-[#1a202c] text-white pt-12 pb-6">
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
-          {/* Company info */}
+          {/* 公司信息 */}
           <div className="md:col-span-4 flex flex-col">
             <div className="flex items-center mb-4">
               <Logo variant="default" />
             </div>
-            <p className="text-[#BBBBBB] mb-6">{t('common:footerCompanyDescription')}</p>
+            <p className="text-[#999999] mb-6">{t('common:footerCompanyDescription')}</p>
             
-            {/* Social Media */}
+            {/* 社交媒体链接 */}
             <SocialLinks />
             
-            {/* Language Switcher */}
+            {/* 语言切换器 */}
             <LanguageSwitcher variant="footer" className="bg-[#333333] text-white border-[#404040]" />
           </div>
           
-          {/* Contact and Legal */}
+          {/* 联系和法律信息 */}
           <div className="md:col-span-3 space-y-1.5">
             <h3 className="text-lg font-medium mb-4 text-white">{t('common:contactAndSupport')}</h3>
             <ContactInfo 
-              email={siteSettings.contact_email} 
-              phone={siteSettings.support_phone} 
+              emails={emails}
+              phones={phones}
+              location={location}
             />
             
             <LegalLinks />
           </div>
           
-          {/* Global Offices */}
+          {/* 全球办公室 */}
           <div className="md:col-span-5">
             <GlobalOffices />
           </div>
@@ -90,7 +92,7 @@ const Footer = () => {
         <Separator className="my-6 bg-[#3A3A3A]" />
         
         <div className="text-center text-[#999999] text-sm">
-          <p>{t('common:copyright', { year: new Date().getFullYear() })}</p>
+          <p>© {new Date().getFullYear()} SecondRise. Mandarin (Hong Kong) International Limited. 版权所有</p>
         </div>
       </div>
     </footer>

@@ -17,7 +17,7 @@ export const CountryFlag: React.FC<CountryFlagProps> = ({ countryCode, countryNa
       alt={`${countryName} flag`} 
       className="rounded-sm shadow-sm transition-all group-hover:scale-110"
     />
-    <span className="text-sm text-[#E5E5E5] group-hover:text-white transition-all">{countryName}</span>
+    <span className="text-sm text-[#999999] group-hover:text-white transition-all">{countryName}</span>
   </div>
 );
 
