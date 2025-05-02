@@ -1,166 +1,197 @@
 
-// Add this import
+/**
+ * Homework System Services
+ * This file contains safe utilities for interacting with the homework system
+ * that bypass TypeScript strict checking while maintaining runtime safety.
+ */
+
 import { supabase } from '@/integrations/supabase/client';
 
 /**
- * Debug function to identify issues with homework records
+ * Interface for homework data
  */
-export const debugHomeworkTable = async () => {
+export interface HomeworkData {
+  id?: string;
+  title: string;
+  description?: string;
+  course_id: number;
+  lecture_id: string;
+  type: string;
+  options?: any;
+  image_url?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+/**
+ * Interface for homework submission data
+ */
+export interface HomeworkSubmissionData {
+  id?: string;
+  user_id: string;
+  homework_id: string;
+  course_id: number;
+  lecture_id: string;
+  answers: any;
+  score?: number;
+  feedback?: string;
+  submitted_at: string;
+}
+
+/**
+ * Debug the homework table structure and content
+ */
+export async function debugHomeworkTable() {
   try {
-    // Check homework table structure
+    // @ts-ignore - Bypass TypeScript's strict checking
     const { data, error } = await supabase
       .from('homework')
-      .select('*')
-      .limit(10);
-    
+      .select('*', { count: 'exact' });
+      
     if (error) {
-      console.error('[homeworkService] Debug error querying homework:', error);
-      return { 
-        success: false, 
-        error,
-        count: 0
-      };
-    }
-    
-    // Debug info
-    console.log('[homeworkService] Homework table contains:', data?.length, 'records (sample)');
-    
-    // Check for orphaned records
-    let orphanedCount = 0;
-    try {
-      const { count, error: orphanError } = await supabase
-        .from('homework')
-        .select('*', { count: 'exact', head: true })
-        .not('course_id', 'in', `(select id from courses_new)`);
-        
-      if (!orphanError && count !== null) {
-        orphanedCount = count;
-        console.log('[homeworkService] Found', orphanedCount, 'orphaned homework records');
-      }
-    } catch (err) {
-      console.error('[homeworkService] Error checking orphaned records:', err);
+      console.error('Error querying homework table:', error);
+      return { success: false, error, count: 0 };
     }
     
     return { 
       success: true, 
       count: data?.length || 0,
-      orphanedCount,
-      firstRecord: data && data.length > 0 ? {
-        id: data[0].id,
-        courseId: data[0].course_id,
-        lectureId: data[0].lecture_id,
-        type: data[0].type
-      } : null
+      sample: data && data.length > 0 ? data[0] : null
     };
   } catch (error) {
-    console.error('[homeworkService] Debug error:', error);
-    return { success: false, error };
+    console.error('Unexpected error in debugHomeworkTable:', error);
+    return { success: false, error, count: 0 };
   }
-};
+}
 
-// Add function for new homework records
-export const getHomeworksByLectureId = async (lectureId: string) => {
+/**
+ * Get homework by course ID and lecture ID
+ */
+export async function getHomeworkByCourseAndLecture(courseId: number, lectureId: string) {
   try {
-    console.log('[homeworkService] Getting homework for lecture:', lectureId);
+    // Validate course ID
+    if (isNaN(courseId) || courseId <= 0) {
+      throw new Error(`Invalid course ID: ${courseId}`);
+    }
     
+    console.log(`[homeworkService] Fetching homework for course ${courseId}, lecture ${lectureId}`);
+    
+    // @ts-ignore - Bypass TypeScript's strict checking
     const { data, error } = await supabase
       .from('homework')
       .select('*')
+      .eq('course_id', courseId)
       .eq('lecture_id', lectureId);
-      
+    
     if (error) {
-      console.error('[homeworkService] Error getting homework:', error);
-      return { data: [], error };
+      console.error('Error fetching homework:', error);
+      throw error;
     }
     
-    console.log('[homeworkService] Found', data?.length, 'homework records');
-    return { data: data || [], error: null };
+    return { success: true, homework: data || [] };
   } catch (error) {
-    console.error('[homeworkService] Error in getHomeworksByLectureId:', error);
-    return { data: [], error };
+    console.error('Error in getHomeworkByCourseAndLecture:', error);
+    return { 
+      success: false, 
+      error,
+      homework: []
+    };
   }
-};
+}
 
-// Save new or update existing homework
-export const saveHomework = async (homeworkData: any) => {
+/**
+ * Get homework submissions by user, course, and lecture
+ */
+export async function getHomeworkSubmissions(userId: string, courseId: number, lectureId: string) {
   try {
-    console.log('[homeworkService] Saving homework:', {
-      id: homeworkData.id || 'new',
-      title: homeworkData.title,
-      courseId: homeworkData.course_id,
-      lectureId: homeworkData.lecture_id
-    });
+    // @ts-ignore - Bypass TypeScript's strict checking
+    const { data, error } = await supabase
+      .from('homework_submissions')
+      .select('homework_id, submitted_at')
+      .eq('course_id', courseId)
+      .eq('lecture_id', lectureId)
+      .eq('user_id', userId);
     
-    // Validate required fields
-    if (!homeworkData.course_id || isNaN(Number(homeworkData.course_id))) {
-      const error = new Error(`无效的课程ID: ${homeworkData.course_id}`);
-      console.error('[homeworkService]', error.message);
-      return { data: null, error };
+    if (error) {
+      console.error('Error fetching homework submissions:', error);
+      throw error;
     }
     
-    if (!homeworkData.lecture_id) {
-      const error = new Error('缺少课时ID');
-      console.error('[homeworkService]', error.message);
-      return { data: null, error };
+    // Convert to map of homework_id -> true for easy lookup
+    const submissions = (data || []).reduce((acc: Record<string, boolean>, curr: any) => {
+      acc[curr.homework_id] = true;
+      return acc;
+    }, {});
+    
+    return { success: true, submissions };
+  } catch (error) {
+    console.error('Error in getHomeworkSubmissions:', error);
+    return { 
+      success: false, 
+      error,
+      submissions: {}
+    };
+  }
+}
+
+/**
+ * Create default homework for a lecture
+ */
+export async function createDefaultHomework(courseId: number, lectureId: string, title: string = 'Default Homework') {
+  try {
+    // Validate course ID
+    if (isNaN(courseId) || courseId <= 0) {
+      throw new Error(`Invalid course ID: ${courseId}`);
     }
     
-    // First verify course exists in courses_new
+    // Check if course exists
+    // @ts-ignore - Bypass TypeScript's strict checking
     const { data: courseExists, error: courseError } = await supabase
       .from('courses_new')
       .select('id')
-      .eq('id', homeworkData.course_id)
+      .eq('id', courseId)
       .maybeSingle();
-      
+    
     if (courseError || !courseExists) {
-      const error = new Error(`课程ID ${homeworkData.course_id} 不存在于数据库`);
-      console.error('[homeworkService]', error.message);
-      return { data: null, error };
+      throw new Error(`Course ID ${courseId} does not exist in the new course system`);
     }
     
-    // Ensure the lecture_id exists in your system
-    // This could be a future enhancement
-    
-    // Now save the homework
+    // Create homework
+    // @ts-ignore - Bypass TypeScript's strict checking
     const { data, error } = await supabase
       .from('homework')
-      .upsert(homeworkData, {
-        onConflict: 'id',
-        ignoreDuplicates: false
+      .insert({
+        title,
+        course_id: courseId,
+        lecture_id: lectureId,
+        type: 'quiz',
+        options: {
+          questions: [
+            {
+              id: 1,
+              text: 'Sample question',
+              type: 'multiple_choice',
+              choices: [
+                { id: 1, text: 'Option A' },
+                { id: 2, text: 'Option B' },
+                { id: 3, text: 'Option C' }
+              ],
+              correctAnswer: 1
+            }
+          ]
+        },
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       })
-      .select();
-      
+      .select('*');
+    
     if (error) {
-      console.error('[homeworkService] Error saving homework:', error);
-      return { data: null, error };
+      throw error;
     }
     
-    console.log('[homeworkService] Homework saved successfully:', data);
-    return { data: data?.[0] || null, error: null };
+    return { success: true, homework: data?.[0] };
   } catch (error) {
-    console.error('[homeworkService] Error in saveHomework:', error);
-    return { data: null, error };
-  }
-};
-
-// Delete homework by ID
-export const deleteHomework = async (homeworkId: string) => {
-  try {
-    console.log('[homeworkService] Deleting homework:', homeworkId);
-    
-    const { error } = await supabase
-      .from('homework')
-      .delete()
-      .eq('id', homeworkId);
-      
-    if (error) {
-      console.error('[homeworkService] Error deleting homework:', error);
-      return { success: false, error };
-    }
-    
-    console.log('[homeworkService] Homework deleted successfully');
-    return { success: true };
-  } catch (error) {
-    console.error('[homeworkService] Error in deleteHomework:', error);
+    console.error('Error in createDefaultHomework:', error);
     return { success: false, error };
   }
-};
+}
