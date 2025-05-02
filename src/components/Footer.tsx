@@ -96,14 +96,13 @@ interface ContactMethodsData {
   contact_email?: string;
   support_phone?: string;
   site_description?: string;
-  [key: string]: any;
 }
 
 const Footer = () => {
   const { t } = useTranslations();
   
-  // Query for contact methods
-  const { data: contactMethods = {} as ContactMethodsData, isLoading: isLoadingContactMethods } = useQuery({
+  // Query for contact methods with simplified type handling
+  const { data, isLoading } = useQuery({
     queryKey: ['contact-methods'],
     queryFn: async () => {
       try {
@@ -114,7 +113,7 @@ const Footer = () => {
           .single();
         
         if (error) throw error;
-        return data || {} as ContactMethodsData;
+        return data as ContactMethodsData;
       } catch (error) {
         console.error("Error fetching contact methods:", error);
         return {} as ContactMethodsData;
@@ -122,6 +121,9 @@ const Footer = () => {
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
+
+  // Use destructured data with default empty object to prevent errors
+  const contactMethods = data || {} as ContactMethodsData;
 
   return (
     <footer className="bg-[#262626] text-white pt-12 pb-6">
