@@ -16,44 +16,7 @@ export interface User {
 export interface Database {
   public: {
     Tables: {
-      site_settings: {
-        Row: {
-          id?: string
-          site_name?: string
-          site_description?: string
-          logo_url?: string
-          contact_email?: string
-          support_phone?: string
-          maintenance_mode?: boolean
-          enable_registration?: boolean
-          created_at?: string
-          updated_at?: string
-        }
-        Insert: {
-          id?: string
-          site_name?: string
-          site_description?: string
-          logo_url?: string
-          contact_email?: string
-          support_phone?: string
-          maintenance_mode?: boolean
-          enable_registration?: boolean
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          site_name?: string
-          site_description?: string
-          logo_url?: string
-          contact_email?: string
-          support_phone?: string
-          maintenance_mode?: boolean
-          enable_registration?: boolean
-          created_at?: string
-          updated_at?: string
-        }
-      },
+      // Add translations table schema
       translations: {
         Row: {
           id: number
@@ -82,6 +45,7 @@ export interface Database {
           updated_at?: string
         }
       },
+      // Add languages table schema
       languages: {
         Row: {
           id: number
@@ -569,18 +533,6 @@ export interface Database {
       [_ in never]: never
     },
     Functions: {
-      check_table_exists: {
-        Args: {
-          table_name: string
-        }
-        Returns: boolean
-      },
-      execute_sql: {
-        Args: {
-          sql_statement: string
-        }
-        Returns: unknown
-      },
       check_translation_exists: {
         Args: {
           p_language_code: string

@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import i18n from "@/i18n";
+import { Database } from "@/lib/supabase/types";
 
 export interface Language {
   id?: number;
@@ -29,7 +30,10 @@ export async function getAllLanguages(): Promise<Language[]> {
     const { data, error } = await supabase
       .from('languages')
       .select('*')
-      .order('name', { ascending: true });
+      .order('name', { ascending: true }) as {
+        data: Language[] | null;
+        error: any;
+      };
     
     if (error) {
       console.error('Error fetching languages:', error);
@@ -50,7 +54,10 @@ export async function getEnabledLanguages(): Promise<Language[]> {
       .from('languages')
       .select('*')
       .eq('enabled', true)
-      .order('name', { ascending: true });
+      .order('name', { ascending: true }) as {
+        data: Language[] | null;
+        error: any;
+      };
     
     if (error) {
       console.error('Error fetching enabled languages:', error);
@@ -70,7 +77,10 @@ export async function addLanguage(language: Language): Promise<{ success: boolea
     const { data, error } = await supabase
       .from('languages')
       .insert([language])
-      .select();
+      .select() as {
+        data: Language[] | null;
+        error: any;
+      };
     
     if (error) {
       console.error('Error adding language:', error);
@@ -142,15 +152,16 @@ export async function deleteLanguage(languageId: number): Promise<{ success: boo
       .from('languages')
       .select('code')
       .eq('id', languageId)
-      .single();
+      .single() as {
+        data: { code: string } | null;
+        error: any;
+      };
     
     if (fetchError) {
       return { success: false, error: fetchError as unknown as Error };
     }
     
-    const lang = language as { code: string } | null;
-    
-    if (lang && (lang.code === 'en' || lang.code === 'zh')) {
+    if (language && (language.code === 'en' || language.code === 'zh')) {
       return { 
         success: false, 
         error: new Error('Cannot delete default languages (English or Chinese)')
@@ -181,7 +192,7 @@ export async function importTranslations(translations: TranslationItem[]): Promi
     // Use batch inserts with replacements
     for (const batch of chunkArray(translations, 100)) {
       const { error } = await supabase
-        .rpc('upsert_translations_batch', { translations_json: JSON.stringify(batch) });
+        .rpc('upsert_translations_batch', { translations_json: batch });
       
       if (error) {
         console.error('Error importing translations batch:', error);
@@ -202,7 +213,10 @@ export async function getTranslationsByLanguage(languageCode: string): Promise<T
     const { data, error } = await supabase
       .from('translations')
       .select('*')
-      .eq('language_code', languageCode);
+      .eq('language_code', languageCode) as {
+        data: TranslationItem[] | null;
+        error: any;
+      };
     
     if (error) {
       console.error('Error fetching translations:', error);

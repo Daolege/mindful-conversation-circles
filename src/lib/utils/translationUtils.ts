@@ -65,3 +65,47 @@ export function validateTranslationJson(json: unknown): boolean {
   
   return true;
 }
+
+/**
+ * 从JSON文件中导入翻译
+ */
+export async function importTranslationsFromFile(file: File, languageCode: string): Promise<{
+  success: boolean;
+  translations?: TranslationItem[];
+  error?: string;
+}> {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    
+    reader.onload = (event) => {
+      try {
+        const result = event.target?.result;
+        if (typeof result !== 'string') {
+          resolve({ success: false, error: 'Invalid file format' });
+          return;
+        }
+        
+        const jsonData = JSON.parse(result);
+        
+        if (!validateTranslationJson(jsonData)) {
+          resolve({ success: false, error: 'Invalid translation format' });
+          return;
+        }
+        
+        const translations = parseTranslationsFromJson(jsonData, languageCode);
+        resolve({ success: true, translations });
+      } catch (error) {
+        resolve({ 
+          success: false, 
+          error: error instanceof Error ? error.message : 'Unknown error parsing file' 
+        });
+      }
+    };
+    
+    reader.onerror = () => {
+      resolve({ success: false, error: 'Error reading file' });
+    };
+    
+    reader.readAsText(file);
+  });
+}

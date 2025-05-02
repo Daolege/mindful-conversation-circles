@@ -26,6 +26,11 @@ import zhDashboard from './locales/zh/dashboard.json';
 import zhErrors from './locales/zh/errors.json';
 import zhOrders from './locales/zh/orders.json';
 
+interface TranslationResult {
+  key: string;
+  value: string;
+}
+
 // 动态加载翻译的 backend
 i18n.use(Backend);
 
@@ -40,11 +45,14 @@ i18n.use({
         .from('translations')
         .select('key, value')
         .eq('language_code', language)
-        .eq('namespace', namespace);
+        .eq('namespace', namespace) as {
+          data: TranslationResult[] | null;
+          error: any;
+        };
       
       // 转换为键值对
       if (!error && data && data.length > 0) {
-        const translations = data.reduce((acc: Record<string, string>, item: {key: string, value: string}) => {
+        const translations = data.reduce((acc: Record<string, string>, item: TranslationResult) => {
           acc[item.key] = item.value;
           return acc;
         }, {});

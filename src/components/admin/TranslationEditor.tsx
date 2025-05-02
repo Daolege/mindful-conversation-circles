@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useTranslations } from '@/hooks/useTranslations';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -11,7 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { Search, Save, RefreshCw } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { exportTranslationsToJson } from '@/lib/utils/translationUtils';
+import { ImportExportTranslations } from './ImportExportTranslations';
 import { TranslationItem } from '@/lib/services/languageService';
 
 const NAMESPACES = ['common', 'navigation', 'courses', 'auth', 'admin', 'checkout', 'dashboard', 'errors', 'orders'];
@@ -63,10 +64,8 @@ export const TranslationEditor = () => {
       const result = await getTranslations(selectedLanguage, selectedNamespace);
       
       if (result.success) {
-        // Ensure we're setting the correct type
-        const typedData = result.data as TranslationItem[];
-        setTranslations(typedData);
-        setFilteredTranslations(typedData);
+        setTranslations(result.data);
+        setFilteredTranslations(result.data);
       } else {
         toast.error(t('errors:general'), { description: result.error });
       }
@@ -129,13 +128,6 @@ export const TranslationEditor = () => {
     }
   };
   
-  const handleExportTranslations = () => {
-    if (!translations.length || !selectedLanguage) return;
-    
-    exportTranslationsToJson(translations, selectedLanguage);
-    toast.success(t('admin:translationsExported'));
-  };
-  
   return (
     <Card className="w-full">
       <CardHeader>
@@ -148,7 +140,7 @@ export const TranslationEditor = () => {
         <Tabs defaultValue="edit">
           <TabsList className="mb-4">
             <TabsTrigger value="edit">{t('admin:editTranslations')}</TabsTrigger>
-            <TabsTrigger value="import" disabled>{t('admin:importExport')}</TabsTrigger>
+            <TabsTrigger value="import">{t('admin:importExport')}</TabsTrigger>
           </TabsList>
           
           <TabsContent value="edit">
@@ -219,14 +211,6 @@ export const TranslationEditor = () => {
                   >
                     <RefreshCw className="h-4 w-4 mr-2" />
                     {t('admin:refreshTranslations')}
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={handleExportTranslations}
-                    disabled={!translations.length}
-                  >
-                    {t('admin:exportJson')}
                   </Button>
                 </div>
                 
@@ -320,9 +304,7 @@ export const TranslationEditor = () => {
           </TabsContent>
           
           <TabsContent value="import">
-            <div className="text-center py-12">
-              <p className="text-muted-foreground">{t('admin:importExportComingSoon')}</p>
-            </div>
+            <ImportExportTranslations />
           </TabsContent>
         </Tabs>
       </CardContent>

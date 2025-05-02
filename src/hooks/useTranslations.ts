@@ -2,6 +2,12 @@
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import { TranslationItem } from '@/lib/services/languageService';
+import { Database } from '@/lib/supabase/types';
+
+// Define type for the result of a translation check
+interface ExistingTranslation {
+  id: number;
+}
 
 export const useTranslations = () => {
   const { t, i18n } = useTranslation(['common', 'navigation', 'courses', 'auth', 'admin', 'checkout', 'dashboard', 'errors', 'orders']);
@@ -21,7 +27,10 @@ export const useTranslations = () => {
         .eq('language_code', language)
         .eq('namespace', namespace)
         .eq('key', key)
-        .maybeSingle();
+        .maybeSingle() as { 
+          data: ExistingTranslation | null; 
+          error: any;
+        };
       
       if (selectError) throw selectError;
       
@@ -39,9 +48,9 @@ export const useTranslations = () => {
           .from('translations')
           .insert({
             language_code: language,
-            namespace: namespace,
-            key: key,
-            value: value
+            namespace,
+            key,
+            value
           });
           
         if (insertError) throw insertError;
@@ -67,7 +76,10 @@ export const useTranslations = () => {
         .from('translations')
         .select('id, language_code, namespace, key, value')
         .eq('language_code', language)
-        .eq('namespace', namespace);
+        .eq('namespace', namespace) as {
+          data: TranslationItem[];
+          error: any;
+        };
         
       if (error) throw error;
       
