@@ -12,9 +12,10 @@ import { useTranslations } from "@/hooks/useTranslations";
 interface LanguageSwitcherProps {
   mobile?: boolean;
   className?: string;
+  variant?: "default" | "footer" | "navbar";
 }
 
-const LanguageSwitcher = ({ mobile, className }: LanguageSwitcherProps) => {
+const LanguageSwitcher = ({ mobile, className, variant = "default" }: LanguageSwitcherProps) => {
   const { currentLanguage, changeLanguage } = useTranslations();
   const [open, setOpen] = useState(false);
 
@@ -28,13 +29,25 @@ const LanguageSwitcher = ({ mobile, className }: LanguageSwitcherProps) => {
     setOpen(false);
   };
 
+  // Different styles based on variant
+  const getButtonStyles = () => {
+    switch (variant) {
+      case "footer":
+        return "bg-[#333333] text-white border-[#404040]";
+      case "navbar":
+        return "bg-white text-gray-600 border-gray-200";
+      default:
+        return "";
+    }
+  };
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
           size="sm"
-          className={`flex items-center gap-2 h-9 px-3 text-gray-600 ${className || ''}`}
+          className={`flex items-center gap-2 h-9 px-3 ${getButtonStyles()} ${className || ''}`}
         >
           <Globe className="h-4 w-4" />
           <span>{languages.find((l) => l.code === currentLanguage)?.name || "Language"}</span>
