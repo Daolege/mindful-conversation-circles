@@ -40,7 +40,7 @@ export function parseTranslationsFromJson(
         namespace,
         key,
         value
-      });
+      } as TranslationItem);
     });
   });
   

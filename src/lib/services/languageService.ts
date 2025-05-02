@@ -1,7 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import i18n from "@/i18n";
-import { Database, Tables } from "@/lib/supabase/database.types";
+import { Tables } from "@/lib/supabase/database.types";
 
 export type Language = Tables<'languages'>;
 export type TranslationItem = Tables<'translations'>;

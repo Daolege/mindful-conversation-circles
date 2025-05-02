@@ -1,3 +1,4 @@
+
 export type Json =
   | string
   | number
@@ -72,7 +73,6 @@ export interface Database {
         }
         Relationships: []
       }
-      
     }
     Views: {
       [_ in never]: never

@@ -14,8 +14,8 @@ interface LanguageContextType {
 
 // 默认支持的语言
 const defaultLanguages: Language[] = [
-  { code: 'en', name: 'English', nativeName: 'English', enabled: true },
-  { code: 'zh', name: 'Chinese (Simplified)', nativeName: '简体中文', enabled: true },
+  { id: 1, code: 'en', name: 'English', nativeName: 'English', enabled: true },
+  { id: 2, code: 'zh', name: 'Chinese (Simplified)', nativeName: '简体中文', enabled: true },
 ];
 
 const LanguageContext = createContext<LanguageContextType>({

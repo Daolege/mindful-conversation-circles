@@ -29,3 +29,31 @@ VALUES
   ('en', 'English', 'English', TRUE),
   ('zh', '中文', '中文', TRUE)
 ON CONFLICT (code) DO NOTHING;
+
+-- Create upsert_translations_batch function for batch operations
+CREATE OR REPLACE FUNCTION upsert_translations_batch(translations_json JSONB)
+RETURNS VOID AS $$
+DECLARE
+  translation_item JSONB;
+BEGIN
+  FOR translation_item IN SELECT * FROM jsonb_array_elements(translations_json)
+  LOOP
+    INSERT INTO translations (
+      language_code, 
+      namespace, 
+      key, 
+      value
+    ) 
+    VALUES (
+      translation_item->>'language_code',
+      translation_item->>'namespace',
+      translation_item->>'key',
+      translation_item->>'value'
+    )
+    ON CONFLICT (language_code, namespace, key) 
+    DO UPDATE SET 
+      value = EXCLUDED.value,
+      updated_at = NOW();
+  END LOOP;
+END;
+$$ LANGUAGE plpgsql;
