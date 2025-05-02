@@ -93,9 +93,9 @@ const PaymentIcons = () => {
 
 // Define a simple interface for contact methods returned from Supabase
 interface ContactMethodsData {
-  email?: string;
-  phone?: string;
-  address?: string;
+  contact_email?: string;
+  support_phone?: string;
+  site_description?: string;
   [key: string]: any;
 }
 
@@ -114,7 +114,7 @@ const Footer = () => {
           .single();
         
         if (error) throw error;
-        return data?.settings as ContactMethodsData || {};
+        return data || {} as ContactMethodsData;
       } catch (error) {
         console.error("Error fetching contact methods:", error);
         return {} as ContactMethodsData;
@@ -157,27 +157,27 @@ const Footer = () => {
           {/* Contact and Legal */}
           <div className="md:col-span-3 space-y-1.5">
             <h3 className="text-lg font-medium mb-4 text-white">{t('common:contactAndSupport')}</h3>
-            {contactMethods.email && (
+            {contactMethods.contact_email && (
               <div className="flex items-center group">
                 <Mail className="h-4 w-4 mr-2 text-[#999999] group-hover:text-knowledge-primary transition-colors" />
-                <a href={`mailto:${contactMethods.email}`} className="text-sm text-[#BBBBBB] hover:text-white transition-colors">
-                  {contactMethods.email}
+                <a href={`mailto:${contactMethods.contact_email}`} className="text-sm text-[#BBBBBB] hover:text-white transition-colors">
+                  {contactMethods.contact_email}
                 </a>
               </div>
             )}
-            {contactMethods.phone && (
+            {contactMethods.support_phone && (
               <div className="flex items-center group">
                 <Phone className="h-4 w-4 mr-2 text-[#999999] group-hover:text-knowledge-primary transition-colors" />
-                <a href={`https://wa.me/${contactMethods.phone.replace(/\D/g, '')}`} className="text-sm text-[#BBBBBB] hover:text-white transition-colors">
-                  {contactMethods.phone}
+                <a href={`https://wa.me/${contactMethods.support_phone.replace(/\D/g, '')}`} className="text-sm text-[#BBBBBB] hover:text-white transition-colors">
+                  {contactMethods.support_phone}
                 </a>
               </div>
             )}
-            {contactMethods.address && (
+            {siteConfig.address && (
               <div className="flex items-start group">
                 <MapPin className="h-4 w-4 mr-2 mt-0.5 text-[#999999] group-hover:text-knowledge-primary transition-colors" />
                 <span className="text-sm text-[#BBBBBB] group-hover:text-white transition-colors">
-                  {contactMethods.address}
+                  {siteConfig.address}
                 </span>
               </div>
             )}
