@@ -2,7 +2,6 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SystemSettings } from "./SystemSettings";
-import ContactMethodsSettings from "./ContactMethodsSettings";
 import { useTranslations } from "@/hooks/useTranslations";
 
 export function AdminSettings() {
@@ -14,7 +13,6 @@ export function AdminSettings() {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="mb-4">
           <TabsTrigger value="system">{t('admin:systemSettings')}</TabsTrigger>
-          <TabsTrigger value="contact">{t('admin:contactMethods')}</TabsTrigger>
         </TabsList>
         
         <TabsContent value="system">
@@ -22,11 +20,9 @@ export function AdminSettings() {
             <SystemSettings />
           </div>
         </TabsContent>
-
-        <TabsContent value="contact">
-          <ContactMethodsSettings />
-        </TabsContent>
       </Tabs>
     </div>
   );
 }
+
+export default AdminSettings;

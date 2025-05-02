@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Navbar from "@/components/Navbar";
@@ -14,7 +13,6 @@ import { DashboardStatistics } from "@/components/admin/DashboardStatistics";
 import { AdminSettings } from "@/components/admin/AdminSettings";
 import { CourseManagement } from "@/components/admin/CourseManagement";
 import CourseManagementNew from "@/components/admin/CourseManagementNew";
-import { AboutPageSettings } from "@/components/admin/AboutPageSettings";
 import { SystemSettings } from "@/components/admin/SystemSettings";
 import { SubscriptionPlanManagement } from "@/components/admin/SubscriptionPlanManagement";
 import { toast } from "sonner";
@@ -204,7 +202,6 @@ const Admin = () => {
               { value: "courses-new", label: t('admin:coursesManagement2') },
               { value: "orders", label: t('admin:ordersManagement') },
               { value: "subscriptions", label: t('admin:subscriptionsManagement') },
-              { value: "about", label: t('admin:aboutPageSettings') },
               { value: "settings", label: t('admin:systemSettings') },
             ].map(tab => (
               <TabsTrigger 
@@ -298,20 +295,6 @@ const Admin = () => {
               >
                 <TabsContent value="subscriptions">
                   <SubscriptionPlanManagement />
-                </TabsContent>
-              </motion.div>
-            )}
-
-            {activeTab === "about" && (
-              <motion.div
-                key="about"
-                variants={tabContentVariants}
-                initial="hidden"
-                animate="visible"
-                exit="exit"
-              >
-                <TabsContent value="about">
-                  <AboutPageSettings />
                 </TabsContent>
               </motion.div>
             )}

@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useTranslations } from "@/hooks/useTranslations";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,25 +13,29 @@ import ContactInfo from './footer/ContactInfo';
 import SocialLinks from './footer/SocialLinks';
 import GlobalOffices from './footer/GlobalOffices';
 import PaymentIcons from './footer/PaymentIcons';
+import LegalLinks from './footer/LegalLinks';
 
-// 新的站点设置类型
+// 站点设置类型
 type SiteSettings = {
   contact_email?: string;
   support_phone?: string;
   site_description?: string;
+  company_name?: string;
+  company_full_name?: string;
+  copyright_text?: string;
 };
 
 const Footer = () => {
   const { t } = useTranslations();
   
-  // 使用简化的查询
-  const { data } = useQuery({
+  // 使用查询获取站点设置
+  const { data: siteSettings } = useQuery({
     queryKey: ['site-settings'],
     queryFn: async () => {
       try {
         const { data, error } = await supabase
           .from('site_settings')
-          .select('contact_email, support_phone, site_description')
+          .select('*')
           .single();
         
         if (error) {
@@ -48,10 +52,49 @@ const Footer = () => {
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
-  // 安全访问数据并设置联系信息
-  const emails = ["secondrise@secondrise.com", "info@secondrise.com"];
-  const phones = ["+85298211389", "+1(202)2099688"];
-  const location = "Hong Kong";
+  // 获取联系方式
+  const { data: contactMethods = [] } = useQuery({
+    queryKey: ['contact-methods'],
+    queryFn: async () => {
+      try {
+        const { data, error } = await supabase
+          .from('contact_methods')
+          .select('*')
+          .eq('is_active', true)
+          .order('display_order', { ascending: true });
+        
+        if (error) {
+          throw error;
+        }
+        
+        return data || [];
+      } catch (error) {
+        console.error("Error fetching contact methods:", error);
+        return [];
+      }
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+
+  // 获取邮箱和电话联系方式
+  const emails = contactMethods
+    .filter(method => method.type === 'email')
+    .map(method => method.value);
+  
+  const phones = contactMethods
+    .filter(method => method.type === 'phone' || method.type === 'whatsapp')
+    .map(method => method.value);
+  
+  // 获取地址
+  const locations = contactMethods
+    .filter(method => method.type === 'address')
+    .map(method => method.value);
+  
+  const location = locations.length > 0 ? locations[0] : 'Hong Kong';
+  
+  // 构建版权信息
+  const copyrightText = siteSettings?.copyright_text || 
+    `© ${new Date().getFullYear()} ${siteSettings?.company_name || 'SecondRise'}. ${siteSettings?.company_full_name || 'Mandarin (Hong Kong) International Limited'}. 版权所有`;
   
   return (
     <footer className="bg-[#1a202c] text-white pt-12 pb-6">
@@ -62,7 +105,7 @@ const Footer = () => {
             <div className="flex items-center mb-4">
               <Logo variant="default" />
             </div>
-            <p className="text-[#999999] mb-6">{t('common:footerCompanyDescription')}</p>
+            <p className="text-[#999999] mb-6">{siteSettings?.site_description || t('common:footerCompanyDescription')}</p>
             
             {/* 社交媒体链接 */}
             <SocialLinks />
@@ -78,10 +121,13 @@ const Footer = () => {
           <div className="md:col-span-3 space-y-1.5">
             <h3 className="text-lg font-medium mb-4 text-white">{t('common:contactAndSupport')}</h3>
             <ContactInfo 
-              emails={emails}
-              phones={phones}
+              emails={emails.length > 0 ? emails : ["secondrise@secondrise.com", "info@secondrise.com"]}
+              phones={phones.length > 0 ? phones : ["+85298211389", "+1(202)2099688"]}
               location={location}
             />
+            
+            {/* 法律链接 */}
+            <LegalLinks />
           </div>
           
           {/* 全球办公室 */}
@@ -94,7 +140,7 @@ const Footer = () => {
         
         <div className="flex flex-col sm:flex-row justify-between items-center text-[#999999] text-sm">
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-2">
-            <p>© {new Date().getFullYear()} SecondRise. Mandarin (Hong Kong) International Limited. 版权所有</p>
+            <p>{copyrightText}</p>
             <div className="flex space-x-4">
               <a href="/privacy-policy" className="hover:text-white transition-colors">{t('common:privacyPolicy')}</a>
               <a href="/terms-of-use" className="hover:text-white transition-colors">{t('common:termsOfUse')}</a>
