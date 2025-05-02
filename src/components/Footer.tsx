@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Mail, Phone, MapPin, Globe, ExternalLink, MessageSquare } from 'lucide-react';
 import { siteConfig } from "@/config/site";
@@ -47,7 +48,7 @@ const PaymentIcons = () => {
       {/* American Express */}
       <div className="bg-white rounded-md p-1 h-8 flex items-center justify-center">
         <svg viewBox="0 0 24 24" width="28" height="28" fill="#006FCF">
-          <path d="M22.588 10.516h-1.23l-0.885-2.126h-0.026v2.126h-1.097v-4.866h2.001c1.075 0 1.664 0.696 1.664 1.444 0 0.961-0.666 1.297-0.794 1.359zM21.184 8.318c0.429 0 0.575-0.356 0.575-0.57 0-0.222-0.146-0.577-0.575-0.577h-0.736v1.147h0.736zM20.413 15.001h-1.215l-1.16-1.776h-0.026v1.776h-1.056l-0.378-0.917h-2.028l-0.369 0.917h-1.333l1.993-4.865h1.641l1.804 4.403v-4.403h1.768l1.050 1.603 0.978-1.603h1.783v4.865h-1.109v-3.740h-0.025l-1.275 2.098h-0.883zM17.183 8.58l-0.663 1.675h1.373l-0.71-1.675zM14.398 10.76l0.616-1.782-0.026-0.002-1.468 3.59h-0.577l-1.47-3.588h-0.025l0.616 1.782h-0.908l-0.438-1.076h-2.339l-0.453 1.076h-1.059l1.94-4.866h1.684l1.85 4.575v-4.575h1.855l1.319 2.882 1.207-2.882h1.823v4.866h-1.049v-3.747h-0.023l-1.361 2.212h-0.911zM8 8.317l-0.88-2.086h-0.025v2.086h-1.043v-2.667h1.599l0.805 1.892 0.807-1.892h1.598v2.667h-1.042v-2.086h-0.026l-0.88 2.086h-0.907zM16.988 13.764l-0.766-1.772h-0.023l0.118 1.772h-2.32v-0.595h-2.586l-0.149 0.595h-1.278c-0.562 0-1.293-0.127-1.712-0.542-0.428-0.425-0.481-1.002-0.481-1.482 0-0.439 0.053-1.046 0.506-1.482 0.293-0.271 0.743-0.419 1.283-0.419h0.904v1.017h-0.874c-0.201 0-0.33 0.028-0.456 0.164-0.105 0.116-0.178 0.32-0.178 0.562 0 0.244 0.095 0.439 0.21 0.544 0.103 0.106 0.254 0.146 0.422 0.146h0.544l1.699-2.433h1.77l2.037 2.91v-2.91h1.752l1.018 2.113 0.932-2.113h1.783v4.865h-1.118v-3.329h-0.023l-1.354 3.329h-0.937zM11.637 12.673h1.564l-0.855-1.228-0.783 1.119-0.052 0.109h0.126z"/>
+          <path d="M22.588 10.516h-1.23l-0.885-2.126h-0.026v2.126h-1.097v-4.866h2.001c1.075 0 1.664 0.696 1.664 1.444 0 0.961-0.666 1.297-0.794 1.359zM21.184 8.318c0.429 0 0.575-0.356 0.575-0.57 0-0.222-0.146-0.577-0.575-0.577h-0.736v1.147h0.736zM20.413 15.001h-1.215l-1.16-1.776h-0.026v1.776h-1.056l-0.378-0.917h-2.028l-0.369 0.917h-1.333l1.993-4.865h1.641l1.804 4.403v-4.403h1.768l1.05 1.603 0.978-1.603h1.783v4.865h-1.109v-3.740h-0.025l-1.275 2.098h-0.883zM17.183 8.58l-0.663 1.675h1.373l-0.71-1.675zM14.398 10.76l0.616-1.782-0.026-0.002-1.468 3.59h-0.577l-1.47-3.588h-0.025l0.616 1.782h-0.908l-0.438-1.076h-2.339l-0.453 1.076h-1.059l1.94-4.866h1.684l1.85 4.575v-4.575h1.855l1.319 2.882 1.207-2.882h1.823v4.866h-1.049v-3.747h-0.023l-1.361 2.212h-0.911zM8 8.317l-0.88-2.086h-0.025v2.086h-1.043v-2.667h1.599l0.805 1.892 0.807-1.892h1.598v2.667h-1.042v-2.086h-0.026l-0.88 2.086h-0.907zM16.988 13.764l-0.766-1.772h-0.023l0.118 1.772h-2.32v-0.595h-2.586l-0.149 0.595h-1.278c-0.562 0-1.293-0.127-1.712-0.542-0.428-0.425-0.481-1.002-0.481-1.482 0-0.439 0.053-1.046 0.506-1.482 0.293-0.271 0.743-0.419 1.283-0.419h0.904v1.017h-0.874c-0.201 0-0.33 0.028-0.456 0.164-0.105 0.116-0.178 0.32-0.178 0.562 0 0.244 0.095 0.439 0.21 0.544 0.103 0.106 0.254 0.146 0.422 0.146h0.544l1.699-2.433h1.77l2.037 2.91v-2.91h1.752l1.018 2.113 0.932-2.113h1.783v4.865h-1.118v-3.329h-0.023l-1.354 3.329h-0.937zM11.637 12.673h1.564l-0.855-1.228-0.783 1.119-0.052 0.109h0.126z"/>
         </svg>
       </div>
       
@@ -82,4 +83,132 @@ const PaymentIcons = () => {
       {/* WeChat Pay */}
       <div className="bg-white rounded-md p-1 h-8 flex items-center justify-center">
         <svg viewBox="0 0 24 24" width="28" height="28" fill="#07C160">
-          <path d="M9.817 10.642a.553.553 0 01-.542-.561.553.553 0 01.542-.561c.365 0 .66.252.66.561 0 .31-.295.561-.66.561zm-3.542 0a.553.553 0 01-.542-.561.553.553 0 01.542-.561c.365 0 .66.252.66.561 0 .31-.296.561-.66.561zm12.858 3.795a.51.51 0 01-.506.513.51.51 0 01-.506-.513c0-.284.226-.513.506-.513s.506.23.506.513zm-3.033 0a.51.51 0 01-.506.513.51.51 0 01-.507-.513c0-.284.226-.513.507-.513.28 0 .506.23.506.513zm2.624-7.343c-3.141 0-5.717 2.13-5.717 4.911 0 2.7 2.453 4.911 5.717 4.911.638 0 1.2
+          <path d="M9.817 10.642a.553.553 0 01-.542-.561.553.553 0 01.542-.561c.365 0 .66.252.66.561 0 .31-.295.561-.66.561zm-3.542 0a.553.553 0 01-.542-.561.553.553 0 01.542-.561c.365 0 .66.252.66.561 0 .31-.296.561-.66.561zm12.858 3.795a.51.51 0 01-.506.513.51.51 0 01-.506-.513c0-.284.226-.513.506-.513s.506.23.506.513zm-3.033 0a.51.51 0 01-.506.513.51.51 0 01-.507-.513c0-.284.226-.513.507-.513.28 0 .506.23.506.513zm2.624-7.343c-3.141 0-5.717 2.13-5.717 4.911 0 2.7 2.453 4.911 5.717 4.911.638 0 1.26-.081 1.834-.23l1.675.91-.46-1.383c1.159-.856 1.834-2.006 1.834-3.288 0-2.7-2.452-4.911-5.717-4.911zm1.496 7.088h-.001l-.347 1.025-.994-.546c-.499.1-.998.164-1.496.164-2.453 0-4.378-1.676-4.378-3.74 0-2.064 1.925-3.74 4.378-3.74 2.317 0 4.377 1.74 4.377 3.74 0 1.145-.682 2.155-1.539 2.827v.27zM12 4.911C8.254 4.911 5.1 7.432 5.1 10.642c0 1.775.998 3.378 2.59 4.419l-.55 1.627 1.926-1.01c.682.164 1.43.246 2.226.246.199 0 .397 0 .596-.016-.125-.41-.199-.837-.199-1.283 0-2.518 2.317-4.583 5.221-4.583.15 0 .298.016.447.033C16.759 6.997 14.651 4.91 12 4.91z"/>
+        </svg>
+      </div>
+    </div>
+  );
+};
+
+const Footer = () => {
+  const { t } = useTranslations();
+
+  // Query contact methods from database
+  const { data: contactMethods = [] } = useQuery({
+    queryKey: ['contact-methods'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('contact_methods')
+        .select('*')
+        .order('display_order');
+      
+      if (error) throw error;
+      return data as ContactMethod[];
+    },
+    onError: handleContactMethodsQueryError,
+  });
+
+  const renderContactIcon = (type: string) => {
+    switch (type) {
+      case 'email': return <Mail className="h-5 w-5 text-gray-300" />;
+      case 'phone': return <Phone className="h-5 w-5 text-gray-300" />;
+      case 'address': return <MapPin className="h-5 w-5 text-gray-300" />;
+      case 'website': return <Globe className="h-5 w-5 text-gray-300" />;
+      case 'chat': return <MessageSquare className="h-5 w-5 text-gray-300" />;
+      default: return <Globe className="h-5 w-5 text-gray-300" />;
+    }
+  };
+
+  const footerLinks = [
+    { href: "/", label: t("navigation:home"), translationKey: "navigation:home" },
+    { href: "/courses", label: t("navigation:allCourses"), translationKey: "navigation:allCourses" },
+    { href: "/instructors", label: t("navigation:instructors"), translationKey: "navigation:instructors" },
+    { href: "/about", label: t("navigation:about"), translationKey: "navigation:about" },
+    { href: "/terms-of-use", label: t("navigation:termsOfUse"), translationKey: "navigation:termsOfUse" },
+    { href: "/privacy-policy", label: t("navigation:privacyPolicy"), translationKey: "navigation:privacyPolicy" },
+    { href: "/cookie-policy", label: t("navigation:cookiePolicy"), translationKey: "navigation:cookiePolicy" },
+  ];
+
+  return (
+    <footer className="bg-[#262626] text-white pt-12 pb-6">
+      <div className="container mx-auto px-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
+          {/* 品牌与联系方式 */}
+          <div className="space-y-4">
+            <Logo className="text-white" />
+            <p className="text-[#E5E5E5] mt-4 text-sm leading-relaxed">
+              {t('common:footerTagline')}
+            </p>
+            
+            {/* 联系方式 */}
+            <div className="mt-6 space-y-3">
+              {contactMethods.map((method) => (
+                <div key={method.id} className="flex items-center space-x-3">
+                  {renderContactIcon(method.type)}
+                  <span className="text-[#E5E5E5] text-sm break-all">
+                    {method.value}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* 快速链接 */}
+          <div>
+            <h3 className="text-lg font-medium mb-4 text-white">{t('common:quickLinks')}</h3>
+            <ul className="space-y-2">
+              {footerLinks.slice(0, 4).map((link) => (
+                <li key={link.href}>
+                  <Link 
+                    to={link.href} 
+                    className="text-[#E5E5E5] hover:text-white transition-colors text-sm"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* 法律链接 */}
+          <div>
+            <h3 className="text-lg font-medium mb-4 text-white">{t('common:legalLinks')}</h3>
+            <ul className="space-y-2">
+              {footerLinks.slice(4).map((link) => (
+                <li key={link.href}>
+                  <Link 
+                    to={link.href} 
+                    className="text-[#E5E5E5] hover:text-white transition-colors text-sm"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* 语言切换与支付方式 */}
+          <div>
+            <h3 className="text-lg font-medium mb-4 text-white">{t('common:language')}</h3>
+            <div className="mb-6">
+              <LanguageSwitcher variant="footer" />
+            </div>
+            
+            <h3 className="text-lg font-medium mb-4 text-white">{t('common:acceptedPaymentMethods')}</h3>
+            <PaymentIcons />
+          </div>
+        </div>
+
+        <Separator className="my-6 bg-[#404040]" />
+        
+        <div className="text-center text-[#808080] text-sm">
+          <p>
+            &copy; {new Date().getFullYear()} {siteConfig.name}. {t('common:allRightsReserved')}.
+          </p>
+        </div>
+      </div>
+    </footer>
+  );
+};
+
+export default Footer;
