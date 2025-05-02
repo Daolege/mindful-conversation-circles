@@ -1,4 +1,3 @@
-
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import CrossBorderHeroBanner from "@/components/home/CrossBorderHeroBanner";
@@ -6,6 +5,7 @@ import FeaturedCourses from "@/components/FeaturedCourses";
 import HomeFAQSection from "@/components/HomeFAQSection";
 import { memo } from "react";
 import { useTranslations } from "@/hooks/useTranslations";
+import HeroSection from "@/components/HeroSection";
 
 // 课程模块包装组件 - 添加标题和描述
 const CourseSection = ({
@@ -33,13 +33,10 @@ const Index = memo(() => {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       <main className="flex-grow">
-        <CrossBorderHeroBanner />
+        {/* Updated hero banner */}
+        <HeroSection />
 
-        {/* 保留两个不同的课程推荐模块 */}
-        <CourseSection
-          title={t('courses:explorePopularCourses')}
-          description={t('courses:carefullySelectedCoursesHelp')}
-        />
+        {/* Keep only one course section to remove duplication */}
         <CourseSection
           title={t('courses:instructorRecommendedCourses')}
           description={t('courses:expertTeamRecommendations')}

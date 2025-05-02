@@ -3,14 +3,18 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
-import { Loader2, HelpCircle, ChevronDown, ChevronUp } from "lucide-react";
+import { Loader2, HelpCircle, ChevronDown, ChevronUp, Search } from "lucide-react";
 import { useTranslations } from "@/hooks/useTranslations";
 import { getFeaturedFaqsByLanguage } from "@/lib/services/faqService";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
-const EXPAND_DURATION = 400;
+const EXPAND_DURATION = 300;
 
 const HomeFAQSection = () => {
   const [openFaqIds, setOpenFaqIds] = useState<Set<number>>(new Set());
+  const [searchTerm, setSearchTerm] = useState("");
   const { currentLanguage, t } = useTranslations();
 
   const {
@@ -19,7 +23,7 @@ const HomeFAQSection = () => {
   } = useQuery({
     queryKey: ["featured-faqs", currentLanguage],
     queryFn: async () => {
-      const { data, error } = await getFeaturedFaqsByLanguage(currentLanguage, 8);
+      const { data, error } = await getFeaturedFaqsByLanguage(currentLanguage, 6);
       
       if (error) {
         console.error("Error fetching featured FAQs:", error);
@@ -42,20 +46,39 @@ const HomeFAQSection = () => {
     });
   }
 
+  const filteredFaqs = faqs.filter(faq => 
+    !searchTerm || 
+    faq.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    faq.answer.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
-    <section className="py-12 bg-gray-50 border-t border-b">
+    <section className="py-16 bg-gray-50 border-t border-b">
       <div className="container mx-auto px-4 max-w-4xl">
-        <div className="text-center mb-8">
-          <h2 className="text-2xl md:text-3xl font-bold mb-2">{t('common:commonQuestions')}</h2>
-          <p className="text-gray-500">{t('common:platformQuestionsExplanation')}</p>
+        <div className="text-center mb-10">
+          <h2 className="text-3xl font-bold mb-2">{t('common:commonQuestions')}</h2>
+          <p className="text-gray-500 max-w-2xl mx-auto">{t('common:platformQuestionsExplanation')}</p>
+          
+          {/* Search input */}
+          <div className="mt-6 max-w-md mx-auto relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+            <Input 
+              type="text"
+              placeholder={t('common:searchQuestions')}
+              className="pl-10"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)} 
+            />
+          </div>
         </div>
+
         {isLoading ? (
           <div className="flex justify-center py-8">
             <Loader2 className="h-6 w-6 animate-spin text-gray-500" />
           </div>
-        ) : faqs.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {faqs.map((faq) => {
+        ) : filteredFaqs.length > 0 ? (
+          <div className="grid grid-cols-1 gap-4">
+            {filteredFaqs.map((faq) => {
               const isOpen = openFaqIds.has(faq.id);
               
               return (
@@ -73,14 +96,14 @@ const HomeFAQSection = () => {
                     onClick={() => handleCardToggle(faq.id)}
                   >
                     <CardHeader className="flex flex-row items-center justify-between py-3 px-4">
-                      <CardTitle className="flex-1 text-sm font-medium text-left text-gray-900 line-clamp-2">
+                      <CardTitle className="flex-1 text-base font-medium text-left text-gray-900">
                         {faq.question}
                       </CardTitle>
                       <span className="ml-2 transition-transform duration-300">
                         {isOpen ? (
-                          <ChevronUp className="w-4 h-4 text-gray-500" />
+                          <ChevronUp className="w-5 h-5 text-gray-500" />
                         ) : (
-                          <ChevronDown className="w-4 h-4 text-gray-400" />
+                          <ChevronDown className="w-5 h-5 text-gray-400" />
                         )}
                       </span>
                     </CardHeader>
@@ -90,7 +113,7 @@ const HomeFAQSection = () => {
                         transitionDuration: `${EXPAND_DURATION}ms`,
                       }}
                     >
-                      <CardContent className="text-sm text-gray-600 whitespace-pre-wrap pt-0 pb-4 px-4">
+                      <CardContent className="text-gray-600 whitespace-pre-wrap pt-0 pb-4 px-4">
                         {faq.answer}
                       </CardContent>
                     </CollapsibleContent>
@@ -105,6 +128,16 @@ const HomeFAQSection = () => {
             <div className="text-gray-500">{t('common:noQuestionsAvailable')}</div>
           </div>
         )}
+        
+        {/* View all FAQs button */}
+        <div className="text-center mt-10">
+          <Button asChild variant="outline" className="mx-auto">
+            <Link to="/faq">
+              {t('common:viewAllFAQs')}
+              <ChevronRight className="ml-1 h-4 w-4" />
+            </Link>
+          </Button>
+        </div>
       </div>
     </section>
   );

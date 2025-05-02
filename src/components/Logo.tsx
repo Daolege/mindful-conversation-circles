@@ -18,9 +18,10 @@ const Logo = ({
     small: "w-10 h-10 text-xl"
   };
 
+  // Change text color to pure black for the website name
   const textColorClass = variant === "auth" 
     ? "text-gray-200" 
-    : "text-gray-200";
+    : "text-black";
 
   return (
     <Link to="/" className="flex items-center">
