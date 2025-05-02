@@ -2,7 +2,6 @@
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import { TranslationItem } from '@/lib/services/languageService';
-import { Database } from '@/lib/supabase/types';
 
 // Define type for the result of a translation check
 interface ExistingTranslation {
@@ -20,17 +19,14 @@ export const useTranslations = () => {
     value: string
   ) => {
     try {
-      // 检查翻译是否存在
+      // 检查翻译是否存在 - using direct table query instead of RPC
       const { data: existingTranslation, error: selectError } = await supabase
         .from('translations')
         .select('id')
         .eq('language_code', language)
         .eq('namespace', namespace)
         .eq('key', key)
-        .maybeSingle() as { 
-          data: ExistingTranslation | null; 
-          error: any;
-        };
+        .maybeSingle();
       
       if (selectError) throw selectError;
       
@@ -76,10 +72,7 @@ export const useTranslations = () => {
         .from('translations')
         .select('id, language_code, namespace, key, value')
         .eq('language_code', language)
-        .eq('namespace', namespace) as {
-          data: TranslationItem[];
-          error: any;
-        };
+        .eq('namespace', namespace);
         
       if (error) throw error;
       

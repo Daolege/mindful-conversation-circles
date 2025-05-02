@@ -45,10 +45,7 @@ i18n.use({
         .from('translations')
         .select('key, value')
         .eq('language_code', language)
-        .eq('namespace', namespace) as {
-          data: TranslationResult[] | null;
-          error: any;
-        };
+        .eq('namespace', namespace);
       
       // 转换为键值对
       if (!error && data && data.length > 0) {

@@ -1,28 +1,10 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import i18n from "@/i18n";
-import { Database } from "@/lib/supabase/types";
+import { Database, Tables } from "@/lib/supabase/database.types";
 
-export interface Language {
-  id?: number;
-  code: string;
-  name: string;
-  nativeName: string;
-  enabled: boolean;
-  rtl?: boolean;
-  created_at?: string;
-  updated_at?: string;
-}
-
-export interface TranslationItem {
-  id?: number;
-  language_code: string;
-  namespace: string;
-  key: string;
-  value: string;
-  created_at?: string;
-  updated_at?: string;
-}
+export type Language = Tables<'languages'>;
+export type TranslationItem = Tables<'translations'>;
 
 // 获取所有支持的语言
 export async function getAllLanguages(): Promise<Language[]> {
@@ -30,17 +12,14 @@ export async function getAllLanguages(): Promise<Language[]> {
     const { data, error } = await supabase
       .from('languages')
       .select('*')
-      .order('name', { ascending: true }) as {
-        data: Language[] | null;
-        error: any;
-      };
+      .order('name', { ascending: true });
     
     if (error) {
       console.error('Error fetching languages:', error);
       return [];
     }
     
-    return data as Language[] || [];
+    return data || [];
   } catch (error) {
     console.error('Unexpected error in getAllLanguages:', error);
     return [];
@@ -54,17 +33,14 @@ export async function getEnabledLanguages(): Promise<Language[]> {
       .from('languages')
       .select('*')
       .eq('enabled', true)
-      .order('name', { ascending: true }) as {
-        data: Language[] | null;
-        error: any;
-      };
+      .order('name', { ascending: true });
     
     if (error) {
       console.error('Error fetching enabled languages:', error);
       return [];
     }
     
-    return data as Language[] || [];
+    return data || [];
   } catch (error) {
     console.error('Unexpected error in getEnabledLanguages:', error);
     return [];
@@ -72,22 +48,19 @@ export async function getEnabledLanguages(): Promise<Language[]> {
 }
 
 // 添加新语言
-export async function addLanguage(language: Language): Promise<{ success: boolean; data?: Language; error?: Error }> {
+export async function addLanguage(language: Omit<Language, 'id'>): Promise<{ success: boolean; data?: Language; error?: Error }> {
   try {
     const { data, error } = await supabase
       .from('languages')
       .insert([language])
-      .select() as {
-        data: Language[] | null;
-        error: any;
-      };
+      .select();
     
     if (error) {
       console.error('Error adding language:', error);
       return { success: false, error: error as unknown as Error };
     }
     
-    return { success: true, data: data && data.length > 0 ? (data[0] as Language) : undefined };
+    return { success: true, data: data && data.length > 0 ? data[0] : undefined };
   } catch (error) {
     console.error('Unexpected error in addLanguage:', error);
     return { success: false, error: error as Error };
@@ -152,10 +125,7 @@ export async function deleteLanguage(languageId: number): Promise<{ success: boo
       .from('languages')
       .select('code')
       .eq('id', languageId)
-      .single() as {
-        data: { code: string } | null;
-        error: any;
-      };
+      .single();
     
     if (fetchError) {
       return { success: false, error: fetchError as unknown as Error };
@@ -213,17 +183,14 @@ export async function getTranslationsByLanguage(languageCode: string): Promise<T
     const { data, error } = await supabase
       .from('translations')
       .select('*')
-      .eq('language_code', languageCode) as {
-        data: TranslationItem[] | null;
-        error: any;
-      };
+      .eq('language_code', languageCode);
     
     if (error) {
       console.error('Error fetching translations:', error);
       return [];
     }
     
-    return data as TranslationItem[] || [];
+    return data || [];
   } catch (error) {
     console.error('Unexpected error in getTranslationsByLanguage:', error);
     return [];
