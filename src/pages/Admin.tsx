@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Navbar from "@/components/Navbar";
@@ -27,6 +28,7 @@ const Admin = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const redirectAttemptedRef = useRef(false);
   const successToastShownRef = useRef(false);
+  const { t } = useTranslations();
   
   const tabFromUrl = searchParams.get('tab');
   const [activeTab, setActiveTab] = useState(tabFromUrl || "overview");
@@ -120,10 +122,10 @@ const Admin = () => {
   useEffect(() => {
     if (!isLoading && user && isAdmin === false && !redirectAttemptedRef.current) {
       redirectAttemptedRef.current = true;
-      toast.error("权限不足", { description: "您没有管理员权限，无法访问后台管理" });
+      toast.error(t('errors:insufficientPermissions'), { description: t('errors:adminAccessRequired') });
       navigate('/');
     }
-  }, [isAdmin, isLoading, navigate, user]);
+  }, [isAdmin, isLoading, navigate, user, t]);
   
   const handleTabChange = (value: string) => {
     console.log("Tab changed to:", value);
@@ -168,7 +170,7 @@ const Admin = () => {
       <div className="min-h-screen flex flex-col">
         <Navbar />
         <div className="flex-grow flex items-center justify-center">
-          <div className="text-xl text-gray-600">只有管理员才能访问此页面</div>
+          <div className="text-xl text-gray-600">{t('errors:adminAreaRestricted')}</div>
         </div>
         <Footer />
       </div>
@@ -185,7 +187,7 @@ const Admin = () => {
           transition={{ duration: 0.3 }}
           className="text-3xl font-bold mb-8 text-knowledge-primary"
         >
-          后台管理系统
+          {t('admin:adminPanel')}
         </motion.h1>
         
         <Tabs 
@@ -196,14 +198,14 @@ const Admin = () => {
         >
           <TabsList className="mb-8 w-full flex flex-wrap justify-start gap-2 bg-gray-50/90 p-3 border border-gray-200 rounded-2xl shadow-sm">
             {[
-              { value: "overview", label: "总览" },
-              { value: "users", label: "用户管理" },
-              { value: "courses", label: "课程管理" },
-              { value: "courses-new", label: "课程管理2" },
-              { value: "orders", label: "订单管理" },
-              { value: "subscriptions", label: "订阅管理" },
-              { value: "about", label: "关于我们" },
-              { value: "settings", label: "系统设置" },
+              { value: "overview", label: t('admin:overview') },
+              { value: "users", label: t('admin:usersManagement') },
+              { value: "courses", label: t('admin:coursesManagement') },
+              { value: "courses-new", label: t('admin:coursesManagement2') },
+              { value: "orders", label: t('admin:ordersManagement') },
+              { value: "subscriptions", label: t('admin:subscriptionsManagement') },
+              { value: "about", label: t('admin:aboutPageSettings') },
+              { value: "settings", label: t('admin:systemSettings') },
             ].map(tab => (
               <TabsTrigger 
                 key={tab.value}

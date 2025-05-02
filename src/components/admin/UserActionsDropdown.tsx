@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { MoreHorizontal, ShieldCheck, ShieldX, AlertTriangle } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { UserRole } from "@/lib/types/user-types";
+import { useTranslations } from "@/hooks/useTranslations";
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -38,6 +39,7 @@ export const UserActionsDropdown = ({
   onStatusChange,
   isUpdating,
 }: UserActionsDropdownProps) => {
+  const { t } = useTranslations();
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [actionType, setActionType] = useState<'disable' | 'enable'>('disable');
   const [internalIsActive, setInternalIsActive] = useState(isActive);
@@ -77,7 +79,7 @@ export const UserActionsDropdown = ({
             className="hover:bg-gray-100 rounded-full w-8 h-8 p-0 transition-all duration-300 hover:scale-110 hover:shadow-md"
           >
             <MoreHorizontal className="h-4 w-4" />
-            <span className="sr-only">打开操作菜单</span>
+            <span className="sr-only">{t('admin:openActionsMenu')}</span>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent 
@@ -95,7 +97,7 @@ export const UserActionsDropdown = ({
                   size={16} 
                   className="text-destructive group-hover:text-destructive/80 transition-colors flex-shrink-0 group-hover:scale-110 duration-300" 
                 />
-                <span>移除管理员</span>
+                <span>{t('admin:removeAdmin')}</span>
               </>
             ) : (
               <>
@@ -103,7 +105,7 @@ export const UserActionsDropdown = ({
                   size={16} 
                   className="text-primary group-hover:text-primary/80 transition-colors flex-shrink-0 group-hover:scale-110 duration-300" 
                 />
-                <span>设为管理员</span>
+                <span>{t('admin:setAsAdmin')}</span>
               </>
             )}
           </DropdownMenuItem>
@@ -112,7 +114,7 @@ export const UserActionsDropdown = ({
             disabled={isUpdating}
             className="group flex items-center justify-between w-full px-3 py-2 hover:bg-gray-100/80 text-gray-800 transition-all duration-300 rounded-md"
           >
-            <span>{internalIsActive ? "禁用用户" : "启用用户"}</span>
+            <span>{internalIsActive ? t('admin:disableUser') : t('admin:enableUser')}</span>
             <Switch 
               checked={internalIsActive}
               className={`${internalIsActive 
@@ -129,18 +131,14 @@ export const UserActionsDropdown = ({
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <AlertTriangle className={actionType === 'disable' ? "text-destructive animate-pulse" : "text-green-600 animate-pulse"} />
-              {actionType === 'disable' ? "确认禁用用户" : "确认启用用户"}
+              {actionType === 'disable' ? t('admin:confirmDisableUser') : t('admin:confirmEnableUser')}
             </AlertDialogTitle>
             <AlertDialogDescription className="text-gray-600">
-              {actionType === 'disable' ? (
-                "禁用此用户后，该用户将无法登录系统。该用户的所有现有会话也将被终止。此操作可以随时撤销。"
-              ) : (
-                "启用此用户后，该用户将可以正常登录和使用系统。"
-              )}
+              {actionType === 'disable' ? t('admin:disableUserDescription') : t('admin:enableUserDescription')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="transition-all duration-300 hover:bg-gray-100">取消</AlertDialogCancel>
+            <AlertDialogCancel className="transition-all duration-300 hover:bg-gray-100">{t('actions:cancel')}</AlertDialogCancel>
             <AlertDialogAction 
               onClick={handleConfirmStatusChange}
               className={`${actionType === 'disable' 
@@ -148,7 +146,7 @@ export const UserActionsDropdown = ({
                 : "bg-green-600 hover:bg-green-700"} 
                 transition-all duration-300 hover:scale-105 shadow-md hover:shadow-lg`}
             >
-              确认{actionType === 'disable' ? "禁用" : "启用"}
+              {t('actions:confirm')} {actionType === 'disable' ? t('actions:disable') : t('actions:enable')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

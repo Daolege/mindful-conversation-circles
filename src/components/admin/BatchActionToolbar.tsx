@@ -17,6 +17,7 @@ import {
   DialogFooter,
   DialogDescription
 } from "@/components/ui/dialog";
+import { useTranslations } from "@/hooks/useTranslations";
 
 interface BatchActionToolbarProps {
   selectedCount: number;
@@ -37,6 +38,7 @@ export const BatchActionToolbar: React.FC<BatchActionToolbarProps> = ({
   onBatchRemoveAdmin,
   isProcessing
 }) => {
+  const { t } = useTranslations();
   const [confirmAction, setConfirmAction] = React.useState<{
     type: string;
     title: string;
@@ -66,7 +68,7 @@ export const BatchActionToolbar: React.FC<BatchActionToolbarProps> = ({
     <>
       <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 bg-white border border-gray-300 shadow-lg rounded-10 px-4 py-3 flex items-center space-x-3 z-50 animate-in fade-in slide-in-from-bottom-5 duration-300">
         <Badge variant="outline" className="bg-gray-800 text-white">
-          已选择 {selectedCount} 项
+          {t('admin:selected', { count: selectedCount })}
         </Badge>
         <div className="h-5 w-px bg-gray-300 mx-1" />
         <TooltipProvider>
@@ -79,10 +81,10 @@ export const BatchActionToolbar: React.FC<BatchActionToolbarProps> = ({
                 disabled={isProcessing}
                 className="text-gray-700"
               >
-                <X className="h-4 w-4 mr-1" /> 清除
+                <X className="h-4 w-4 mr-1" /> {t('actions:clear')}
               </Button>
             </TooltipTrigger>
-            <TooltipContent>清除所有选择</TooltipContent>
+            <TooltipContent>{t('admin:clearAllSelections')}</TooltipContent>
           </Tooltip>
         </TooltipProvider>
 
@@ -96,17 +98,17 @@ export const BatchActionToolbar: React.FC<BatchActionToolbarProps> = ({
                 size="sm"
                 onClick={() => handleConfirmDialog(
                   'enable',
-                  '批量启用用户',
-                  `确认要启用 ${selectedCount} 个用户吗？此操作将允许这些用户登录系统。`,
+                  t('admin:batchEnableUsers'),
+                  t('admin:batchEnableUsersDescription', { count: selectedCount }),
                   onBatchEnable
                 )}
                 className="bg-gray-50 text-gray-700 hover:bg-gray-100 border-gray-200"
                 disabled={isProcessing}
               >
-                <UserCheck className="h-4 w-4 mr-1" /> 启用
+                <UserCheck className="h-4 w-4 mr-1" /> {t('actions:enable')}
               </Button>
             </TooltipTrigger>
-            <TooltipContent>批量启用选中用户</TooltipContent>
+            <TooltipContent>{t('admin:batchEnableSelectedUsers')}</TooltipContent>
           </Tooltip>
         </TooltipProvider>
 
@@ -118,17 +120,17 @@ export const BatchActionToolbar: React.FC<BatchActionToolbarProps> = ({
                 size="sm"
                 onClick={() => handleConfirmDialog(
                   'disable',
-                  '批量禁用用户',
-                  `确认要禁用 ${selectedCount} 个用户吗？此操作将阻止这些用户登录系统。`,
+                  t('admin:batchDisableUsers'),
+                  t('admin:batchDisableUsersDescription', { count: selectedCount }),
                   onBatchDisable
                 )}
                 className="bg-gray-50 text-gray-700 hover:bg-gray-100 border-gray-200"
                 disabled={isProcessing}
               >
-                <UserX className="h-4 w-4 mr-1" /> 禁用
+                <UserX className="h-4 w-4 mr-1" /> {t('actions:disable')}
               </Button>
             </TooltipTrigger>
-            <TooltipContent>批量禁用选中用户</TooltipContent>
+            <TooltipContent>{t('admin:batchDisableSelectedUsers')}</TooltipContent>
           </Tooltip>
         </TooltipProvider>
 
@@ -140,17 +142,17 @@ export const BatchActionToolbar: React.FC<BatchActionToolbarProps> = ({
                 size="sm"
                 onClick={() => handleConfirmDialog(
                   'makeAdmin',
-                  '批量设为管理员',
-                  `确认要将 ${selectedCount} 个用户设置为管理员吗？此操作将赋予这些用户管理系统的权限。`,
+                  t('admin:batchSetAdmin'),
+                  t('admin:batchSetAdminDescription', { count: selectedCount }),
                   onBatchSetAdmin
                 )}
                 className="bg-gray-50 text-gray-700 hover:bg-gray-100 border-gray-200"
                 disabled={isProcessing}
               >
-                <UserPlus className="h-4 w-4 mr-1" /> 设为管理员
+                <UserPlus className="h-4 w-4 mr-1" /> {t('admin:setAsAdmin')}
               </Button>
             </TooltipTrigger>
-            <TooltipContent>批量设置为管理员</TooltipContent>
+            <TooltipContent>{t('admin:batchSetAsAdmins')}</TooltipContent>
           </Tooltip>
         </TooltipProvider>
 
@@ -162,17 +164,17 @@ export const BatchActionToolbar: React.FC<BatchActionToolbarProps> = ({
                 size="sm"
                 onClick={() => handleConfirmDialog(
                   'removeAdmin',
-                  '批量移除管理员',
-                  `确认要将 ${selectedCount} 个用户从管理员角色移除吗？此操作将撤销这些用户的管理权限。`,
+                  t('admin:batchRemoveAdmin'),
+                  t('admin:batchRemoveAdminDescription', { count: selectedCount }),
                   onBatchRemoveAdmin
                 )}
                 className="bg-gray-50 text-gray-700 hover:bg-gray-100 border-gray-200"
                 disabled={isProcessing}
               >
-                <UserMinus className="h-4 w-4 mr-1" /> 移除管理员
+                <UserMinus className="h-4 w-4 mr-1" /> {t('admin:removeAdmin')}
               </Button>
             </TooltipTrigger>
-            <TooltipContent>批量移除管理员权限</TooltipContent>
+            <TooltipContent>{t('admin:batchRemoveAdminRights')}</TooltipContent>
           </Tooltip>
         </TooltipProvider>
 
@@ -188,7 +190,9 @@ export const BatchActionToolbar: React.FC<BatchActionToolbarProps> = ({
             <DialogDescription>{confirmAction?.description}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setConfirmAction(null)} className="rounded-10">取消</Button>
+            <Button variant="outline" onClick={() => setConfirmAction(null)} className="rounded-10">
+              {t('actions:cancel')}
+            </Button>
             <Button 
               variant={confirmAction?.type === 'disable' ? 'destructive' : 'default'} 
               onClick={executeAction}
@@ -196,7 +200,7 @@ export const BatchActionToolbar: React.FC<BatchActionToolbarProps> = ({
               className="rounded-10"
             >
               {isProcessing && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              确认
+              {t('actions:confirm')}
             </Button>
           </DialogFooter>
         </DialogContent>

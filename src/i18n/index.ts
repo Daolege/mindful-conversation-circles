@@ -15,6 +15,7 @@ import enCheckout from './locales/en/checkout.json';
 import enDashboard from './locales/en/dashboard.json';
 import enErrors from './locales/en/errors.json';
 import enOrders from './locales/en/orders.json';
+import enActions from './locales/en/actions.json';
 
 import zhCommon from './locales/zh/common.json';
 import zhCourses from './locales/zh/courses.json';
@@ -25,6 +26,7 @@ import zhCheckout from './locales/zh/checkout.json';
 import zhDashboard from './locales/zh/dashboard.json';
 import zhErrors from './locales/zh/errors.json';
 import zhOrders from './locales/zh/orders.json';
+import zhActions from './locales/zh/actions.json';
 
 interface TranslationResult {
   key: string;
@@ -72,6 +74,7 @@ i18n.use({
           case 'dashboard': translationsObj = enDashboard; break;
           case 'errors': translationsObj = enErrors; break;
           case 'orders': translationsObj = enOrders; break;
+          case 'actions': translationsObj = enActions; break;
         }
       } else if (language === 'zh') {
         switch (namespace) {
@@ -84,6 +87,7 @@ i18n.use({
           case 'dashboard': translationsObj = zhDashboard; break;
           case 'errors': translationsObj = zhErrors; break;
           case 'orders': translationsObj = zhOrders; break;
+          case 'actions': translationsObj = zhActions; break;
         }
       }
       
@@ -99,6 +103,7 @@ i18n.use({
   supportedLngs: ['en', 'zh'],
   fallbackLng: 'zh',
   defaultNS: 'common',
+  ns: ['common', 'navigation', 'courses', 'auth', 'admin', 'checkout', 'dashboard', 'errors', 'orders', 'actions'],
   interpolation: {
     escapeValue: false,
   },

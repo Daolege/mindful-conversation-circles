@@ -7,7 +7,7 @@ import { Tables } from '@/lib/supabase/database.types';
 export type TranslationItem = Tables<'translations'>;
 
 export const useTranslations = () => {
-  const { t, i18n } = useTranslation(['common', 'navigation', 'courses', 'auth', 'admin', 'checkout', 'dashboard', 'errors', 'orders']);
+  const { t, i18n } = useTranslation(['common', 'navigation', 'courses', 'auth', 'admin', 'checkout', 'dashboard', 'errors', 'orders', 'actions']);
   
   // 更新或添加单个翻译项
   const updateTranslation = async (
@@ -109,6 +109,27 @@ export const useTranslations = () => {
     }
   };
   
+  // 批量导入翻译
+  const importTranslations = async (translations: TranslationItem[]) => {
+    try {
+      // 使用RPC函数批量导入
+      const { error } = await supabase.rpc(
+        'upsert_translations_batch', 
+        { translations_json: translations }
+      );
+      
+      if (error) throw error;
+      
+      return { success: true };
+    } catch (error) {
+      console.error('Error importing translations:', error);
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
+  };
+  
   return {
     t,
     i18n,
@@ -117,6 +138,7 @@ export const useTranslations = () => {
     isRTL: i18n.dir() === 'rtl',
     updateTranslation,
     getTranslations,
-    refreshTranslations
+    refreshTranslations,
+    importTranslations
   };
 };

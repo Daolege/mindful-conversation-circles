@@ -10,6 +10,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { useTranslations } from '@/hooks/useTranslations';
 
 interface ConfirmDialogProps {
   title: string;
@@ -25,13 +26,15 @@ interface ConfirmDialogProps {
 export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   title,
   description,
-  confirmText = "确认",
-  cancelText = "取消",
+  confirmText,
+  cancelText,
   open,
   onConfirm,
   onCancel,
   variant = 'default'
 }) => {
+  const { t } = useTranslations();
+  
   return (
     <AlertDialog open={open} onOpenChange={(isOpen) => {
       if (!isOpen) onCancel();
@@ -44,14 +47,14 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel onClick={onCancel}>{cancelText}</AlertDialogCancel>
+          <AlertDialogCancel onClick={onCancel}>{cancelText || t('actions:cancel')}</AlertDialogCancel>
           <AlertDialogAction 
             onClick={onConfirm}
             className={variant === 'destructive' ? 
               'bg-destructive text-destructive-foreground hover:bg-destructive/90' : 
               undefined}
           >
-            {confirmText}
+            {confirmText || t('actions:confirm')}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
