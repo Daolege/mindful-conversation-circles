@@ -1,67 +1,59 @@
 
-import React from 'react';
-import { Globe } from 'lucide-react';
+import React, { useState } from "react";
+import { Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { useLanguage } from '@/contexts/LanguageContext';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { useTranslations } from "@/hooks/useTranslations";
 
-interface LanguageSwitcherProps {
-  variant?: "default" | "outline" | "ghost" | "knowledge" | null;
-  mobile?: boolean;
-  className?: string;
-}
+const LanguageSwitcher = () => {
+  const { currentLanguage, changeLanguage } = useTranslations();
+  const [open, setOpen] = useState(false);
 
-const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({ 
-  variant = "outline", 
-  mobile = false,
-  className = ""
-}) => {
-  const { currentLanguage, changeLanguage, supportedLanguages } = useLanguage();
-  
-  const currentLanguageData = supportedLanguages.find(lang => lang.code === currentLanguage) 
-    || supportedLanguages[0];
+  const languages = [
+    { code: "en", name: "English" },
+    { code: "zh", name: "中文" },
+  ];
 
-  const handleLanguageChange = (langCode: string) => {
-    changeLanguage(langCode);
+  const handleChangeLanguage = (languageCode: string) => {
+    changeLanguage(languageCode);
+    setOpen(false);
   };
 
-  if (mobile) {
-    return (
-      <div className={`space-y-2 ${className}`}>
-        {supportedLanguages.map((language) => (
-          <Button
-            key={language.code}
-            variant={currentLanguage === language.code ? "default" : "outline"}
-            className={`w-full justify-start ${currentLanguage === language.code ? 'bg-knowledge-primary text-white' : ''}`}
-            onClick={() => handleLanguageChange(language.code)}
-          >
-            {language.nativeName}
-          </Button>
-        ))}
-      </div>
-    );
-  }
-
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant={variant} size="sm" className={`flex items-center gap-2 ${className}`}>
-          <Globe size={16} />
-          <span className="hidden md:inline">{currentLanguageData.nativeName}</span>
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          size="sm"
+          className="flex items-center gap-2 h-9 px-3 text-gray-600"
+        >
+          <Globe className="h-4 w-4" />
+          <span>{languages.find((l) => l.code === currentLanguage)?.name || "Language"}</span>
         </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        {supportedLanguages.map((language) => (
-          <DropdownMenuItem 
-            key={language.code}
-            className={currentLanguage === language.code ? 'bg-muted' : ''}
-            onClick={() => handleLanguageChange(language.code)}
-          >
-            {language.nativeName}
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
+      </PopoverTrigger>
+      <PopoverContent className="w-40 p-0">
+        <div className="grid">
+          {languages.map((language) => (
+            <Button
+              key={language.code}
+              variant="ghost"
+              className={`justify-start rounded-none px-4 py-2 text-left text-sm ${
+                currentLanguage === language.code
+                  ? "bg-gray-100 font-medium"
+                  : ""
+              }`}
+              onClick={() => handleChangeLanguage(language.code)}
+            >
+              {language.name}
+            </Button>
+          ))}
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 };
 

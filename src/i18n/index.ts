@@ -17,6 +17,7 @@ import enDashboard from './locales/en/dashboard.json';
 import enErrors from './locales/en/errors.json';
 import enOrders from './locales/en/orders.json';
 import enActions from './locales/en/actions.json';
+import enHome from './locales/en/home.json';
 
 import zhCommon from './locales/zh/common.json';
 import zhCourses from './locales/zh/courses.json';
@@ -28,6 +29,7 @@ import zhDashboard from './locales/zh/dashboard.json';
 import zhErrors from './locales/zh/errors.json';
 import zhOrders from './locales/zh/orders.json';
 import zhActions from './locales/zh/actions.json';
+import zhHome from './locales/zh/home.json';
 
 // 动态加载翻译的 backend
 i18n.use(Backend);
@@ -47,7 +49,7 @@ i18n.use({
       
       // 转换为键值对
       if (!error && data && data.length > 0) {
-        const translations = data.reduce((acc: Record<string, string>, item: any) => {
+        const translations = data.reduce((acc, item) => {
           acc[item.key] = item.value;
           return acc;
         }, {});
@@ -71,6 +73,7 @@ i18n.use({
           case 'errors': translationsObj = enErrors; break;
           case 'orders': translationsObj = enOrders; break;
           case 'actions': translationsObj = enActions; break;
+          case 'home': translationsObj = enHome; break;
         }
       } else if (language === 'zh') {
         switch (namespace) {
@@ -84,12 +87,14 @@ i18n.use({
           case 'errors': translationsObj = zhErrors; break;
           case 'orders': translationsObj = zhOrders; break;
           case 'actions': translationsObj = zhActions; break;
+          case 'home': translationsObj = zhHome; break;
         }
       }
       
       callback(null, translationsObj);
     } catch (err) {
-      callback(err as Error, null);
+      console.error('Error loading translations:', err);
+      callback(err instanceof Error ? err : new Error('Unknown error loading translations'), null);
     }
   }
 })
@@ -99,13 +104,16 @@ i18n.use({
   supportedLngs: ['en', 'zh'],
   fallbackLng: 'zh',
   defaultNS: 'common',
-  ns: ['common', 'navigation', 'courses', 'auth', 'admin', 'checkout', 'dashboard', 'errors', 'orders', 'actions'],
+  ns: ['common', 'navigation', 'courses', 'auth', 'admin', 'checkout', 'dashboard', 'errors', 'orders', 'actions', 'home'],
   interpolation: {
     escapeValue: false,
   },
   detection: {
     order: ['localStorage', 'navigator'],
     caches: ['localStorage'],
+  },
+  react: {
+    useSuspense: false, // Disable suspense to prevent loading flickers
   },
 });
 

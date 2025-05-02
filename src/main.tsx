@@ -1,4 +1,3 @@
-
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.tsx'
@@ -29,16 +28,36 @@ async function initializeApp() {
   }
 }
 
-// 减少不必要的日志输出
-console.log = (function(originalLog) {
-  return function(...args) {
-    // 只在开发环境显示日志，且限制特定关键日志
-    if (import.meta.env.DEV && args[0] && 
-        (typeof args[0] === 'string' && 
-         !args[0].includes('[CourseCard]'))) { // 过滤掉高频CourseCard日志
-      originalLog.apply(console, args);
+// Apply performance optimizations and fix color logging
+const originalConsoleLog = console.log;
+console.log = function(...args) {
+  // Filter out unnecessary logs and keep important ones
+  const shouldLog = import.meta.env.DEV && 
+    (!args[0] || typeof args[0] !== 'string' || 
+     (!args[0].includes('[CourseCard]') && 
+      !args[0].includes('purple') && 
+      !args[0].includes('violet')));
+  
+  if (shouldLog) {
+    originalConsoleLog.apply(console, args);
+  }
+};
+
+// Setup performance optimization
+// Add loader to track when all components have been rendered
+window.addEventListener('load', () => {
+  const inactiveTimeout = setTimeout(() => {
+    // Remove loader or any loading states after the app is fully loaded
+    const loader = document.querySelector('.initial-loader');
+    if (loader) {
+      loader.classList.add('fade-out');
+      setTimeout(() => {
+        loader.remove();
+      }, 300);
     }
-  };
-})(console.log);
+  }, 500);
+
+  return () => clearTimeout(inactiveTimeout);
+});
 
 initializeApp();
