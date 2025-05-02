@@ -91,8 +91,8 @@ const PaymentIcons = () => {
   );
 };
 
-// Define a simple interface for contact methods returned from Supabase
-interface ContactMethodsData {
+// Define interface for contact methods returned from Supabase
+interface SiteSettings {
   contact_email?: string;
   support_phone?: string;
   site_description?: string;
@@ -101,7 +101,7 @@ interface ContactMethodsData {
 const Footer = () => {
   const { t } = useTranslations();
   
-  // Query for contact methods with simplified type handling
+  // Simplify the query to avoid type depth issues
   const { data, isLoading } = useQuery({
     queryKey: ['contact-methods'],
     queryFn: async () => {
@@ -113,17 +113,17 @@ const Footer = () => {
           .single();
         
         if (error) throw error;
-        return data as ContactMethodsData;
+        return data as SiteSettings;
       } catch (error) {
         console.error("Error fetching contact methods:", error);
-        return {} as ContactMethodsData;
+        return {} as SiteSettings;
       }
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
-  // Use destructured data with default empty object to prevent errors
-  const contactMethods = data || {} as ContactMethodsData;
+  // Use a simple approach to handle the data
+  const contactInfo = data || {};
 
   return (
     <footer className="bg-[#262626] text-white pt-12 pb-6">
@@ -159,19 +159,19 @@ const Footer = () => {
           {/* Contact and Legal */}
           <div className="md:col-span-3 space-y-1.5">
             <h3 className="text-lg font-medium mb-4 text-white">{t('common:contactAndSupport')}</h3>
-            {contactMethods.contact_email && (
+            {contactInfo.contact_email && (
               <div className="flex items-center group">
                 <Mail className="h-4 w-4 mr-2 text-[#999999] group-hover:text-knowledge-primary transition-colors" />
-                <a href={`mailto:${contactMethods.contact_email}`} className="text-sm text-[#BBBBBB] hover:text-white transition-colors">
-                  {contactMethods.contact_email}
+                <a href={`mailto:${contactInfo.contact_email}`} className="text-sm text-[#BBBBBB] hover:text-white transition-colors">
+                  {contactInfo.contact_email}
                 </a>
               </div>
             )}
-            {contactMethods.support_phone && (
+            {contactInfo.support_phone && (
               <div className="flex items-center group">
                 <Phone className="h-4 w-4 mr-2 text-[#999999] group-hover:text-knowledge-primary transition-colors" />
-                <a href={`https://wa.me/${contactMethods.support_phone.replace(/\D/g, '')}`} className="text-sm text-[#BBBBBB] hover:text-white transition-colors">
-                  {contactMethods.support_phone}
+                <a href={`https://wa.me/${contactInfo.support_phone.replace(/\D/g, '')}`} className="text-sm text-[#BBBBBB] hover:text-white transition-colors">
+                  {contactInfo.support_phone}
                 </a>
               </div>
             )}
