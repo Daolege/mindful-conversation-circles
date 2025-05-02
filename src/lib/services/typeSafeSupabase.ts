@@ -17,14 +17,12 @@ export async function selectFromTable<T>(
   filters?: Record<string, any>
 ): Promise<{ data: T[] | null; error: any }> {
   try {
-    // Create the query
-    // @ts-ignore - Bypass TypeScript's strict checking
-    let query = supabase.from(tableName).select(columns);
+    // Create the query - use any type to bypass TypeScript's strict checking
+    let query = (supabase as any).from(tableName).select(columns);
     
     // Apply filters if provided
     if (filters && typeof filters === 'object') {
       Object.entries(filters).forEach(([key, value]) => {
-        // @ts-ignore - Bypass TypeScript's strict checking
         query = query.eq(key, value);
       });
     }
@@ -49,8 +47,8 @@ export async function insertIntoTable<T>(
   returning: string = '*'
 ): Promise<{ data: T[] | null; error: any }> {
   try {
-    // @ts-ignore - Bypass TypeScript's strict checking
-    const result = await supabase.from(tableName).insert(data).select(returning);
+    // Use any type to bypass TypeScript's strict checking
+    const result = await (supabase as any).from(tableName).insert(data).select(returning);
     return { data: result.data as T[] | null, error: result.error };
   } catch (error) {
     console.error(`Error in insertIntoTable for ${tableName}:`, error);
@@ -67,12 +65,11 @@ export async function updateTable(
   filters: Record<string, any>
 ): Promise<{ data: any; error: any }> {
   try {
-    // @ts-ignore - Bypass TypeScript's strict checking
-    let query = supabase.from(tableName).update(updates);
+    // Use any type to bypass TypeScript's strict checking
+    let query = (supabase as any).from(tableName).update(updates);
     
     // Apply filters
     Object.entries(filters).forEach(([key, value]) => {
-      // @ts-ignore - Bypass TypeScript's strict checking
       query = query.eq(key, value);
     });
     
@@ -92,12 +89,11 @@ export async function deleteFromTable(
   filters: Record<string, any>
 ): Promise<{ data: any; error: any }> {
   try {
-    // @ts-ignore - Bypass TypeScript's strict checking
-    let query = supabase.from(tableName).delete();
+    // Use any type to bypass TypeScript's strict checking
+    let query = (supabase as any).from(tableName).delete();
     
     // Apply filters
     Object.entries(filters).forEach(([key, value]) => {
-      // @ts-ignore - Bypass TypeScript's strict checking
       query = query.eq(key, value);
     });
     
@@ -117,8 +113,8 @@ export async function callRpcFunction<T>(
   params?: Record<string, any>
 ): Promise<{ data: T | null; error: any }> {
   try {
-    // @ts-ignore - Bypass TypeScript's strict checking for RPC functions
-    const { data, error } = await supabase.rpc(functionName, params);
+    // Use any type to bypass TypeScript's strict checking for RPC functions
+    const { data, error } = await (supabase as any).rpc(functionName, params);
     return { data: data as T, error };
   } catch (error) {
     console.error(`Error calling RPC function ${functionName}:`, error);
@@ -160,8 +156,7 @@ export async function insertTranslation(
  */
 export async function batchImportTranslations(translations: any[]): Promise<{ success: boolean; error?: any }> {
   try {
-    // @ts-ignore - Bypass TypeScript's strict checking
-    const { error } = await supabase.rpc('upsert_translations_batch', { translations_json: translations });
+    const { error } = await callRpcFunction('upsert_translations_batch', { translations_json: translations });
     return { success: !error, error };
   } catch (error) {
     console.error('Error in batchImportTranslations:', error);

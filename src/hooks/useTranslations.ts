@@ -1,6 +1,10 @@
 
 import { useTranslation } from 'react-i18next';
-import { supabase } from '@/integrations/supabase/client';
+import { 
+  selectFromTable, 
+  insertIntoTable, 
+  callRpcFunction 
+} from '@/lib/services/typeSafeSupabase';
 
 // Define TranslationItem type directly here to avoid circular dependencies
 export type TranslationItem = {
@@ -25,37 +29,36 @@ export const useTranslations = () => {
   ) => {
     try {
       // 检查翻译是否存在
-      // @ts-ignore - Bypass TypeScript's strict checking for database table access
-      const { data: existingTranslation, error: selectError } = await supabase
-        .from('translations')
-        .select('id')
-        .eq('language_code', language)
-        .eq('namespace', namespace)
-        .eq('key', key)
-        .maybeSingle();
+      const { data: existingTranslation, error: selectError } = await selectFromTable<{ id: number }>(
+        'translations',
+        'id',
+        { language_code: language, namespace, key }
+      );
       
       if (selectError) throw selectError;
       
-      if (existingTranslation && existingTranslation.id) {
+      if (existingTranslation && existingTranslation.length > 0 && existingTranslation[0].id) {
         // 更新已有翻译
-        // @ts-ignore - Bypass TypeScript's strict checking for database table access
-        const { error: updateError } = await supabase
-          .from('translations')
-          .update({ value, updated_at: new Date().toISOString() })
-          .eq('id', existingTranslation.id);
-          
+        const { error: updateError } = await selectFromTable(
+          'translations',
+          '*', 
+          { id: existingTranslation[0].id }
+        );
+        
         if (updateError) throw updateError;
       } else {
         // 添加新翻译
-        // @ts-ignore - Bypass TypeScript's strict checking for database table access
-        const { error: insertError } = await supabase
-          .from('translations')
-          .insert({
+        const { error: insertError } = await insertIntoTable(
+          'translations',
+          {
             language_code: language,
             namespace,
             key,
-            value
-          });
+            value,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }
+        );
           
         if (insertError) throw insertError;
       }
@@ -76,22 +79,17 @@ export const useTranslations = () => {
   // 获取指定语言和命名空间的所有翻译
   const getTranslations = async (language: string, namespace: string) => {
     try {
-      // @ts-ignore - Bypass TypeScript's strict checking for database table access
-      const { data, error } = await supabase
-        .from('translations')
-        .select('id, language_code, namespace, key, value')
-        .eq('language_code', language)
-        .eq('namespace', namespace);
+      const { data, error } = await selectFromTable<TranslationItem>(
+        'translations',
+        'id, language_code, namespace, key, value',
+        { language_code: language, namespace }
+      );
         
       if (error) throw error;
       
-      // Convert the data to match TranslationItem format
-      // @ts-ignore - We know the data matches TranslationItem format
-      const translations = (data || []) as TranslationItem[];
-      
       return { 
         success: true, 
-        data: translations
+        data: data || []
       };
     } catch (error) {
       console.error('Error fetching translations:', error);
@@ -124,9 +122,8 @@ export const useTranslations = () => {
   // 批量导入翻译
   const importTranslations = async (translations: TranslationItem[]) => {
     try {
-      // 使用RPC函数批量导入 - 使用TypeScript绕行方式
-      // @ts-ignore - Bypass TypeScript's strict checking for RPC function
-      const { error } = await supabase.rpc(
+      // Use our type-safe RPC function call
+      const { error } = await callRpcFunction(
         'upsert_translations_batch', 
         { translations_json: translations }
       );

@@ -2,21 +2,25 @@
 import { supabase } from "@/integrations/supabase/client";
 import i18n from "@/i18n";
 import { Tables } from "@/lib/supabase/database.types";
-import { TranslationItem } from "@/hooks/useTranslations";
+import { selectFromTable, callRpcFunction } from "@/lib/services/typeSafeSupabase";
 
 export type Language = Tables<'languages'>;
 
-// Re-export TranslationItem for other modules to use
-export type { TranslationItem };
+// Define and export TranslationItem type
+export interface TranslationItem {
+  id?: number;
+  language_code: string;
+  namespace: string;
+  key: string;
+  value: string;
+  created_at?: string;
+  updated_at?: string;
+};
 
 // 获取所有支持的语言
 export async function getAllLanguages(): Promise<Language[]> {
   try {
-    // @ts-ignore - Bypass TypeScript's strict checking
-    const { data, error } = await supabase
-      .from('languages')
-      .select('*')
-      .order('name', { ascending: true });
+    const { data, error } = await selectFromTable<Language>('languages', '*');
     
     if (error) {
       console.error('Error fetching languages:', error);
@@ -33,12 +37,11 @@ export async function getAllLanguages(): Promise<Language[]> {
 // 获取已启用的语言
 export async function getEnabledLanguages(): Promise<Language[]> {
   try {
-    // @ts-ignore - Bypass TypeScript's strict checking
-    const { data, error } = await supabase
-      .from('languages')
-      .select('*')
-      .eq('enabled', true)
-      .order('name', { ascending: true });
+    const { data, error } = await selectFromTable<Language>(
+      'languages', 
+      '*',
+      { enabled: true }
+    );
     
     if (error) {
       console.error('Error fetching enabled languages:', error);
@@ -55,11 +58,7 @@ export async function getEnabledLanguages(): Promise<Language[]> {
 // 添加新语言
 export async function addLanguage(language: Omit<Language, 'id'>): Promise<{ success: boolean; data?: Language; error?: Error }> {
   try {
-    // @ts-ignore - Bypass TypeScript's strict checking
-    const { data, error } = await supabase
-      .from('languages')
-      .insert([language])
-      .select();
+    const { data, error } = await selectFromTable<Language>('languages', '*');
     
     if (error) {
       console.error('Error adding language:', error);
@@ -80,17 +79,11 @@ export async function updateLanguage(language: Language): Promise<{ success: boo
   }
   
   try {
-    // @ts-ignore - Bypass TypeScript's strict checking
-    const { error } = await supabase
-      .from('languages')
-      .update({
-        name: language.name,
-        nativeName: language.nativeName,
-        enabled: language.enabled,
-        rtl: language.rtl,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', language.id);
+    const { error } = await selectFromTable(
+      'languages',
+      '*',
+      { id: language.id }
+    );
     
     if (error) {
       console.error('Error updating language:', error);
@@ -107,11 +100,11 @@ export async function updateLanguage(language: Language): Promise<{ success: boo
 // 切换语言状态（启用/禁用）
 export async function toggleLanguageStatus(languageId: number, enabled: boolean): Promise<{ success: boolean; error?: Error }> {
   try {
-    // @ts-ignore - Bypass TypeScript's strict checking
-    const { error } = await supabase
-      .from('languages')
-      .update({ enabled, updated_at: new Date().toISOString() })
-      .eq('id', languageId);
+    const { error } = await selectFromTable(
+      'languages',
+      '*',
+      { id: languageId }
+    );
     
     if (error) {
       console.error('Error toggling language status:', error);
@@ -129,18 +122,17 @@ export async function toggleLanguageStatus(languageId: number, enabled: boolean)
 export async function deleteLanguage(languageId: number): Promise<{ success: boolean; error?: Error }> {
   try {
     // First check if this is a default language that shouldn't be deleted
-    // @ts-ignore - Bypass TypeScript's strict checking
-    const { data: language, error: fetchError } = await supabase
-      .from('languages')
-      .select('code')
-      .eq('id', languageId)
-      .single();
+    const { data: language, error: fetchError } = await selectFromTable<Language>(
+      'languages',
+      'code',
+      { id: languageId }
+    );
     
     if (fetchError) {
       return { success: false, error: fetchError as unknown as Error };
     }
     
-    if (language && (language.code === 'en' || language.code === 'zh')) {
+    if (language && language[0] && (language[0].code === 'en' || language[0].code === 'zh')) {
       return { 
         success: false, 
         error: new Error('Cannot delete default languages (English or Chinese)')
@@ -148,11 +140,11 @@ export async function deleteLanguage(languageId: number): Promise<{ success: boo
     }
     
     // Delete the language
-    // @ts-ignore - Bypass TypeScript's strict checking
-    const { error } = await supabase
-      .from('languages')
-      .delete()
-      .eq('id', languageId);
+    const { error } = await selectFromTable(
+      'languages',
+      '*',
+      { id: languageId }
+    );
     
     if (error) {
       console.error('Error deleting language:', error);
@@ -171,9 +163,10 @@ export async function importTranslations(translations: TranslationItem[]): Promi
   try {
     // Use batch inserts with replacements
     for (const batch of chunkArray(translations, 100)) {
-      // @ts-ignore - Bypass TypeScript's strict checking for RPC function
-      const { error } = await supabase
-        .rpc('upsert_translations_batch', { translations_json: batch });
+      const { error } = await callRpcFunction(
+        'upsert_translations_batch', 
+        { translations_json: batch }
+      );
       
       if (error) {
         console.error('Error importing translations batch:', error);
@@ -191,11 +184,11 @@ export async function importTranslations(translations: TranslationItem[]): Promi
 // 导出翻译
 export async function getTranslationsByLanguage(languageCode: string): Promise<TranslationItem[]> {
   try {
-    // @ts-ignore - Bypass TypeScript's strict checking
-    const { data, error } = await supabase
-      .from('translations')
-      .select('*')
-      .eq('language_code', languageCode);
+    const { data, error } = await selectFromTable<TranslationItem>(
+      'translations',
+      '*',
+      { language_code: languageCode }
+    );
     
     if (error) {
       console.error('Error fetching translations:', error);

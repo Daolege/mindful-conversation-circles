@@ -4,6 +4,7 @@ import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 import Backend from 'i18next-http-backend';
 import { supabase } from '@/integrations/supabase/client';
+import { selectFromTable } from '@/lib/services/typeSafeSupabase';
 
 // Import translations
 import enCommon from './locales/en/common.json';
@@ -28,11 +29,6 @@ import zhErrors from './locales/zh/errors.json';
 import zhOrders from './locales/zh/orders.json';
 import zhActions from './locales/zh/actions.json';
 
-interface TranslationResult {
-  key: string;
-  value: string;
-}
-
 // 动态加载翻译的 backend
 i18n.use(Backend);
 
@@ -43,16 +39,14 @@ i18n.use({
   read: async (language, namespace, callback) => {
     try {
       // 首先尝试从数据库加载翻译
-      // @ts-ignore - Bypass TypeScript's strict checking for database table access
-      const { data, error } = await supabase
-        .from('translations')
-        .select('key, value')
-        .eq('language_code', language)
-        .eq('namespace', namespace);
+      const { data, error } = await selectFromTable(
+        'translations',
+        'key, value',
+        { language_code: language, namespace: namespace }
+      );
       
       // 转换为键值对
       if (!error && data && data.length > 0) {
-        // @ts-ignore - Bypass TypeScript errors for type conversion
         const translations = data.reduce((acc: Record<string, string>, item: any) => {
           acc[item.key] = item.value;
           return acc;

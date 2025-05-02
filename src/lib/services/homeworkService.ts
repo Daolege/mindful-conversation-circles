@@ -1,3 +1,4 @@
+
 /**
  * Homework System Services
  * This file contains safe utilities for interacting with the homework system
@@ -5,6 +6,7 @@
  */
 
 import { supabase } from '@/integrations/supabase/client';
+import { selectFromTable, insertIntoTable, deleteFromTable, updateTable } from './typeSafeSupabase';
 
 /**
  * Interface for homework data
@@ -42,10 +44,7 @@ export interface HomeworkSubmissionData {
  */
 export async function debugHomeworkTable() {
   try {
-    // @ts-ignore - Bypass TypeScript's strict checking
-    const { data, error } = await supabase
-      .from('homework')
-      .select('*', { count: 'exact' });
+    const { data, error } = await selectFromTable('homework', '*', {});
       
     if (error) {
       console.error('Error querying homework table:', error);
@@ -75,12 +74,11 @@ export async function getHomeworkByCourseAndLecture(courseId: number, lectureId:
     
     console.log(`[homeworkService] Fetching homework for course ${courseId}, lecture ${lectureId}`);
     
-    // @ts-ignore - Bypass TypeScript's strict checking
-    const { data, error } = await supabase
-      .from('homework')
-      .select('*')
-      .eq('course_id', courseId)
-      .eq('lecture_id', lectureId);
+    const { data, error } = await selectFromTable<HomeworkData>(
+      'homework',
+      '*',
+      { course_id: courseId, lecture_id: lectureId }
+    );
     
     if (error) {
       console.error('Error fetching homework:', error);
@@ -103,13 +101,15 @@ export async function getHomeworkByCourseAndLecture(courseId: number, lectureId:
  */
 export async function getHomeworkSubmissions(userId: string, courseId: number, lectureId: string) {
   try {
-    // @ts-ignore - Bypass TypeScript's strict checking
-    const { data, error } = await supabase
-      .from('homework_submissions')
-      .select('homework_id, submitted_at')
-      .eq('course_id', courseId)
-      .eq('lecture_id', lectureId)
-      .eq('user_id', userId);
+    const { data, error } = await selectFromTable(
+      'homework_submissions',
+      'homework_id, submitted_at',
+      {
+        course_id: courseId,
+        lecture_id: lectureId,
+        user_id: userId
+      }
+    );
     
     if (error) {
       console.error('Error fetching homework submissions:', error);
@@ -144,22 +144,20 @@ export async function createDefaultHomework(courseId: number, lectureId: string,
     }
     
     // Check if course exists
-    // @ts-ignore - Bypass TypeScript's strict checking
-    const { data: courseExists, error: courseError } = await supabase
-      .from('courses_new')
-      .select('id')
-      .eq('id', courseId)
-      .maybeSingle();
+    const { data: courseExists, error: courseError } = await selectFromTable(
+      'courses_new',
+      'id',
+      { id: courseId }
+    );
     
-    if (courseError || !courseExists) {
+    if (courseError || !courseExists || courseExists.length === 0) {
       throw new Error(`Course ID ${courseId} does not exist in the new course system`);
     }
     
     // Create homework
-    // @ts-ignore - Bypass TypeScript's strict checking
-    const { data, error } = await supabase
-      .from('homework')
-      .insert({
+    const { data, error } = await insertIntoTable<HomeworkData>(
+      'homework',
+      {
         title,
         course_id: courseId,
         lecture_id: lectureId,
@@ -181,8 +179,8 @@ export async function createDefaultHomework(courseId: number, lectureId: string,
         },
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
-      })
-      .select('*');
+      }
+    );
     
     if (error) {
       throw error;
@@ -203,11 +201,11 @@ export async function getHomeworksByLectureId(lectureId: string) {
   try {
     console.log(`[homeworkService] Fetching homework for lecture ${lectureId}`);
     
-    // @ts-ignore - Bypass TypeScript's strict checking
-    const { data, error } = await supabase
-      .from('homework')
-      .select('*')
-      .eq('lecture_id', lectureId);
+    const { data, error } = await selectFromTable<HomeworkData>(
+      'homework',
+      '*',
+      { lecture_id: lectureId }
+    );
     
     if (error) {
       console.error('Error fetching homework by lecture ID:', error);
@@ -238,19 +236,18 @@ export async function saveHomework(homeworkData: HomeworkData) {
     let existingHomework = null;
     
     if (homeworkData.id) {
-      // @ts-ignore - Bypass TypeScript's strict checking
-      const { data, error } = await supabase
-        .from('homework')
-        .select('id')
-        .eq('id', homeworkData.id)
-        .maybeSingle();
+      const { data, error } = await selectFromTable(
+        'homework',
+        'id',
+        { id: homeworkData.id }
+      );
       
       if (error) {
         console.error('Error checking homework existence:', error);
         throw error;
       }
       
-      existingHomework = data;
+      existingHomework = data && data.length > 0 ? data[0] : null;
     }
     
     // Add timestamps
@@ -268,19 +265,17 @@ export async function saveHomework(homeworkData: HomeworkData) {
     
     if (existingHomework) {
       // Update existing homework
-      // @ts-ignore - Bypass TypeScript's strict checking
-      result = await supabase
-        .from('homework')
-        .update(updatedData)
-        .eq('id', homeworkData.id)
-        .select('*');
+      result = await updateTable(
+        'homework',
+        updatedData,
+        { id: homeworkData.id }
+      );
     } else {
       // Create new homework
-      // @ts-ignore - Bypass TypeScript's strict checking
-      result = await supabase
-        .from('homework')
-        .insert(updatedData)
-        .select('*');
+      result = await insertIntoTable(
+        'homework',
+        updatedData
+      );
     }
     
     if (result.error) {
@@ -288,7 +283,8 @@ export async function saveHomework(homeworkData: HomeworkData) {
       return { error: result.error, data: null };
     }
     
-    return { data: result.data?.[0] || null, error: null };
+    const savedData = result.data?.[0] || null;
+    return { data: savedData, error: null };
   } catch (error) {
     console.error('Error in saveHomework:', error);
     return { error, data: null };
@@ -300,11 +296,10 @@ export async function saveHomework(homeworkData: HomeworkData) {
  */
 export async function deleteHomework(homeworkId: string) {
   try {
-    // @ts-ignore - Bypass TypeScript's strict checking
-    const { error } = await supabase
-      .from('homework')
-      .delete()
-      .eq('id', homeworkId);
+    const { error } = await deleteFromTable(
+      'homework',
+      { id: homeworkId }
+    );
     
     if (error) {
       console.error('Error deleting homework:', error);
