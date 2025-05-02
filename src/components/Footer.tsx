@@ -1,5 +1,6 @@
+
 import React from 'react';
-import { Mail, MapPin, Globe, ExternalLink, MessageSquare, Facebook, Instagram, Twitter, Linkedin, Whatsapp } from 'lucide-react';
+import { Mail, MapPin, Globe, MessageSquare, Facebook, Instagram, Twitter, Linkedin, Whatsapp } from 'lucide-react';
 import { siteConfig } from "@/config/site";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
@@ -76,7 +77,7 @@ const PaymentIcons = () => {
       {/* PayPal */}
       <div className="bg-white rounded-md p-1 h-8 flex items-center justify-center">
         <svg viewBox="0 0 24 24" width="28" height="28" fill="#003087">
-          <path d="M7.076 21.337H2.47a.389.389 0 0 1-.392-.356L.006 2.859A.389.389 0 0 1 .394 2.5h8.233c2.74 0 4.75.65 6.075 1.959 1.281 1.281 1.773 2.934 1.466 4.925-.307 1.991-1.359 3.593-2.975 4.52-1.616.927-3.763 1.406-6.482 1.406h-2.93a.39.39 0 0 0-.39.354l-1.027 6.028a.389.389 0 0 1-.391.354l-5.027.25a.466.466 0 0 0 .13.041zm4.413-9.433c2.83 0 4.694-.52 6.084-1.591 1.39-1.072 2.229-2.76 2.229-5.046 0-1.548-.514-2.767-1.535-3.594C17.247 1.044 15.635.5 13.259.5H5.568a.773.773 0 0 0-.771.686L2.704 15.433a.778.778 0 0 0 .77.904h4.207a.778.778 0 0 0 .771-.686l.456-2.683a.778.778 0 0 1 .77-.686h1.813zm10.365-2.93c-.33 2.096-1.543 3.784-3.324 4.785-1.782 1-4.163 1.483-7.182 1.483h-1.668a.38.38 0 0 0-.379.329l-1.09 6.288a.38.38 0 0 1-.38.329h-3.841a.38.38 0 0 1-.38-.431l1.804-11.419a.765.765 0 0 1 .755-.665h5.847c3.457 0 4.478-.815 4.865-1.29.387-.473.588-1.284.588-2.566 0-.867-.142-1.424-.473-1.707-.33-.284-1.017-.544-2.588-.544H9.736a.764.764 0 0 0-.756.665L7.184 12.44a.38.38 0 0 1-.38.329H2.962a.38.38 0 0 1-.38-.43L4.386 1.92A.765.765 0 0 1 5.14 1.256h8.777c1.815 0 3.183.433 4.154 1.185.971.752 1.455 1.816 1.455 3.29 0 1.6-.223 2.807-.671 3.644-.448.838-1.057 1.334-1.809 1.6h.05c1.744 0 2.738.461 3.324 1.383.586.923.731 2.31.444 4.153v.41l-.137.858-.038.224-.101.634z"/>
+          <path d="M7.076 21.337H2.47a.389.389 0 0 1-.392-.356L.006 2.859A.389.389 0 0 1 .394 2.5h8.233c2.74 0 4.75.65 6.075 1.959 1.281 1.281 1.773 2.934 1.466 4.925-.307 1.991-1.359 3.593-2.975 4.52-1.616.927-3.763 1.406-6.482 1.406h-2.93a.39.39 0 0 0-.39.354l-1.027 6.028a.389.389 0 0 1-.391.354l-5.027.25a.466.466 0 0 0 .13.041zm4.413-9.433c2.83 0 4.694-.52 6.084-1.591 1.39-1.072 2.229-2.76 2.229-5.046 0-1.548-.514-2.767-1.535-3.594C17.247 1.044 15.635.5 13.259.5H5.568a.773.773 0 0 0-.771.686L2.704 15.433a.778.778 0 0 0 .77.904h4.207a.778.778 0 0 0 .771-.686l.456-2.683a.778.778 0 0 1 .77-.686h1.813z"/>
         </svg>
       </div>
       
@@ -84,4 +85,158 @@ const PaymentIcons = () => {
       <div className="bg-white rounded-md p-1 h-8 flex items-center justify-center">
         <svg viewBox="0 0 24 24" width="28" height="28">
           <path d="M7.078 5.396c.381-.6.571-1.121.571-1.886-.552.03-1.221.368-1.622.833-.354.41-.667.996-.667 1.771.614.05 1.232-.32 1.718-.718zm1.86 5.772c-.599.878-1.222 1.75-2.19 1.75-.958 0-1.264-.565-2.36-.565-1.11 0-1.416.55-2.332.55-2.424 0-4.056-4.138-4.056-6.51v-.465c0-1.52.599-2.942 1.62-3.794C.66 2.494 1.995 2.134 3.077 2.134c.982 0 1.802.58 2.424.58.597 0 1.529-.595 2.687-.595.433 0 1.997.059 2.937.985-2.574 1.009-2.195 3.68.19 5.09-.401.705-.874 1.38-1.377 1.973z" fill="#000000"/>
-          <path d="M18.375 16.805c.387 0 .738.046.974.134v-3.178l.002-.03c.007-.137.02-.27.043-.396l.003-.017c.046-.268.11-.469.192-.606l.013-.022c.162-.255.487-.434.973-.535v-.25c-.82 0-1.355.518-1.608 1.005a6.32 6.32 0 0 0-.36.855 6.772 6.772 0 0 0-.188.801c-.021.12-.038.242-.052.368l-.002.038v1.833zm-6.49.134c.235-.088.586-.134.973-.134v-1.833l-.002-.037a5.505 5.505 0 0 0-.052-.369 6.662 6.662 0 0 0-.188-.8 6.31 6.31 0 0 0-.36-.855c-.253-.488-.789-1.006-1.608-1.006v.25c.486.1.81.28.973.535l.013.022c.081.137.146.338.192.607l.003.016c.023.127.036.26.043.396l.001.031v3.177zm12.614-.07c0 .332-.12.589-.359.77-.238.18-.57.27-.996.27-.408 0-.74-.089-.995-.266-.256-.177-.384-.428-.384-.752 0-.304.144-.542.43-.716.146-.083.37-.144.673-.183-.12-.049-.209-.097-.267-.144-.145-.115-.217-.274-.217-.478 0-.376.308-.564.925-.564h.215l-.12-.09c-.126-.094-.21-.176-.253-.247a.451.451 0 0 1-.064-.233c0-.126.062-.236.186-.33.124-.093.291-.14.503-.14.423 0 .635.154.635.462a.431.431 0 0 1-.062.228c-.4.066-.126.144-.258.235a8.67 8.67 0 0 0-.473.341c.137.078.37.193.7.343.33.15.55.253.662.308.111.056.22.133.328.232.107.099.16.208.16.327zm-6.124.967V10.088h1.725v.38H19.35v6.988h1.502v.38h-3.753v-.38h1.276zm-6.49 0V10.088h1.725v.38h-1.25v6.988h1.502v.38h-3.753v-.38h1.276zm8.937-1.066c.221 0 .394-.059.52-.176.125-.118.188-.275.188-.473a.81.81 0 0 0-.083-.366c-.055-.111-.144-.216-.267-.317a8.074 8.074 0 0 0-.54-.351c-.31-.174-.532-.325-.668-.455-.135-.13-.203-.31-.203-.54 0-.22.08-.401.243-.544.162-.143.356-.214.581-.214.138 0 .262.027.373.082.11.055.196.13.256.225.6.096.089.186.089.269 0 .074-.024.136-.073.187a.24.24 0 0 1-.18.075c-.072 0-.13-.02-.175-.063a.22.22 0 0 1-.066-.164.36.36 0 0 1 .027-.14.396.396 0 0 0 .032-.148c0-.099-.034-.173-.1-.223-.066-.05-.146-.075-.237-.075-.188 0-.34.058-.463.173-.122.116-.183.27-.183.461 0 .235.092.42.277.554.069.05.205.139.409.267.204.128.357.223.458.288.101.065.18.12.239.17.147.123.253.243.316.358.064.115.096.248.096.399 0 .225-.068.413-.204.563-.137.15-.333.226-.59.226-.266 0-.475-.093-.627-.28-.151-.186-.227-.426-.227-.718v-.075h.38v.075c0 .195.032.358.096.487.065.13.175.194.33.194zM15.28 9.545l-2.067.01h-.093l-.059.071c-.38.46-.882.991-1.252 1.273a3.115 3.115 0 0 1-1.319.595l-.248.053.047.25c.238 1.236.992 2.25 2.112 2.83a3.294 3.294 0 0 0 1.365.294h.003c.196 0 .385-.02.571-.054v.383c-.189.041-.395.062-.611.062a3.69 3.69 0 0 1-1.481-.306c-.444-.196-.85-.486-1.217-.868a3.89 3.89 0 0 1-.891-1.421 3.97 3.97 0 0 1-.262-1.376 4.2 4.2 0 0 1 .349-1.604l.05-.119.5-.143c.043-.123.092-.242.147-.356.099-.206.213-.4.339-.58l.119-.17h3.184l.014-.391c0-.025-.003-.05-.005-.075l-.005-.058zm8.165 7.79c-.116 0-.222-.023-.317-.069a.585.585 0 0 1-.232-.205c-.22.095-.077.173-.162.235-.84.061-.188.092-.31.092-.123 0-.227-.03-.31-.092a.517.517 0 0 1-.167-.232.84.84 0 0 1-.058-.309c0-.153.04-.282.122-.385.081-.103.198-.154.35-.154.116 0 .21.027.28.082.07.054.106.123.106.207a.19.19 0 0 1-.042.12.133.133 0 0 1-.112.054.132.132 0 0 1-.103-.046.17.17 0 0 1-.04-.117c0-.059.034-.101.103-.126a.273.273 0 0 0-.066-.008c-.14 0-.245.064-.314.19a.429.429 0 0 0-.057.213c0 .115.033.205.097.27.64.065.14.097.228.097.134 0 .241-.048.32-.145.02-.024.04-.053.059-.089l.067-.128h.142a.891.891 0 0 0 .053.228.253.253 0 0 0 .1.114c.045.029.103.043.175.043.098 0 .174-.036.23-.109a.447.447 0 0 0 .082-.276c0-.176-.046-.33-.137-.461-.092-.131-.253-.285-.483-.46-.24-.185-.4-.334-.48-.447a.715.715 0 0 1-.12-.3
+          <path d="M18.375 16.805c.387 0 .738.046.974.134v-3.178l.002-.03c.007-.137.02-.27.043-.396l.003-.017c.046-.268.11-.469.192-.606l.013-.022c.162-.255.487-.434.973-.535v-.25c-.82 0-1.355.518-1.608 1.005a6.32 6.32 0 0 0-.36.855 6.772 6.772 0 0 0-.188.801c-.021.12-.038.242-.052.368l-.002.038v1.833z" fill="#000000"/>
+        </svg>
+      </div>
+    </div>
+  );
+};
+
+const Footer = () => {
+  const { t } = useTranslations();
+  
+  // Query for contact methods
+  const { data: contactMethods = {}, isLoading: isLoadingContactMethods } = useQuery({
+    queryKey: ['contact-methods'],
+    queryFn: async () => {
+      try {
+        const { data, error } = await supabase
+          .from('site_settings')
+          .select('*')
+          .eq('category', 'contact_methods')
+          .single();
+        
+        if (error) throw error;
+        return data?.settings || {};
+      } catch (error) {
+        handleContactMethodsQueryError(error);
+        return {};
+      }
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+
+  return (
+    <footer className="bg-[#262626] text-white pt-12 pb-6">
+      <div className="container mx-auto px-4">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
+          {/* Company info */}
+          <div className="md:col-span-4 flex flex-col">
+            <div className="flex items-center mb-4">
+              <Logo variant="white" />
+            </div>
+            <p className="text-[#BBBBBB] mb-6">{t('common:footerCompanyDescription')}</p>
+            
+            {/* Social Media */}
+            <div className="flex space-x-4 mb-6">
+              <a href="#" className="bg-[#333333] hover:bg-knowledge-primary transition-all p-2 rounded-full">
+                <Facebook className="h-5 w-5 text-white" />
+              </a>
+              <a href="#" className="bg-[#333333] hover:bg-knowledge-primary transition-all p-2 rounded-full">
+                <Instagram className="h-5 w-5 text-white" />
+              </a>
+              <a href="#" className="bg-[#333333] hover:bg-knowledge-primary transition-all p-2 rounded-full">
+                <Twitter className="h-5 w-5 text-white" />
+              </a>
+              <a href="#" className="bg-[#333333] hover:bg-knowledge-primary transition-all p-2 rounded-full">
+                <Linkedin className="h-5 w-5 text-white" />
+              </a>
+            </div>
+            
+            {/* Language Switcher */}
+            <LanguageSwitcher variant="footer" className="bg-[#333333] text-white border-[#404040]" />
+          </div>
+          
+          {/* Contact and Legal */}
+          <div className="md:col-span-3 space-y-1.5">
+            <h3 className="text-lg font-medium mb-4 text-white">{t('common:contactAndSupport')}</h3>
+            {contactMethods?.email && (
+              <div className="flex items-center group">
+                <Mail className="h-4 w-4 mr-2 text-[#999999] group-hover:text-knowledge-primary transition-colors" />
+                <a href={`mailto:${contactMethods.email}`} className="text-sm text-[#BBBBBB] hover:text-white transition-colors">
+                  {contactMethods.email}
+                </a>
+              </div>
+            )}
+            {contactMethods?.phone && (
+              <div className="flex items-center group">
+                <Whatsapp className="h-4 w-4 mr-2 text-[#999999] group-hover:text-knowledge-primary transition-colors" />
+                <a href={`https://wa.me/${contactMethods.phone.replace(/\D/g, '')}`} className="text-sm text-[#BBBBBB] hover:text-white transition-colors">
+                  {contactMethods.phone}
+                </a>
+              </div>
+            )}
+            {contactMethods?.address && (
+              <div className="flex items-start group">
+                <MapPin className="h-4 w-4 mr-2 mt-0.5 text-[#999999] group-hover:text-knowledge-primary transition-colors" />
+                <span className="text-sm text-[#BBBBBB] group-hover:text-white transition-colors">
+                  {contactMethods.address}
+                </span>
+              </div>
+            )}
+            
+            <div className="pt-4 space-y-1.5">
+              <h3 className="text-lg font-medium mb-2 text-white">{t('common:legal')}</h3>
+              <div className="flex flex-col space-y-1">
+                <Link to="/privacy-policy" className="text-sm text-[#BBBBBB] hover:text-white transition-colors">{t('common:privacyPolicy')}</Link>
+                <Link to="/terms-of-use" className="text-sm text-[#BBBBBB] hover:text-white transition-colors">{t('common:termsOfUse')}</Link>
+                <Link to="/cookie-policy" className="text-sm text-[#BBBBBB] hover:text-white transition-colors">{t('common:cookiePolicy')}</Link>
+                <Link to="/faq" className="text-sm text-[#BBBBBB] hover:text-white transition-colors flex items-center">
+                  <MessageSquare className="h-3 w-3 mr-1" />
+                  {t('common:faq')}
+                </Link>
+              </div>
+            </div>
+          </div>
+          
+          {/* Global Offices */}
+          <div className="md:col-span-5">
+            <h3 className="text-lg font-medium mb-4 text-white flex items-center">
+              <Globe className="h-4 w-4 mr-2 text-[#999999]" />
+              {t('common:globalOffices')}
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* North America */}
+              <div>
+                <h4 className="text-[#999999] font-medium mb-2">{t('common:northAmerica')}</h4>
+                <CountryFlag countryCode="us" countryName="United States" />
+                <CountryFlag countryCode="ca" countryName="Canada" />
+                <CountryFlag countryCode="mx" countryName="Mexico" />
+              </div>
+              
+              {/* Europe */}
+              <div>
+                <h4 className="text-[#999999] font-medium mb-2">{t('common:europe')}</h4>
+                <CountryFlag countryCode="gb" countryName="United Kingdom" />
+                <CountryFlag countryCode="de" countryName="Germany" />
+                <CountryFlag countryCode="fr" countryName="France" />
+              </div>
+              
+              {/* Asia Pacific */}
+              <div>
+                <h4 className="text-[#999999] font-medium mb-2">{t('common:asiaPacific')}</h4>
+                <CountryFlag countryCode="au" countryName="Australia" />
+                <CountryFlag countryCode="sg" countryName="Singapore" />
+                <CountryFlag countryCode="jp" countryName="Japan" />
+              </div>
+              
+              {/* Payments */}
+              <div>
+                <h4 className="text-[#999999] font-medium mb-2">{t('common:acceptedPayments')}</h4>
+                <PaymentIcons />
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <Separator className="my-6 bg-[#3A3A3A]" />
+        
+        <div className="text-center text-[#999999] text-sm">
+          <p>{t('common:copyright', { year: new Date().getFullYear() })}</p>
+        </div>
+      </div>
+    </footer>
+  );
+};
+
+export default Footer;
