@@ -5,7 +5,6 @@ import { siteConfig } from "@/config/site";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { handleContactMethodsQueryError } from "@/lib/supabaseUtils";
 import { useTranslations } from "@/hooks/useTranslations";
 import { Link } from 'react-router-dom';
 import Logo from "@/components/Logo";
@@ -92,11 +91,19 @@ const PaymentIcons = () => {
   );
 };
 
+// Define a simple interface for contact methods returned from Supabase
+interface ContactMethodsData {
+  email?: string;
+  phone?: string;
+  address?: string;
+  [key: string]: any;
+}
+
 const Footer = () => {
   const { t } = useTranslations();
   
   // Query for contact methods
-  const { data: contactMethods = {}, isLoading: isLoadingContactMethods } = useQuery({
+  const { data: contactMethods = {} as ContactMethodsData, isLoading: isLoadingContactMethods } = useQuery({
     queryKey: ['contact-methods'],
     queryFn: async () => {
       try {
@@ -107,10 +114,10 @@ const Footer = () => {
           .single();
         
         if (error) throw error;
-        return data?.settings || {};
+        return data?.settings as ContactMethodsData || {};
       } catch (error) {
-        handleContactMethodsQueryError(error);
-        return {};
+        console.error("Error fetching contact methods:", error);
+        return {} as ContactMethodsData;
       }
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
