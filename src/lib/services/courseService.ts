@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { CourseData, CourseResponse, CourseWithSections } from "@/lib/types/course-new";
 
@@ -108,6 +109,7 @@ export async function deleteCourse(courseId: number): Promise<{ success: boolean
 // Simplified courses by instructor with explicit return type to avoid deep instantiation
 export async function getCoursesByInstructorId(instructorId: string) {
   try {
+    // Replace the problematic line with a simpler type definition
     const { data, error } = await supabase
       .from('courses_new')
       .select('*')
@@ -117,7 +119,8 @@ export async function getCoursesByInstructorId(instructorId: string) {
       return { data: null, error };
     }
     
-    return { data: data || [], error: null };
+    // Use a simpler type here to avoid deep instantiation
+    return { data: data as any[] || [], error: null };
   } catch (err) {
     return { data: null, error: err };
   }
@@ -201,8 +204,8 @@ export async function updateMultipleCourses(coursesData: BasicCourseData[]) {
   }
 }
 
-// Add getCourseNewById for the new system
-export async function getCourseNewById(courseId: number): Promise<any> {
+// Add getCourseNewById for the new system with simplified return type
+export async function getCourseNewById(courseId: number) {
   try {
     const { data, error } = await supabase
       .from('courses_new')
@@ -221,7 +224,7 @@ export async function getCourseNewById(courseId: number): Promise<any> {
 }
 
 // Simplified version of getCourseWithSections to avoid type issues
-export const getCourseWithSections = async (courseId: number): Promise<any> => {
+export const getCourseWithSections = async (courseId: number) => {
   try {
     // Get basic course info
     const { data: course } = await supabase
