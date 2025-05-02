@@ -19,6 +19,53 @@ interface FooterLink {
   external?: boolean;
 }
 
+// Country flag images
+interface CountryFlag {
+  code: string;
+  name: string;
+  region: string;
+}
+
+// Global Offices data organized by region
+const globalOffices: CountryFlag[] = [
+  // North America
+  { code: 'us', name: 'United States', region: 'northAmerica' },
+  { code: 'ca', name: 'Canada', region: 'northAmerica' },
+  
+  // Europe
+  { code: 'gb', name: 'United Kingdom', region: 'europe' },
+  { code: 'fr', name: 'France', region: 'europe' },
+  { code: 'de', name: 'Germany', region: 'europe' },
+  { code: 'es', name: 'Spain', region: 'europe' },
+  { code: 'it', name: 'Italy', region: 'europe' },
+  { code: 'ie', name: 'Ireland', region: 'europe' },
+  
+  // Southeast Asia
+  { code: 'vn', name: 'Vietnam', region: 'southeastAsia' },
+  { code: 'ph', name: 'Philippines', region: 'southeastAsia' },
+  { code: 'my', name: 'Malaysia', region: 'southeastAsia' },
+  { code: 'th', name: 'Thailand', region: 'southeastAsia' },
+  { code: 'sg', name: 'Singapore', region: 'southeastAsia' },
+  { code: 'id', name: 'Indonesia', region: 'southeastAsia' },
+  { code: 'hk', name: 'Hong Kong', region: 'southeastAsia' },
+];
+
+// Country flag component
+const CountryFlag = ({ countryCode, countryName }: { countryCode: string; countryName: string }) => (
+  <div className="flex items-center space-x-2 mb-2 group">
+    <img 
+      src={`https://flagcdn.com/24x18/${countryCode.toLowerCase()}.png`}
+      srcSet={`https://flagcdn.com/48x36/${countryCode.toLowerCase()}.png 2x,
+              https://flagcdn.com/72x54/${countryCode.toLowerCase()}.png 3x`}
+      width="24" 
+      height="18"
+      alt={`${countryName} flag`} 
+      className="rounded-sm shadow-sm transition-all group-hover:scale-110"
+    />
+    <span className="text-sm text-[#E5E5E5] group-hover:text-white transition-all">{countryName}</span>
+  </div>
+);
+
 // Payment method icons as SVG components
 const PaymentIcons = () => {
   return (
@@ -131,18 +178,27 @@ const Footer = () => {
     { href: "/cookie-policy", label: t("navigation:cookiePolicy"), translationKey: "navigation:cookiePolicy" },
   ];
 
+  // Group offices by region
+  const officesByRegion = globalOffices.reduce((acc, office) => {
+    if (!acc[office.region]) {
+      acc[office.region] = [];
+    }
+    acc[office.region].push(office);
+    return acc;
+  }, {} as Record<string, CountryFlag[]>);
+
   return (
     <footer className="bg-[#262626] text-white pt-12 pb-6">
       <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
-          {/* 品牌与联系方式 */}
-          <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 mb-8">
+          {/* Brand and contact info - 3 columns */}
+          <div className="lg:col-span-3 space-y-4">
             <Logo className="text-white" />
             <p className="text-[#E5E5E5] mt-4 text-sm leading-relaxed">
               {t('common:footerTagline')}
             </p>
             
-            {/* 联系方式 */}
+            {/* Contact methods */}
             <div className="mt-6 space-y-3">
               {contactMethods.map((method) => (
                 <div key={method.id} className="flex items-center space-x-3">
@@ -155,8 +211,8 @@ const Footer = () => {
             </div>
           </div>
 
-          {/* 快速链接 */}
-          <div>
+          {/* Quick Links - 2 columns */}
+          <div className="lg:col-span-2">
             <h3 className="text-lg font-medium mb-4 text-white">{t('common:quickLinks')}</h3>
             <ul className="space-y-2">
               {footerLinks.slice(0, 4).map((link) => (
@@ -172,8 +228,8 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* 法律链接 */}
-          <div>
+          {/* Legal Links - 2 columns */}
+          <div className="lg:col-span-2">
             <h3 className="text-lg font-medium mb-4 text-white">{t('common:legalLinks')}</h3>
             <ul className="space-y-2">
               {footerLinks.slice(4).map((link) => (
@@ -189,8 +245,56 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* 语言切换与支付方式 */}
-          <div>
+          {/* Global Offices - 3 columns */}
+          <div className="lg:col-span-3">
+            <h3 className="text-lg font-medium mb-4 text-white">Global Offices</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* North America */}
+              <div>
+                <h4 className="text-sm font-medium mb-2 text-[#E5E5E5] uppercase tracking-wider">North America</h4>
+                <div className="space-y-1">
+                  {officesByRegion.northAmerica.map((country) => (
+                    <CountryFlag 
+                      key={country.code} 
+                      countryCode={country.code} 
+                      countryName={country.name} 
+                    />
+                  ))}
+                </div>
+              </div>
+              
+              {/* Europe */}
+              <div>
+                <h4 className="text-sm font-medium mb-2 text-[#E5E5E5] uppercase tracking-wider">Europe</h4>
+                <div className="space-y-1">
+                  {officesByRegion.europe.map((country) => (
+                    <CountryFlag 
+                      key={country.code} 
+                      countryCode={country.code} 
+                      countryName={country.name} 
+                    />
+                  ))}
+                </div>
+              </div>
+              
+              {/* Southeast Asia */}
+              <div>
+                <h4 className="text-sm font-medium mb-2 text-[#E5E5E5] uppercase tracking-wider">Southeast Asia</h4>
+                <div className="space-y-1">
+                  {officesByRegion.southeastAsia.map((country) => (
+                    <CountryFlag 
+                      key={country.code} 
+                      countryCode={country.code} 
+                      countryName={country.name} 
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Language & Payment - 2 columns */}
+          <div className="lg:col-span-2">
             <h3 className="text-lg font-medium mb-4 text-white">{t('common:language')}</h3>
             <div className="mb-6">
               <LanguageSwitcher variant="footer" />

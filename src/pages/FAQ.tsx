@@ -139,12 +139,33 @@ const FAQ = () => {
             />
           </div>
 
+          {/* Updated tabs to match Dashboard style */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
-            <TabsList className="grid grid-cols-4 w-full">
-              <TabsTrigger value="all">{t('common:allQuestions')}</TabsTrigger>
-              <TabsTrigger value="account">{t('common:accountQuestions')}</TabsTrigger>
-              <TabsTrigger value="course">{t('common:courseQuestions')}</TabsTrigger>
-              <TabsTrigger value="payment">{t('common:paymentQuestions')}</TabsTrigger>
+            <TabsList className="w-full flex flex-wrap justify-start gap-2 bg-gray-50/90 p-3 border border-gray-200 rounded-2xl shadow-sm">
+              <TabsTrigger 
+                value="all" 
+                className="flex-1 px-6 py-3.5 text-sm font-medium min-w-[120px] data-[state=active]:bg-[#595959] data-[state=active]:text-white"
+              >
+                {t('common:allQuestions')}
+              </TabsTrigger>
+              <TabsTrigger 
+                value="account"
+                className="flex-1 px-6 py-3.5 text-sm font-medium min-w-[120px] data-[state=active]:bg-[#595959] data-[state=active]:text-white"
+              >
+                {t('common:accountQuestions')}
+              </TabsTrigger>
+              <TabsTrigger 
+                value="course"
+                className="flex-1 px-6 py-3.5 text-sm font-medium min-w-[120px] data-[state=active]:bg-[#595959] data-[state=active]:text-white"
+              >
+                {t('common:courseQuestions')}
+              </TabsTrigger>
+              <TabsTrigger 
+                value="payment"
+                className="flex-1 px-6 py-3.5 text-sm font-medium min-w-[120px] data-[state=active]:bg-[#595959] data-[state=active]:text-white"
+              >
+                {t('common:paymentQuestions')}
+              </TabsTrigger>
             </TabsList>
           </Tabs>
 
