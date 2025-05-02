@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
-import { Loader2, HelpCircle, ChevronDown, ChevronUp, Search } from "lucide-react";
+import { Loader2, HelpCircle, ChevronDown, ChevronUp, Search, ChevronRight } from "lucide-react";
 import { useTranslations } from "@/hooks/useTranslations";
 import { getFeaturedFaqsByLanguage } from "@/lib/services/faqService";
 import { Input } from "@/components/ui/input";
