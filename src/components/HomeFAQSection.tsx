@@ -12,7 +12,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 const EXPAND_DURATION = 300;
 
 const HomeFAQSection = () => {
-  const [openFaqIds, setOpenFaqIds] = useState<Set<number>>(new Set());
+  const [openFaqIds, setOpenFaqIds] = useState(new Set());
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("all");
   const { currentLanguage, t } = useTranslations();
@@ -34,7 +34,7 @@ const HomeFAQSection = () => {
     },
   });
 
-  function handleCardToggle(id: number) {
+  function handleCardToggle(id) {
     setOpenFaqIds(prev => {
       const next = new Set(prev);
       if (next.has(id)) {
@@ -59,7 +59,7 @@ const HomeFAQSection = () => {
   });
 
   // Group FAQs by category for display
-  const getCategoryTitle = (category: string) => {
+  const getCategoryTitle = (category) => {
     switch (category) {
       case "account":
         return t('common:accountIssues');
@@ -73,7 +73,7 @@ const HomeFAQSection = () => {
   };
 
   // FAQ Card component to reduce repetition
-  const FAQCard = ({ faq }: { faq: any }) => (
+  const FAQCard = ({ faq }) => (
     <Collapsible key={faq.id} open={openFaqIds.has(faq.id)}>
       <Card
         className={`
