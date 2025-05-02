@@ -58,11 +58,11 @@ const config = {
           foreground: "hsl(var(--card-foreground))",
         },
         knowledge: {
-          primary: "#222222",
-          secondary: "#555555",
-          tertiary: "#8E9196",
-          dark: "#1A1F2C",
-          light: "#F3F3F3",
+          primary: "#262626",    // Updated to the provided highlight color
+          secondary: "#404040",  // Updated to the provided main text color
+          tertiary: "#808080",   // Updated to the provided secondary text color
+          dark: "#333333",       // Updated to the provided button hover color
+          light: "#F8F8F8",      // Updated to the provided background color
         },
       },
       borderRadius: {

@@ -79,23 +79,23 @@ const HomeFAQSection = () => {
         className={`
           cursor-pointer 
           transition-all duration-300 ease-in-out
-          hover:bg-gray-50/80
+          hover:bg-[#F8F8F8]
           ${openFaqIds.has(faq.id) ? 
-            'shadow-md border-gray-300' : 
+            'shadow-md border-[#E5E5E5]' : 
             'hover:shadow-sm hover:-translate-y-[1px]'
           }
         `}
         onClick={() => handleCardToggle(faq.id)}
       >
         <CardHeader className="flex flex-row items-center justify-between py-3 px-4">
-          <CardTitle className="flex-1 text-base font-medium text-left text-gray-900">
+          <CardTitle className="flex-1 text-base font-medium text-left text-[#404040]">
             {faq.question}
           </CardTitle>
           <span className="ml-2 transition-transform duration-300">
             {openFaqIds.has(faq.id) ? (
-              <ChevronUp className="w-5 h-5 text-gray-500" />
+              <ChevronUp className="w-5 h-5 text-[#808080]" />
             ) : (
-              <ChevronDown className="w-5 h-5 text-gray-400" />
+              <ChevronDown className="w-5 h-5 text-[#808080]" />
             )}
           </span>
         </CardHeader>
@@ -105,7 +105,7 @@ const HomeFAQSection = () => {
             transitionDuration: `${EXPAND_DURATION}ms`,
           }}
         >
-          <CardContent className="text-gray-600 whitespace-pre-wrap pt-0 pb-4 px-4">
+          <CardContent className="text-[#808080] whitespace-pre-wrap pt-0 pb-4 px-4">
             {faq.answer}
           </CardContent>
         </CollapsibleContent>
@@ -114,19 +114,19 @@ const HomeFAQSection = () => {
   );
 
   return (
-    <section className="py-16 bg-gray-50 border-t border-b">
+    <section className="py-16 bg-white border-t border-b border-[#E5E5E5]">
       <div className="container mx-auto px-4 max-w-4xl">
         <div className="text-center mb-10">
-          <h2 className="text-3xl font-bold mb-2">{t('common:commonQuestions')}</h2>
-          <p className="text-gray-500 max-w-2xl mx-auto">{t('common:platformQuestionsExplanation')}</p>
+          <h2 className="text-3xl font-bold mb-2 text-[#262626]">{t('common:commonQuestions')}</h2>
+          <p className="text-[#808080] max-w-2xl mx-auto">{t('common:platformQuestionsExplanation')}</p>
           
           {/* Search input */}
           <div className="mt-6 max-w-md mx-auto relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#808080]" size={18} />
             <Input 
               type="text"
               placeholder={t('common:searchQuestions')}
-              className="pl-10"
+              className="pl-10 border-[#E5E5E5] text-[#404040]"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)} 
             />
@@ -135,17 +135,37 @@ const HomeFAQSection = () => {
 
         {/* Category tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
-          <TabsList className="grid grid-cols-4 w-full">
-            <TabsTrigger value="all">{t('common:allQuestions')}</TabsTrigger>
-            <TabsTrigger value="account">{t('common:accountQuestions')}</TabsTrigger>
-            <TabsTrigger value="course">{t('common:courseQuestions')}</TabsTrigger>
-            <TabsTrigger value="payment">{t('common:paymentQuestions')}</TabsTrigger>
+          <TabsList className="grid grid-cols-4 w-full bg-[#F8F8F8]">
+            <TabsTrigger 
+              value="all" 
+              className="data-[state=active]:bg-[#595959] data-[state=active]:text-white"
+            >
+              {t('common:allQuestions')}
+            </TabsTrigger>
+            <TabsTrigger 
+              value="account"
+              className="data-[state=active]:bg-[#595959] data-[state=active]:text-white"
+            >
+              {t('common:accountQuestions')}
+            </TabsTrigger>
+            <TabsTrigger 
+              value="course"
+              className="data-[state=active]:bg-[#595959] data-[state=active]:text-white"
+            >
+              {t('common:courseQuestions')}
+            </TabsTrigger>
+            <TabsTrigger 
+              value="payment"
+              className="data-[state=active]:bg-[#595959] data-[state=active]:text-white"
+            >
+              {t('common:paymentQuestions')}
+            </TabsTrigger>
           </TabsList>
         </Tabs>
 
         {isLoading ? (
           <div className="flex justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin text-gray-500" />
+            <Loader2 className="h-6 w-6 animate-spin text-[#808080]" />
           </div>
         ) : filteredFaqs.length > 0 ? (
           <div className="space-y-8">
@@ -157,7 +177,7 @@ const HomeFAQSection = () => {
 
                 return (
                   <div key={category}>
-                    <h3 className="text-xl font-semibold mb-4">{getCategoryTitle(category)}</h3>
+                    <h3 className="text-xl font-semibold mb-4 text-[#404040]">{getCategoryTitle(category)}</h3>
                     <div className="space-y-4">
                       {categoryFaqs.map((faq) => (
                         <FAQCard key={faq.id} faq={faq} />
@@ -177,8 +197,8 @@ const HomeFAQSection = () => {
           </div>
         ) : (
           <div className="text-center py-8">
-            <HelpCircle className="mx-auto h-8 w-8 text-gray-400 mb-3" />
-            <div className="text-gray-500">{t('common:noMatchingQuestions')}</div>
+            <HelpCircle className="mx-auto h-8 w-8 text-[#808080] mb-3" />
+            <div className="text-[#808080]">{t('common:noMatchingQuestions')}</div>
           </div>
         )}
       </div>

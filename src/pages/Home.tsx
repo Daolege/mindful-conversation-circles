@@ -15,11 +15,11 @@ const CourseSection = ({
   title: string;
   description: string;
 }) => (
-  <section className="mb-16">
+  <section className="mb-16 bg-[#F8F8F8]">
     <div className="container mx-auto px-4">
       <div className="text-center mb-12">
-        <h2 className="text-3xl font-bold mb-3">{title}</h2>
-        <p className="text-gray-600 max-w-2xl mx-auto">{description}</p>
+        <h2 className="text-3xl font-bold mb-3 text-[#262626]">{title}</h2>
+        <p className="text-[#808080] max-w-2xl mx-auto">{description}</p>
       </div>
       <FeaturedCourses />
     </div>
@@ -30,7 +30,7 @@ const Index = memo(() => {
   const { t } = useTranslations();
   
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-[#F8F8F8]">
       <Navbar />
       <main className="flex-grow">
         {/* Updated hero banner */}

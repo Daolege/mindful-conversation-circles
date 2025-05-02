@@ -57,7 +57,7 @@ const Navbar = () => {
     isAdmin,
     setIsMenuOpen,
     handleSignOut,
-    showAboutLink: false // 不再显示关于我们链接
+    showAboutLink: false
   }), [user, isAdmin, handleSignOut]);
 
   return (
@@ -65,7 +65,7 @@ const Navbar = () => {
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.3 }}
-      className="bg-white/80 backdrop-blur-md shadow-sm py-4 sticky top-0 z-50 border-b border-gray-100"
+      className="bg-white/80 backdrop-blur-md shadow-sm py-4 sticky top-0 z-50 border-b border-[#E5E5E5]"
     >
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center">
@@ -74,38 +74,36 @@ const Navbar = () => {
           <div className="hidden md:flex items-center space-x-8">
             <Link 
               to="/" 
-              className="flex items-center space-x-1 text-gray-600 hover:text-knowledge-primary transition-all duration-200 relative group"
+              className="flex items-center space-x-1 text-[#404040] hover:text-[#262626] transition-all duration-200 relative group"
             >
               <Home size={18} />
               <span>{t('navigation:home')}</span>
               <motion.div
-                className="absolute -bottom-1 left-0 w-0 h-0.5 bg-knowledge-primary group-hover:w-full transition-all duration-200"
+                className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#262626] group-hover:w-full transition-all duration-200"
                 whileHover={{ width: "100%" }}
               />
             </Link>
             
             <Link 
               to="/courses" 
-              className="text-gray-600 hover:text-knowledge-primary transition-all duration-200 relative group"
+              className="text-[#404040] hover:text-[#262626] transition-all duration-200 relative group"
             >
               {t('navigation:allCourses')}
               <motion.div
-                className="absolute -bottom-1 left-0 w-0 h-0.5 bg-knowledge-primary group-hover:w-full transition-all duration-200"
+                className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#262626] group-hover:w-full transition-all duration-200"
                 whileHover={{ width: "100%" }}
               />
             </Link>
             
-            {/* Removed FAQ link */}
-            
             {user && isAdmin && (
               <Link 
                 to="/admin" 
-                className="flex items-center space-x-1 text-knowledge-primary font-medium hover:text-knowledge-secondary transition-all duration-200 relative group"
+                className="flex items-center space-x-1 text-[#262626] font-medium hover:text-[#333333] transition-all duration-200 relative group"
               >
                 <Shield size={18} />
                 <span>{t('navigation:adminPanel')}</span>
                 <motion.div
-                  className="absolute -bottom-1 left-0 w-0 h-0.5 bg-knowledge-secondary group-hover:w-full transition-all duration-200"
+                  className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#333333] group-hover:w-full transition-all duration-200"
                   whileHover={{ width: "100%" }}
                 />
               </Link>
@@ -119,29 +117,29 @@ const Navbar = () => {
               <div className="flex items-center space-x-4">
                 <Link 
                   to="/dashboard" 
-                  className="flex items-center space-x-2 text-gray-600 hover:text-knowledge-primary transition-all duration-200 relative group"
+                  className="flex items-center space-x-2 text-[#404040] hover:text-[#262626] transition-all duration-200 relative group"
                 >
                   <User size={20} />
                   <span>{user.name || t('navigation:userCenter')}</span>
                   <motion.div
-                    className="absolute -bottom-1 left-0 w-0 h-0.5 bg-knowledge-primary group-hover:w-full transition-all duration-200"
+                    className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#262626] group-hover:w-full transition-all duration-200"
                     whileHover={{ width: "100%" }}
                   />
                 </Link>
                 <Link 
                   to="/auth" 
-                  className="text-gray-600 hover:text-knowledge-primary transition-all duration-200 relative group"
+                  className="text-[#404040] hover:text-[#262626] transition-all duration-200 relative group"
                 >
                   {t('navigation:accountManagement')}
                   <motion.div
-                    className="absolute -bottom-1 left-0 w-0 h-0.5 bg-knowledge-primary group-hover:w-full transition-all duration-200"
+                    className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#262626] group-hover:w-full transition-all duration-200"
                     whileHover={{ width: "100%" }}
                   />
                 </Link>
                 <Button 
                   variant="outline" 
                   onClick={handleSignOut}
-                  className="border-knowledge-primary text-knowledge-primary hover:bg-knowledge-primary hover:text-white transition-all duration-200"
+                  className="border-[#595959] text-[#595959] hover:bg-[#595959] hover:text-white transition-all duration-200"
                 >
                   {t('navigation:logout')}
                 </Button>
@@ -151,13 +149,13 @@ const Navbar = () => {
                 <Button 
                   variant="outline" 
                   onClick={() => navigate("/auth")}
-                  className="border-knowledge-primary text-knowledge-primary hover:bg-knowledge-primary hover:text-white transition-all duration-200"
+                  className="border-[#595959] text-[#595959] hover:bg-[#595959] hover:text-white transition-all duration-200"
                 >
                   {t('navigation:login')}
                 </Button>
                 <Button 
                   onClick={() => navigate("/auth")}
-                  className="bg-knowledge-primary hover:bg-knowledge-secondary text-white transition-all duration-200"
+                  className="bg-[#595959] hover:bg-[#333333] text-white transition-all duration-200"
                 >
                   {t('navigation:register')}
                 </Button>
@@ -171,9 +169,9 @@ const Navbar = () => {
             aria-label={isMenuOpen ? "关闭菜单" : "打开菜单"}
           >
             {isMenuOpen ? (
-              <X className="h-6 w-6 text-gray-700" />
+              <X className="h-6 w-6 text-[#404040]" />
             ) : (
-              <Menu className="h-6 w-6 text-gray-700" />
+              <Menu className="h-6 w-6 text-[#404040]" />
             )}
           </button>
         </div>
