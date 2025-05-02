@@ -10,7 +10,6 @@ import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 // Import refactored components
 import ContactInfo from './footer/ContactInfo';
-import LegalLinks from './footer/LegalLinks';
 import SocialLinks from './footer/SocialLinks';
 import GlobalOffices from './footer/GlobalOffices';
 
@@ -79,8 +78,6 @@ const Footer = () => {
               phones={phones}
               location={location}
             />
-            
-            <LegalLinks />
           </div>
           
           {/* 全球办公室 */}
@@ -91,8 +88,13 @@ const Footer = () => {
         
         <Separator className="my-6 bg-[#3A3A3A]" />
         
-        <div className="text-center text-[#999999] text-sm">
+        <div className="flex flex-col sm:flex-row justify-between items-center text-[#999999] text-sm">
           <p>© {new Date().getFullYear()} SecondRise. Mandarin (Hong Kong) International Limited. 版权所有</p>
+          <div className="flex space-x-4 mt-2 sm:mt-0">
+            <a href="/privacy-policy" className="hover:text-white transition-colors">{t('common:privacyPolicy')}</a>
+            <a href="/terms-of-use" className="hover:text-white transition-colors">{t('common:termsOfUse')}</a>
+            <a href="/cookie-policy" className="hover:text-white transition-colors">{t('common:cookiePolicy')}</a>
+          </div>
         </div>
       </div>
     </footer>
