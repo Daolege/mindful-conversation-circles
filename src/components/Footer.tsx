@@ -167,14 +167,22 @@ const Footer = () => {
     { code: 'hk', name: 'Hong Kong', region: 'southeastAsia' },
   ];
 
-  // Group offices by region
-  const officesByRegion = globalOffices.reduce((acc, office) => {
+  // Define the type for our region groups
+  type RegionGroups = {
+    northAmerica: Array<{ code: string, name: string, region: string }>;
+    europe: Array<{ code: string, name: string, region: string }>;
+    southeastAsia: Array<{ code: string, name: string, region: string }>;
+    [key: string]: Array<{ code: string, name: string, region: string }>;
+  };
+
+  // Group offices by region with proper typing
+  const officesByRegion = globalOffices.reduce<RegionGroups>((acc, office) => {
     if (!acc[office.region]) {
       acc[office.region] = [];
     }
     acc[office.region].push(office);
     return acc;
-  }, {});
+  }, {} as RegionGroups);
 
   return (
     <footer className="bg-[#262626] text-white pt-12 pb-6">
@@ -219,7 +227,7 @@ const Footer = () => {
               <div>
                 <h4 className="text-sm font-medium mb-2 text-[#E5E5E5] uppercase tracking-wider">North America</h4>
                 <div className="space-y-1">
-                  {officesByRegion.northAmerica.map((country) => (
+                  {officesByRegion.northAmerica && officesByRegion.northAmerica.map((country) => (
                     <CountryFlag 
                       key={country.code} 
                       countryCode={country.code} 
@@ -233,7 +241,7 @@ const Footer = () => {
               <div>
                 <h4 className="text-sm font-medium mb-2 text-[#E5E5E5] uppercase tracking-wider">Europe</h4>
                 <div className="space-y-1">
-                  {officesByRegion.europe.map((country) => (
+                  {officesByRegion.europe && officesByRegion.europe.map((country) => (
                     <CountryFlag 
                       key={country.code} 
                       countryCode={country.code} 
@@ -247,7 +255,7 @@ const Footer = () => {
               <div>
                 <h4 className="text-sm font-medium mb-2 text-[#E5E5E5] uppercase tracking-wider">Southeast Asia</h4>
                 <div className="space-y-1">
-                  {officesByRegion.southeastAsia.map((country) => (
+                  {officesByRegion.southeastAsia && officesByRegion.southeastAsia.map((country) => (
                     <CountryFlag 
                       key={country.code} 
                       countryCode={country.code} 
