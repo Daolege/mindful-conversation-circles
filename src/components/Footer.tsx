@@ -23,11 +23,7 @@ const Footer = () => {
   
   const usefulLinks: FooterLink[] = [
     { href: '/courses', label: t('navigation:allCourses'), translationKey: 'navigation:allCourses' },
-    { href: '/about', label: t('navigation:aboutUs'), translationKey: 'navigation:aboutUs' },
     { href: '/faq', label: t('common:faq'), translationKey: 'common:faq' },
-    { href: '/terms', label: t('common:termsOfService'), translationKey: 'common:termsOfService' },
-    { href: '/privacy', label: t('common:privacyPolicy'), translationKey: 'common:privacyPolicy' },
-    { href: '/cookie-policy', label: t('common:cookiePolicy'), translationKey: 'common:cookiePolicy' },
   ];
 
   const { data: contactMethods = [] } = useQuery({
@@ -54,7 +50,7 @@ const Footer = () => {
   const whatsapp = getContactMethodValue('whatsapp') || '+852 1234 5678';
 
   return (
-    <footer className="bg-gray-900 text-white">
+    <footer className="bg-black text-white">
       <div className="container mx-auto py-12 px-4">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
           {/* Company & Brand */}
@@ -149,30 +145,27 @@ const Footer = () => {
             <div className="mb-6">
               <LanguageSwitcher />
             </div>
-            
-            <h3 className="text-lg font-semibold mb-4 mt-6">{t('common:legal')}</h3>
-            <ul className="space-y-2">
-              <li>
-                <Link to="/terms" className="text-gray-300 hover:text-white transition-colors">
-                  {t('common:termsOfUse')}
-                </Link>
-              </li>
-              <li>
-                <Link to="/privacy" className="text-gray-300 hover:text-white transition-colors">
-                  {t('common:privacyPolicy')}
-                </Link>
-              </li>
-              <li>
-                <Link to="/cookie-policy" className="text-gray-300 hover:text-white transition-colors">
-                  {t('common:cookiePolicy')}
-                </Link>
-              </li>
-            </ul>
           </div>
         </div>
         
-        <div className="border-t border-gray-800 mt-10 pt-6 text-center text-gray-400 text-sm">
-          <p>© {new Date().getFullYear()} SecondRise. Mandarin (Hong Kong) International Limited. {t('common:allRightsReserved')}</p>
+        {/* Moved policy links to copyright row */}
+        <div className="border-t border-gray-800 mt-10 pt-6 text-center">
+          <div className="flex flex-col md:flex-row justify-center items-center space-y-3 md:space-y-0">
+            <p className="text-gray-400 text-sm mr-4">© {new Date().getFullYear()} SecondRise. Mandarin (Hong Kong) International Limited. {t('common:allRightsReserved')}</p>
+            <div className="flex items-center space-x-4">
+              <Link to="/terms-of-use" className="text-gray-400 hover:text-white text-sm transition-colors">
+                {t('common:termsOfUse')}
+              </Link>
+              <span className="text-gray-600">|</span>
+              <Link to="/privacy-policy" className="text-gray-400 hover:text-white text-sm transition-colors">
+                {t('common:privacyPolicy')}
+              </Link>
+              <span className="text-gray-600">|</span>
+              <Link to="/cookie-policy" className="text-gray-400 hover:text-white text-sm transition-colors">
+                {t('common:cookiePolicy')}
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     </footer>
