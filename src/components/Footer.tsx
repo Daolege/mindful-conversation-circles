@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Mail, MapPin, Globe, MessageSquare, Facebook, Instagram, Twitter, Linkedin, WhatsApp } from 'lucide-react';
+import { Mail, MapPin, Globe, MessageSquare, Facebook, Instagram, Twitter, Linkedin, Phone } from 'lucide-react';
 import { siteConfig } from "@/config/site";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
@@ -85,7 +85,7 @@ const PaymentIcons = () => {
       <div className="bg-white rounded-md p-1 h-8 flex items-center justify-center">
         <svg viewBox="0 0 24 24" width="28" height="28">
           <path d="M7.078 5.396c.381-.6.571-1.121.571-1.886-.552.03-1.221.368-1.622.833-.354.41-.667.996-.667 1.771.614.05 1.232-.32 1.718-.718zm1.86 5.772c-.599.878-1.222 1.75-2.19 1.75-.958 0-1.264-.565-2.36-.565-1.11 0-1.416.55-2.332.55-2.424 0-4.056-4.138-4.056-6.51v-.465c0-1.52.599-2.942 1.62-3.794C.66 2.494 1.995 2.134 3.077 2.134c.982 0 1.802.58 2.424.58.597 0 1.529-.595 2.687-.595.433 0 1.997.059 2.937.985-2.574 1.009-2.195 3.68.19 5.09-.401.705-.874 1.38-1.377 1.973z" fill="#000000"/>
-          <path d="M18.375 16.805c.387 0 .738.046.974.134v-3.178l.002-.03c.007-.137.02-.27.043-.396l.003-.017c.046-.268.11-.469.192-.606l.013-.022c.162-.255.487-.434.973-.535v-.25c-.82 0-1.355.518-1.608 1.005a6.32 6.32 0 0 0-.36.855 6.772 6.772 0 0 0-.188.801c-.021.12-.038.242-.052.368l-.002.038v1.833z" fill="#000000"/>
+          <path d="M18.375 16.805c.387 0 .738.046.974.134v-3.178c.007-.137.02-.27.043-.396l.003-.017c.046-.268.11-.469.192-.606l.013-.022c.162-.255.487-.434.973-.535v-.25c-.82 0-1.355.518-1.608 1.005a6.32 6.32 0 0 0-.36.855 6.772 6.772 0 0 0-.188.801c-.021.12-.038.242-.052.368v1.841z" fill="#000000"/>
         </svg>
       </div>
     </div>
@@ -107,7 +107,7 @@ const Footer = () => {
           .single();
         
         if (error) throw error;
-        return data || {};
+        return data?.settings || {};
       } catch (error) {
         handleContactMethodsQueryError(error);
         return {};
@@ -123,7 +123,7 @@ const Footer = () => {
           {/* Company info */}
           <div className="md:col-span-4 flex flex-col">
             <div className="flex items-center mb-4">
-              <Logo variant="white" />
+              <Logo variant="default" />
             </div>
             <p className="text-[#BBBBBB] mb-6">{t('common:footerCompanyDescription')}</p>
             
@@ -150,7 +150,7 @@ const Footer = () => {
           {/* Contact and Legal */}
           <div className="md:col-span-3 space-y-1.5">
             <h3 className="text-lg font-medium mb-4 text-white">{t('common:contactAndSupport')}</h3>
-            {contactMethods?.email && (
+            {contactMethods.email && (
               <div className="flex items-center group">
                 <Mail className="h-4 w-4 mr-2 text-[#999999] group-hover:text-knowledge-primary transition-colors" />
                 <a href={`mailto:${contactMethods.email}`} className="text-sm text-[#BBBBBB] hover:text-white transition-colors">
@@ -158,15 +158,15 @@ const Footer = () => {
                 </a>
               </div>
             )}
-            {contactMethods?.phone && (
+            {contactMethods.phone && (
               <div className="flex items-center group">
-                <WhatsApp className="h-4 w-4 mr-2 text-[#999999] group-hover:text-knowledge-primary transition-colors" />
+                <Phone className="h-4 w-4 mr-2 text-[#999999] group-hover:text-knowledge-primary transition-colors" />
                 <a href={`https://wa.me/${contactMethods.phone.replace(/\D/g, '')}`} className="text-sm text-[#BBBBBB] hover:text-white transition-colors">
                   {contactMethods.phone}
                 </a>
               </div>
             )}
-            {contactMethods?.address && (
+            {contactMethods.address && (
               <div className="flex items-start group">
                 <MapPin className="h-4 w-4 mr-2 mt-0.5 text-[#999999] group-hover:text-knowledge-primary transition-colors" />
                 <span className="text-sm text-[#BBBBBB] group-hover:text-white transition-colors">
