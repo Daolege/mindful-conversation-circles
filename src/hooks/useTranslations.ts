@@ -3,11 +3,6 @@ import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import { Tables } from '@/lib/supabase/database.types';
 
-// Define type for the result of a translation check
-interface ExistingTranslation {
-  id: number;
-}
-
 // Define TranslationItem type
 export type TranslationItem = Tables<'translations'>;
 

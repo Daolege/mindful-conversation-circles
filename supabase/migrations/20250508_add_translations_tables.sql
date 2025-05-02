@@ -57,3 +57,16 @@ BEGIN
   END LOOP;
 END;
 $$ LANGUAGE plpgsql;
+
+-- Add indexes to improve query performance
+CREATE INDEX IF NOT EXISTS idx_translations_language_namespace 
+ON translations(language_code, namespace);
+
+CREATE INDEX IF NOT EXISTS idx_translations_key 
+ON translations(key);
+
+CREATE INDEX IF NOT EXISTS idx_languages_code 
+ON languages(code);
+
+CREATE INDEX IF NOT EXISTS idx_languages_enabled 
+ON languages(enabled);
