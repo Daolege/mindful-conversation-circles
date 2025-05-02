@@ -12,6 +12,7 @@ import LanguageSwitcher from "@/components/LanguageSwitcher";
 import ContactInfo from './footer/ContactInfo';
 import SocialLinks from './footer/SocialLinks';
 import GlobalOffices from './footer/GlobalOffices';
+import PaymentIcons from './footer/PaymentIcons';
 
 // 新的站点设置类型
 type SiteSettings = {
@@ -66,8 +67,11 @@ const Footer = () => {
             {/* 社交媒体链接 */}
             <SocialLinks />
             
-            {/* 语言切换器 */}
-            <LanguageSwitcher variant="footer" className="bg-[#333333] text-white border-[#404040]" />
+            {/* 支付方式图标 - 移动到社交媒体下方 */}
+            <div className="mb-6">
+              <h4 className="text-[#999999] font-medium mb-2">{t('common:acceptedPayments')}</h4>
+              <PaymentIcons />
+            </div>
           </div>
           
           {/* 联系和法律信息 */}
@@ -89,11 +93,18 @@ const Footer = () => {
         <Separator className="my-6 bg-[#3A3A3A]" />
         
         <div className="flex flex-col sm:flex-row justify-between items-center text-[#999999] text-sm">
-          <p>© {new Date().getFullYear()} SecondRise. Mandarin (Hong Kong) International Limited. 版权所有</p>
-          <div className="flex space-x-4 mt-2 sm:mt-0">
-            <a href="/privacy-policy" className="hover:text-white transition-colors">{t('common:privacyPolicy')}</a>
-            <a href="/terms-of-use" className="hover:text-white transition-colors">{t('common:termsOfUse')}</a>
-            <a href="/cookie-policy" className="hover:text-white transition-colors">{t('common:cookiePolicy')}</a>
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-2">
+            <p>© {new Date().getFullYear()} SecondRise. Mandarin (Hong Kong) International Limited. 版权所有</p>
+            <div className="flex space-x-4">
+              <a href="/privacy-policy" className="hover:text-white transition-colors">{t('common:privacyPolicy')}</a>
+              <a href="/terms-of-use" className="hover:text-white transition-colors">{t('common:termsOfUse')}</a>
+              <a href="/cookie-policy" className="hover:text-white transition-colors">{t('common:cookiePolicy')}</a>
+            </div>
+          </div>
+          
+          {/* 语言切换器移动到右下角 */}
+          <div className="mt-4 sm:mt-0">
+            <LanguageSwitcher variant="footer" className="bg-[#333333] text-white border-[#404040]" />
           </div>
         </div>
       </div>

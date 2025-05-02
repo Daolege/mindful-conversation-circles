@@ -3,7 +3,6 @@ import React from 'react';
 import { Globe } from 'lucide-react';
 import { useTranslations } from "@/hooks/useTranslations";
 import CountryFlag from './CountryFlag';
-import PaymentIcons from './PaymentIcons';
 
 const GlobalOffices: React.FC = () => {
   const { t } = useTranslations();
@@ -28,12 +27,6 @@ const GlobalOffices: React.FC = () => {
         <CountryFlag countryCode="jp" countryName="Japan" />
         <CountryFlag countryCode="au" countryName="Australia" />
         <CountryFlag countryCode="id" countryName="Indonesia" />
-      </div>
-      
-      {/* Payments */}
-      <div>
-        <h4 className="text-[#999999] font-medium mb-2">{t('common:acceptedPayments')}</h4>
-        <PaymentIcons />
       </div>
     </div>
   );
