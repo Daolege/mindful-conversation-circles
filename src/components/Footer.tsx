@@ -5,53 +5,15 @@ import { siteConfig } from "@/config/site";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { handleContactMethodsQueryError, ContactMethod } from "@/lib/supabaseUtils";
+import { handleContactMethodsQueryError } from "@/lib/supabaseUtils";
 import { useTranslations } from "@/hooks/useTranslations";
 import { Link } from 'react-router-dom';
 import Logo from "@/components/Logo";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { Separator } from "@/components/ui/separator";
 
-interface FooterLink {
-  href: string;
-  label: string;
-  translationKey: string;
-  external?: boolean;
-}
-
-// Country flag images
-interface CountryFlag {
-  code: string;
-  name: string;
-  region: string;
-}
-
-// Global Offices data organized by region
-const globalOffices: CountryFlag[] = [
-  // North America
-  { code: 'us', name: 'United States', region: 'northAmerica' },
-  { code: 'ca', name: 'Canada', region: 'northAmerica' },
-  
-  // Europe
-  { code: 'gb', name: 'United Kingdom', region: 'europe' },
-  { code: 'fr', name: 'France', region: 'europe' },
-  { code: 'de', name: 'Germany', region: 'europe' },
-  { code: 'es', name: 'Spain', region: 'europe' },
-  { code: 'it', name: 'Italy', region: 'europe' },
-  { code: 'ie', name: 'Ireland', region: 'europe' },
-  
-  // Southeast Asia
-  { code: 'vn', name: 'Vietnam', region: 'southeastAsia' },
-  { code: 'ph', name: 'Philippines', region: 'southeastAsia' },
-  { code: 'my', name: 'Malaysia', region: 'southeastAsia' },
-  { code: 'th', name: 'Thailand', region: 'southeastAsia' },
-  { code: 'sg', name: 'Singapore', region: 'southeastAsia' },
-  { code: 'id', name: 'Indonesia', region: 'southeastAsia' },
-  { code: 'hk', name: 'Hong Kong', region: 'southeastAsia' },
-];
-
 // Country flag component
-const CountryFlag = ({ countryCode, countryName }: { countryCode: string; countryName: string }) => (
+const CountryFlag = ({ countryCode, countryName }) => (
   <div className="flex items-center space-x-2 mb-2 group">
     <img 
       src={`https://flagcdn.com/24x18/${countryCode.toLowerCase()}.png`}
@@ -150,14 +112,14 @@ const Footer = () => {
         .order('display_order');
       
       if (error) throw error;
-      return data as ContactMethod[];
+      return data;
     },
     meta: {
       onError: handleContactMethodsQueryError, // Use meta.onError as per TanStack Query's latest API
     }
   });
 
-  const renderContactIcon = (type: string) => {
+  const renderContactIcon = (type) => {
     switch (type) {
       case 'email': return <Mail className="h-5 w-5 text-gray-300" />;
       case 'phone': return <Phone className="h-5 w-5 text-gray-300" />;
@@ -173,9 +135,36 @@ const Footer = () => {
     { href: "/courses", label: t("navigation:allCourses"), translationKey: "navigation:allCourses" },
     { href: "/instructors", label: t("navigation:instructors"), translationKey: "navigation:instructors" },
     { href: "/about", label: t("navigation:about"), translationKey: "navigation:about" },
+  ];
+
+  const legalLinks = [
     { href: "/terms-of-use", label: t("navigation:termsOfUse"), translationKey: "navigation:termsOfUse" },
     { href: "/privacy-policy", label: t("navigation:privacyPolicy"), translationKey: "navigation:privacyPolicy" },
     { href: "/cookie-policy", label: t("navigation:cookiePolicy"), translationKey: "navigation:cookiePolicy" },
+  ];
+
+  // Global Offices data organized by region
+  const globalOffices = [
+    // North America
+    { code: 'us', name: 'United States', region: 'northAmerica' },
+    { code: 'ca', name: 'Canada', region: 'northAmerica' },
+    
+    // Europe
+    { code: 'gb', name: 'United Kingdom', region: 'europe' },
+    { code: 'fr', name: 'France', region: 'europe' },
+    { code: 'de', name: 'Germany', region: 'europe' },
+    { code: 'es', name: 'Spain', region: 'europe' },
+    { code: 'it', name: 'Italy', region: 'europe' },
+    { code: 'ie', name: 'Ireland', region: 'europe' },
+    
+    // Southeast Asia
+    { code: 'vn', name: 'Vietnam', region: 'southeastAsia' },
+    { code: 'ph', name: 'Philippines', region: 'southeastAsia' },
+    { code: 'my', name: 'Malaysia', region: 'southeastAsia' },
+    { code: 'th', name: 'Thailand', region: 'southeastAsia' },
+    { code: 'sg', name: 'Singapore', region: 'southeastAsia' },
+    { code: 'id', name: 'Indonesia', region: 'southeastAsia' },
+    { code: 'hk', name: 'Hong Kong', region: 'southeastAsia' },
   ];
 
   // Group offices by region
@@ -185,7 +174,7 @@ const Footer = () => {
     }
     acc[office.region].push(office);
     return acc;
-  }, {} as Record<string, CountryFlag[]>);
+  }, {});
 
   return (
     <footer className="bg-[#262626] text-white pt-12 pb-6">
@@ -204,49 +193,26 @@ const Footer = () => {
                 <div key={method.id} className="flex items-center space-x-3">
                   {renderContactIcon(method.type)}
                   <span className="text-[#E5E5E5] text-sm break-all">
-                    {method.value}
+                    {method.type === 'phone' ? (
+                      <a 
+                        href={`https://wa.me/${method.value.replace(/[^0-9]/g, '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="hover:text-white transition-colors"
+                      >
+                        {method.value}
+                      </a>
+                    ) : (
+                      method.value
+                    )}
                   </span>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Quick Links - 2 columns */}
-          <div className="lg:col-span-2">
-            <h3 className="text-lg font-medium mb-4 text-white">{t('common:quickLinks')}</h3>
-            <ul className="space-y-2">
-              {footerLinks.slice(0, 4).map((link) => (
-                <li key={link.href}>
-                  <Link 
-                    to={link.href} 
-                    className="text-[#E5E5E5] hover:text-white transition-colors text-sm"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Legal Links - 2 columns */}
-          <div className="lg:col-span-2">
-            <h3 className="text-lg font-medium mb-4 text-white">{t('common:legalLinks')}</h3>
-            <ul className="space-y-2">
-              {footerLinks.slice(4).map((link) => (
-                <li key={link.href}>
-                  <Link 
-                    to={link.href} 
-                    className="text-[#E5E5E5] hover:text-white transition-colors text-sm"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Global Offices - 3 columns */}
-          <div className="lg:col-span-3">
+          {/* Global Offices - 5 columns */}
+          <div className="lg:col-span-5">
             <h3 className="text-lg font-medium mb-4 text-white">Global Offices</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* North America */}
@@ -293,6 +259,23 @@ const Footer = () => {
             </div>
           </div>
 
+          {/* Navigation Links - 2 columns */}
+          <div className="lg:col-span-2">
+            <h3 className="text-lg font-medium mb-4 text-white">{t('navigation:navigation')}</h3>
+            <ul className="space-y-2">
+              {footerLinks.map((link) => (
+                <li key={link.href}>
+                  <Link 
+                    to={link.href} 
+                    className="text-[#E5E5E5] hover:text-white transition-colors text-sm"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
           {/* Language & Payment - 2 columns */}
           <div className="lg:col-span-2">
             <h3 className="text-lg font-medium mb-4 text-white">{t('common:language')}</h3>
@@ -307,10 +290,21 @@ const Footer = () => {
 
         <Separator className="my-6 bg-[#404040]" />
         
-        <div className="text-center text-[#808080] text-sm">
-          <p>
-            &copy; {new Date().getFullYear()} {siteConfig.name}. {t('common:allRightsReserved')}.
-          </p>
+        <div className="flex flex-col md:flex-row justify-between items-center text-[#808080] text-sm">
+          <div>
+            &copy; {new Date().getFullYear()} Mandarin (Hong Kong) International Limited. {t('common:allRightsReserved')}.
+          </div>
+          <div className="flex gap-4 mt-4 md:mt-0">
+            {legalLinks.map((link) => (
+              <Link 
+                key={link.href}
+                to={link.href}
+                className="text-[#808080] hover:text-white transition-colors"
+              >
+                {link.label}
+              </Link>
+            ))}
+          </div>
         </div>
       </div>
     </footer>

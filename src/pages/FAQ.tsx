@@ -22,7 +22,7 @@ import { getFaqsByLanguage } from "@/lib/services/faqService";
 const FAQ = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("all");
-  const [openIds, setOpenIds] = useState<Set<number>>(new Set());
+  const [openIds, setOpenIds] = useState(new Set());
   const { currentLanguage, t } = useTranslations();
 
   const {
@@ -55,7 +55,7 @@ const FAQ = () => {
   });
 
   // Group FAQs by category for display
-  const getCategoryTitle = (category: string) => {
+  const getCategoryTitle = (category) => {
     switch (category) {
       case "account":
         return t('common:accountIssues');
@@ -68,7 +68,7 @@ const FAQ = () => {
     }
   };
 
-  function handleToggle(id: number) {
+  function handleToggle(id) {
     setOpenIds(prev => {
       const next = new Set(prev);
       if (next.has(id)) {
@@ -85,7 +85,7 @@ const FAQ = () => {
   }
 
   // FAQ Card component to reduce repetition
-  const FAQCard = ({ faq }: { faq: any }) => (
+  const FAQCard = ({ faq }) => (
     <Collapsible key={faq.id} open={openIds.has(faq.id)}>
       <Card
         className={`cursor-pointer transition-all duration-300 group ${
@@ -144,25 +144,25 @@ const FAQ = () => {
             <TabsList className="w-full flex flex-wrap justify-start gap-2 bg-gray-50/90 p-3 border border-gray-200 rounded-2xl shadow-sm">
               <TabsTrigger 
                 value="all" 
-                className="flex-1 px-6 py-3.5 text-sm font-medium min-w-[120px] data-[state=active]:bg-[#595959] data-[state=active]:text-white"
+                className="flex-1 px-6 py-3.5 text-sm font-medium min-w-[120px] data-[state=active]:bg-[#262626] data-[state=active]:text-white"
               >
                 {t('common:allQuestions')}
               </TabsTrigger>
               <TabsTrigger 
                 value="account"
-                className="flex-1 px-6 py-3.5 text-sm font-medium min-w-[120px] data-[state=active]:bg-[#595959] data-[state=active]:text-white"
+                className="flex-1 px-6 py-3.5 text-sm font-medium min-w-[120px] data-[state=active]:bg-[#262626] data-[state=active]:text-white"
               >
                 {t('common:accountQuestions')}
               </TabsTrigger>
               <TabsTrigger 
                 value="course"
-                className="flex-1 px-6 py-3.5 text-sm font-medium min-w-[120px] data-[state=active]:bg-[#595959] data-[state=active]:text-white"
+                className="flex-1 px-6 py-3.5 text-sm font-medium min-w-[120px] data-[state=active]:bg-[#262626] data-[state=active]:text-white"
               >
                 {t('common:courseQuestions')}
               </TabsTrigger>
               <TabsTrigger 
                 value="payment"
-                className="flex-1 px-6 py-3.5 text-sm font-medium min-w-[120px] data-[state=active]:bg-[#595959] data-[state=active]:text-white"
+                className="flex-1 px-6 py-3.5 text-sm font-medium min-w-[120px] data-[state=active]:bg-[#262626] data-[state=active]:text-white"
               >
                 {t('common:paymentQuestions')}
               </TabsTrigger>
