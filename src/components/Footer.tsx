@@ -173,11 +173,11 @@ const Footer = () => {
                 </a>
               </div>
             )}
-            {siteConfig.address && (
+            {siteConfig.email && (
               <div className="flex items-start group">
                 <MapPin className="h-4 w-4 mr-2 mt-0.5 text-[#999999] group-hover:text-knowledge-primary transition-colors" />
                 <span className="text-sm text-[#BBBBBB] group-hover:text-white transition-colors">
-                  {siteConfig.address}
+                  {siteConfig.email}
                 </span>
               </div>
             )}
