@@ -4,7 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { getEnabledLanguages } from '@/lib/services/language/languageService';
 import { useQuery } from '@tanstack/react-query';
 import { Language, rtlLanguages, languageToCountryCode, defaultLanguages } from '@/lib/services/language/languageCore';
-import { initializeLanguageMigration } from '@/lib/services/language/migrationService';
+import { initializeLanguageMigration, checkLanguageMigrationStatus, runLanguageMigration, createLanguagesTableIfNeeded } from '@/lib/services/language/migrationService';
+import { toast } from 'sonner';
 
 interface LanguageContextType {
   currentLanguage: string;
@@ -15,6 +16,7 @@ interface LanguageContextType {
   reloadLanguages: () => void;
   getCountryCode: (languageCode: string) => string;
   isLanguageLoading: boolean;
+  forceMigration: () => Promise<void>;
 }
 
 const LanguageContext = createContext<LanguageContextType>({
@@ -25,7 +27,8 @@ const LanguageContext = createContext<LanguageContextType>({
   isRTL: false,
   reloadLanguages: () => {},
   getCountryCode: () => '',
-  isLanguageLoading: false
+  isLanguageLoading: false,
+  forceMigration: async () => {}
 });
 
 export const useLanguage = () => useContext(LanguageContext);
@@ -35,30 +38,84 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [currentLanguage, setCurrentLanguage] = useState(i18n.language || 'zh');
   const [isRTL, setIsRTL] = useState(rtlLanguages.includes(currentLanguage));
   const [isLanguageLoading, setIsLanguageLoading] = useState(true); // Track language resources loading
+  const [migrationAttempted, setMigrationAttempted] = useState(false);
   
   // Use React Query to get languages
   const { 
     data: languages, 
     isLoading, 
-    refetch: reloadLanguages 
+    refetch: reloadLanguages,
+    error: languageError
   } = useQuery({
     queryKey: ['languages'],
     queryFn: async () => {
       try {
         console.log('Fetching enabled languages');
-        // Run the migration check on first load
-        await initializeLanguageMigration();
+        
+        // Check if the migration has been run at least once
+        if (!migrationAttempted) {
+          setMigrationAttempted(true);
+          console.log('Running initial language migration check');
+          
+          // Create table if needed (last resort)
+          await createLanguagesTableIfNeeded();
+          
+          // Run the migration check
+          await initializeLanguageMigration();
+        }
         
         const enabledLanguages = await getEnabledLanguages();
         console.log('Fetched languages:', enabledLanguages);
+        
+        if (enabledLanguages.length <= 2) {
+          console.warn('Only found default languages, you may need to manually restore additional languages');
+        }
+        
         return enabledLanguages.length > 0 ? enabledLanguages : defaultLanguages;
       } catch (error) {
         console.error("Error loading languages:", error);
+        toast.error("Error loading languages. Using defaults.");
         return defaultLanguages;
       }
     },
     staleTime: 5 * 60 * 1000, // 5 minute cache
+    retry: 2  // Retry failed requests twice
   });
+
+  // Force migration manually
+  const forceMigration = async () => {
+    try {
+      setIsLanguageLoading(true);
+      toast.info("Restoring all languages...");
+      
+      // Run table creation if needed
+      await createLanguagesTableIfNeeded();
+      
+      // Run the migration (force it)
+      const result = await runLanguageMigration();
+      
+      if (result.success) {
+        toast.success(`Successfully restored ${result.added} languages`);
+        if (result.error) {
+          toast.warning("Some languages failed to restore", { 
+            description: result.error
+          });
+        }
+      } else {
+        toast.error("Failed to restore languages", { 
+          description: result.error 
+        });
+      }
+      
+      // Refresh data
+      await reloadLanguages();
+    } catch (error) {
+      console.error("Error in forceMigration:", error);
+      toast.error("An unexpected error occurred");
+    } finally {
+      setIsLanguageLoading(false);
+    }
+  };
 
   // Enhanced language changing function with loading state
   const changeLanguage = async (lang: string) => {
@@ -133,7 +190,8 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     isRTL,
     reloadLanguages,
     getCountryCode,
-    isLanguageLoading
+    isLanguageLoading,
+    forceMigration
   };
 
   // Show loading state or children based on language loading status

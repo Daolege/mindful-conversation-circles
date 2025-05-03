@@ -1,15 +1,44 @@
 
 import { Language, defaultLanguages } from './languageCore';
+import { selectFromTable } from '@/lib/services/typeSafeSupabase';
+import { getAllLanguages } from './languageManagement';
 
 // Get enabled languages only
 export async function getEnabledLanguages(): Promise<Language[]> {
   try {
-    // In a real app, this would fetch from an API or database
-    // For now we'll use the default languages
+    // Try to fetch enabled languages from the database first
+    const { data, error } = await selectFromTable(
+      'languages', 
+      '*',
+      { enabled: true }
+    );
+    
+    if (error) {
+      console.error("Error fetching enabled languages:", error);
+      return defaultLanguages.filter(lang => lang.enabled);
+    }
+    
+    // Check if we got data from the database
+    if (data && Array.isArray(data) && data.length > 0) {
+      console.log("Fetched enabled languages from DB:", data.length);
+      return data as Language[];
+    }
+    
+    // If no data from DB, try getting from getAllLanguages function
+    const allLanguages = await getAllLanguages();
+    const enabledLanguages = allLanguages.filter(lang => lang.enabled);
+    
+    if (enabledLanguages.length > 0) {
+      console.log("Using enabled languages from getAllLanguages:", enabledLanguages.length);
+      return enabledLanguages;
+    }
+    
+    // Fallback to default languages as last resort
+    console.log("Falling back to default languages");
     return defaultLanguages.filter(lang => lang.enabled);
   } catch (error) {
-    console.error("Error fetching languages:", error);
-    return defaultLanguages;
+    console.error("Error in getEnabledLanguages:", error);
+    return defaultLanguages.filter(lang => lang.enabled);
   }
 }
 

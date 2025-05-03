@@ -19,12 +19,47 @@ const supportedLanguages: Omit<Language, 'id'>[] = [
 ];
 
 /**
+ * Check if the languages table exists in the database
+ */
+export const checkLanguagesTableExists = async (): Promise<boolean> => {
+  try {
+    const { data, error } = await supabase
+      .from('languages')
+      .select('id')
+      .limit(1);
+    
+    if (error) {
+      console.error('Error checking languages table:', error);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Exception checking languages table:', error);
+    return false;
+  }
+};
+
+/**
  * Check if the migration has already been applied
  */
 export const checkLanguageMigrationStatus = async (): Promise<boolean> => {
   try {
+    // First check if the languages table exists
+    const tableExists = await checkLanguagesTableExists();
+    if (!tableExists) {
+      console.error('Languages table does not exist');
+      return false;
+    }
+    
     // Get all languages from the database
     const languages = await getAllLanguages();
+    
+    // Debug log
+    console.log('Migration check - found languages:', languages.length, 'languages');
+    if (languages.length > 0) {
+      console.log('Language codes:', languages.map(l => l.code).join(', '));
+    }
     
     // If we have more than just English and Chinese, assume migration is done
     if (languages.length > 2) {
@@ -60,23 +95,44 @@ export const runLanguageMigration = async (): Promise<{
   error?: string 
 }> => {
   try {
-    // First check if migration is needed
-    const isMigrated = await checkLanguageMigrationStatus();
-    if (isMigrated) {
-      return { success: true, added: 0 };
+    // First check if table exists
+    const tableExists = await checkLanguagesTableExists();
+    if (!tableExists) {
+      console.error('Languages table does not exist, cannot run migration');
+      return { 
+        success: false, 
+        added: 0, 
+        error: 'Languages table does not exist in the database.' 
+      };
     }
+    
+    // Get current languages to avoid duplicates
+    const currentLanguages = await getAllLanguages();
+    const existingLanguageCodes = new Set(currentLanguages.map(lang => lang.code));
+    
+    console.log('Current languages before migration:', existingLanguageCodes);
     
     let addedCount = 0;
     const failedLanguages: string[] = [];
     
-    // Try to add each language
+    // Try to add each language that doesn't already exist
     for (const lang of supportedLanguages) {
+      // Skip if language already exists
+      if (existingLanguageCodes.has(lang.code)) {
+        console.log(`Language ${lang.code} already exists, skipping.`);
+        continue;
+      }
+      
       try {
-        const result = await addLanguage(lang as Language);
+        console.log(`Adding language: ${lang.code}`);
+        const result = await addLanguage({
+          ...lang,
+          updated_at: new Date().toISOString()
+        });
         
         if (result.success) {
           addedCount++;
-          console.log(`Added language: ${lang.code}`);
+          console.log(`Successfully added language: ${lang.code}`);
         } else {
           failedLanguages.push(lang.code);
           console.error(`Failed to add language ${lang.code}:`, result.error);
@@ -89,6 +145,8 @@ export const runLanguageMigration = async (): Promise<{
     
     // Record migration status to prevent running it multiple times
     await recordMigration(addedCount, failedLanguages);
+    
+    console.log(`Migration completed. Added ${addedCount} languages. Failed: ${failedLanguages.length}`);
     
     return { 
       success: true, 
@@ -127,6 +185,8 @@ const recordMigration = async (addedCount: number, failedLanguages: string[]): P
     
     if (error) {
       console.error('Error recording migration status:', error);
+    } else {
+      console.log('Successfully recorded migration status');
     }
   } catch (err) {
     console.error('Failed to record migration status:', err);
@@ -139,6 +199,13 @@ const recordMigration = async (addedCount: number, failedLanguages: string[]): P
  */
 export const initializeLanguageMigration = async (): Promise<void> => {
   try {
+    // First check if languages table exists
+    const tableExists = await checkLanguagesTableExists();
+    if (!tableExists) {
+      console.warn('Languages table does not exist, skipping migration');
+      return;
+    }
+    
     const isMigrated = await checkLanguageMigrationStatus();
     
     // If not migrated yet, run the migration
@@ -148,11 +215,49 @@ export const initializeLanguageMigration = async (): Promise<void> => {
       
       if (result.success) {
         console.log(`Language migration completed. Added ${result.added} languages.`);
+        if (result.error) {
+          console.warn('Some languages failed:', result.error);
+        }
       } else {
         console.error('Language migration failed:', result.error);
       }
+    } else {
+      console.log('Language migration already completed');
     }
   } catch (error) {
     console.error('Error initializing language migration:', error);
+  }
+};
+
+/**
+ * Execute SQL to create the languages table if it doesn't exist
+ * This is a last resort if the table doesn't exist
+ */
+export const createLanguagesTableIfNeeded = async (): Promise<boolean> => {
+  try {
+    // Check if table exists first
+    const tableExists = await checkLanguagesTableExists();
+    if (tableExists) {
+      console.log('Languages table already exists');
+      return true;
+    }
+    
+    // Execute SQL to create table (using RPC for security)
+    const { error } = await supabase.rpc('create_languages_table_if_not_exists');
+    
+    if (error) {
+      console.error('Error creating languages table:', error);
+      return false;
+    }
+    
+    console.log('Successfully created languages table');
+    
+    // Insert default languages
+    await supabase.rpc('insert_default_languages');
+    
+    return true;
+  } catch (error) {
+    console.error('Error creating languages table:', error);
+    return false;
   }
 };
