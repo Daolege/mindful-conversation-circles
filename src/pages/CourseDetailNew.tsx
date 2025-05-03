@@ -55,7 +55,7 @@ const CourseDetailNew = () => {
   }
 
   // Convert CourseNew to CourseWithDetails to ensure proper typing
-  const courseData = {
+  const courseData: CourseWithDetails = {
     ...courseResponse.data,
     category: courseResponse.data.category || 'default',
     // Ensure all required properties for CourseWithDetails
@@ -63,7 +63,7 @@ const CourseDetailNew = () => {
     showRequirements: true,
     showTargetAudience: true,
     showMaterials: false,
-  } as CourseWithDetails;
+  };
 
   return (
     <>
