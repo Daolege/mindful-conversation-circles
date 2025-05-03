@@ -13,11 +13,15 @@ import { toast } from 'sonner';
 import { Search, Save, RefreshCw, FileText, BarChart2, Check, X, FileUp, FileDown, History, Type } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ImportExportTranslations } from './ImportExportTranslations';
-import { TranslationItem } from '@/lib/services/languageService';
+import { TranslationItem } from '@/lib/services/language/languageCore';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { TranslationStats } from './TranslationStats';
+import { BatchEditDialog } from './translation/BatchEditDialog';
+import { TranslationSuggestions } from './translation/TranslationSuggestions';
+import { TranslationConsistencyChecker } from './translation/TranslationConsistencyChecker';
+import { TranslationHistory } from './translation/TranslationHistory';
 
 const NAMESPACES = ['common', 'navigation', 'courses', 'auth', 'admin', 'checkout', 'dashboard', 'errors', 'orders', 'actions', 'home'];
 
@@ -35,8 +39,10 @@ export const TranslationEditor = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [selectedTranslations, setSelectedTranslations] = useState<string[]>([]);
   const [bulkEditMode, setBulkEditMode] = useState(false);
+  const [showBatchEditDialog, setShowBatchEditDialog] = useState(false);
   const [showMissingOnly, setShowMissingOnly] = useState(false);
   const [rtlPreview, setRtlPreview] = useState(false);
+  const [showTranslationHistory, setShowTranslationHistory] = useState(false);
   
   // Translation stats
   const [stats, setStats] = useState({
@@ -191,6 +197,44 @@ export const TranslationEditor = () => {
     return lang?.rtl || false;
   };
   
+  const handleToggleBulkEditMode = () => {
+    setBulkEditMode(!bulkEditMode);
+    
+    // Clear selection when disabling bulk edit mode
+    if (bulkEditMode) {
+      setSelectedTranslations([]);
+    }
+  };
+  
+  const openBatchEditDialog = () => {
+    if (selectedTranslations.length === 0) {
+      toast.error(t('admin:selectItemsFirst'));
+      return;
+    }
+    
+    setShowBatchEditDialog(true);
+  };
+  
+  // Get the selected translations items from keys
+  const getSelectedTranslationItems = (): TranslationItem[] => {
+    return translations.filter(t => selectedTranslations.includes(t.key));
+  };
+  
+  const handleViewHistory = (translationId: number) => {
+    if (!translationId) return;
+    setEditingTranslation(null);
+    setShowTranslationHistory(true);
+  };
+  
+  const handleSuggestionApplied = (suggestion: string) => {
+    if (!editingTranslation) return;
+    
+    setEditingTranslation({
+      ...editingTranslation,
+      value: suggestion
+    });
+  };
+  
   return (
     <Card className="w-full">
       <CardHeader>
@@ -203,6 +247,7 @@ export const TranslationEditor = () => {
         <Tabs defaultValue="edit">
           <TabsList className="mb-4">
             <TabsTrigger value="edit">{t('admin:editTranslations')}</TabsTrigger>
+            <TabsTrigger value="quality">{t('admin:qualityCheck')}</TabsTrigger>
             <TabsTrigger value="stats">{t('admin:translationStats')}</TabsTrigger>
             <TabsTrigger value="import">{t('admin:importExport')}</TabsTrigger>
           </TabsList>
@@ -277,8 +322,8 @@ export const TranslationEditor = () => {
               </div>
               
               {/* Action buttons */}
-              <div className="flex justify-between items-center">
-                <div className="flex items-center space-x-2">
+              <div className="flex flex-wrap justify-between items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <Button 
                     variant="outline" 
                     size="sm"
@@ -305,6 +350,34 @@ export const TranslationEditor = () => {
                     >
                       <Type className="h-4 w-4 mr-2 rtl-mirror" />
                       {t('admin:rtlPreview')}
+                    </Button>
+                  )}
+                  
+                  <Button
+                    variant={bulkEditMode ? "default" : "outline"}
+                    size="sm"
+                    onClick={handleToggleBulkEditMode}
+                  >
+                    {bulkEditMode ? (
+                      <>
+                        <Check className="h-4 w-4 mr-2" />
+                        {t('admin:bulkEditMode')}
+                      </>
+                    ) : (
+                      <>
+                        <FileText className="h-4 w-4 mr-2" />
+                        {t('admin:enableBulkEdit')}
+                      </>
+                    )}
+                  </Button>
+                  
+                  {bulkEditMode && selectedTranslations.length > 0 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={openBatchEditDialog}
+                    >
+                      {t('admin:batchEdit')} ({selectedTranslations.length})
                     </Button>
                   )}
                 </div>
@@ -355,13 +428,25 @@ export const TranslationEditor = () => {
                                 )}
                                 <Label className="font-mono text-xs">{translation.key}</Label>
                               </div>
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                onClick={() => handleEditTranslation(translation)}
-                              >
-                                {t('admin:edit')}
-                              </Button>
+                              <div className="flex space-x-2">
+                                {translation.id && (
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm"
+                                    onClick={() => handleViewHistory(translation.id)}
+                                    title={t('admin:viewHistory')}
+                                  >
+                                    <History className="h-4 w-4" />
+                                  </Button>
+                                )}
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={() => handleEditTranslation(translation)}
+                                >
+                                  {t('admin:edit')}
+                                </Button>
+                              </div>
                             </div>
                             <div className={`${
                               !translation.value || translation.value.trim() === '' 
@@ -423,6 +508,16 @@ export const TranslationEditor = () => {
                             dir={isLanguageRtl(editingTranslation.language_code) ? "rtl" : "ltr"}
                           />
                         )}
+                        
+                        {/* Translation suggestions */}
+                        <TranslationSuggestions 
+                          currentKey={editingTranslation.key}
+                          currentValue={editingTranslation.value}
+                          languageCode={editingTranslation.language_code}
+                          namespace={editingTranslation.namespace}
+                          allTranslations={translations}
+                          onApplySuggestion={handleSuggestionApplied}
+                        />
                       </div>
                     </div>
                     
@@ -447,6 +542,14 @@ export const TranslationEditor = () => {
             </div>
           </TabsContent>
           
+          <TabsContent value="quality">
+            <TranslationConsistencyChecker 
+              languageCode={selectedLanguage}
+              translations={translations}
+              onFixApplied={loadTranslations}
+            />
+          </TabsContent>
+          
           <TabsContent value="stats">
             <TranslationStats />
           </TabsContent>
@@ -456,6 +559,30 @@ export const TranslationEditor = () => {
           </TabsContent>
         </Tabs>
       </CardContent>
+      
+      {/* Batch edit dialog */}
+      {showBatchEditDialog && (
+        <BatchEditDialog 
+          open={showBatchEditDialog}
+          onClose={() => setShowBatchEditDialog(false)}
+          selectedTranslations={getSelectedTranslationItems()}
+          onBatchUpdateComplete={() => {
+            loadTranslations();
+            setSelectedTranslations([]);
+          }}
+        />
+      )}
+      
+      {/* Translation history dialog */}
+      {showTranslationHistory && (
+        <TranslationHistory
+          open={showTranslationHistory}
+          onClose={() => setShowTranslationHistory(false)}
+          translationId={editingTranslation?.id || 0}
+          onHistoryChange={loadTranslations}
+        />
+      )}
     </Card>
   );
 };
+

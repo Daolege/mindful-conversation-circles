@@ -79,3 +79,29 @@
   margin-right: 0;
   margin-left: 0.5rem;
 }
+
+/* RTL for translation editor */
+[dir="rtl"] .edit-area {
+  text-align: right;
+}
+
+[dir="rtl"] .translation-suggestions .suggestion-card {
+  text-align: right;
+}
+
+[dir="rtl"] .consistency-checker .issue-card {
+  text-align: right;
+}
+
+[dir="rtl"] .batch-edit-dialog .dialog-content {
+  text-align: right;
+}
+
+/* RTL for translation history */
+[dir="rtl"] .translation-history-dialog .history-item {
+  text-align: right;
+}
+
+[dir="rtl"] .translation-history-dialog .version-info {
+  direction: rtl;
+}

@@ -8,6 +8,7 @@ import {
 } from '@/lib/services/typeSafeSupabase';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { TranslationItem } from '@/lib/services/language/languageCore';
+import { batchUpdateTranslations } from '@/lib/services/language/translationBatchService';
 
 export const useTranslations = () => {
   const { t: originalT, i18n } = useTranslation(['common', 'navigation', 'courses', 'auth', 'admin', 'checkout', 'dashboard', 'errors', 'orders', 'actions', 'home']);
@@ -228,6 +229,21 @@ export const useTranslations = () => {
     }
   };
   
+  // 批量更新翻译
+  const batchUpdate = async (translations: TranslationItem[]) => {
+    try {
+      const result = await batchUpdateTranslations(translations);
+      return result;
+    } catch (error) {
+      console.error('Error batch updating translations:', error);
+      return {
+        success: false,
+        count: 0,
+        error: error instanceof Error ? error : new Error('Unknown error')
+      };
+    }
+  };
+  
   return {
     t,
     i18n,
@@ -237,6 +253,7 @@ export const useTranslations = () => {
     updateTranslation,
     getTranslations,
     refreshTranslations,
-    importTranslations
+    importTranslations,
+    batchUpdate
   };
 };
