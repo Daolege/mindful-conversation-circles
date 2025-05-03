@@ -61,25 +61,41 @@ export const useTranslations = () => {
       // Check if existingTranslation is array and has valid data
       if (existingTranslation && 
           Array.isArray(existingTranslation) && 
-          existingTranslation.length > 0 && 
-          existingTranslation[0] !== null &&
-          typeof existingTranslation[0] === 'object' &&
-          'id' in existingTranslation[0] &&
-          existingTranslation[0]?.id !== null) {
+          existingTranslation.length > 0) {
         
-        // 更新已有翻译
-        const translationId = existingTranslation[0]?.id;
-        if (translationId === null || translationId === undefined) {
-          throw new Error('Translation ID is null');
+        const translationData = existingTranslation[0];
+        if (translationData !== null && 
+            typeof translationData === 'object' && 
+            'id' in translationData && 
+            translationData.id !== null && 
+            translationData.id !== undefined) {
+            
+          // 更新已有翻译
+          const translationId = translationData.id;
+          
+          const { error: updateError } = await updateTable(
+            'translations',
+            { value, updated_at: new Date().toISOString() },
+            { id: translationId }
+          );
+          
+          if (updateError) throw updateError;
+        } else {
+          // If we have a record but no valid ID, treat as new translation
+          const { error: insertError } = await insertIntoTable(
+            'translations',
+            {
+              language_code: language,
+              namespace,
+              key,
+              value,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            }
+          );
+          
+          if (insertError) throw insertError;
         }
-        
-        const { error: updateError } = await updateTable(
-          'translations',
-          { value, updated_at: new Date().toISOString() },
-          { id: translationId }
-        );
-        
-        if (updateError) throw updateError;
       } else {
         // 添加新翻译
         const { error: insertError } = await insertIntoTable(

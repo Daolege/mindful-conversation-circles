@@ -155,14 +155,23 @@ export async function deleteLanguage(languageId: number): Promise<{ success: boo
       return { success: false, error: fetchError as unknown as Error };
     }
     
-    if (Array.isArray(language) && language.length > 0 && language[0] !== null && 
-        typeof language[0] === 'object' && 'code' in language[0] && language[0]?.code !== null) {
-      const langCode = language[0]?.code as string | null;
-      if (langCode === 'en' || langCode === 'zh') {
-        return { 
-          success: false, 
-          error: new Error('Cannot delete default languages (English or Chinese)')
-        };
+    // Check if language data exists and has a code property
+    if (Array.isArray(language) && language.length > 0) {
+      const langData = language[0];
+      
+      if (langData !== null && 
+          typeof langData === 'object' && 
+          'code' in langData && 
+          typeof langData.code === 'string') {
+        
+        const langCode = langData.code;
+        
+        if (langCode === 'en' || langCode === 'zh') {
+          return { 
+            success: false, 
+            error: new Error('Cannot delete default languages (English or Chinese)')
+          };
+        }
       }
     }
     
