@@ -43,8 +43,8 @@ export const getCourseNewById = async (id: number | string): Promise<{ data: Cou
       ...courseData,
       // Cast status to match the required type
       status: courseData.status as 'published' | 'draft' | 'archived',
-      // Ensure language property exists (use category as fallback if language doesn't exist)
-      language: courseData.language || courseData.category || 'zh',
+      // Ensure language property exists by using type assertion with 'as any' to access potential language property
+      language: (courseData as any).language || courseData.category || 'zh',
       category: courseData.category || 'zh', // Ensure backward compatibility
       sections: courseData.course_sections?.map(section => ({
         ...section,
