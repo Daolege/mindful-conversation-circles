@@ -66,6 +66,20 @@ interface TranslationEntry {
   value: string;
 }
 
+// Type guard for translation entries
+const isValidTranslationEntry = (item: any): item is TranslationEntry => {
+  if (item === null || typeof item !== 'object') {
+    return false;
+  }
+  
+  return (
+    'key' in item && 
+    typeof item.key === 'string' && 
+    'value' in item && 
+    typeof item.value === 'string'
+  );
+};
+
 // 自定义后端，支持从数据库加载翻译
 i18n.use({
   type: 'backend',
@@ -82,28 +96,12 @@ i18n.use({
       // 转换为键值对
       if (!error && data && Array.isArray(data) && data.length > 0) {
         const translations = data.reduce((acc: Record<string, string>, item) => {
-          // Null check first
-          if (!item) {
+          // Skip if item is null or not valid
+          if (!isValidTranslationEntry(item)) {
             return acc;
           }
           
-          // Type check before accessing properties
-          if (typeof item !== 'object') {
-            return acc;
-          }
-          
-          // Check if required properties exist
-          if (!('key' in item) || !('value' in item)) {
-            return acc;
-          }
-          
-          // Check if key and value are not null and are strings
-          if (!item || item.key === null || item.value === null ||
-              typeof item.key !== 'string' || typeof item.value !== 'string') {
-            return acc;
-          }
-          
-          // Now it's safe to add to the accumulator
+          // Now we know item has key and value properties
           acc[item.key] = item.value;
           return acc;
         }, {} as Record<string, string>);

@@ -2,6 +2,20 @@
 import { selectFromTable } from "@/lib/services/typeSafeSupabase";
 import { Language, defaultLanguages } from "./languageCore";
 
+// Type guard for language item
+const isValidLanguage = (item: any): item is Language => {
+  if (item === null || typeof item !== 'object') {
+    return false;
+  }
+  
+  return (
+    'id' in item && 
+    typeof item.id === 'number' &&
+    'code' in item && 
+    typeof item.code === 'string'
+  );
+};
+
 // 获取所有支持的语言
 export async function getAllLanguages(): Promise<Language[]> {
   try {
@@ -17,31 +31,10 @@ export async function getAllLanguages(): Promise<Language[]> {
     
     // Check if data is valid
     if (Array.isArray(data) && data.length > 0) {
-      const validLanguages = data.filter((item): item is NonNullable<typeof item> => {
-        // First check if item is null
-        if (!item) {
-          return false;
-        }
-        
-        // Now we know item is not null, we can safely check its properties
-        // Check each required property
-        if (typeof item !== 'object') {
-          return false;
-        }
-        
-        if (!('id' in item) || !item.id) {
-          return false;
-        }
-        
-        if (!('code' in item) || !item.code) {
-          return false;
-        }
-        
-        return true;
-      });
+      const validLanguages = data.filter(isValidLanguage);
       
       if (validLanguages.length > 0) {
-        return validLanguages as unknown as Language[];
+        return validLanguages;
       }
     }
     
@@ -68,31 +61,10 @@ export async function getEnabledLanguages(): Promise<Language[]> {
     
     // Check if data is valid
     if (Array.isArray(data) && data.length > 0) {
-      const validLanguages = data.filter((item): item is NonNullable<typeof item> => {
-        // First check if item is null
-        if (!item) {
-          return false;
-        }
-        
-        // Now we know item is not null, we can safely check its properties
-        // Check each required property
-        if (typeof item !== 'object') {
-          return false;
-        }
-        
-        if (!('id' in item) || !item.id) {
-          return false;
-        }
-        
-        if (!('code' in item) || !item.code) {
-          return false;
-        }
-        
-        return true;
-      });
+      const validLanguages = data.filter(isValidLanguage);
       
       if (validLanguages.length > 0) {
-        return validLanguages as unknown as Language[];
+        return validLanguages;
       }
     }
     
@@ -174,6 +146,14 @@ export async function toggleLanguageStatus(languageId: number, enabled: boolean)
   }
 }
 
+// Type guard for language code
+const isValidLanguageCode = (langData: any): langData is { code: string } => {
+  return langData !== null && 
+         typeof langData === 'object' && 
+         'code' in langData && 
+         typeof langData.code === 'string';
+};
+
 // 删除语言
 export async function deleteLanguage(languageId: number): Promise<{ success: boolean; error?: Error }> {
   try {
@@ -192,26 +172,7 @@ export async function deleteLanguage(languageId: number): Promise<{ success: boo
     if (Array.isArray(language) && language.length > 0) {
       const langData = language[0];
       
-      // Strict null check for langData
-      if (!langData) {
-        return { success: false, error: new Error('Invalid language data received') };
-      }
-      
-      // Type check for langData
-      if (typeof langData !== 'object') {
-        return { success: false, error: new Error('Invalid language data type') };
-      }
-      
-      // Check if code property exists
-      if (!('code' in langData)) {
-        return { success: false, error: new Error('Language data has no code property') };
-      }
-      
-      // Ensure langData and langData.code are not null before accessing
-      if (langData && 
-          'code' in langData && 
-          langData.code && 
-          typeof langData.code === 'string') {
+      if (isValidLanguageCode(langData)) {
         const langCode = langData.code;
         
         if (langCode === 'en' || langCode === 'zh') {

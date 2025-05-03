@@ -41,6 +41,14 @@ export const useTranslations = () => {
     return key;
   };
   
+  // Helper function to check if an object is a valid translation record
+  const isValidTranslationRecord = (item: any): item is { id: number } => {
+    return item !== null && 
+           typeof item === 'object' && 
+           'id' in item && 
+           typeof item.id === 'number';
+  };
+  
   // 更新或添加单个翻译项
   const updateTranslation = async (
     language: string, 
@@ -65,9 +73,8 @@ export const useTranslations = () => {
         
         const translationData = existingTranslation[0];
         
-        // Add null check before accessing translationData properties
-        if (!translationData) {
-          // If translationData is null, treat as new translation
+        // If translationData is null or not valid, treat as new translation
+        if (translationData === null || typeof translationData !== 'object' || !('id' in translationData)) {
           const { error: insertError } = await insertIntoTable(
             'translations',
             {
@@ -84,12 +91,8 @@ export const useTranslations = () => {
           return { success: true };
         }
         
-        // Safe type check before accessing translationData properties
-        if (typeof translationData === 'object' && 
-            translationData !== null &&
-            'id' in translationData && 
-            typeof translationData.id === 'number') {
-            
+        // We've verified translationData has an id property
+        if (isValidTranslationRecord(translationData)) {
           // 更新已有翻译
           const translationId = translationData.id;
           
@@ -146,6 +149,28 @@ export const useTranslations = () => {
     }
   };
 
+  // Type guard for translation item
+  const isValidTranslation = (item: any): item is TranslationItem => {
+    if (item === null) {
+      return false;
+    }
+    
+    if (typeof item !== 'object') {
+      return false;
+    }
+    
+    return (
+      'language_code' in item && 
+      item.language_code !== null &&
+      'namespace' in item && 
+      item.namespace !== null &&
+      'key' in item && 
+      item.key !== null &&
+      'value' in item && 
+      item.value !== null
+    );
+  };
+
   // 获取指定语言和命名空间的所有翻译
   const getTranslations = async (language: string, namespace: string) => {
     try {
@@ -158,40 +183,10 @@ export const useTranslations = () => {
       if (error) throw error;
       
       // Ensure we return a valid array of TranslationItem objects
-      const validItems = Array.isArray(data) ? 
-        data.filter((item): item is NonNullable<typeof item> => {
-          // First check if item is null
-          if (item === null) {
-            return false;
-          }
-          
-          // Now item is definitely not null, we can check its properties
-          // Explicit check for each property
-          if (typeof item !== 'object') {
-            return false;
-          }
-          
-          if (!item || !('language_code' in item) || item.language_code === null) {
-            return false;
-          }
-          
-          if (!item || !('namespace' in item) || item.namespace === null) {
-            return false;
-          }
-          
-          if (!item || !('key' in item) || item.key === null) {
-            return false;
-          }
-          
-          if (!item || !('value' in item) || item.value === null) {
-            return false;
-          }
-          
-          return true;
-        }) : [];
+      const validItems = Array.isArray(data) ? data.filter(isValidTranslation) : [];
       
       // We've filtered out null items, safe to type assert now
-      const translations = validItems as unknown as TranslationItem[];
+      const translations = validItems as TranslationItem[];
       
       return { 
         success: true, 

@@ -40,43 +40,33 @@ export async function getTranslationsByLanguage(languageCode: string): Promise<T
       return [];
     }
     
-    if (Array.isArray(data)) {
-      const validTranslations = data.filter((item): item is NonNullable<typeof item> => {
-        // First check if item is null
-        if (!item) {
-          return false;
-        }
-        
-        // Now that we know item is not null, check its properties
-        // Check object type
-        if (typeof item !== 'object') {
-          return false;
-        }
-        
-        // Check all required properties exist and are not null
-        if (!('language_code' in item) || !item.language_code) {
-          return false;
-        }
-        
-        if (!('namespace' in item) || !item.namespace) {
-          return false;
-        }
-        
-        if (!('key' in item) || !item.key) {
-          return false;
-        }
-        
-        if (!('value' in item) || !item.value) {
-          return false;
-        }
-        
-        return true;
-      });
-      
-      return validTranslations as unknown as TranslationItem[];
+    // Early return if data is not an array or empty
+    if (!Array.isArray(data) || data.length === 0) {
+      return [];
     }
     
-    return [];
+    // Type guard function to check if item is a valid translation
+    const isValidTranslation = (item: any): item is TranslationItem => {
+      if (item === null || typeof item !== 'object') {
+        return false;
+      }
+      
+      return (
+        'language_code' in item && 
+        typeof item.language_code === 'string' && 
+        'namespace' in item && 
+        typeof item.namespace === 'string' && 
+        'key' in item && 
+        typeof item.key === 'string' && 
+        'value' in item && 
+        typeof item.value === 'string'
+      );
+    };
+    
+    // Filter and map valid translations
+    const validTranslations = data.filter(isValidTranslation);
+    
+    return validTranslations;
   } catch (error) {
     console.error('Unexpected error in getTranslationsByLanguage:', error);
     return [];
