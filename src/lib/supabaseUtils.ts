@@ -382,11 +382,12 @@ export const exchangeRatesService = {
           console.log("Using old exchange_rates structure with cny_to_usd field, converting");
           return newStructureData.map(item => ({
             id: item.id,
-            rate: item.cny_to_usd,
+            rate: item.cny_to_usd as number,
             from_currency: 'CNY',
             to_currency: 'USD',
             created_at: item.created_at,
-            updated_at: item.updated_at
+            updated_at: item.updated_at,
+            cny_to_usd: item.cny_to_usd as number
           })) as ExchangeRate[];
         }
       }
