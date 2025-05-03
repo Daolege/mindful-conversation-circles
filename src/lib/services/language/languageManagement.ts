@@ -96,10 +96,10 @@ export async function addLanguage(language: Omit<Language, 'id'>): Promise<{ suc
     }
     
     // Fix TypeScript error with proper type assertions and checks
-    if (data !== null) {
-      // Check if data is an array first to avoid "length" property error
+    if (data !== null && data !== undefined) {
+      // Check if data is an array with proper type assertion
       if (Array.isArray(data)) {
-        // Now TypeScript knows data is an array and can access length property
+        // Now TypeScript knows data is an array and can safely access length property
         if (data.length > 0) {
           const firstItem = data[0];
           if (firstItem) {
