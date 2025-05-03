@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import i18n from "@/i18n";
 import { Tables } from "@/lib/supabase/database.types";
@@ -48,7 +49,7 @@ export async function getAllLanguages(): Promise<Language[]> {
     // Check if data is valid
     if (Array.isArray(data) && data.length > 0) {
       const validLanguages = data.filter(item => 
-        item !== null && 
+        item && 
         typeof item === 'object' && 
         'id' in item && 
         'code' in item
@@ -83,7 +84,7 @@ export async function getEnabledLanguages(): Promise<Language[]> {
     // Check if data is valid
     if (Array.isArray(data) && data.length > 0) {
       const validLanguages = data.filter(item => 
-        item !== null && 
+        item && 
         typeof item === 'object' && 
         'id' in item && 
         'code' in item
@@ -114,7 +115,7 @@ export async function addLanguage(language: Omit<Language, 'id'>): Promise<{ suc
       return { success: false, error: error as unknown as Error };
     }
     
-    if (Array.isArray(data) && data.length > 0 && typeof data[0] === 'object') {
+    if (Array.isArray(data) && data.length > 0 && data[0] && typeof data[0] === 'object') {
       return { success: true, data: data[0] as Language };
     }
     
@@ -185,7 +186,7 @@ export async function deleteLanguage(languageId: number): Promise<{ success: boo
       return { success: false, error: fetchError as unknown as Error };
     }
     
-    if (Array.isArray(language) && language.length > 0 && language[0] !== null && typeof language[0] === 'object' && 'code' in language[0]) {
+    if (Array.isArray(language) && language.length > 0 && language[0] && typeof language[0] === 'object' && 'code' in language[0]) {
       const langCode = language[0].code;
       if (langCode === 'en' || langCode === 'zh') {
         return { 
@@ -253,7 +254,7 @@ export async function getTranslationsByLanguage(languageCode: string): Promise<T
     
     if (Array.isArray(data)) {
       return data.filter(item => 
-        item !== null &&
+        item &&
         typeof item === 'object' &&
         'language_code' in item &&
         'namespace' in item &&

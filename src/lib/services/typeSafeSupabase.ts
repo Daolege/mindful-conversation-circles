@@ -14,15 +14,16 @@ export async function selectFromTable<T = any>(
     order?: { column: string; ascending: boolean };
   }
 ) {
+  // Use type assertion for the dynamic table name
   let query = supabase
-    .from(table)
+    .from(table as any)
     .select(columns);
 
   // Apply filters if provided
   if (filter) {
     Object.entries(filter).forEach(([key, value]) => {
       // Type assertion to handle dynamic query building
-      query = query.eq(key, value) as any;
+      query = (query as any).eq(key, value);
     });
   }
 
@@ -47,7 +48,7 @@ export async function insertIntoTable<T = any>(
   data: Record<string, any> | Record<string, any>[]
 ) {
   return supabase
-    .from(table)
+    .from(table as any)
     .insert(data);
 }
 
@@ -60,12 +61,12 @@ export async function updateTable<T = any>(
   filter: Record<string, any>
 ) {
   let query = supabase
-    .from(table)
+    .from(table as any)
     .update(data);
 
   // Apply filters
   Object.entries(filter).forEach(([key, value]) => {
-    query = query.eq(key, value) as any;
+    query = (query as any).eq(key, value);
   });
 
   return query;
@@ -79,12 +80,12 @@ export async function deleteFromTable(
   filter: Record<string, any>
 ) {
   let query = supabase
-    .from(table)
+    .from(table as any)
     .delete();
 
   // Apply filters
   Object.entries(filter).forEach(([key, value]) => {
-    query = query.eq(key, value) as any;
+    query = (query as any).eq(key, value);
   });
 
   return query;
@@ -97,7 +98,6 @@ export async function callRpcFunction(
   functionName: string,
   params?: Record<string, any>
 ) {
-  // Use type assertion to allow any string function name
   return supabase
     .rpc(functionName as any, params || {});
 }

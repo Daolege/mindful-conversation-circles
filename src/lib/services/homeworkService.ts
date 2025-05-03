@@ -6,6 +6,7 @@ interface HomeworkResult {
   success: boolean;
   data?: any[];
   error?: Error;
+  count?: number; // Add count property for pagination and stats
 }
 
 // Diagnose issues with the homework table
@@ -26,23 +27,25 @@ export const debugHomeworkTable = async (): Promise<HomeworkResult> => {
 // Get homework by lecture ID
 export const getHomeworksByLectureId = async (lectureId: string): Promise<HomeworkResult> => {
   try {
-    const { data, error } = await supabase
+    const { data, error, count } = await supabase
       .from('homework')
-      .select('*')
+      .select('*', { count: 'exact' })
       .eq('lecture_id', lectureId);
     
     if (error) throw error;
     
     return {
       success: true,
-      data: data || []
+      data: data || [],
+      count: count || 0
     };
   } catch (error) {
     console.error("Error fetching homework:", error);
     return {
       success: false,
       error: error instanceof Error ? error : new Error("Unknown error"),
-      data: []
+      data: [],
+      count: 0
     };
   }
 };

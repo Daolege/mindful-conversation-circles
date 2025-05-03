@@ -86,12 +86,14 @@ export default function OrderItem({
   // Extract the order from the orderData structure
   const order = orderData.data;
   
-  const statusColor = {
-    [OrderStatus.COMPLETED]: "bg-green-500",
-    [OrderStatus.PENDING]: "bg-yellow-500",
-    [OrderStatus.FAILED]: "bg-red-500",
-    [OrderStatus.REFUNDED]: "bg-gray-500",
-    [OrderStatus.CANCELLED]: "bg-gray-500",
+  // Map for status colors using string literals instead of enum values
+  const statusColor: Record<string, string> = {
+    completed: "bg-green-500",
+    pending: "bg-yellow-500",
+    processing: "bg-yellow-500",
+    failed: "bg-red-500",
+    refunded: "bg-gray-500",
+    cancelled: "bg-gray-500",
   };
 
   return (
@@ -99,9 +101,9 @@ export default function OrderItem({
       <CardHeader className="pb-3 bg-gray-50">
         <div className="flex flex-wrap justify-between items-center">
           <CardTitle className="text-base flex flex-wrap items-center gap-2">
-            <span>{tCustom('orders:order')}: #{order.order_number}</span>
-            <Badge className={statusColor[order.status as OrderStatus]}>
-              {tCustom(`orders:${order.status.toLowerCase()}`)}
+            <span>{tCustom('orders:order')}: #{order.order_number || order.id.substring(0, 8)}</span>
+            <Badge className={statusColor[order.status?.toLowerCase() || 'pending']}>
+              {tCustom(`orders:${order.status?.toLowerCase() || 'pending'}`)}
             </Badge>
           </CardTitle>
           <span className="text-sm text-gray-500">
@@ -111,7 +113,7 @@ export default function OrderItem({
       </CardHeader>
       
       <CardContent className="pt-4">
-        <OrderLineItems items={order.items} t={t} />
+        {order.items && <OrderLineItems items={order.items} t={t} />}
         
         <Separator className="my-4" />
         
@@ -142,7 +144,7 @@ export default function OrderItem({
           )}
           
           {showRefundButton && 
-           order.status === OrderStatus.COMPLETED && 
+           order.status === 'completed' && 
            onRefund && (
             <Button 
               variant="destructive" 
