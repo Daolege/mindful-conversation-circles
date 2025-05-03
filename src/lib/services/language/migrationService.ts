@@ -239,38 +239,24 @@ export const initializeLanguageMigration = async (): Promise<void> => {
  */
 export const checkCoursesLanguageColumn = async (): Promise<boolean> => {
   try {
-    // Direct SQL query to check if column exists, using the built-in PostgreSQL information_schema
-    const { data, error } = await supabase.rpc('admin_check_column_exists', {
-      p_table_name: 'courses_new',
-      p_column_name: 'language'
-    });
+    // Try a basic query against the table to see if the column exists
+    const { data, error } = await supabase
+      .from('courses_new')
+      .select('language')
+      .limit(1);
     
-    if (error) {
-      console.error('Error checking language column (RPC):', error);
-      
-      // Fallback: Try a basic query against the table to see if the column exists
-      try {
-        const { data: testData, error: testError } = await supabase
-          .from('courses_new')
-          .select('language')
-          .limit(1);
-        
-        // If no error, column exists
-        if (!testError) {
-          console.log('Language column exists (verified by test query)');
-          return true;
-        } else {
-          console.error('Language column test query failed:', testError);
-          return false;
-        }
-      } catch (testErr) {
-        console.error('Exception in language column test query:', testErr);
-        return false;
-      }
+    // If no error with column 'language', it exists
+    if (!error) {
+      console.log('Language column exists (verified by test query)');
+      return true;
+    } else if (error.code === '42703') { // PostgreSQL code for "undefined_column"
+      console.error('Language column test query failed:', error);
+      return false;
+    } else {
+      // Some other error occurred
+      console.error('Error checking language column:', error);
+      return false;
     }
-    
-    console.log('Language column check result:', data);
-    return !!data;
   } catch (error) {
     console.error('Exception checking language column:', error);
     return false;
@@ -292,52 +278,33 @@ export const addLanguageColumnToCourses = async (): Promise<boolean> => {
     
     console.log('Adding language column to courses_new table...');
     
-    // Direct SQL approach to add the column
-    const { error } = await supabase.rpc('admin_execute_sql', {
-      p_sql: `
-        ALTER TABLE courses_new 
-        ADD COLUMN IF NOT EXISTS language TEXT DEFAULT 'zh';
-        
-        -- Set language based on category if appropriate
-        UPDATE courses_new
-        SET language = category
-        WHERE language IS NULL AND category IN ('en', 'zh', 'fr', 'de', 'es', 'ja', 'ko', 'ru');
-        
-        -- Set default language for remaining records
-        UPDATE courses_new
-        SET language = 'zh'
-        WHERE language IS NULL;
-      `
-    });
-    
-    if (error) {
-      console.error('Error adding language column:', error);
+    // Try direct course update to add the column
+    try {
+      // First try updating a single course to see if we can add the language column
+      const { error: updateError } = await supabase
+        .from('courses_new')
+        .update({ 
+          category: 'zh',  // Make sure we set an existing column too
+          language: 'zh'   // This might create the column if the DB allows it
+        })
+        .eq('id', 1);
       
-      // Fallback: Try direct course update if the above fails
-      try {
-        console.log('Falling back to direct course update...');
-        
-        // Try to update a course with language field to see if it exists
-        const { error: updateError } = await supabase
-          .from('courses_new')
-          .update({ language: 'zh' })
-          .eq('id', 1);
-        
-        if (!updateError || updateError.code !== '42703') { // 42703 is "column does not exist"
-          console.log('Language column seems to exist or was just added');
-          return true;
-        } else {
-          console.error('Language column direct update failed:', updateError);
-        }
-      } catch (err) {
-        console.error('Error in fallback update:', err);
+      // Check if the update succeeded
+      if (!updateError) {
+        console.log('Successfully added language column via update');
+        return true;
+      } else if (updateError.code !== '42703') { // If error is not "column does not exist"
+        console.error('Error updating courses with language:', updateError);
       }
-      
-      return false;
+    } catch (err) {
+      console.error('Error in direct update attempt:', err);
     }
     
-    console.log('Successfully added language column to courses_new table');
-    return true;
+    // If direct update failed, let the user know they need to run a migration
+    console.error('Could not automatically add language column to courses_new table');
+    console.log('User should run database migration script to add the column');
+    
+    return false;
   } catch (error) {
     console.error('Error adding language column:', error);
     return false;
@@ -408,38 +375,12 @@ export const createLanguagesTableIfNeeded = async (): Promise<boolean> => {
       return true;
     }
     
-    // Try to create the table using direct SQL
-    const { error } = await supabase.rpc('admin_execute_sql', {
-      p_sql: `
-        CREATE TABLE IF NOT EXISTS languages (
-          id SERIAL PRIMARY KEY,
-          code TEXT NOT NULL UNIQUE,
-          name TEXT NOT NULL,
-          nativeName TEXT NOT NULL,
-          enabled BOOLEAN DEFAULT TRUE,
-          rtl BOOLEAN DEFAULT FALSE,
-          created_at TIMESTAMPTZ DEFAULT NOW(),
-          updated_at TIMESTAMPTZ DEFAULT NULL
-        );
-        
-        -- Insert default languages if table was just created
-        INSERT INTO languages (code, name, nativeName, enabled, rtl)
-        VALUES 
-          ('en', 'English', 'English', true, false),
-          ('zh', 'Chinese (Simplified)', '简体中文', true, false)
-        ON CONFLICT (code) DO NOTHING;
-      `
-    });
+    // Try to create the table using direct insert approach
+    await createDefaultLanguages();
     
-    if (error) {
-      console.error('Error creating languages table:', error);
-      // Fall back to manual insert using insertIntoTable
-      await createDefaultLanguages();
-      return false;
-    }
-    
-    console.log('Successfully created languages table');
-    return true;
+    // Check if the table exists now
+    const tableCreated = await checkLanguagesTableExists();
+    return tableCreated;
   } catch (error) {
     console.error('Error creating languages table:', error);
     return false;

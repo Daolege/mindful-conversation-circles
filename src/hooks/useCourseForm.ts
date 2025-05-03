@@ -52,8 +52,11 @@ export function useCourseForm(initialData?: Partial<CourseWithDetails>) {
 
   // Log initial data to help with debugging
   console.log("[useCourseForm] Initial data:", initialData);
-  console.log("[useCourseForm] Initial language value:", initialData?.language);
+  console.log("[useCourseForm] Initial language value:", initialData?.language || initialData?.category);
   console.log("[useCourseForm] Initial category value:", initialData?.category);
+
+  // For backward compatibility, use either language or category
+  const initialLanguage = initialData?.language || initialData?.category || 'zh';
 
   const defaultValues: CourseWithDetails = {
     id: initialData?.id ?? 0,
@@ -61,8 +64,8 @@ export function useCourseForm(initialData?: Partial<CourseWithDetails>) {
     description: initialData?.description ?? '',
     price: initialData?.price ?? 0,
     currency: initialData?.currency ?? 'cny',
-    language: initialData?.language ?? 'zh', // Ensure language is set with a default
-    category: initialData?.category ?? initialData?.language ?? 'zh', // Use language as fallback for category
+    language: initialLanguage, // Use detected language value
+    category: initialData?.category ?? initialLanguage, // Keep category synced with language for backward compatibility
     featured: initialData?.featured ?? false,
     display_order: initialData?.display_order ?? 0,
     status: initialData?.status ?? 'draft',
@@ -94,6 +97,13 @@ export function useCourseForm(initialData?: Partial<CourseWithDetails>) {
       // Log submission values for debugging
       console.log("[useCourseForm] Form values being submitted:", values);
       console.log("[useCourseForm] Language being submitted:", values.language);
+      console.log("[useCourseForm] Category being submitted:", values.category);
+      
+      // Make sure category is synchronized with language for backward compatibility
+      if (values.language && values.category !== values.language) {
+        values.category = values.language;
+        console.log("[useCourseForm] Synchronized category with language:", values.category);
+      }
       
       // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 1000));

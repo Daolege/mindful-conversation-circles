@@ -15,7 +15,7 @@ import { getObjectives, getRequirements, getAudiences } from "@/lib/services/cou
 import { runAllLanguageMigrations } from '@/lib/services/language/migrationService';
 
 const CourseNewEditorPage = () => {
-  const { user, loading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const redirectAttemptedRef = useRef(false);
   const [searchParams] = useSearchParams();
@@ -40,8 +40,8 @@ const CourseNewEditorPage = () => {
   const [dbInitialized, setDbInitialized] = useState(false);
 
   // ALL hooks MUST be called unconditionally at the top level
-  // Admin check hook
-  const { data: isAdmin, isLoading } = useQuery({
+  // Admin check hook - always called regardless of user status
+  const { data: isAdmin, isLoading: adminCheckLoading } = useQuery({
     queryKey: ['admin-role', user?.id],
     queryFn: async () => {
       if (!user) return false;
@@ -79,49 +79,52 @@ const CourseNewEditorPage = () => {
       }
     };
     
-    initializeDatabase();
+    // Run the initialization in a non-blocking way
+    setTimeout(() => {
+      initializeDatabase();
+    }, 1000);
   }, []);
 
   // Authentication redirection hook
   useEffect(() => {
-    if (!isLoading && user && isAdmin === false && !redirectAttemptedRef.current) {
+    const shouldRedirect = !authLoading && user && isAdmin === false && !redirectAttemptedRef.current;
+    
+    if (shouldRedirect) {
       redirectAttemptedRef.current = true;
       toast.error("权限不足", { description: "您没有管理员权限，无法访问课程编辑器" });
       navigate('/');
     }
-  }, [isAdmin, isLoading, navigate, user]);
+  }, [isAdmin, authLoading, navigate, user]);
+  
+  // Convert the courseId parameter to a number if it exists and is not "new"
+  const numericCourseId = courseIdFromParams && courseIdFromParams !== "new" 
+    ? (Number(courseIdFromParams) || null)
+    : null;
   
   // Check if the course exists when courseId is provided
   useEffect(() => {
     const checkCourseExists = async () => {
-      if (courseIdFromParams && courseIdFromParams !== "new") {
-        const numericCourseId = Number(courseIdFromParams);
-        
-        if (!isNaN(numericCourseId)) {
-          try {
-            console.log("[CourseNewEditorPage 调试] Checking if course exists:", numericCourseId);
-            const { data, error } = await getCourseNewById(numericCourseId);
-            
-            if (error) {
-              console.error("[CourseNewEditorPage 调试] Error getting course:", error);
-              setCourseExists(false);
-              return;
-            }
-            
-            if (data) {
-              console.log("[CourseNewEditorPage 调试] Course exists:", data);
-              setCourseExists(true);
-              setCourseData(data);
-            } else {
-              console.log("[CourseNewEditorPage 调试] Course does not exist");
-              setCourseExists(false);
-            }
-          } catch (err) {
-            console.error("[CourseNewEditorPage 调试] Error checking course:", err);
+      if (numericCourseId) {
+        try {
+          console.log("[CourseNewEditorPage 调试] Checking if course exists:", numericCourseId);
+          const { data, error } = await getCourseNewById(numericCourseId);
+          
+          if (error) {
+            console.error("[CourseNewEditorPage 调试] Error getting course:", error);
+            setCourseExists(false);
+            return;
+          }
+          
+          if (data) {
+            console.log("[CourseNewEditorPage 调试] Course exists:", data);
+            setCourseExists(true);
+            setCourseData(data);
+          } else {
+            console.log("[CourseNewEditorPage 调试] Course does not exist");
             setCourseExists(false);
           }
-        } else {
-          console.error("[CourseNewEditorPage 调试] Invalid course ID:", courseIdFromParams);
+        } catch (err) {
+          console.error("[CourseNewEditorPage 调试] Error checking course:", err);
           setCourseExists(false);
         }
       } else if (courseIdFromParams === "new") {
@@ -132,40 +135,8 @@ const CourseNewEditorPage = () => {
     if (user && isAdmin) {
       checkCourseExists();
     }
-  }, [courseIdFromParams, user, isAdmin]);
+  }, [numericCourseId, courseIdFromParams, user, isAdmin]);
   
-  // Debug logging hook
-  useEffect(() => {
-    console.log("[CourseNewEditorPage 调试] Component initialized");
-    console.log("[CourseNewEditorPage 调试] URL params:", Object.fromEntries(searchParams.entries()));
-    console.log("[CourseNewEditorPage 调试] URL path params:", params);
-    console.log("[CourseNewEditorPage 调试] Current URL:", window.location.pathname + window.location.search);
-    console.log("[CourseNewEditorPage 调试] Current courseId param:", courseIdFromParams);
-    console.log("[CourseNewEditorPage 调试] courseId type:", typeof courseIdFromParams);
-    console.log("[CourseNewEditorPage 调试] Course exists status:", courseExists);
-    console.log("[CourseNewEditorPage 调试] Database initialized:", dbInitialized);
-    
-    if (tabParam) {
-      console.log("[CourseNewEditorPage 调试] Tab param:", tabParam);
-    }
-    
-    if (courseIdFromParams) {
-      const numericCourseId = Number(courseIdFromParams);
-      console.log("[CourseNewEditorPage 调试] Numeric course ID:", numericCourseId);
-      console.log("[CourseNewEditorPage 调试] Is valid number:", !isNaN(numericCourseId));
-    }
-  }, [searchParams, tabParam, params, courseIdFromParams, courseExists, dbInitialized]);
-
-  // Convert the courseId parameter to a number if it exists and is not "new"
-  let numericCourseId = null;
-  if (courseIdFromParams && courseIdFromParams !== "new") {
-    numericCourseId = Number(courseIdFromParams);
-    // If conversion results in NaN, set to null
-    if (isNaN(numericCourseId)) {
-      numericCourseId = null;
-    }
-  }
-
   // Load saved sections from localStorage on component mount
   useEffect(() => {
     if (numericCourseId && !loadedInitialState) {
@@ -266,15 +237,39 @@ const CourseNewEditorPage = () => {
     loadInitialVisibilityFromDatabase();
   }, [numericCourseId, loadedInitialState, sectionVisibility]);
 
+  // Debug logging
+  useEffect(() => {
+    console.log("[CourseNewEditorPage 调试] Current rendering cycle");
+    console.log("[CourseNewEditorPage 调试] courseId:", courseIdFromParams);
+    console.log("[CourseNewEditorPage 调试] numericCourseId:", numericCourseId);
+    console.log("[CourseNewEditorPage 调试] user:", user?.id);
+    console.log("[CourseNewEditorPage 调试] isAdmin:", isAdmin);
+    console.log("[CourseNewEditorPage 调试] authLoading:", authLoading);
+    console.log("[CourseNewEditorPage 调试] adminCheckLoading:", adminCheckLoading);
+    console.log("[CourseNewEditorPage 调试] Saved sections state:", savedSections);
+    console.log("[CourseNewEditorPage 调试] Section visibility state:", sectionVisibility);
+    console.log("[CourseNewEditorPage 调试] Loaded initial state:", loadedInitialState);
+    console.log("[CourseNewEditorPage 调试] DB initialized:", dbInitialized);
+  }, [
+    courseIdFromParams, 
+    numericCourseId, 
+    user, 
+    isAdmin, 
+    authLoading, 
+    adminCheckLoading, 
+    savedSections, 
+    sectionVisibility, 
+    loadedInitialState, 
+    dbInitialized
+  ]);
+
   // Determine the course title to display
   const courseTitle = courseData?.title || (courseIdFromParams === "new" ? "创建新课程" : "");
+  
+  // Combined loading state for simplified rendering logic
+  const isLoading = authLoading || adminCheckLoading;
 
-  console.log("[CourseNewEditorPage 调试] Rendering with courseId:", courseIdFromParams, "numericCourseId:", numericCourseId);
-  console.log("[CourseNewEditorPage 调试] Saved sections state:", savedSections);
-  console.log("[CourseNewEditorPage 调试] Section visibility state:", sectionVisibility);
-  console.log("[CourseNewEditorPage 调试] Loaded initial state:", loadedInitialState);
-
-  if (loading || isLoading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />

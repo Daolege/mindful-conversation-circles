@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -134,11 +133,12 @@ export const BasicInfoForm = ({ onTabChange, onCourseCreated, courseId }: BasicI
           let languageValue = "zh"; // Default fallback
           
           try {
-            // Check if language field exists in the data
+            // Check if language column exists in the data
             if ('language' in courseData && courseData.language) {
+              console.log("Using language field value:", courseData.language);
               languageValue = courseData.language;
             } 
-            // Fallback to category if appropriate
+            // Fallback to category if language doesn't exist
             else if ('category' in courseData && ['zh', 'en', 'fr', 'de', 'es', 'ja', 'ko', 'ru'].includes(courseData.category)) {
               languageValue = courseData.category;
               console.log("Using category as language fallback:", languageValue);
@@ -184,38 +184,63 @@ export const BasicInfoForm = ({ onTabChange, onCourseCreated, courseId }: BasicI
       
       if (courseId) {
         // Update existing course
-        const { error } = await supabase
-          .from('courses_new')
-          .update({
-            title: values.title,
-            description: values.description,
-            price: values.price,
-            original_price: values.original_price,
-            category: values.language, // Ensure backward compatibility
-            language: values.language,
-            currency: values.currency,
-            status: values.status,
-            display_order: values.display_order,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', courseId);
-        
-        if (error) {
-          console.error("Error updating course:", error);
-          console.error("Error details:", JSON.stringify(error));
+        try {
+          // First try updating with both language and category
+          const { error } = await supabase
+            .from('courses_new')
+            .update({
+              title: values.title,
+              description: values.description,
+              price: values.price,
+              original_price: values.original_price,
+              category: values.language, // Set category to same value for backward compatibility
+              language: values.language, // Try to set language column
+              currency: values.currency,
+              status: values.status,
+              display_order: values.display_order,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', courseId);
           
-          if (error.code === '42703') { // PostgreSQL code for "column does not exist"
-            setLanguageError("数据库缺少语言(language)字段。系统将尝试在下次应用启动时自动修复此问题。如果问题持续存在，请联系系统管理员。");
-            toast.error("保存失败: 数据库结构不完整", {
-              description: "语言字段缺失，请联系系统管理员"
-            });
+          // If we get a column does not exist error, try without language column
+          if (error && error.code === '42703') {
+            console.log("Language column doesn't exist, trying without it");
+            
+            const { error: retryError } = await supabase
+              .from('courses_new')
+              .update({
+                title: values.title,
+                description: values.description,
+                price: values.price,
+                original_price: values.original_price,
+                category: values.language, // Still set category as before
+                currency: values.currency,
+                status: values.status,
+                display_order: values.display_order,
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', courseId);
+            
+            if (retryError) {
+              throw new Error(`更新课程失败: ${retryError.message}`);
+            } else {
+              // Show warning about missing column
+              setLanguageError("数据库缺少语言(language)字段。系统将使用category字段作为临时解决方案。由于数据库结构原因，可能无法使用全部功能。");
+              toast.success("课程已更新", {
+                description: "使用了向后兼容模式"
+              });
+            }
+          } else if (error) {
+            throw new Error(`更新课程失败: ${error.message}`);
           } else {
-            toast.error(`更新课程失败: ${error.message}`);
+            toast.success("课程已成功更新");
           }
+        } catch (err: any) {
+          console.error("Error updating course:", err);
+          toast.error(`更新课程失败: ${err.message}`);
           return;
         }
         
-        toast.success("课程已成功更新");
         onTabChange('curriculum');
       } else {
         // Create new course
@@ -230,30 +255,27 @@ export const BasicInfoForm = ({ onTabChange, onCourseCreated, courseId }: BasicI
           ? (maxOrderData[0].display_order || 0) + 1 
           : 1;
         
-        // Try first with both language and category fields
-        const { data, error } = await supabase
-          .from('courses_new')
-          .insert({
-            title: values.title,
-            description: values.description,
-            price: values.price,
-            original_price: values.original_price,
-            category: values.language, // Set category for backward compatibility
-            language: values.language, // Set dedicated language field
-            currency: values.currency,
-            status: values.status,
-            display_order: nextDisplayOrder,
-          })
-          .select('id');
-        
-        if (error) {
-          console.error("Error creating course:", error);
+        try {
+          // First try with both language and category fields
+          const { data, error } = await supabase
+            .from('courses_new')
+            .insert({
+              title: values.title,
+              description: values.description,
+              price: values.price,
+              original_price: values.original_price,
+              category: values.language, // Set category for backward compatibility
+              language: values.language, // Set dedicated language field
+              currency: values.currency,
+              status: values.status,
+              display_order: nextDisplayOrder,
+            })
+            .select('id');
           
-          // Handle column does not exist error
-          if (error.code === '42703') {
-            console.log("Language column might be missing, trying without it");
+          // If we get a column does not exist error, try without language column
+          if (error && error.code === '42703') {
+            console.log("Language column doesn't exist, trying without it");
             
-            // Retry without language column
             const { data: retryData, error: retryError } = await supabase
               .from('courses_new')
               .insert({
@@ -269,31 +291,28 @@ export const BasicInfoForm = ({ onTabChange, onCourseCreated, courseId }: BasicI
               .select('id');
               
             if (retryError) {
-              console.error("Second attempt failed:", retryError);
-              setLanguageError("创建课程失败。数据库架构可能缺少必要的字段。请联系系统管理员。");
-              toast.error("创建课程失败");
-              return;
+              throw new Error(`创建课程失败: ${retryError.message}`);
             }
             
             if (retryData && retryData.length > 0) {
               const newCourseId = retryData[0].id;
-              toast.success("课程已成功创建");
-              toast.info("注意：系统使用了兼容模式保存语言设置", {
-                description: "请联系系统管理员来修复数据库架构"
+              setLanguageError("数据库缺少语言(language)字段。系统将使用category字段作为临时解决方案。由于数据库结构原因，可能无法使用全部功能。");
+              toast.success("课程已成功创建", {
+                description: "使用了向后兼容模式"
               });
               onCourseCreated(newCourseId);
-              return;
             }
-          } else {
-            toast.error(`创建课程失败: ${error.message}`);
-            return;
+          } else if (error) {
+            throw new Error(`创建课程失败: ${error.message}`);
+          } else if (data && data.length > 0) {
+            const newCourseId = data[0].id;
+            toast.success("课程已成功创建");
+            onCourseCreated(newCourseId);
           }
-        }
-        
-        if (data && data.length > 0) {
-          const newCourseId = data[0].id;
-          toast.success("课程已成功创建");
-          onCourseCreated(newCourseId);
+        } catch (err: any) {
+          console.error("Error creating course:", err);
+          toast.error(`创建课程失败: ${err.message}`);
+          return;
         }
       }
     } catch (err: any) {
@@ -324,7 +343,7 @@ export const BasicInfoForm = ({ onTabChange, onCourseCreated, courseId }: BasicI
           {languageError && (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
-              <AlertTitle>数据库错误</AlertTitle>
+              <AlertTitle>数据库兼容性警告</AlertTitle>
               <AlertDescription>
                 {languageError}
               </AlertDescription>
