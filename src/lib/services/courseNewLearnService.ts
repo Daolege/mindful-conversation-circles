@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { CourseWithDetails } from '@/lib/types/course-new';
 import { CourseSyllabusSection } from '@/lib/types/course';

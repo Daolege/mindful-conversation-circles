@@ -10,6 +10,17 @@ export interface Language {
   rtl: boolean;
 }
 
+// Translation item interface for database operations
+export interface TranslationItem {
+  id?: number;
+  language_code: string;
+  namespace: string;
+  key: string;
+  value: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
 // Mapping of language codes to country codes for flag display
 export const languageToCountryCode: Record<string, string> = {
   en: 'us',
@@ -34,3 +45,12 @@ export const defaultLanguages: Language[] = [
   { id: 1, code: 'en', name: 'English', nativeName: 'English', enabled: true, rtl: false },
   { id: 2, code: 'zh', name: 'Chinese (Simplified)', nativeName: '简体中文', enabled: true, rtl: false }
 ];
+
+// Utility function to chunk array into smaller pieces for batch operations
+export function chunkArray<T>(array: T[], chunkSize: number): T[][] {
+  const chunks: T[][] = [];
+  for (let i = 0; i < array.length; i += chunkSize) {
+    chunks.push(array.slice(i, i + chunkSize));
+  }
+  return chunks;
+}

@@ -86,17 +86,19 @@ export const BasicInfoForm = ({ onTabChange, onCourseCreated, courseId }: BasicI
         
         if (data) {
           // Set form values - handle different data structures
-          const languageValue = data.language || data.category || "zh"; // Use language or fallback to category
+          // Use type assertion to handle the language property which might be missing in the database response
+          const courseData = data as any;
+          const languageValue = courseData.language || courseData.category || "zh"; // Use language or fallback to category
           
           form.reset({
-            title: data.title || "",
-            description: data.description || "",
-            price: data.price || 0,
-            original_price: data.original_price,
+            title: courseData.title || "",
+            description: courseData.description || "",
+            price: courseData.price || 0,
+            original_price: courseData.original_price,
             language: languageValue,
-            currency: data.currency || "cny",
-            status: (data.status as "draft" | "published" | "archived") || "draft",
-            display_order: data.display_order || 0,
+            currency: courseData.currency || "cny",
+            status: (courseData.status as "draft" | "published" | "archived") || "draft",
+            display_order: courseData.display_order || 0,
           });
         }
       } catch (err) {

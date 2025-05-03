@@ -109,6 +109,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     document.documentElement.lang = currentLanguage;
   }, [isRTL, currentLanguage]);
 
+  // Make sure the value object has the correct type for supportedLanguages
   const value: LanguageContextType = {
     currentLanguage,
     changeLanguage,

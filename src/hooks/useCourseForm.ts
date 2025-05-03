@@ -15,6 +15,7 @@ const formSchema = z.object({
   }),
   currency: z.string().optional(),
   language: z.string().default("zh"),
+  category: z.string().default("zh"), // Add category field
   featured: z.boolean().default(false).optional(),
   display_order: z.number().optional(),
   status: z.string().optional(),
