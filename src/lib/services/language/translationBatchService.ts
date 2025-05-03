@@ -110,11 +110,16 @@ export async function rollbackToVersion(
     const firstItem = data[0];
     
     // Type guard to ensure data has the expected structure
-    if (!firstItem || typeof firstItem !== 'object' || !('new_value' in firstItem)) {
+    if (!firstItem || typeof firstItem !== 'object') {
       return { success: false, error: new Error('Invalid data format') };
     }
     
-    // Get the value from the fetched version
+    // Additional check to ensure new_value exists
+    if (!('new_value' in firstItem) || firstItem.new_value === undefined) {
+      return { success: false, error: new Error('Invalid data format: missing new_value') };
+    }
+    
+    // At this point, firstItem is definitely not null and has new_value
     const valueToRestore = firstItem.new_value;
     
     // Get the current translation to update
@@ -134,14 +139,21 @@ export async function rollbackToVersion(
     const currentItem = currentData[0];
     
     // Type guard to ensure currentData has the expected structure
-    if (!currentItem || 
-        typeof currentItem !== 'object' || 
-        !('language_code' in currentItem) || 
-        !('namespace' in currentItem) || 
-        !('key' in currentItem)) {
+    if (!currentItem || typeof currentItem !== 'object') {
       return { success: false, error: new Error('Invalid translation data format') };
     }
     
+    // Additional checks to ensure all required properties exist
+    if (!('language_code' in currentItem) || 
+        !('namespace' in currentItem) || 
+        !('key' in currentItem) ||
+        currentItem.language_code === undefined ||
+        currentItem.namespace === undefined ||
+        currentItem.key === undefined) {
+      return { success: false, error: new Error('Invalid translation data: missing required properties') };
+    }
+    
+    // At this point, currentItem is definitely not null and has all required properties
     // Update the translation with the historical value
     const updateResult = await batchUpdateTranslations([{
       id: translationId,
