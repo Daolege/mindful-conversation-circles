@@ -107,22 +107,19 @@ export async function rollbackToVersion(
       return { success: false, error: error as unknown as Error };
     }
     
-    // Safe access to firstItem - use a non-null assertion after the check
     const firstItem = data[0];
     
     // Type guard to ensure data has the expected structure
-    if (!firstItem || typeof firstItem !== 'object') {
+    if (firstItem === null || typeof firstItem !== 'object') {
       return { success: false, error: new Error('Invalid data format') };
     }
     
     // Additional check to ensure new_value exists
-    // Since we've checked firstItem is not null and is an object, we can safely access it
-    if (!('new_value' in firstItem) || firstItem.new_value === undefined) {
+    if (!firstItem || !('new_value' in firstItem) || firstItem.new_value === undefined) {
       return { success: false, error: new Error('Invalid data format: missing new_value') };
     }
     
-    // At this point, firstItem is definitely not null and has new_value
-    // We've done thorough checks above, so we can safely access properties
+    // At this point, we know firstItem is not null and has the new_value property
     const valueToRestore = firstItem.new_value;
     
     // Get the current translation to update
@@ -139,17 +136,16 @@ export async function rollbackToVersion(
       return { success: false, error: error as unknown as Error };
     }
     
-    // Safe access to currentItem with proper null check
     const currentItem = currentData[0];
     
     // Type guard to ensure currentData has the expected structure
-    if (!currentItem || typeof currentItem !== 'object') {
+    if (currentItem === null || typeof currentItem !== 'object') {
       return { success: false, error: new Error('Invalid translation data format') };
     }
     
     // Additional checks to ensure all required properties exist
-    // We've checked currentItem is not null and is an object, so we can safely access it
-    if (!('language_code' in currentItem) || 
+    if (!currentItem || 
+        !('language_code' in currentItem) || 
         !('namespace' in currentItem) || 
         !('key' in currentItem) ||
         currentItem.language_code === undefined ||
@@ -158,13 +154,17 @@ export async function rollbackToVersion(
       return { success: false, error: new Error('Invalid translation data: missing required properties') };
     }
     
-    // At this point, currentItem is definitely not null and has all required properties
-    // Safe to use the properties due to the checks above
+    // At this point, we know currentItem is not null and has all required properties
+    const language_code = currentItem.language_code;
+    const namespace = currentItem.namespace;
+    const key = currentItem.key;
+    
+    // Now we can safely create the TranslationItem object
     const updateResult = await batchUpdateTranslations([{
       id: translationId,
-      language_code: currentItem.language_code,
-      namespace: currentItem.namespace,
-      key: currentItem.key,
+      language_code,
+      namespace,
+      key,
       value: valueToRestore
     } as TranslationItem]);
     
