@@ -3,6 +3,7 @@ import React, { Suspense, useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { getCourseNewById } from '@/lib/services/courseNewService';
+import { CourseWithDetails } from '@/lib/types/course-new';
 import { CourseDetailHeaderNew } from '@/components/course-detail-new/CourseDetailHeaderNew';
 import { CourseDetailContentNew } from '@/components/course-detail-new/CourseDetailContentNew';
 import { CourseEnrollCardNew } from '@/components/course-detail-new/CourseEnrollCardNew';
@@ -19,7 +20,7 @@ const CourseDetailNew = () => {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
 
-  const { data: course, isLoading, error } = useQuery({
+  const { data: courseResponse, isLoading, error } = useQuery({
     queryKey: ['course-new', courseIdNum],
     queryFn: () => getCourseNewById(courseIdNum),
     enabled: !!courseIdNum && !isNaN(courseIdNum),
@@ -43,7 +44,7 @@ const CourseDetailNew = () => {
     );
   }
 
-  if (error || !course?.data) {
+  if (error || !courseResponse?.data) {
     return (
       <>
         <Navbar />
@@ -53,7 +54,16 @@ const CourseDetailNew = () => {
     );
   }
 
-  const courseData = course.data;
+  // Convert CourseNew to CourseWithDetails to ensure proper typing
+  const courseData = {
+    ...courseResponse.data,
+    category: courseResponse.data.category || 'default',
+    // Ensure all required properties for CourseWithDetails
+    showObjectives: true,
+    showRequirements: true,
+    showTargetAudience: true,
+    showMaterials: false,
+  } as CourseWithDetails;
 
   return (
     <>

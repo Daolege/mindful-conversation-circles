@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { CourseData, CourseResponse, CourseNew, CourseSection } from '@/lib/types/course-new';
 
@@ -6,7 +5,7 @@ import { CourseData, CourseResponse, CourseNew, CourseSection } from '@/lib/type
 export const getAllCoursesNew = async (search?: string): Promise<CourseResponse<CourseNew[]>> => {
   try {
     let query = supabase
-      .from('courses')
+      .from('courses_new')
       .select('*')
       .order('display_order', { ascending: true });
 
@@ -29,10 +28,10 @@ export const getAllCoursesNew = async (search?: string): Promise<CourseResponse<
 };
 
 // Get a single course by ID
-export const getCourseNewById = async (id: string | number): Promise<CourseResponse<CourseNew>> => {
+export const getCourseNewById = async (id: number): Promise<CourseResponse<CourseNew>> => {
   try {
     const { data, error } = await supabase
-      .from('courses')
+      .from('courses_new')
       .select('*')
       .eq('id', id)
       .single();
@@ -55,11 +54,12 @@ export const createCourseNew = async (courseData: CourseData): Promise<CourseRes
     // Set default status to draft if not provided
     const courseWithDefaults = {
       ...courseData,
-      status: courseData.status || 'draft'
+      status: courseData.status || 'draft',
+      currency: courseData.currency || 'cny'
     };
     
     const { data, error } = await supabase
-      .from('courses')
+      .from('courses_new')
       .insert([courseWithDefaults])
       .select()
       .single();
@@ -77,10 +77,10 @@ export const createCourseNew = async (courseData: CourseData): Promise<CourseRes
 };
 
 // Update an existing course
-export const updateCourseNew = async (id: string | number, courseData: CourseData): Promise<CourseResponse<CourseNew>> => {
+export const updateCourseNew = async (id: number, courseData: CourseData): Promise<CourseResponse<CourseNew>> => {
   try {
     const { data, error } = await supabase
-      .from('courses')
+      .from('courses_new')
       .update(courseData)
       .eq('id', id)
       .select()
@@ -99,31 +99,31 @@ export const updateCourseNew = async (id: string | number, courseData: CourseDat
 };
 
 // Delete a course by ID
-export const deleteCourseNew = async (id: string | number): Promise<CourseResponse<null>> => {
+export const deleteCourseNew = async (id: number): Promise<CourseResponse<null> & { success: boolean }> => {
   try {
     const { error } = await supabase
-      .from('courses')
+      .from('courses_new')
       .delete()
       .eq('id', id);
     
     if (error) {
       console.error(`Error deleting course with ID ${id}:`, error);
-      return { data: null, error };
+      return { data: null, error, success: false };
     }
     
-    return { data: null, error: null };
+    return { data: null, error: null, success: true };
   } catch (error) {
     console.error(`Exception deleting course with ID ${id}:`, error);
-    return { data: null, error: error as Error };
+    return { data: null, error: error as Error, success: false };
   }
 };
 
 // Get complete course details with sections and lectures
-export const getFullCourseDetailsNew = async (id: string | number): Promise<CourseResponse<CourseNew>> => {
+export const getFullCourseDetailsNew = async (id: number): Promise<CourseResponse<CourseNew>> => {
   try {
     // First, get the course
     const { data: course, error: courseError } = await supabase
-      .from('courses')
+      .from('courses_new')
       .select('*')
       .eq('id', id)
       .single();
@@ -175,7 +175,7 @@ export const getFullCourseDetailsNew = async (id: string | number): Promise<Cour
       data: { 
         ...course, 
         sections: sectionsWithLectures 
-      }, 
+      } as CourseNew, 
       error: null 
     };
   } catch (error) {
@@ -185,51 +185,51 @@ export const getFullCourseDetailsNew = async (id: string | number): Promise<Cour
 };
 
 // Batch delete multiple courses
-export const batchDeleteCourses = async (ids: (string | number)[]): Promise<CourseResponse<null>> => {
+export const batchDeleteCourses = async (ids: number[]): Promise<CourseResponse<null> & { success: boolean }> => {
   try {
     const { error } = await supabase
-      .from('courses')
+      .from('courses_new')
       .delete()
       .in('id', ids);
     
     if (error) {
       console.error(`Error batch deleting courses:`, error);
-      return { data: null, error };
+      return { data: null, error, success: false };
     }
     
-    return { data: null, error: null };
+    return { data: null, error: null, success: true };
   } catch (error) {
     console.error(`Exception batch deleting courses:`, error);
-    return { data: null, error: error as Error };
+    return { data: null, error: error as Error, success: false };
   }
 };
 
 // Batch update course status
 export const batchUpdateCourseStatus = async (
-  ids: (string | number)[],
+  ids: number[],
   status: 'published' | 'draft' | 'archived'
-): Promise<CourseResponse<null>> => {
+): Promise<CourseResponse<null> & { success: boolean }> => {
   try {
     const { error } = await supabase
-      .from('courses')
+      .from('courses_new')
       .update({ status })
       .in('id', ids);
     
     if (error) {
       console.error(`Error batch updating course status:`, error);
-      return { data: null, error };
+      return { data: null, error, success: false };
     }
     
-    return { data: null, error: null };
+    return { data: null, error: null, success: true };
   } catch (error) {
     console.error(`Exception batch updating course status:`, error);
-    return { data: null, error: error as Error };
+    return { data: null, error: error as Error, success: false };
   }
 };
 
 // Update course section visibility settings
 export const updateCourseSectionVisibility = async (
-  courseId: string | number, 
+  courseId: number, 
   visibilitySettings: {
     showObjectives?: boolean;
     showRequirements?: boolean;
@@ -239,7 +239,7 @@ export const updateCourseSectionVisibility = async (
 ): Promise<CourseResponse<null>> => {
   try {
     const { error } = await supabase
-      .from('courses')
+      .from('courses_new')
       .update({
         showObjectives: visibilitySettings.showObjectives,
         showRequirements: visibilitySettings.showRequirements,
@@ -257,5 +257,53 @@ export const updateCourseSectionVisibility = async (
   } catch (error) {
     console.error(`Exception updating course visibility settings:`, error);
     return { data: null, error: error as Error };
+  }
+};
+
+// Save a course with all its data
+export const saveFullCourse = async (courseId: number, courseData: CourseData, sections: CourseSection[] = []): Promise<{ data?: CourseNew, error?: Error, success: boolean }> => {
+  try {
+    let result;
+    
+    // If it's a new course, create it
+    if (courseId === 0) {
+      result = await createCourseNew(courseData);
+      
+      if (result.error) {
+        return { error: result.error, success: false };
+      }
+      
+      return { data: result.data, success: true };
+    } 
+    // Otherwise update existing course
+    else {
+      result = await updateCourseNew(courseId, courseData);
+      
+      if (result.error) {
+        return { error: result.error, success: false };
+      }
+      
+      // TODO: Handle updating course sections
+      
+      return { data: result.data, success: true };
+    }
+  } catch (error) {
+    console.error(`Exception in saveFullCourse:`, error);
+    return { error: error as Error, success: false };
+  }
+};
+
+// Clear course local storage data
+export const clearCourseLocalStorageData = (courseId: number): void => {
+  try {
+    const savedSectionsStorageKey = `course_${courseId}_saved_sections`;
+    const visibilityStorageKey = `course_${courseId}_section_visibility`;
+    
+    localStorage.removeItem(savedSectionsStorageKey);
+    localStorage.removeItem(visibilityStorageKey);
+    
+    console.log(`Cleared localStorage data for course ${courseId}`);
+  } catch (error) {
+    console.error(`Error clearing localStorage for course ${courseId}:`, error);
   }
 };
