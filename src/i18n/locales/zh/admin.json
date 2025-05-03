@@ -1,4 +1,3 @@
-
 {
   "systemSettings": "系统设置",
   "generalSettings": "常规设置",
@@ -98,5 +97,9 @@
   "rollback": "回滚",
   "rollbackSuccess": "回滚成功",
   "rollbackError": "回滚失败",
-  "viewHistory": "查看历史"
+  "viewHistory": "查看历史",
+  "generateTestData": "生成测试数据",
+  "generatingData": "正在生成...",
+  "testDataGenerated": "已成功创建 {{count}} 条测试记录",
+  "errorGeneratingTestData": "生成测试数据时出错"
 }

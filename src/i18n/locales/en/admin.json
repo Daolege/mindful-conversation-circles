@@ -95,5 +95,9 @@
   "importSuccess": "Translations imported successfully",
   "translationsImported": "{{count}} translations imported",
   "showMissingOnly": "Show Missing Only",
-  "translationStats": "Translation Statistics"
+  "translationStats": "Translation Statistics",
+  "generateTestData": "Generate Test Data",
+  "generatingData": "Generating...",
+  "testDataGenerated": "{{count}} test records created successfully",
+  "errorGeneratingTestData": "Error generating test data"
 }

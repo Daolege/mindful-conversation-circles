@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useTranslations } from "@/hooks/useTranslations";
-import { Loader2, CreditCard, History, Calendar, ArrowLeftRight, AlertCircle, RefreshCw, ChevronLeft, ChevronRight, CalendarArrowDown } from "lucide-react";
+import { Loader2, CreditCard, History, Calendar, ArrowLeftRight, AlertCircle, RefreshCw, ChevronLeft, ChevronRight, CalendarArrowDown, Database } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DatePickerWithRange } from "@/components/ui/date-range-picker";
 import { formatDistanceToNow } from 'date-fns';
@@ -24,6 +23,7 @@ const ExchangeRateSettings = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isHistoryLoading, setIsHistoryLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isGeneratingData, setIsGeneratingData] = useState(false);
   const [exchangeRate, setExchangeRate] = useState<Partial<ExchangeRate>>({
     rate: 7.23,
     from_currency: 'CNY',
@@ -35,9 +35,9 @@ const ExchangeRateSettings = () => {
   const [errorMessage, setErrorMessage] = useState('');
   const [connectionStatus, setConnectionStatus] = useState<'checking' | 'connected' | 'disconnected'>('checking');
   
-  // Pagination state
+  // Pagination state - CHANGED: default page size decreased from 10 to 5
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(5);
   const [totalRecords, setTotalRecords] = useState(0);
   
   // Date filter state
@@ -258,6 +258,63 @@ const ExchangeRateSettings = () => {
     }
   };
 
+  // NEW: Generate test exchange rate data
+  const generateTestData = async () => {
+    if (connectionStatus !== 'connected') {
+      toast.error(t('admin:databaseConnectionError'));
+      setErrorMessage(t('admin:databaseConnectionRequired'));
+      return;
+    }
+
+    setIsGeneratingData(true);
+    try {
+      // Generate and save 20 test exchange rate records with varying dates and rates
+      const numRecords = 20;
+      const baseRate = exchangeRate.rate || 7.23;
+      
+      // Create array of promises for concurrent inserts
+      const insertPromises = [];
+      
+      for (let i = 0; i < numRecords; i++) {
+        // Generate a random date within the last 30 days
+        const randomDaysAgo = Math.floor(Math.random() * 30);
+        const date = new Date();
+        date.setDate(date.getDate() - randomDaysAgo);
+        
+        // Vary the rate a bit (within ±5% of base rate)
+        const variation = (Math.random() * 0.1) - 0.05; // -5% to +5%
+        const randomRate = baseRate * (1 + variation);
+        const roundedRate = parseFloat(randomRate.toFixed(4));
+        
+        // Create the test record
+        const testRecord = {
+          rate: roundedRate,
+          from_currency: 'CNY',
+          to_currency: 'USD',
+          created_at: date.toISOString(),
+          updated_at: date.toISOString()
+        };
+        
+        // Add insert operation to promises array
+        insertPromises.push(exchangeRatesService.insert(testRecord));
+      }
+      
+      // Wait for all inserts to complete
+      await Promise.all(insertPromises);
+      
+      toast.success(t('admin:testDataGenerated', { count: numRecords }));
+      
+      // Reload exchange history after generating test data
+      await loadExchangeHistory(1, pageSize);
+      setIsUsingSampleData(false);
+    } catch (error: any) {
+      console.error("Error generating test data:", error);
+      toast.error(error.message || t('admin:errorGeneratingTestData'));
+    } finally {
+      setIsGeneratingData(false);
+    }
+  };
+
   // Retry connection if there was an error
   const retryConnection = async () => {
     setErrorMessage('');
@@ -462,6 +519,16 @@ const ExchangeRateSettings = () => {
             </CardDescription>
           </div>
           <div className="flex items-center space-x-2">
+            {/* NEW: Generate Test Data button */}
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={generateTestData}
+              disabled={isGeneratingData || connectionStatus !== 'connected'}
+            >
+              <Database className={`h-4 w-4 mr-2 ${isGeneratingData ? 'animate-pulse' : ''}`} />
+              {isGeneratingData ? t('admin:generatingData') : t('admin:generateTestData')}
+            </Button>
             <Button 
               variant="outline" 
               size="sm"

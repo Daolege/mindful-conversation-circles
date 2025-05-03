@@ -140,23 +140,79 @@ export const defaultLegalDocuments: Record<string, LegalDocument> = {
   }
 };
 
-// Default exchange rates
+// Updated default exchange rates with more sample data
 export const defaultExchangeRates = [
   {
-    id: 'default-1',
-    rate: 7.23, // CNY to USD
+    id: '1',
+    rate: 7.23,
     from_currency: 'CNY',
     to_currency: 'USD',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
+    created_at: new Date(Date.now()).toISOString(),
+    updated_at: new Date(Date.now()).toISOString(),
+    cny_to_usd: 7.23
   },
   {
-    id: 'default-2',
-    rate: 7.20, // Historical rate example
+    id: '2',
+    rate: 7.21,
     from_currency: 'CNY',
     to_currency: 'USD',
     created_at: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
-    updated_at: new Date(Date.now() - 86400000).toISOString()
+    updated_at: new Date(Date.now() - 86400000).toISOString(),
+    cny_to_usd: 7.21
+  },
+  {
+    id: '3',
+    rate: 7.25,
+    from_currency: 'CNY',
+    to_currency: 'USD',
+    created_at: new Date(Date.now() - 86400000 * 2).toISOString(), // 2 days ago
+    updated_at: new Date(Date.now() - 86400000 * 2).toISOString(),
+    cny_to_usd: 7.25
+  },
+  {
+    id: '4',
+    rate: 7.19,
+    from_currency: 'CNY',
+    to_currency: 'USD',
+    created_at: new Date(Date.now() - 86400000 * 3).toISOString(), // 3 days ago
+    updated_at: new Date(Date.now() - 86400000 * 3).toISOString(),
+    cny_to_usd: 7.19
+  },
+  {
+    id: '5',
+    rate: 7.22,
+    from_currency: 'CNY',
+    to_currency: 'USD',
+    created_at: new Date(Date.now() - 86400000 * 4).toISOString(), // 4 days ago
+    updated_at: new Date(Date.now() - 86400000 * 4).toISOString(),
+    cny_to_usd: 7.22
+  },
+  {
+    id: '6',
+    rate: 7.18,
+    from_currency: 'CNY',
+    to_currency: 'USD',
+    created_at: new Date(Date.now() - 86400000 * 5).toISOString(), // 5 days ago
+    updated_at: new Date(Date.now() - 86400000 * 5).toISOString(),
+    cny_to_usd: 7.18
+  },
+  {
+    id: '7',
+    rate: 7.17,
+    from_currency: 'CNY',
+    to_currency: 'USD',
+    created_at: new Date(Date.now() - 86400000 * 6).toISOString(), // 6 days ago
+    updated_at: new Date(Date.now() - 86400000 * 6).toISOString(),
+    cny_to_usd: 7.17
+  },
+  {
+    id: '8',
+    rate: 7.20,
+    from_currency: 'CNY',
+    to_currency: 'USD',
+    created_at: new Date(Date.now() - 86400000 * 7).toISOString(), // 7 days ago
+    updated_at: new Date(Date.now() - 86400000 * 7).toISOString(),
+    cny_to_usd: 7.20
   }
 ];
 
