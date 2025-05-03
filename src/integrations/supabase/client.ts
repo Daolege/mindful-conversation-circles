@@ -136,7 +136,7 @@ export const createMockHomeworkSubmissions = async (): Promise<{success: boolean
     }
     
     // 获取现有作业
-    const { data: existingHomework, error: homeworkError } = await supabase
+    let { data: existingHomework, error: homeworkError } = await supabase
       .from('homework')
       .select('id, lecture_id, course_id')
       .limit(5);
