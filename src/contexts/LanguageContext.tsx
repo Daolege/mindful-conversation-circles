@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getEnabledLanguages } from '@/lib/services/language/languageService';
@@ -40,7 +39,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [isRTL, setIsRTL] = useState(rtlLanguages.includes(currentLanguage));
   const [isLanguageLoading, setIsLanguageLoading] = useState(true); // Track language resources loading
   
-  // 使用 React Query 获取语言
+  // Use React Query to get languages
   const { 
     data: languages, 
     isLoading, 
@@ -56,7 +55,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         return defaultLanguages;
       }
     },
-    staleTime: 5 * 60 * 1000, // 5分钟缓存
+    staleTime: 5 * 60 * 1000, // 5 minute cache
   });
 
   // Enhanced language changing function with loading state
@@ -100,10 +99,10 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       setIsLanguageLoading(false);
     });
 
-    // 订阅语言变更事件
+    // Subscribe to language change event
     i18n.on('languageChanged', handleLanguageChanged);
 
-    // 清理
+    // Clean up
     return () => {
       i18n.off('languageChanged', handleLanguageChanged);
     };
@@ -115,7 +114,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     document.documentElement.lang = currentLanguage;
   }, [isRTL, currentLanguage]);
 
-  const value = {
+  const value: LanguageContextType = {
     currentLanguage,
     changeLanguage,
     supportedLanguages: languages || defaultLanguages,

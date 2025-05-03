@@ -55,7 +55,8 @@ export function useCourseForm(initialData?: Partial<CourseWithDetails>) {
     description: initialData?.description ?? '',
     price: initialData?.price ?? 0,
     currency: initialData?.currency ?? 'cny',
-    language: initialData?.language ?? 'zh', // Ensure language field is present
+    language: initialData?.language ?? 'zh',
+    category: initialData?.category ?? initialData?.language ?? 'zh', // Use language as fallback for category
     featured: initialData?.featured ?? false,
     display_order: initialData?.display_order ?? 0,
     status: initialData?.status ?? 'draft',

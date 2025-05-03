@@ -215,7 +215,8 @@ function getSampleCourses(): CourseNew[] {
       status: 'published', 
       currency: 'USD', 
       display_order: 1, 
-      is_featured: true 
+      is_featured: true,
+      language: 'en'
     },
     { 
       id: 2, 
@@ -224,7 +225,8 @@ function getSampleCourses(): CourseNew[] {
       status: 'published', 
       currency: 'USD', 
       display_order: 2, 
-      is_featured: false 
+      is_featured: false,
+      language: 'en'
     },
     { 
       id: 3, 
@@ -233,7 +235,8 @@ function getSampleCourses(): CourseNew[] {
       status: 'published', 
       currency: 'USD', 
       display_order: 3, 
-      is_featured: true 
+      is_featured: true,
+      language: 'en'
     }
   ];
 }

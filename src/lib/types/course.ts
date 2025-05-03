@@ -10,8 +10,10 @@ export interface Course {
   featured?: boolean;
   display_order?: number;
   imageUrl?: string | null;
+  imageurl?: string | null; // For backward compatibility
   enrollment_count?: number;
   studentCount?: number;
+  studentcount?: number; // For backward compatibility
   lastupdated?: string;
   lastUpdated?: string;
   language: string; // Primary language field
@@ -23,8 +25,21 @@ export interface Course {
   lectures?: number;
   rating?: number;
   ratingCount?: number;
+  ratingcount?: number; // For backward compatibility
   currency: string;
   published_at?: string;
+  
+  // Add back fields that are still being referenced
+  instructor?: string;
+  instructorid?: number;
+  instructorId?: number;
+  syllabus?: any[];
+  materials?: CourseMaterial[];
+  materialsVisible?: boolean;
+  
+  // Additional fields for compatibility
+  subscription_plans?: any;
+  video_url?: string;
 }
 
 export interface CourseWithDetails extends Course {
@@ -115,9 +130,7 @@ export const prepareCourseForDb = (course: Partial<Course>): CourseDbData => {
   };
 };
 
-// Helper function to transform course data 
-// This is where the circular reference was happening
-// We'll simplify it to avoid excessive type recursion
+// Modified transformCourseData function to handle both old and new fields
 export const transformCourseData = (courseData: any): Course => {
   // Safely handle materials
   let materials: CourseMaterial[] = [];
@@ -155,10 +168,10 @@ export const transformCourseData = (courseData: any): Course => {
     whatyouwilllearn: courseData.whatyouwilllearn || courseData.what_you_will_learn || courseData.whatYouWillLearn || [],
     whatYouWillLearn: courseData.whatyouwilllearn || courseData.what_you_will_learn || courseData.whatYouWillLearn || [],
     requirements: courseData.requirements || [],
-    category: courseData.category || '',
+    category: courseData.category || courseData.language || 'zh',
     level: courseData.level || 'beginner',
     duration: courseData.duration || '',
-    language: courseData.language || 'zh',
+    language: courseData.language || courseData.category || 'zh',
     featured: courseData.featured || false,
     display_order: courseData.display_order || 0,
     imageurl: courseData.imageurl || courseData.image_url || null,
@@ -167,7 +180,9 @@ export const transformCourseData = (courseData: any): Course => {
     lastUpdated: courseData.lastupdated || courseData.lastUpdated || new Date().toISOString(),
     enrollment_count: courseData.enrollment_count || 0,
     materials: materials,
-    syllabus: courseData.syllabus || []
+    syllabus: courseData.syllabus || [],
+    currency: courseData.currency || 'cny',
+    materialsVisible: courseData.materialsVisible !== false
   };
 
   return transformed;
@@ -188,7 +203,7 @@ export interface CourseSyllabusSection {
 // JSON type for compatibility
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
-// Update the defaultCourse with both category and language fields
+// Update the defaultCourse with all required fields
 export const defaultCourse: Course = {
   id: 0,
   title: '',

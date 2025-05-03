@@ -28,7 +28,7 @@ export const transformCourseNewToOld = (courseNew: CourseNew): Course => {
     // Set defaults for required fields that might not be present in CourseNew
     ratingCount: 0,
     rating: 4.5, // Default rating
-    imageUrl: null, // Will use default image in CourseCard if not available
+    imageUrl: courseNew.thumbnail_url || null, // Will use default image in CourseCard if not available
     currency: courseNew.currency || 'cny',
     // Additional fields for better card display
     level: 'all', // Default level
@@ -36,5 +36,7 @@ export const transformCourseNewToOld = (courseNew: CourseNew): Course => {
     whatYouWillLearn: [], // Default empty array
     whatyouwilllearn: [],
     requirements: [],
+    instructor: '', // Add empty instructor for compatibility
+    instructorId: 0,
   };
 };

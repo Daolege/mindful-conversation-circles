@@ -63,6 +63,8 @@ export interface CourseNew {
   thumbnail_url?: string;
   published_at?: string;
   lecture_count?: number;
+  // Add for backwards compatibility
+  category?: string;
 }
 
 // For form handling

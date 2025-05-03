@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -79,10 +78,10 @@ const CourseCardNew = ({ course, variantIndex = 0 }: CourseCardNewProps) => {
             </div>
             
             {/* Category if available */}
-            {course.category && (
+            {course.language && (
               <div className="mb-2">
                 <Badge variant="outline" className="text-xs font-normal text-gray-600">
-                  {course.category}
+                  {course.language || '中文'}
                 </Badge>
               </div>
             )}

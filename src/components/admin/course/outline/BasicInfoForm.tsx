@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -66,7 +65,7 @@ export const BasicInfoForm = ({ onTabChange, onCourseCreated, courseId }: BasicI
     { value: "ru", label: "Русский" }
   ];
 
-  // 如果有courseId，加载现有课程数据
+  // If there's courseId, load existing course data
   useEffect(() => {
     const loadCourseData = async () => {
       if (!courseId) return;
@@ -86,13 +85,13 @@ export const BasicInfoForm = ({ onTabChange, onCourseCreated, courseId }: BasicI
         }
         
         if (data) {
-          // 设置表单值
+          // Set form values
           form.reset({
             title: data.title || "",
             description: data.description || "",
             price: data.price || 0,
             original_price: data.original_price,
-            language: data.language || "zh",
+            language: data.language || data.category || "zh", // Use category as fallback
             currency: data.currency || "cny",
             status: (data.status as "draft" | "published" | "archived") || "draft",
             display_order: data.display_order || 0,
@@ -115,7 +114,7 @@ export const BasicInfoForm = ({ onTabChange, onCourseCreated, courseId }: BasicI
       setLoading(true);
       
       if (courseId) {
-        // 更新现有课程
+        // Update existing course
         const { error } = await supabase
           .from('courses_new')
           .update({
@@ -140,14 +139,14 @@ export const BasicInfoForm = ({ onTabChange, onCourseCreated, courseId }: BasicI
         toast.success("课程已成功更新");
         onTabChange('curriculum');
       } else {
-        // 创建新课程
+        // Create new course
         const { data: maxOrderData } = await supabase
           .from('courses_new')
           .select('display_order')
           .order('display_order', { ascending: false })
           .limit(1);
         
-        // 设置新课程的显示顺序为当前最大值+1，或者1（如果没有课程）
+        // Set new course's display order to current max value+1, or 1 (if no courses)
         const nextDisplayOrder = maxOrderData && maxOrderData.length > 0 
           ? (maxOrderData[0].display_order || 0) + 1 
           : 1;

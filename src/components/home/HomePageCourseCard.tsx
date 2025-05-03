@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -53,10 +52,10 @@ const HomePageCourseCard = ({ course, index }: HomePageCourseCardProps) => {
           {/* Content */}
           <div className="relative p-5 flex flex-col h-full z-10">
             {/* Category tag */}
-            {course.category && (
+            {course.language && (
               <div className="mb-2">
-                <Badge variant="outline" className="bg-white/90 text-gray-800 text-xs font-medium">
-                  {course.category}
+                <Badge variant="outline" className="px-2 py-1 text-xs">
+                  {course.language || '中文'}
                 </Badge>
               </div>
             )}
