@@ -14,7 +14,7 @@ const PaymentIcons: React.FC = () => {
         return await paymentIconsService.getAll();
       } catch (error) {
         console.error("Error fetching payment icons:", error);
-        return [];
+        return defaultPaymentIcons;
       }
     },
     staleTime: 1000 * 60 * 5, // 5 minutes

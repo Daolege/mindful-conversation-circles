@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -70,7 +71,15 @@ export const InstructorManagement = () => {
 
       const { data, error } = await query.order("name");
       
-      return handleInstructorsQueryError(data, error);
+      // Validate the status field to ensure it's either 'active' or 'inactive'
+      const validatedData = data?.map(instructor => ({
+        ...instructor,
+        status: (instructor.status === 'active' || instructor.status === 'inactive') 
+          ? instructor.status 
+          : 'inactive' // default to inactive if invalid
+      })) as Instructor[];
+      
+      return handleInstructorsQueryError(validatedData, error);
     },
     refetchOnWindowFocus: false,
   });
@@ -368,7 +377,10 @@ export const InstructorManagement = () => {
                               <Label htmlFor="edit-status">状态</Label>
                               <Select
                                 value={currentInstructor.status}
-                                onValueChange={(value) => setCurrentInstructor({ ...currentInstructor, status: value as 'active' | 'inactive' })}
+                                onValueChange={(value) => setCurrentInstructor({ 
+                                  ...currentInstructor, 
+                                  status: value as 'active' | 'inactive' 
+                                })}
                               >
                                 <SelectTrigger>
                                   <SelectValue placeholder="选择状态" />

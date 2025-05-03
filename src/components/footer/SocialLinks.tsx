@@ -14,7 +14,7 @@ const SocialLinks: React.FC = () => {
         return await socialMediaService.getAll();
       } catch (error) {
         console.error("Error fetching social media links:", error);
-        return [];
+        return defaultSocialMediaLinks;
       }
     },
     staleTime: 1000 * 60 * 5, // 5 minutes

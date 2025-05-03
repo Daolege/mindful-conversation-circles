@@ -137,10 +137,10 @@ export function safeSupabaseSelect<T>(tableName: string, select: string = '*') {
   return {
     async getAll() {
       try {
-        // @ts-ignore - Intentionally ignore type error for table name
-        const { data, error } = await supabase
-          .from(tableName)
-          .select(select);
+        // Using type assertion to bypass TypeScript's strict checking for table names
+        const { data, error } = await (supabase
+          .from(tableName as any)
+          .select(select) as any);
         
         // Return default data if error or if the API can't be reached
         if (error) {
@@ -167,12 +167,12 @@ export function safeSupabaseSelect<T>(tableName: string, select: string = '*') {
     
     async getOne(id: string) {
       try {
-        // @ts-ignore - Intentionally ignore type error for table name
-        const { data, error } = await supabase
-          .from(tableName)
+        // Using type assertion to bypass TypeScript's strict checking for table names
+        const { data, error } = await (supabase
+          .from(tableName as any)
           .select(select)
           .eq('id', id)
-          .single();
+          .single() as any);
         
         if (error) throw error;
         return data as T;
@@ -184,11 +184,11 @@ export function safeSupabaseSelect<T>(tableName: string, select: string = '*') {
 
     async getByFilter(filterField: string, filterValue: any) {
       try {
-        // @ts-ignore - Intentionally ignore type error for table name
-        const { data, error } = await supabase
-          .from(tableName)
+        // Using type assertion to bypass TypeScript's strict checking for table names
+        const { data, error } = await (supabase
+          .from(tableName as any)
           .select(select)
-          .eq(filterField, filterValue);
+          .eq(filterField, filterValue) as any);
         
         if (error) throw error;
         
@@ -214,11 +214,11 @@ export function safeSupabaseSelect<T>(tableName: string, select: string = '*') {
 
     async getOrdered(orderField: string = 'display_order', ascending: boolean = true) {
       try {
-        // @ts-ignore - Intentionally ignore type error for table name
-        const { data, error } = await supabase
-          .from(tableName)
+        // Using type assertion to bypass TypeScript's strict checking for table names
+        const { data, error } = await (supabase
+          .from(tableName as any)
           .select(select)
-          .order(orderField, { ascending });
+          .order(orderField, { ascending }) as any);
         
         // Return default data if error or if the API can't be reached
         if (error) {
@@ -248,11 +248,11 @@ export function safeSupabaseMutation<T>(tableName: string) {
   return {
     async insert(record: Partial<T>) {
       try {
-        // @ts-ignore - Intentionally ignore type error for table name
-        const { data, error } = await supabase
-          .from(tableName)
+        // Using type assertion to bypass TypeScript's strict checking for table names
+        const { data, error } = await (supabase
+          .from(tableName as any)
           .insert(record)
-          .select();
+          .select() as any);
         
         if (error) throw error;
         return { data: data as T[], error: null };
@@ -264,12 +264,12 @@ export function safeSupabaseMutation<T>(tableName: string) {
     
     async update(id: string, updates: Partial<T>) {
       try {
-        // @ts-ignore - Intentionally ignore type error for table name
-        const { data, error } = await supabase
-          .from(tableName)
+        // Using type assertion to bypass TypeScript's strict checking for table names
+        const { data, error } = await (supabase
+          .from(tableName as any)
           .update(updates)
           .eq('id', id)
-          .select();
+          .select() as any);
         
         if (error) throw error;
         return { data: data as T[], error: null };
@@ -281,11 +281,11 @@ export function safeSupabaseMutation<T>(tableName: string) {
 
     async upsert(records: Partial<T> | Partial<T>[]) {
       try {
-        // @ts-ignore - Intentionally ignore type error for table name
-        const { data, error } = await supabase
-          .from(tableName)
+        // Using type assertion to bypass TypeScript's strict checking for table names
+        const { data, error } = await (supabase
+          .from(tableName as any)
           .upsert(records)
-          .select();
+          .select() as any);
         
         if (error) throw error;
         return { data: data as T[], error: null };
@@ -297,11 +297,11 @@ export function safeSupabaseMutation<T>(tableName: string) {
     
     async delete(id: string) {
       try {
-        // @ts-ignore - Intentionally ignore type error for table name
-        const { data, error } = await supabase
-          .from(tableName)
+        // Using type assertion to bypass TypeScript's strict checking for table names
+        const { data, error } = await (supabase
+          .from(tableName as any)
           .delete()
-          .eq('id', id);
+          .eq('id', id) as any);
         
         if (error) throw error;
         return { data, error: null };
@@ -313,11 +313,11 @@ export function safeSupabaseMutation<T>(tableName: string) {
 
     async deleteAll() {
       try {
-        // @ts-ignore - Intentionally ignore type error for table name
-        const { data, error } = await supabase
-          .from(tableName)
+        // Using type assertion to bypass TypeScript's strict checking for table names
+        const { data, error } = await (supabase
+          .from(tableName as any)
           .delete()
-          .not('id', 'is', null);
+          .not('id', 'is', null) as any);
         
         if (error) throw error;
         return { data, error: null };
@@ -365,11 +365,11 @@ export const exchangeRatesService = {
 export const siteSettingsService = {
   get: async () => {
     try {
-      // @ts-ignore - Intentionally ignore type error for table name
-      const { data, error } = await supabase
-        .from('site_settings')
+      // Using type assertion to bypass TypeScript's strict checking for table names
+      const { data, error } = await (supabase
+        .from('site_settings' as any)
         .select('*')
-        .single();
+        .single() as any);
       
       if (error) throw error;
       return data as SiteSettings;
@@ -386,11 +386,11 @@ export const siteSettingsService = {
 export const aboutPageSettingsService = {
   get: async () => {
     try {
-      // @ts-ignore - Intentionally ignore type error for table name
-      const { data, error } = await supabase
-        .from('about_page_settings')
+      // Using type assertion to bypass TypeScript's strict checking for table names
+      const { data, error } = await (supabase
+        .from('about_page_settings' as any)
         .select('*')
-        .single();
+        .single() as any);
       
       if (error) throw error;
       return data as AboutPageSettings;
@@ -408,11 +408,11 @@ export const aboutPageSettingsService = {
 export const userRolesService = {
   getByUserId: async (userId: string) => {
     try {
-      // @ts-ignore - Intentionally ignore type error for table name
-      const { data, error } = await supabase
-        .from('user_roles')
+      // Using type assertion to bypass TypeScript's strict checking for table names
+      const { data, error } = await (supabase
+        .from('user_roles' as any)
         .select('*')
-        .eq('user_id', userId);
+        .eq('user_id', userId) as any);
       
       if (error) throw error;
       return data as UserRole[];
@@ -426,12 +426,12 @@ export const userRolesService = {
     safeSupabaseMutation<UserRole>('user_roles').insert({ user_id: userId, role }),
   removeRole: async (userId: string, role: string) => {
     try {
-      // @ts-ignore - Intentionally ignore type error for table name
-      const { data, error } = await supabase
-        .from('user_roles')
+      // Using type assertion to bypass TypeScript's strict checking for table names
+      const { data, error } = await (supabase
+        .from('user_roles' as any)
         .delete()
         .eq('user_id', userId)
-        .eq('role', role);
+        .eq('role', role) as any);
       
       if (error) throw error;
       return { data, error: null };
