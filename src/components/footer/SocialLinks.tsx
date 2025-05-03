@@ -24,12 +24,12 @@ const SocialLinks: React.FC = () => {
   const linksToDisplay = (!isError && socialLinks.length > 0) ? socialLinks : defaultSocialMediaLinks;
 
   return (
-    <div className="flex space-x-4 mb-6">
+    <div className="flex space-x-3 mb-6">
       {linksToDisplay.map((link, index) => (
         <a 
           key={`social-${index}`} 
           href={link.url} 
-          className="hover:scale-110 transition-all"
+          className="group bg-[#2d3748] hover:bg-[#3a4358] rounded-full p-2 transition-all hover:scale-110"
           target="_blank"
           rel="noopener noreferrer"
           title={link.name}
@@ -37,7 +37,8 @@ const SocialLinks: React.FC = () => {
           <img 
             src={link.icon_url} 
             alt={link.name} 
-            className="h-8 w-8 rounded-full object-contain"
+            className="h-5 w-5 object-contain"
+            loading="lazy"
           />
         </a>
       ))}

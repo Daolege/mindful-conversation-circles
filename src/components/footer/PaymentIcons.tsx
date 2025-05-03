@@ -24,14 +24,18 @@ const PaymentIcons: React.FC = () => {
   const iconsToDisplay = (!isError && paymentIcons.length > 0) ? paymentIcons : defaultPaymentIcons;
 
   return (
-    <div className="flex flex-wrap gap-3">
+    <div className="flex flex-wrap gap-2.5">
       {iconsToDisplay.map((method, index) => (
-        <div key={`payment-${index}`} className="bg-white rounded-md p-1.5 h-8 w-14 flex items-center justify-center">
+        <div 
+          key={`payment-${index}`} 
+          className="bg-white rounded-md p-1.5 h-7 w-12 sm:h-8 sm:w-14 flex items-center justify-center hover:shadow-md transition-shadow"
+          title={method.name}
+        >
           <img 
             src={method.icon_url} 
-            alt={method.name} 
-            title={method.name}
+            alt={method.name}
             className="max-h-full max-w-full object-contain"
+            loading="lazy"
           />
         </div>
       ))}

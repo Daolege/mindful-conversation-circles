@@ -10,29 +10,37 @@ interface ContactInfoProps {
 
 const ContactInfo: React.FC<ContactInfoProps> = ({ emails, phones, location }) => {
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-3">
       {emails && emails.map((email, index) => (
-        <div key={`email-${index}`} className="flex items-center group">
-          <Mail className="h-4 w-4 mr-2 text-[#999999] group-hover:text-knowledge-primary transition-colors" />
-          <a href={`mailto:${email}`} className="text-sm text-[#999999] hover:text-white transition-colors">
+        <a 
+          key={`email-${index}`} 
+          href={`mailto:${email}`} 
+          className="flex items-center group hover:bg-[#2d3748] rounded-md p-1 -ml-1 transition-colors"
+        >
+          <Mail className="h-4 w-4 mr-2.5 text-[#999999] group-hover:text-white transition-colors" />
+          <span className="text-sm text-[#BBBBBB] group-hover:text-white transition-colors">
             {email}
-          </a>
-        </div>
+          </span>
+        </a>
       ))}
       
       {phones && phones.map((phone, index) => (
-        <div key={`phone-${index}`} className="flex items-center group">
-          <Phone className="h-4 w-4 mr-2 text-[#999999] group-hover:text-knowledge-primary transition-colors" />
-          <a href={`https://wa.me/${phone.replace(/\D/g, '')}`} className="text-sm text-[#999999] hover:text-white transition-colors">
+        <a 
+          key={`phone-${index}`} 
+          href={`https://wa.me/${phone.replace(/\D/g, '')}`} 
+          className="flex items-center group hover:bg-[#2d3748] rounded-md p-1 -ml-1 transition-colors"
+        >
+          <Phone className="h-4 w-4 mr-2.5 text-[#999999] group-hover:text-white transition-colors" />
+          <span className="text-sm text-[#BBBBBB] group-hover:text-white transition-colors">
             WhatsApp: {phone}
-          </a>
-        </div>
+          </span>
+        </a>
       ))}
       
       {location && (
-        <div className="flex items-start group">
-          <MapPin className="h-4 w-4 mr-2 mt-0.5 text-[#999999] group-hover:text-knowledge-primary transition-colors" />
-          <span className="text-sm text-[#999999] group-hover:text-white transition-colors">
+        <div className="flex items-start group hover:bg-[#2d3748] rounded-md p-1 -ml-1 transition-colors">
+          <MapPin className="h-4 w-4 mr-2.5 mt-0.5 text-[#999999] group-hover:text-white transition-colors" />
+          <span className="text-sm text-[#BBBBBB] group-hover:text-white transition-colors">
             {location}
           </span>
         </div>

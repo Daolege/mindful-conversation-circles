@@ -7,12 +7,14 @@ import { siteConfig } from "@/config/site";
 import { Separator } from "@/components/ui/separator";
 import Logo from "@/components/Logo";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 // Import refactored components
 import ContactInfo from './footer/ContactInfo';
 import SocialLinks from './footer/SocialLinks';
 import GlobalOffices from './footer/GlobalOffices';
 import PaymentIcons from './footer/PaymentIcons';
+import LegalLinks from './footer/LegalLinks';
 
 // 站点设置类型
 type SiteSettings = {
@@ -26,6 +28,7 @@ type SiteSettings = {
 
 const Footer = () => {
   const { t } = useTranslations();
+  const isMobile = useIsMobile();
   
   // 使用查询获取站点设置
   const { data: siteSettings } = useQuery({
@@ -96,55 +99,78 @@ const Footer = () => {
     `© ${new Date().getFullYear()} ${siteSettings?.company_name || 'SecondRise'}. ${siteSettings?.company_full_name || 'Mandarin (Hong Kong) International Limited'}. 版权所有`;
   
   return (
-    <footer className="bg-[#1a202c] text-white pt-12 pb-6">
+    <footer className="bg-[#1a202c] text-white pt-12 pb-8">
       <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
-          {/* 公司信息 */}
-          <div className="md:col-span-4 flex flex-col">
-            <div className="flex items-center mb-4">
+        {/* 优化的网格布局 - 改进了响应式断点和列宽比例 */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-x-8 gap-y-10">
+          {/* 公司信息 - 调整了列宽 */}
+          <div className="lg:col-span-4 flex flex-col space-y-6">
+            <div className="flex items-center mb-2">
               <Logo variant="default" />
             </div>
-            <p className="text-[#999999] mb-6">{siteSettings?.site_description || t('common:footerCompanyDescription')}</p>
+            <p className="text-[#999999] text-sm leading-relaxed mb-4">{siteSettings?.site_description || t('common:footerCompanyDescription')}</p>
             
             {/* 社交媒体链接 */}
             <SocialLinks />
             
-            {/* 支付方式图标 - 移动到社交媒体下方 */}
-            <div className="mb-6">
-              <h4 className="text-[#999999] font-medium mb-2">{t('common:acceptedPayments')}</h4>
+            {/* 支付方式图标 - 添加了更好的间距和响应式布局 */}
+            <div>
+              <h4 className="text-[#999999] font-medium mb-3">{t('common:acceptedPayments')}</h4>
               <PaymentIcons />
             </div>
           </div>
           
-          {/* 联系信息 - 移除了法律链接 */}
-          <div className="md:col-span-3 space-y-1.5">
-            <h3 className="text-lg font-medium mb-4 text-white">{t('common:contactAndSupport')}</h3>
-            <ContactInfo 
-              emails={emails.length > 0 ? emails : ["secondrise@secondrise.com", "info@secondrise.com"]}
-              phones={phones.length > 0 ? phones : ["+85298211389", "+1(202)2099688"]}
-              location={location}
-            />
-          </div>
-          
-          {/* 全球办公室 */}
-          <div className="md:col-span-5">
-            <GlobalOffices />
-          </div>
-        </div>
-        
-        <Separator className="my-6 bg-[#3A3A3A]" />
-        
-        <div className="flex flex-col sm:flex-row justify-between items-center text-[#999999] text-sm">
-          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-2">
-            <p>{copyrightText}</p>
-            <div className="flex space-x-4">
-              <a href="/privacy-policy" className="hover:text-white transition-colors">{t('common:privacyPolicy')}</a>
-              <a href="/terms-of-use" className="hover:text-white transition-colors">{t('common:termsOfUse')}</a>
-              <a href="/cookie-policy" className="hover:text-white transition-colors">{t('common:cookiePolicy')}</a>
+          {/* 中间区域 - 联系信息和法律链接 */}
+          <div className="lg:col-span-3 flex flex-col space-y-6">
+            {/* 联系信息 */}
+            <div>
+              <h3 className="text-lg font-medium mb-4 text-white">{t('common:contactAndSupport')}</h3>
+              <ContactInfo 
+                emails={emails.length > 0 ? emails : ["secondrise@secondrise.com", "info@secondrise.com"]}
+                phones={phones.length > 0 ? phones : ["+85298211389", "+1(202)2099688"]}
+                location={location}
+              />
+            </div>
+            
+            {/* 添加法律链接到中间区域，仅在小屏幕显示 */}
+            <div className="block lg:hidden mt-4">
+              <LegalLinks />
             </div>
           </div>
           
-          {/* 语言切换器移动到右下角 */}
+          {/* 右侧区域 - 全球办公室和法律链接 */}
+          <div className="lg:col-span-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-6">
+              {/* 全球办公室 */}
+              <div className="md:col-span-2">
+                <GlobalOffices />
+              </div>
+              
+              {/* 法律链接只在大屏幕显示 */}
+              <div className="hidden lg:block">
+                <LegalLinks />
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {/* 使用更明显的分隔线 */}
+        <Separator className="my-8 bg-[#3A3A3A] opacity-60" />
+        
+        {/* 改进的底部版权区域 - 更好的响应式对齐 */}
+        <div className="flex flex-col sm:flex-row justify-between items-center text-[#999999] text-sm">
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 mb-4 sm:mb-0">
+            <p className="text-center sm:text-left">{copyrightText}</p>
+          </div>
+          
+          {/* 法律链接作为内联链接显示在移动视图 */}
+          <div className="flex space-x-4 sm:space-x-6 mb-6 sm:mb-0 text-xs sm:text-sm">
+            <a href="/privacy-policy" className="hover:text-white transition-colors">{t('common:privacyPolicy')}</a>
+            <a href="/terms-of-use" className="hover:text-white transition-colors">{t('common:termsOfUse')}</a>
+            <a href="/cookie-policy" className="hover:text-white transition-colors">{t('common:cookiePolicy')}</a>
+          </div>
+          
+          {/* 语言切换器 */}
           <div className="mt-4 sm:mt-0">
             <LanguageSwitcher variant="footer" className="bg-[#333333] text-white border-[#404040]" />
           </div>
