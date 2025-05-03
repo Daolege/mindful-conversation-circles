@@ -1,5 +1,5 @@
 
-import { selectFromTable } from "@/lib/services/typeSafeSupabase";
+import { selectFromTable, insertIntoTable, updateTable, deleteFromTable } from "@/lib/services/typeSafeSupabase";
 import { Language, defaultLanguages } from "./languageCore";
 
 // Type guard for language item
@@ -78,9 +78,16 @@ export async function getEnabledLanguages(): Promise<Language[]> {
 // 添加新语言
 export async function addLanguage(language: Omit<Language, 'id'>): Promise<{ success: boolean; data?: Language; error?: Error }> {
   try {
-    const { data, error } = await selectFromTable(
+    const { data, error } = await insertIntoTable(
       'languages', 
-      '*'
+      {
+        code: language.code,
+        name: language.name,
+        nativeName: language.nativeName,
+        enabled: language.enabled,
+        rtl: language.rtl,
+        updated_at: new Date().toISOString()
+      }
     );
     
     if (error) {
@@ -107,9 +114,15 @@ export async function updateLanguage(language: Language): Promise<{ success: boo
   }
   
   try {
-    const { error } = await selectFromTable(
+    const { error } = await updateTable(
       'languages',
-      '*',
+      {
+        name: language.name,
+        nativeName: language.nativeName,
+        enabled: language.enabled,
+        rtl: language.rtl,
+        updated_at: new Date().toISOString()
+      },
       { id: language.id }
     );
     
@@ -128,9 +141,12 @@ export async function updateLanguage(language: Language): Promise<{ success: boo
 // 切换语言状态（启用/禁用）
 export async function toggleLanguageStatus(languageId: number, enabled: boolean): Promise<{ success: boolean; error?: Error }> {
   try {
-    const { error } = await selectFromTable(
+    const { error } = await updateTable(
       'languages',
-      '*',
+      {
+        enabled: enabled,
+        updated_at: new Date().toISOString()
+      },
       { id: languageId }
     );
     
@@ -185,9 +201,8 @@ export async function deleteLanguage(languageId: number): Promise<{ success: boo
     }
     
     // Delete the language
-    const { error } = await selectFromTable(
+    const { error } = await deleteFromTable(
       'languages',
-      '*',
       { id: languageId }
     );
     

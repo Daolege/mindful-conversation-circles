@@ -22,19 +22,23 @@ export const SystemSettings = () => {
       <h2 className="text-2xl font-bold text-gray-900">{t('admin:systemSettings')}</h2>
       
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <ScrollArea className="pb-4 w-full">
-          <TabsList className="mb-6 w-max flex-nowrap">
-            <TabsTrigger value="general">{t('admin:generalSettings')}</TabsTrigger>
-            <TabsTrigger value="company">{t('admin:companyInfo')}</TabsTrigger>
-            <TabsTrigger value="contact">{t('admin:contactMethods')}</TabsTrigger>
-            <TabsTrigger value="social">{t('admin:socialMedia')}</TabsTrigger>
-            <TabsTrigger value="payment">{t('admin:paymentIcons')}</TabsTrigger>
-            <TabsTrigger value="legal">{t('admin:legalDocuments')}</TabsTrigger>
-            <TabsTrigger value="faq">{t('admin:faq')}</TabsTrigger>
-            <TabsTrigger value="languages">{t('admin:languageManagement')}</TabsTrigger>
-            <TabsTrigger value="translations">{t('admin:translationEditor')}</TabsTrigger>
-          </TabsList>
-        </ScrollArea>
+        <div className="relative">
+          <ScrollArea className="pb-4 w-full">
+            <div className="flex overflow-x-auto">
+              <TabsList className="mb-6 inline-flex space-x-1 p-1 bg-gray-100/80 rounded-xl">
+                <TabsTrigger className="px-3 py-1.5" value="general">{t('admin:generalSettings')}</TabsTrigger>
+                <TabsTrigger className="px-3 py-1.5" value="company">{t('admin:companyInfo')}</TabsTrigger>
+                <TabsTrigger className="px-3 py-1.5" value="contact">{t('admin:contactMethods')}</TabsTrigger>
+                <TabsTrigger className="px-3 py-1.5" value="social">{t('admin:socialMedia')}</TabsTrigger>
+                <TabsTrigger className="px-3 py-1.5" value="payment">{t('admin:paymentIcons')}</TabsTrigger>
+                <TabsTrigger className="px-3 py-1.5" value="legal">{t('admin:legalDocuments')}</TabsTrigger>
+                <TabsTrigger className="px-3 py-1.5" value="faq">{t('admin:faq')}</TabsTrigger>
+                <TabsTrigger className="px-3 py-1.5" value="languages">{t('admin:languageManagement')}</TabsTrigger>
+                <TabsTrigger className="px-3 py-1.5" value="translations">{t('admin:translationEditor')}</TabsTrigger>
+              </TabsList>
+            </div>
+          </ScrollArea>
+        </div>
         
         <TabsContent value="general">
           <ExchangeRateSettings />

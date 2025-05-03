@@ -1,9 +1,21 @@
 
-import { Tables } from "@/lib/supabase/database.types";
+/**
+ * Core language types and defaults
+ */
 
-export type Language = Tables<'languages'>;
+// Language definition
+export interface Language {
+  id: number;
+  code: string;
+  name: string;
+  nativeName: string;
+  enabled: boolean;
+  rtl: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
 
-// Define and export TranslationItem type
+// Translation item structure
 export interface TranslationItem {
   id?: number;
   language_code: string;
@@ -14,7 +26,7 @@ export interface TranslationItem {
   updated_at?: string;
 }
 
-// Default languages as fallback
+// 默认支持的语言
 export const defaultLanguages: Language[] = [
   { id: 1, code: 'en', name: 'English', nativeName: 'English', enabled: true, rtl: false },
   { id: 2, code: 'zh', name: 'Chinese (Simplified)', nativeName: '简体中文', enabled: true, rtl: false },
@@ -27,14 +39,24 @@ export const defaultLanguages: Language[] = [
   { id: 9, code: 'th', name: 'Thai', nativeName: 'ไทย', enabled: true, rtl: false },
   { id: 10, code: 'pt', name: 'Portuguese', nativeName: 'Português', enabled: true, rtl: false },
   { id: 11, code: 'ja', name: 'Japanese', nativeName: '日本語', enabled: true, rtl: false },
-  { id: 12, code: 'ko', name: 'Korean', nativeName: '한国語', enabled: true, rtl: false }
+  { id: 12, code: 'ko', name: 'Korean', nativeName: '한국어', enabled: true, rtl: false }
 ];
 
-// Utility function to split array into chunks
-export function chunkArray<T>(array: T[], size: number): T[][] {
-  const result = [];
-  for (let i = 0; i < array.length; i += size) {
-    result.push(array.slice(i, i + size));
-  }
-  return result;
-}
+// List of RTL languages
+export const rtlLanguages = ['ar'];
+
+// Get a map of language codes to country codes for flag display
+export const languageToCountryCode: Record<string, string> = {
+  'en': 'us',  // English -> USA
+  'zh': 'cn',  // Chinese -> China
+  'fr': 'fr',  // French -> France
+  'de': 'de',  // German -> Germany
+  'ru': 'ru',  // Russian -> Russia
+  'ar': 'sa',  // Arabic -> Saudi Arabia
+  'es': 'es',  // Spanish -> Spain
+  'vi': 'vn',  // Vietnamese -> Vietnam
+  'th': 'th',  // Thai -> Thailand
+  'pt': 'pt',  // Portuguese -> Portugal
+  'ja': 'jp',  // Japanese -> Japan
+  'ko': 'kr',  // Korean -> South Korea
+};

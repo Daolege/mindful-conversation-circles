@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Label } from '@/components/ui/label';
-import { Check, FileDown, AlertTriangle } from 'lucide-react';
+import { Check, FileDown, AlertTriangle, FileType } from 'lucide-react';
 import { toast } from 'sonner';
 import { TranslationItem } from '@/lib/services/language/languageCore';
 import { exportTranslationsToJson } from '@/lib/utils/translationUtils';
@@ -29,7 +29,6 @@ export const ImportExportTranslations = () => {
   const [selectedNamespaces, setSelectedNamespaces] = useState<string[]>(['common']);
   const [isExporting, setIsExporting] = useState(false);
   const [exportFormat, setExportFormat] = useState<string>('json');
-  const [showExportInfo, setShowExportInfo] = useState(false);
   
   const toggleNamespace = (namespace: string) => {
     setSelectedNamespaces(prev => {
@@ -81,24 +80,10 @@ export const ImportExportTranslations = () => {
         return;
       }
       
-      switch (exportFormat) {
-        case 'json':
-          exportTranslationsToJson(allTranslations, selectedLanguage);
-          toast.success(t('admin:translationsExported', { count: allTranslations.length }));
-          break;
-        case 'csv':
-          // Currently not implemented
-          setShowExportInfo(true);
-          toast.info(t('admin:formatNotSupported'));
-          break;
-        case 'excel':
-          // Currently not implemented
-          setShowExportInfo(true);
-          toast.info(t('admin:formatNotSupported'));
-          break;
-        default:
-          toast.error(t('admin:invalidExportFormat'));
-      }
+      // Currently only JSON export is fully implemented
+      exportTranslationsToJson(allTranslations, selectedLanguage);
+      toast.success(t('admin:translationsExported', { count: allTranslations.length }));
+      
     } catch (error) {
       console.error('Error exporting translations:', error);
       toast.error(t('errors:general'));
@@ -158,10 +143,13 @@ export const ImportExportTranslations = () => {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="json">JSON</SelectItem>
-                          <SelectItem value="csv">CSV (Coming Soon)</SelectItem>
-                          <SelectItem value="excel">Excel (Coming Soon)</SelectItem>
+                          <SelectItem disabled value="csv">CSV</SelectItem>
+                          <SelectItem disabled value="excel">Excel</SelectItem>
                         </SelectContent>
                       </Select>
+                      <p className="text-xs text-muted-foreground">
+                        {t('admin:onlyJsonSupported')}
+                      </p>
                     </div>
                   </div>
                   
@@ -212,17 +200,15 @@ export const ImportExportTranslations = () => {
                     </ScrollArea>
                   </div>
                   
-                  {showExportInfo && (
-                    <div className="flex items-start gap-2 p-4 bg-amber-50 border border-amber-200 rounded-md">
-                      <AlertTriangle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
-                      <div>
-                        <h4 className="font-medium text-sm">{t('admin:featureInDevelopment')}</h4>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {t('admin:moreExportFormatsComingSoon')}
-                        </p>
-                      </div>
+                  <div className="flex items-start gap-2 p-4 bg-blue-50 border border-blue-200 rounded-md">
+                    <AlertTriangle className="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <h4 className="font-medium text-sm">{t('admin:exportInfo')}</h4>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {t('admin:currentlyOnlyJsonSupported')}
+                      </p>
                     </div>
-                  )}
+                  </div>
                   
                   <Button
                     className="w-full"

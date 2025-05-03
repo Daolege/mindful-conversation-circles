@@ -1,9 +1,9 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { getEnabledLanguages, Language } from '@/lib/services/languageService';
+import { getEnabledLanguages } from '@/lib/services/languageService';
 import { useQuery } from '@tanstack/react-query';
-import { languageToCountryCode } from '@/lib/utils/languageUtils';
+import { Language, rtlLanguages, languageToCountryCode } from '@/lib/services/language/languageCore';
 
 interface LanguageContextType {
   currentLanguage: string;
@@ -16,24 +16,10 @@ interface LanguageContextType {
   isLanguageLoading: boolean;
 }
 
-// 默认支持的语言
 const defaultLanguages: Language[] = [
   { id: 1, code: 'en', name: 'English', nativeName: 'English', enabled: true, rtl: false },
-  { id: 2, code: 'zh', name: 'Chinese (Simplified)', nativeName: '简体中文', enabled: true, rtl: false },
-  { id: 3, code: 'fr', name: 'French', nativeName: 'Français', enabled: true, rtl: false },
-  { id: 4, code: 'de', name: 'German', nativeName: 'Deutsch', enabled: true, rtl: false },
-  { id: 5, code: 'ru', name: 'Russian', nativeName: 'Русский', enabled: true, rtl: false },
-  { id: 6, code: 'ar', name: 'Arabic', nativeName: 'العربية', enabled: true, rtl: true },
-  { id: 7, code: 'es', name: 'Spanish', nativeName: 'Español', enabled: true, rtl: false },
-  { id: 8, code: 'vi', name: 'Vietnamese', nativeName: 'Tiếng Việt', enabled: true, rtl: false },
-  { id: 9, code: 'th', name: 'Thai', nativeName: 'ไทย', enabled: true, rtl: false },
-  { id: 10, code: 'pt', name: 'Portuguese', nativeName: 'Português', enabled: true, rtl: false },
-  { id: 11, code: 'ja', name: 'Japanese', nativeName: '日本語', enabled: true, rtl: false },
-  { id: 12, code: 'ko', name: 'Korean', nativeName: '한국어', enabled: true, rtl: false }
+  { id: 2, code: 'zh', name: 'Chinese (Simplified)', nativeName: '简体中文', enabled: true, rtl: false }
 ];
-
-// RTL languages list
-const rtlLanguages = ['ar'];
 
 const LanguageContext = createContext<LanguageContextType>({
   currentLanguage: 'zh',
