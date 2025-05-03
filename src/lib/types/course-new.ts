@@ -33,14 +33,7 @@ export interface CourseWithDetails extends Course {
   materials?: CourseMaterial[];
   status?: 'published' | 'draft' | 'archived';
   thumbnail_url?: string;
-}
-
-export interface CourseMaterial {
-  id: string;
-  name: string;
-  url: string;
-  position: number;
-  is_visible?: boolean;
+  language?: string; // Make sure language is explicitly defined
 }
 
 // Add the CourseNew interface for admin components

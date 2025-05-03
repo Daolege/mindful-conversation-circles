@@ -50,13 +50,18 @@ export function useCourseForm(initialData?: Partial<CourseWithDetails>) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  // Log initial data to help with debugging
+  console.log("[useCourseForm] Initial data:", initialData);
+  console.log("[useCourseForm] Initial language value:", initialData?.language);
+  console.log("[useCourseForm] Initial category value:", initialData?.category);
+
   const defaultValues: CourseWithDetails = {
     id: initialData?.id ?? 0,
     title: initialData?.title ?? '',
     description: initialData?.description ?? '',
     price: initialData?.price ?? 0,
     currency: initialData?.currency ?? 'cny',
-    language: initialData?.language ?? 'zh',
+    language: initialData?.language ?? 'zh', // Ensure language is set with a default
     category: initialData?.category ?? initialData?.language ?? 'zh', // Use language as fallback for category
     featured: initialData?.featured ?? false,
     display_order: initialData?.display_order ?? 0,
@@ -71,6 +76,10 @@ export function useCourseForm(initialData?: Partial<CourseWithDetails>) {
     thumbnail_url: initialData?.thumbnail_url ?? '',
   };
 
+  // Log the constructed default values for debugging
+  console.log("[useCourseForm] Constructed default values:", defaultValues);
+  console.log("[useCourseForm] Final language value:", defaultValues.language);
+
   const form = useForm<CourseWithDetails>({
     resolver: zodResolver(formSchema),
     defaultValues: defaultValues,
@@ -82,6 +91,10 @@ export function useCourseForm(initialData?: Partial<CourseWithDetails>) {
     setErrorMessage(null);
 
     try {
+      // Log submission values for debugging
+      console.log("[useCourseForm] Form values being submitted:", values);
+      console.log("[useCourseForm] Language being submitted:", values.language);
+      
       // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 1000));
       console.log("Form values submitted:", values);

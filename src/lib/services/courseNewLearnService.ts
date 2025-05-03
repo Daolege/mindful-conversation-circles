@@ -37,14 +37,33 @@ export const getCourseNewById = async (id: number | string): Promise<{ data: Cou
 
     console.log(`[getCourseNewById] Successfully fetched course: ${courseData.title} (ID: ${courseData.id})`);
     console.log(`[getCourseNewById] Sections count: ${courseData.course_sections?.length || 0}`);
+    console.log(`[getCourseNewById] Raw course data:`, courseData);
     
     // Handle the response structure - map the database field names to our CourseWithDetails structure
     const transformedData: CourseWithDetails = {
       ...courseData,
       // Cast status to match the required type
       status: courseData.status as 'published' | 'draft' | 'archived',
-      // Ensure language property exists by using type assertion with 'as any' to access potential language property
-      language: (courseData as any).language || courseData.category || 'zh',
+      // Properly handle the language field with detailed logging
+      language: (() => {
+        // Try to access language field first
+        const langValue = (courseData as any).language;
+        console.log(`[getCourseNewById] Language value from DB:`, langValue);
+        
+        // If not found, use category as fallback
+        if (!langValue && courseData.category) {
+          console.log(`[getCourseNewById] Using category as language fallback:`, courseData.category);
+          return courseData.category;
+        }
+        
+        // Default to 'zh' if neither exists
+        if (!langValue && !courseData.category) {
+          console.log(`[getCourseNewById] No language or category found, using default 'zh'`);
+          return 'zh';
+        }
+        
+        return langValue;
+      })(),
       category: courseData.category || 'zh', // Ensure backward compatibility
       sections: courseData.course_sections?.map(section => ({
         ...section,
@@ -56,6 +75,9 @@ export const getCourseNewById = async (id: number | string): Promise<{ data: Cou
       })) || [],
       materials: courseData.course_materials || []
     };
+
+    console.log(`[getCourseNewById] Transformed language field:`, transformedData.language);
+    console.log(`[getCourseNewById] Transformed category field:`, transformedData.category);
 
     // Ensure we're returning a proper CourseWithDetails object
     return { 

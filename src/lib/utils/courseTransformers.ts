@@ -9,7 +9,16 @@ export const transformCourseNewToOld = (courseNew: CourseNew): Course => {
   // Get current date in ISO format for lastUpdated if not available
   const currentDateISO = new Date().toISOString();
   
-  return {
+  // Log the transformation input
+  console.log("[transformCourseNewToOld] Input data:", courseNew);
+  console.log("[transformCourseNewToOld] Input language:", courseNew.language);
+  console.log("[transformCourseNewToOld] Input category:", courseNew.category);
+  
+  // Determine the language to use
+  const languageToUse = courseNew.language || courseNew.category || 'zh';
+  console.log("[transformCourseNewToOld] Using language:", languageToUse);
+  
+  const result = {
     id: courseNew.id,
     title: courseNew.title,
     description: courseNew.description || '',
@@ -20,7 +29,7 @@ export const transformCourseNewToOld = (courseNew: CourseNew): Course => {
     display_order: courseNew.display_order || 0,
     enrollment_count: courseNew.enrollment_count || 0,
     studentCount: courseNew.enrollment_count || 0,
-    language: courseNew.language || 'zh',
+    language: languageToUse, // Ensure language is explicitly set
     published_at: courseNew.published_at || '',
     lectures: courseNew.lecture_count || 0,
     lastUpdated: courseNew.updated_at || currentDateISO,
@@ -39,4 +48,10 @@ export const transformCourseNewToOld = (courseNew: CourseNew): Course => {
     instructor: '', // Add empty instructor for compatibility
     instructorId: 0,
   };
+  
+  // Log the transformation output
+  console.log("[transformCourseNewToOld] Output data language:", result.language);
+  console.log("[transformCourseNewToOld] Output data category:", result.category);
+  
+  return result;
 };
