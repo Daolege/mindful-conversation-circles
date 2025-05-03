@@ -43,7 +43,14 @@ const queryClient = new QueryClient({
 (async () => {
   try {
     console.log('Initializing language migrations...');
-    await runAllLanguageMigrations();
+    // Set a timeout to not block the UI rendering
+    setTimeout(async () => {
+      try {
+        await runAllLanguageMigrations();
+      } catch (err) {
+        console.error('Error running language migrations:', err);
+      }
+    }, 2000);
   } catch (error) {
     console.error('Failed to initialize language migrations:', error);
   }

@@ -36,10 +36,11 @@ const CourseNewEditorPage = () => {
     audiences: false
   });
   const [loadedInitialState, setLoadedInitialState] = useState(false);
-  // Add this state to track database initialization
+  // This state tracks database initialization
   const [dbInitialized, setDbInitialized] = useState(false);
 
-  // Move this useQuery outside of any conditions to avoid the "Rendered more hooks" error
+  // ALL hooks MUST be called unconditionally at the top level
+  // Admin check hook
   const { data: isAdmin, isLoading } = useQuery({
     queryKey: ['admin-role', user?.id],
     queryFn: async () => {
@@ -64,7 +65,7 @@ const CourseNewEditorPage = () => {
     gcTime: 10 * 60 * 1000,
   });
 
-  // Initialize database - make sure this hook is always called in the same order
+  // Database initialization hook - ALWAYS called in same order
   useEffect(() => {
     const initializeDatabase = async () => {
       try {
@@ -81,6 +82,7 @@ const CourseNewEditorPage = () => {
     initializeDatabase();
   }, []);
 
+  // Authentication redirection hook
   useEffect(() => {
     if (!isLoading && user && isAdmin === false && !redirectAttemptedRef.current) {
       redirectAttemptedRef.current = true;
@@ -132,6 +134,7 @@ const CourseNewEditorPage = () => {
     }
   }, [courseIdFromParams, user, isAdmin]);
   
+  // Debug logging hook
   useEffect(() => {
     console.log("[CourseNewEditorPage 调试] Component initialized");
     console.log("[CourseNewEditorPage 调试] URL params:", Object.fromEntries(searchParams.entries()));
@@ -140,6 +143,7 @@ const CourseNewEditorPage = () => {
     console.log("[CourseNewEditorPage 调试] Current courseId param:", courseIdFromParams);
     console.log("[CourseNewEditorPage 调试] courseId type:", typeof courseIdFromParams);
     console.log("[CourseNewEditorPage 调试] Course exists status:", courseExists);
+    console.log("[CourseNewEditorPage 调试] Database initialized:", dbInitialized);
     
     if (tabParam) {
       console.log("[CourseNewEditorPage 调试] Tab param:", tabParam);
@@ -150,7 +154,7 @@ const CourseNewEditorPage = () => {
       console.log("[CourseNewEditorPage 调试] Numeric course ID:", numericCourseId);
       console.log("[CourseNewEditorPage 调试] Is valid number:", !isNaN(numericCourseId));
     }
-  }, [searchParams, tabParam, params, courseIdFromParams, courseExists]);
+  }, [searchParams, tabParam, params, courseIdFromParams, courseExists, dbInitialized]);
 
   // Convert the courseId parameter to a number if it exists and is not "new"
   let numericCourseId = null;

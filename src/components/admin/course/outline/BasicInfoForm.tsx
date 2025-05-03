@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -14,7 +15,8 @@ import { useNavigate } from "react-router-dom";
 import { CourseFormValues } from "@/lib/types/course-new";
 import { useTranslation } from "react-i18next";
 import { getEnabledLanguages } from '@/lib/services/language/languageService';
-import { addLanguageColumnToCourses, checkCoursesLanguageColumn } from '@/lib/services/language/migrationService';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 // 定义表单验证模式
 const formSchema = z.object({
@@ -38,7 +40,7 @@ export const BasicInfoForm = ({ onTabChange, onCourseCreated, courseId }: BasicI
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(!!courseId);
   const [languages, setLanguages] = useState<any[]>([]);
-  const [languageColumnExists, setLanguageColumnExists] = useState<boolean | null>(null);
+  const [languageError, setLanguageError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { t } = useTranslation(['admin']);
   
@@ -57,38 +59,6 @@ export const BasicInfoForm = ({ onTabChange, onCourseCreated, courseId }: BasicI
     }
   });
 
-  // Check if the courses_new table has the language column
-  useEffect(() => {
-    const checkLanguageColumn = async () => {
-      try {
-        const exists = await checkCoursesLanguageColumn();
-        setLanguageColumnExists(exists);
-        console.log("Language column exists:", exists);
-        
-        if (!exists) {
-          // Try to add the column
-          const added = await addLanguageColumnToCourses();
-          setLanguageColumnExists(added);
-          console.log("Language column added:", added);
-          
-          if (added) {
-            toast.success("课程数据结构已更新", {
-              description: "语言字段已添加到课程表中"
-            });
-          } else {
-            toast.error("更新课程数据结构失败", {
-              description: "无法添加语言字段，请联系管理员"
-            });
-          }
-        }
-      } catch (err) {
-        console.error("Error checking language column:", err);
-      }
-    };
-    
-    checkLanguageColumn();
-  }, []);
-
   // Load available languages from the database using the languageService
   useEffect(() => {
     const loadLanguages = async () => {
@@ -105,6 +75,7 @@ export const BasicInfoForm = ({ onTabChange, onCourseCreated, courseId }: BasicI
           setLanguages(languageOptions);
           console.log("Loaded languages:", languageOptions.length);
         } else {
+          console.log("No languages found in database, using fallback options");
           // Fallback to hardcoded languages if none found in database
           setLanguages([
             { value: "zh", label: "中文" },
@@ -158,8 +129,23 @@ export const BasicInfoForm = ({ onTabChange, onCourseCreated, courseId }: BasicI
         if (data) {
           // Make sure we handle the language field correctly
           const courseData = data as any;
-          // Use explicit language field first, then fallback to category if needed
-          const languageValue = courseData.language || courseData.category || "zh";
+          
+          // First try language field, then fallback to category if needed
+          let languageValue = "zh"; // Default fallback
+          
+          try {
+            // Check if language field exists in the data
+            if ('language' in courseData && courseData.language) {
+              languageValue = courseData.language;
+            } 
+            // Fallback to category if appropriate
+            else if ('category' in courseData && ['zh', 'en', 'fr', 'de', 'es', 'ja', 'ko', 'ru'].includes(courseData.category)) {
+              languageValue = courseData.category;
+              console.log("Using category as language fallback:", languageValue);
+            }
+          } catch (err) {
+            console.error("Error processing language field:", err);
+          }
           
           console.log("Loaded course data:", courseData);
           console.log("Language value:", languageValue);
@@ -190,22 +176,11 @@ export const BasicInfoForm = ({ onTabChange, onCourseCreated, courseId }: BasicI
   const onSubmit = async (values: CourseFormValues) => {
     try {
       setLoading(true);
+      setLanguageError(null);
       
       // Log the values being sent to the server
       console.log("Submitting form values:", values);
       console.log("Language being submitted:", values.language);
-      
-      // Check if language column exists before proceeding
-      if (languageColumnExists === false) {
-        // Try to add the column again
-        const added = await addLanguageColumnToCourses();
-        if (!added) {
-          toast.error("保存失败: 数据库缺少语言字段", {
-            description: "系统无法添加必要的语言字段，请联系管理员"
-          });
-          return;
-        }
-      }
       
       if (courseId) {
         // Update existing course
@@ -216,7 +191,8 @@ export const BasicInfoForm = ({ onTabChange, onCourseCreated, courseId }: BasicI
             description: values.description,
             price: values.price,
             original_price: values.original_price,
-            language: values.language, // Make sure language is included
+            category: values.language, // Ensure backward compatibility
+            language: values.language,
             currency: values.currency,
             status: values.status,
             display_order: values.display_order,
@@ -229,8 +205,9 @@ export const BasicInfoForm = ({ onTabChange, onCourseCreated, courseId }: BasicI
           console.error("Error details:", JSON.stringify(error));
           
           if (error.code === '42703') { // PostgreSQL code for "column does not exist"
-            toast.error("保存失败: 数据库缺少语言字段", {
-              description: "请联系管理员添加必要的数据库字段"
+            setLanguageError("数据库缺少语言(language)字段。系统将尝试在下次应用启动时自动修复此问题。如果问题持续存在，请联系系统管理员。");
+            toast.error("保存失败: 数据库结构不完整", {
+              description: "语言字段缺失，请联系系统管理员"
             });
           } else {
             toast.error(`更新课程失败: ${error.message}`);
@@ -253,6 +230,7 @@ export const BasicInfoForm = ({ onTabChange, onCourseCreated, courseId }: BasicI
           ? (maxOrderData[0].display_order || 0) + 1 
           : 1;
         
+        // Try first with both language and category fields
         const { data, error } = await supabase
           .from('courses_new')
           .insert({
@@ -260,7 +238,8 @@ export const BasicInfoForm = ({ onTabChange, onCourseCreated, courseId }: BasicI
             description: values.description,
             price: values.price,
             original_price: values.original_price,
-            language: values.language,
+            category: values.language, // Set category for backward compatibility
+            language: values.language, // Set dedicated language field
             currency: values.currency,
             status: values.status,
             display_order: nextDisplayOrder,
@@ -269,8 +248,46 @@ export const BasicInfoForm = ({ onTabChange, onCourseCreated, courseId }: BasicI
         
         if (error) {
           console.error("Error creating course:", error);
-          toast.error("创建课程失败");
-          return;
+          
+          // Handle column does not exist error
+          if (error.code === '42703') {
+            console.log("Language column might be missing, trying without it");
+            
+            // Retry without language column
+            const { data: retryData, error: retryError } = await supabase
+              .from('courses_new')
+              .insert({
+                title: values.title,
+                description: values.description,
+                price: values.price,
+                original_price: values.original_price,
+                category: values.language, // Use language as category
+                currency: values.currency,
+                status: values.status,
+                display_order: nextDisplayOrder,
+              })
+              .select('id');
+              
+            if (retryError) {
+              console.error("Second attempt failed:", retryError);
+              setLanguageError("创建课程失败。数据库架构可能缺少必要的字段。请联系系统管理员。");
+              toast.error("创建课程失败");
+              return;
+            }
+            
+            if (retryData && retryData.length > 0) {
+              const newCourseId = retryData[0].id;
+              toast.success("课程已成功创建");
+              toast.info("注意：系统使用了兼容模式保存语言设置", {
+                description: "请联系系统管理员来修复数据库架构"
+              });
+              onCourseCreated(newCourseId);
+              return;
+            }
+          } else {
+            toast.error(`创建课程失败: ${error.message}`);
+            return;
+          }
         }
         
         if (data && data.length > 0) {
@@ -279,9 +296,11 @@ export const BasicInfoForm = ({ onTabChange, onCourseCreated, courseId }: BasicI
           onCourseCreated(newCourseId);
         }
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error in onSubmit:", err);
-      toast.error("保存课程时出错");
+      toast.error("保存课程时出错", {
+        description: err.message || "请稍后重试"
+      });
     } finally {
       setLoading(false);
     }
@@ -301,6 +320,16 @@ export const BasicInfoForm = ({ onTabChange, onCourseCreated, courseId }: BasicI
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 p-4 bg-white rounded-lg border border-gray-100">
         <div className="grid grid-cols-1 gap-6 md:gap-8">
           <h2 className="text-xl font-medium">基本信息</h2>
+          
+          {languageError && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>数据库错误</AlertTitle>
+              <AlertDescription>
+                {languageError}
+              </AlertDescription>
+            </Alert>
+          )}
           
           <FormField
             control={form.control}
