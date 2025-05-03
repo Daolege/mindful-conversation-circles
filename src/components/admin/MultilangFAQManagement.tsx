@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -78,16 +79,32 @@ const MultilangFAQManagement = () => {
     queryKey: ["languages"],
     queryFn: async () => {
       try {
-        const { data } = await (supabase as any)
+        // Try to fetch from the database first
+        const { data, error } = await (supabase as any)
           .from("languages")
           .select("*")
           .eq("enabled", true);
-        return data || [];
+        
+        if (error || !data || data.length === 0) {
+          console.log("[FAQManagement] Using default languages");
+          // Return at least English and Chinese if DB call fails
+          return [
+            { id: 1, code: 'en', name: 'English', nativeName: 'English', enabled: true },
+            { id: 2, code: 'zh', name: 'Chinese (Simplified)', nativeName: '简体中文', enabled: true },
+          ];
+        }
+        
+        return data;
       } catch (error) {
         console.error("Error fetching languages:", error);
-        return [];
+        // Return at least English and Chinese if DB call fails
+        return [
+          { id: 1, code: 'en', name: 'English', nativeName: 'English', enabled: true },
+          { id: 2, code: 'zh', name: 'Chinese (Simplified)', nativeName: '简体中文', enabled: true },
+        ];
       }
     },
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
   // Get translations for a specific FAQ
@@ -141,11 +158,11 @@ const MultilangFAQManagement = () => {
       queryClient.invalidateQueries({ queryKey: ["featured-faqs"] });
       setIsDialogOpen(false);
       resetForm();
-      toast.success(t('common:faqCreated'));
+      toast.success(t('common:faqCreated') || "FAQ created successfully");
     },
     onError: (error) => {
       console.error("Error creating FAQ:", error);
-      toast.error(t('common:errorCreatingFaq'));
+      toast.error(t('common:errorCreatingFaq') || "Error creating FAQ");
     },
   });
 
@@ -167,11 +184,11 @@ const MultilangFAQManagement = () => {
       queryClient.invalidateQueries({ queryKey: ["admin-multilingual-faqs"] });
       queryClient.invalidateQueries({ queryKey: ["featured-faqs"] });
       queryClient.invalidateQueries({ queryKey: ["faq-translations"] });
-      toast.success(t('common:translationUpdated'));
+      toast.success(t('common:translationUpdated') || "Translation updated successfully");
     },
     onError: (error) => {
       console.error("Error updating translation:", error);
-      toast.error(t('common:errorUpdatingTranslation'));
+      toast.error(t('common:errorUpdatingTranslation') || "Error updating translation");
     },
   });
 
@@ -226,7 +243,7 @@ const MultilangFAQManagement = () => {
     e.preventDefault();
     
     if (!formData.question.trim() || !formData.answer.trim()) {
-      toast.error(t('common:pleaseCompleteAllFields'));
+      toast.error(t('common:pleaseCompleteAllFields') || "Please complete all fields");
       return;
     }
     
@@ -259,18 +276,18 @@ const MultilangFAQManagement = () => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">{t('common:manageFaqs')}</h2>
+        <h2 className="text-2xl font-bold">{t('common:manageFaqs') || "Manage FAQs"}</h2>
         <Button onClick={handleCreateNew}>
-          <Plus className="mr-2 h-4 w-4" /> {t('common:createNewFaq')}
+          <Plus className="mr-2 h-4 w-4" /> {t('common:createNewFaq') || "Create New FAQ"}
         </Button>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="mb-4 grid grid-cols-4 md:w-[400px]">
-          <TabsTrigger value="all">{t('common:allCategories')}</TabsTrigger>
-          <TabsTrigger value="account">{t('common:account')}</TabsTrigger>
-          <TabsTrigger value="course">{t('common:course')}</TabsTrigger>
-          <TabsTrigger value="payment">{t('common:payment')}</TabsTrigger>
+          <TabsTrigger value="all">{t('common:allCategories') || "All Categories"}</TabsTrigger>
+          <TabsTrigger value="account">{t('common:account') || "Account"}</TabsTrigger>
+          <TabsTrigger value="course">{t('common:course') || "Course"}</TabsTrigger>
+          <TabsTrigger value="payment">{t('common:payment') || "Payment"}</TabsTrigger>
         </TabsList>
 
         <TabsContent value={activeTab} className="mt-0">
@@ -292,7 +309,7 @@ const MultilangFAQManagement = () => {
                           </span>
                           {faq.is_featured && (
                             <span className="ml-2 bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded text-xs flex items-center">
-                              <Star className="h-3 w-3 mr-1" /> {t('common:featured')}
+                              <Star className="h-3 w-3 mr-1" /> {t('common:featured') || "Featured"}
                             </span>
                           )}
                         </CardDescription>
@@ -309,7 +326,7 @@ const MultilangFAQManagement = () => {
                   </CardContent>
                   <CardFooter className="pt-0 text-xs text-gray-400 flex items-center">
                     <Globe className="h-3 w-3 mr-1" />
-                    {t('common:languageVersion', { language: currentLanguage })}
+                    {t('common:languageVersion', { language: currentLanguage }) || `Language: ${currentLanguage}`}
                   </CardFooter>
                 </Card>
               ))}
@@ -317,12 +334,12 @@ const MultilangFAQManagement = () => {
           ) : (
             <div className="text-center py-12 bg-gray-50 border rounded-md">
               <AlertCircle className="mx-auto h-10 w-10 text-gray-400" />
-              <h3 className="mt-4 text-lg font-medium">{t('common:noFaqsFound')}</h3>
+              <h3 className="mt-4 text-lg font-medium">{t('common:noFaqsFound') || "No FAQs found"}</h3>
               <p className="mt-2 text-gray-500">
-                {t('common:createFirstFaq')}
+                {t('common:createFirstFaq') || "Create your first FAQ to get started"}
               </p>
               <Button className="mt-4" onClick={handleCreateNew}>
-                <Plus className="mr-2 h-4 w-4" /> {t('common:createNewFaq')}
+                <Plus className="mr-2 h-4 w-4" /> {t('common:createNewFaq') || "Create New FAQ"}
               </Button>
             </div>
           )}
@@ -333,24 +350,24 @@ const MultilangFAQManagement = () => {
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>
-              {editingFaq ? t('common:editFaq') : t('common:createNewFaq')}
+              {editingFaq ? (t('common:editFaq') || "Edit FAQ") : (t('common:createNewFaq') || "Create New FAQ")}
             </DialogTitle>
             <DialogDescription>
               {editingFaq 
-                ? t('common:editFaqDescription') 
-                : t('common:createFaqDescription')}
+                ? (t('common:editFaqDescription') || "Edit the FAQ content and translations")
+                : (t('common:createFaqDescription') || "Create a new FAQ with translations")}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit}>
             {editingFaq && (
               <div className="mb-4">
-                <label className="block text-sm font-medium mb-1">{t('common:selectLanguage')}</label>
+                <label className="block text-sm font-medium mb-1">{t('common:selectLanguage') || "Select Language"}</label>
                 <Select 
                   value={currentEditLang} 
                   onValueChange={handleChangeLanguage}
                 >
                   <SelectTrigger className="w-full">
-                    <SelectValue placeholder={t('common:selectLanguage')} />
+                    <SelectValue placeholder={t('common:selectLanguage') || "Select Language"} />
                   </SelectTrigger>
                   <SelectContent>
                     {languages.map((lang: any) => (
@@ -364,7 +381,7 @@ const MultilangFAQManagement = () => {
             )}
 
             <div className="mb-4">
-              <label className="block text-sm font-medium mb-1">{t('common:category')}</label>
+              <label className="block text-sm font-medium mb-1">{t('common:category') || "Category"}</label>
               <Select 
                 value={formData.category} 
                 name="category"
@@ -372,40 +389,40 @@ const MultilangFAQManagement = () => {
                 disabled={!!editingFaq} // Disable category change for existing FAQs
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder={t('common:selectCategory')} />
+                  <SelectValue placeholder={t('common:selectCategory') || "Select Category"} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="general">{t('common:general')}</SelectItem>
-                  <SelectItem value="account">{t('common:account')}</SelectItem>
-                  <SelectItem value="course">{t('common:course')}</SelectItem>
-                  <SelectItem value="payment">{t('common:payment')}</SelectItem>
+                  <SelectItem value="general">{t('common:general') || "General"}</SelectItem>
+                  <SelectItem value="account">{t('common:account') || "Account"}</SelectItem>
+                  <SelectItem value="course">{t('common:course') || "Course"}</SelectItem>
+                  <SelectItem value="payment">{t('common:payment') || "Payment"}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="mb-4">
               <label className="block text-sm font-medium mb-1" htmlFor="question">
-                {t('common:question')}
+                {t('common:question') || "Question"}
               </label>
               <Input
                 id="question"
                 name="question"
                 value={formData.question}
                 onChange={handleInputChange}
-                placeholder={t('common:enterQuestion')}
+                placeholder={t('common:enterQuestion') || "Enter question"}
               />
             </div>
 
             <div className="mb-4">
               <label className="block text-sm font-medium mb-1" htmlFor="answer">
-                {t('common:answer')}
+                {t('common:answer') || "Answer"}
               </label>
               <Textarea
                 id="answer"
                 name="answer"
                 value={formData.answer}
                 onChange={handleInputChange}
-                placeholder={t('common:enterAnswer')}
+                placeholder={t('common:enterAnswer') || "Enter answer"}
                 rows={5}
                 className="resize-y"
               />
@@ -421,7 +438,7 @@ const MultilangFAQManagement = () => {
                   onChange={handleCheckboxChange}
                   className="mr-2"
                 />
-                <label htmlFor="is_featured">{t('common:featureFaq')}</label>
+                <label htmlFor="is_featured">{t('common:featureFaq') || "Feature this FAQ"}</label>
               </div>
             )}
 
@@ -431,7 +448,7 @@ const MultilangFAQManagement = () => {
                 variant="outline" 
                 onClick={() => setIsDialogOpen(false)}
               >
-                <X className="mr-1 h-4 w-4" /> {t('common:cancel')}
+                <X className="mr-1 h-4 w-4" /> {t('common:cancel') || "Cancel"}
               </Button>
               <Button 
                 type="submit"
@@ -440,12 +457,12 @@ const MultilangFAQManagement = () => {
                 {createFaqMutation.isPending || updateTranslationMutation.isPending ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {t('common:saving')}
+                    {t('common:saving') || "Saving..."}
                   </>
                 ) : (
                   <>
                     <Check className="mr-1 h-4 w-4" />
-                    {editingFaq ? t('common:saveChanges') : t('common:createFaq')}
+                    {editingFaq ? (t('common:saveChanges') || "Save Changes") : (t('common:createFaq') || "Create FAQ")}
                   </>
                 )}
               </Button>

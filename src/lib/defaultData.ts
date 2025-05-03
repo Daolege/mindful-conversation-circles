@@ -1,4 +1,3 @@
-
 // Default data for system settings components
 // This provides fallback data when database queries fail or during development
 
@@ -231,3 +230,160 @@ export const defaultContactMethods = [
     updated_at: new Date().toISOString()
   }
 ];
+
+// Default FAQ data with multilingual support
+export const defaultFaqs = [
+  {
+    id: 1,
+    category: "account",
+    display_order: 1,
+    is_featured: true,
+    is_active: true,
+    question: "如何更改我的账户密码？",
+    answer: "您可以在个人资料设置中找到"安全"选项，点击"更改密码"按钮，然后按照提示操作即可修改密码。请确保您的新密码足够强大且不容易被猜到。",
+    language_code: "zh"
+  },
+  {
+    id: 1,
+    category: "account",
+    display_order: 1,
+    is_featured: true,
+    is_active: true,
+    question: "How do I change my account password?",
+    answer: "You can find the 'Security' option in your profile settings, click the 'Change Password' button, and follow the prompts to modify your password. Please ensure your new password is strong and not easily guessable.",
+    language_code: "en"
+  },
+  {
+    id: 2,
+    category: "account",
+    display_order: 2,
+    is_featured: false,
+    is_active: true,
+    question: "如何更新我的个人资料信息？",
+    answer: "登录后，点击右上角您的头像，选择"个人资料"，然后您可以编辑您的个人信息，包括姓名、联系方式和个人简介等。完成后，点击"保存更改"按钮。",
+    language_code: "zh"
+  },
+  {
+    id: 2,
+    category: "account",
+    display_order: 2,
+    is_featured: false,
+    is_active: true,
+    question: "How do I update my profile information?",
+    answer: "After logging in, click on your avatar in the top right corner, select 'Profile', and then you can edit your personal information including name, contact details, and bio. Click the 'Save Changes' button when done.",
+    language_code: "en"
+  },
+  {
+    id: 3,
+    category: "course",
+    display_order: 1,
+    is_featured: true,
+    is_active: true,
+    question: "我可以在不同设备上访问我购买的课程吗？",
+    answer: "是的，您购买的所有课程都可以在任何设备上通过您的账户访问。我们的平台支持电脑、平板和手机等多种设备，让您随时随地学习。",
+    language_code: "zh"
+  },
+  {
+    id: 3,
+    category: "course",
+    display_order: 1,
+    is_featured: true,
+    is_active: true,
+    question: "Can I access my purchased courses on different devices?",
+    answer: "Yes, all your purchased courses can be accessed on any device through your account. Our platform supports multiple devices including computers, tablets, and phones, allowing you to learn anytime, anywhere.",
+    language_code: "en"
+  },
+  {
+    id: 4,
+    category: "course",
+    display_order: 2,
+    is_featured: true,
+    is_active: true,
+    question: "课程内容会定期更新吗？",
+    answer: "是的，我们的导师会定期更新课程内容，确保您学习的是最新、最相关的知识。更新通常包括新的讲座视频、补充材料和行业最新趋势分析等。",
+    language_code: "zh"
+  },
+  {
+    id: 4,
+    category: "course",
+    display_order: 2,
+    is_featured: true,
+    is_active: true,
+    question: "Do course contents get updated regularly?",
+    answer: "Yes, our instructors regularly update course content to ensure you're learning the most current and relevant information. Updates typically include new lecture videos, supplementary materials, and analysis of the latest industry trends.",
+    language_code: "en"
+  },
+  {
+    id: 5,
+    category: "payment",
+    display_order: 1,
+    is_featured: true,
+    is_active: true,
+    question: "你们支持哪些支付方式？",
+    answer: "我们支持多种支付方式，包括主要信用卡（Visa、MasterCard、American Express）、PayPal、微信支付和支付宝。在某些地区，我们还支持银行转账和其他本地支付方式。",
+    language_code: "zh"
+  },
+  {
+    id: 5,
+    category: "payment",
+    display_order: 1,
+    is_featured: true,
+    is_active: true,
+    question: "What payment methods do you support?",
+    answer: "We support various payment methods including major credit cards (Visa, MasterCard, American Express), PayPal, WeChat Pay, and Alipay. In certain regions, we also support bank transfers and other local payment options.",
+    language_code: "en"
+  },
+  {
+    id: 6,
+    category: "payment",
+    display_order: 2,
+    is_featured: false,
+    is_active: true,
+    question: "如果我不满意课程，可以退款吗？",
+    answer: "是的，我们提供30天退款保证。如果您在购买课程后的30天内不满意，可以申请全额退款。请联系我们的客服团队，他们将指导您完成退款流程。",
+    language_code: "zh"
+  },
+  {
+    id: 6,
+    category: "payment",
+    display_order: 2,
+    is_featured: false,
+    is_active: true,
+    question: "Can I get a refund if I'm not satisfied with a course?",
+    answer: "Yes, we offer a 30-day money-back guarantee. If you're not satisfied with a course within 30 days of purchase, you can request a full refund. Please contact our customer service team, and they will guide you through the refund process.",
+    language_code: "en"
+  }
+];
+
+// Helper function to transform default FAQs by language
+export function getDefaultFaqsByLanguage(languageCode: string) {
+  return defaultFaqs
+    .filter(faq => faq.language_code === languageCode)
+    .map(faq => ({
+      id: faq.id,
+      category: faq.category,
+      display_order: faq.display_order,
+      is_featured: faq.is_featured,
+      is_active: faq.is_active,
+      question: faq.question,
+      answer: faq.answer,
+      language_code: faq.language_code
+    }));
+}
+
+// Helper function to get featured FAQs
+export function getDefaultFeaturedFaqs(languageCode: string, limit: number = 4) {
+  return defaultFaqs
+    .filter(faq => faq.language_code === languageCode && faq.is_featured)
+    .slice(0, limit)
+    .map(faq => ({
+      id: faq.id,
+      category: faq.category,
+      display_order: faq.display_order,
+      is_featured: faq.is_featured,
+      is_active: faq.is_active,
+      question: faq.question,
+      answer: faq.answer,
+      language_code: faq.language_code
+    }));
+}
