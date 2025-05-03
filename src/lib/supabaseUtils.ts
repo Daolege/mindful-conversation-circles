@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { PostgrestError } from "@supabase/supabase-js";
 import { defaultPaymentIcons, defaultSocialMediaLinks, defaultLegalDocuments, defaultExchangeRates } from "./defaultData";
@@ -52,6 +53,15 @@ export interface ExchangeRate {
   created_at: string;
   updated_at: string;
   cny_to_usd?: number;
+}
+
+// Old schema type for handling legacy data
+interface LegacyExchangeRate {
+  id: string;
+  cny_to_usd: number;
+  created_at: string;
+  updated_at: string;
+  [key: string]: any;
 }
 
 export interface SiteSettings {
@@ -380,14 +390,17 @@ export const exchangeRatesService = {
         // If we have the old structure with cny_to_usd field, convert it
         if ('cny_to_usd' in newStructureData[0]) {
           console.log("Using old exchange_rates structure with cny_to_usd field, converting");
-          return newStructureData.map(item => ({
+          // Type assertion to properly handle the old schema
+          const oldStructureData = newStructureData as unknown as LegacyExchangeRate[];
+          
+          return oldStructureData.map(item => ({
             id: item.id,
-            rate: item.cny_to_usd as number,
+            rate: item.cny_to_usd,
             from_currency: 'CNY',
             to_currency: 'USD',
             created_at: item.created_at,
             updated_at: item.updated_at,
-            cny_to_usd: item.cny_to_usd as number
+            cny_to_usd: item.cny_to_usd
           })) as ExchangeRate[];
         }
       }
