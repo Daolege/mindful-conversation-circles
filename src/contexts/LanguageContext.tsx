@@ -1,8 +1,10 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getEnabledLanguages } from '@/lib/services/language/languageService';
 import { useQuery } from '@tanstack/react-query';
 import { Language, rtlLanguages, languageToCountryCode, defaultLanguages } from '@/lib/services/language/languageCore';
+import { initializeLanguageMigration } from '@/lib/services/language/migrationService';
 
 interface LanguageContextType {
   currentLanguage: string;
@@ -43,7 +45,12 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     queryKey: ['languages'],
     queryFn: async () => {
       try {
+        console.log('Fetching enabled languages');
+        // Run the migration check on first load
+        await initializeLanguageMigration();
+        
         const enabledLanguages = await getEnabledLanguages();
+        console.log('Fetched languages:', enabledLanguages);
         return enabledLanguages.length > 0 ? enabledLanguages : defaultLanguages;
       } catch (error) {
         console.error("Error loading languages:", error);
@@ -108,6 +115,14 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     document.documentElement.dir = isRTL ? 'rtl' : 'ltr';
     document.documentElement.lang = currentLanguage;
   }, [isRTL, currentLanguage]);
+
+  // Debug log for languages
+  useEffect(() => {
+    if (languages) {
+      console.log('LanguageContext - Available languages:', languages.length);
+      console.log('LanguageContext - Languages:', languages.map(l => l.code).join(', '));
+    }
+  }, [languages]);
 
   // Make sure the value object has the correct type for supportedLanguages
   const value: LanguageContextType = {

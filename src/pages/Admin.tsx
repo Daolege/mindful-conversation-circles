@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Navbar from "@/components/Navbar";
@@ -7,7 +6,7 @@ import { useAuth } from "@/contexts/authHooks";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
-import { Loader2, LayoutDashboard, Users, BookOpen, ShoppingCart, Repeat, Settings } from "lucide-react";
+import { Loader2, LayoutDashboard, Users, BookOpen, ShoppingCart, Repeat, Settings, Globe } from "lucide-react";
 import { UserManagement } from "@/components/admin/UserManagement";
 import { OrderManagement } from "@/components/admin/OrderManagement";
 import { DashboardStatistics } from "@/components/admin/DashboardStatistics";
@@ -15,6 +14,8 @@ import { AdminSettings } from "@/components/admin/AdminSettings";
 import { CourseManagement } from "@/components/admin/CourseManagement";
 import CourseManagementNew from "@/components/admin/CourseManagementNew";
 import { SubscriptionPlanManagement } from "@/components/admin/SubscriptionPlanManagement";
+import { LanguageManagement } from "@/components/admin/LanguageManagement";
+import SystemSettings from "@/components/admin/SystemSettings";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslations } from '@/hooks/useTranslations';
@@ -183,6 +184,7 @@ const Admin = () => {
     { value: "courses-new", label: t('admin:coursesManagement2'), icon: BookOpen },
     { value: "orders", label: t('admin:ordersManagement'), icon: ShoppingCart },
     { value: "subscriptions", label: t('admin:subscriptionsManagement'), icon: Repeat },
+    { value: "languages", label: t('admin:languageManagement'), icon: Globe },
     { value: "settings", label: t('admin:systemSettings'), icon: Settings }
   ];
 
@@ -304,6 +306,20 @@ const Admin = () => {
                 </motion.div>
               )}
               
+              {activeTab === "languages" && (
+                <motion.div
+                  key="languages"
+                  variants={tabContentVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                >
+                  <TabsContent value="languages" forceMount>
+                    <LanguageManagement />
+                  </TabsContent>
+                </motion.div>
+              )}
+              
               {activeTab === "settings" && (
                 <motion.div
                   key="settings"
@@ -313,7 +329,7 @@ const Admin = () => {
                   exit="exit"
                 >
                   <TabsContent value="settings" forceMount>
-                    <AdminSettings />
+                    <SystemSettings />
                   </TabsContent>
                 </motion.div>
               )}

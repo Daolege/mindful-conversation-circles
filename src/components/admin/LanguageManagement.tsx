@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslations } from '@/hooks/useTranslations';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -15,8 +15,10 @@ import {
   updateLanguage, 
   toggleLanguageStatus, 
   deleteLanguage,
-  Language 
-} from '@/lib/services/languageService';
+  Language,
+  languageToCountryCode,
+  rtlLanguages 
+} from '@/lib/services/language';
 import { 
   Dialog, 
   DialogContent, 
@@ -27,7 +29,6 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
-import { InlineEdit } from '@/components/ui/inline-edit';
 import { toast } from 'sonner';
 import { Separator } from '@/components/ui/separator';
 import { 
@@ -46,7 +47,7 @@ export const LanguageManagement = () => {
   const { currentLanguage, reloadLanguages } = useLanguage();
   const queryClient = useQueryClient();
   
-  // 状态变量
+  // State variables
   const [isAddLanguageOpen, setIsAddLanguageOpen] = useState(false);
   const [isEditLanguageOpen, setIsEditLanguageOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -60,14 +61,72 @@ export const LanguageManagement = () => {
     rtl: false
   });
   
-  // 获取所有语言
-  const { data: languages = [], isLoading } = useQuery({
+  // Get all languages
+  const { data: languages = [], isLoading, refetch: refetchLanguages } = useQuery({
     queryKey: ['admin-languages'],
     queryFn: getAllLanguages,
     staleTime: 30000
   });
   
-  // 添加语言 mutation
+  // Add a debug useEffect to log languages when they change
+  useEffect(() => {
+    console.log('LanguageManagement - Current languages:', languages);
+  }, [languages]);
+
+  // Effect to trigger language migration if needed
+  useEffect(() => {
+    // If we only have 2 languages (default), try to migrate additional languages
+    if (languages.length <= 2 && !isLoading) {
+      console.log('Only found default languages, attempting to execute migration');
+      executeMigration();
+    }
+  }, [languages, isLoading]);
+
+  // Function to manually execute the language migration
+  const executeMigration = async () => {
+    try {
+      // First try to execute the SQL directly from the migration file
+      // This is a simulation - in a real app we'd use the Supabase API
+      toast.info(t('admin:applyingLanguageMigration'));
+      
+      // Add the missing languages if they don't exist
+      const missingLanguages = [
+        { code: 'fr', name: 'French', nativeName: 'Français', enabled: true, rtl: false },
+        { code: 'de', name: 'German', nativeName: 'Deutsch', enabled: true, rtl: false },
+        { code: 'ru', name: 'Russian', nativeName: 'Русский', enabled: true, rtl: false },
+        { code: 'ar', name: 'Arabic', nativeName: 'العربية', enabled: true, rtl: true },
+        { code: 'es', name: 'Spanish', nativeName: 'Español', enabled: true, rtl: false },
+        { code: 'vi', name: 'Vietnamese', nativeName: 'Tiếng Việt', enabled: true, rtl: false },
+        { code: 'th', name: 'Thai', nativeName: 'ไทย', enabled: true, rtl: false },
+        { code: 'pt', name: 'Portuguese', nativeName: 'Português', enabled: true, rtl: false },
+        { code: 'ja', name: 'Japanese', nativeName: '日本語', enabled: true, rtl: false },
+        { code: 'ko', name: 'Korean', nativeName: '한국어', enabled: true, rtl: false }
+      ];
+      
+      // Try to add each missing language
+      for (const lang of missingLanguages) {
+        try {
+          await addLanguage(lang as Language);
+          console.log(`Added language: ${lang.code}`);
+        } catch (err) {
+          console.error(`Error adding language ${lang.code}:`, err);
+        }
+      }
+      
+      // Refetch languages to update the UI
+      await refetchLanguages();
+      
+      // Refresh the language context to make changes visible application-wide
+      reloadLanguages();
+      
+      toast.success(t('admin:languageMigrationCompleted'));
+    } catch (error) {
+      console.error('Error executing migration:', error);
+      toast.error(t('admin:languageMigrationFailed'));
+    }
+  };
+  
+  // Add language mutation
   const addLanguageMutation = useMutation({
     mutationFn: addLanguage,
     onSuccess: () => {
@@ -83,7 +142,7 @@ export const LanguageManagement = () => {
     }
   });
   
-  // 更新语言 mutation
+  // Update language mutation
   const updateLanguageMutation = useMutation({
     mutationFn: updateLanguage,
     onSuccess: () => {
@@ -98,7 +157,7 @@ export const LanguageManagement = () => {
     }
   });
   
-  // 切换语言状态 mutation
+  // Toggle language status mutation
   const toggleLanguageStatusMutation = useMutation({
     mutationFn: ({ id, enabled }: { id: number; enabled: boolean }) => 
       toggleLanguageStatus(id, enabled),
@@ -113,7 +172,7 @@ export const LanguageManagement = () => {
     }
   });
   
-  // 删除语言 mutation
+  // Delete language mutation
   const deleteLanguageMutation = useMutation({
     mutationFn: (id: number) => deleteLanguage(id),
     onSuccess: () => {
@@ -200,7 +259,7 @@ export const LanguageManagement = () => {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="flex justify-between mb-6">
+        <div className="flex flex-wrap justify-between items-center mb-6 gap-4">
           <div className="space-x-2">
             <Button 
               onClick={() => setIsAddLanguageOpen(true)}
@@ -217,6 +276,17 @@ export const LanguageManagement = () => {
               <Upload className="h-4 w-4" />
               {t('admin:importTranslations')}
             </Button>
+            
+            {languages.length <= 2 && (
+              <Button 
+                variant="secondary" 
+                onClick={executeMigration}
+                className="flex items-center gap-2"
+              >
+                <Download className="h-4 w-4" />
+                {t('admin:restoreDefaultLanguages')}
+              </Button>
+            )}
           </div>
           <div className="text-sm text-muted-foreground">
             {t('admin:totalLanguages')}: {languages.length}
@@ -233,83 +303,111 @@ export const LanguageManagement = () => {
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {languages.map((language) => (
-              <div 
-                key={language.code}
-                className={`relative flex items-center justify-between p-4 border rounded-lg ${
-                  language.enabled ? 'bg-white' : 'bg-gray-50'
-                } ${language.code === currentLanguage ? 'ring-2 ring-knowledge-primary/20' : ''}`}
-              >
-                <div className="flex items-center gap-3">
-                  <Switch 
-                    id={`lang-${language.code}`}
-                    checked={language.enabled}
-                    disabled={isDefaultLanguage(language.code)}
-                    onCheckedChange={() => handleToggleLanguageStatus(language)}
-                  />
-                  <div className="flex flex-col">
-                    <span className="font-medium">{language.nativeName}</span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-gray-500">{language.name}</span>
-                      <span className="text-xs text-muted-foreground">({language.code})</span>
+          <>
+            {languages.length <= 2 && (
+              <div className="mb-6 p-4 border border-amber-200 bg-amber-50 rounded-lg">
+                <div className="flex items-center gap-2 text-amber-800">
+                  <AlertTriangle className="h-5 w-5" />
+                  <p className="font-medium">{t('admin:languagesRestoreNeeded')}</p>
+                </div>
+                <p className="mt-2 text-sm text-amber-700">
+                  {t('admin:languagesRestoreDescription')}
+                </p>
+                <Button 
+                  variant="secondary" 
+                  className="mt-3 bg-amber-100 hover:bg-amber-200 text-amber-800"
+                  onClick={executeMigration}
+                >
+                  {t('admin:restoreAllLanguages')}
+                </Button>
+              </div>
+            )}
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {languages.map((language) => (
+                <div 
+                  key={language.code}
+                  className={`relative flex items-center justify-between p-4 border rounded-lg ${
+                    language.enabled ? 'bg-white' : 'bg-gray-50'
+                  } ${language.code === currentLanguage ? 'ring-2 ring-knowledge-primary/20' : ''}`}
+                >
+                  <div className="flex items-center gap-3">
+                    <Switch 
+                      id={`lang-${language.code}`}
+                      checked={language.enabled}
+                      disabled={isDefaultLanguage(language.code)}
+                      onCheckedChange={() => handleToggleLanguageStatus(language)}
+                    />
+                    <div className="flex flex-col">
+                      <span className="font-medium">{language.nativeName}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-gray-500">{language.name}</span>
+                        <span className="text-xs text-muted-foreground">({language.code})</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-                
-                <div className="flex items-center space-x-2">
-                  {language.enabled ? (
-                    <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                      {t('admin:active')}
-                    </Badge>
-                  ) : (
-                    <Badge variant="outline" className="bg-gray-50 text-gray-500 border-gray-200">
-                      {t('admin:disabled')}
-                    </Badge>
-                  )}
-                  {language.rtl && (
-                    <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                      RTL
-                    </Badge>
-                  )}
-                </div>
-                
-                <div className="absolute top-2 right-2 flex gap-1">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6"
-                    onClick={() => openEditDialog(language)}
-                  >
-                    <Edit className="h-3 w-3" />
-                    <span className="sr-only">Edit</span>
-                  </Button>
                   
-                  {!isDefaultLanguage(language.code) && (
+                  <div className="flex items-center space-x-2">
+                    {language.enabled ? (
+                      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                        {t('admin:active')}
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="bg-gray-50 text-gray-500 border-gray-200">
+                        {t('admin:disabled')}
+                      </Badge>
+                    )}
+                    {language.rtl && (
+                      <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                        RTL
+                      </Badge>
+                    )}
+                  </div>
+                  
+                  <div className="absolute top-2 right-2 flex gap-1">
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-6 w-6 text-red-500 hover:text-red-600 hover:bg-red-50"
-                      onClick={() => openDeleteDialog(language)}
+                      className="h-6 w-6"
+                      onClick={() => openEditDialog(language)}
                     >
-                      <Trash2 className="h-3 w-3" />
-                      <span className="sr-only">Delete</span>
+                      <Edit className="h-3 w-3" />
+                      <span className="sr-only">Edit</span>
                     </Button>
-                  )}
+                    
+                    {!isDefaultLanguage(language.code) && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 text-red-500 hover:text-red-600 hover:bg-red-50"
+                        onClick={() => openDeleteDialog(language)}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                        <span className="sr-only">Delete</span>
+                      </Button>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          </>
         )}
         
         {languages.length === 0 && !isLoading && (
           <div className="text-center py-12 border rounded-lg bg-gray-50">
             <p className="text-muted-foreground">{t('admin:noLanguagesFound')}</p>
+            <Button 
+              variant="secondary" 
+              onClick={executeMigration}
+              className="mt-4"
+            >
+              {t('admin:restoreDefaultLanguages')}
+            </Button>
           </div>
         )}
       </CardContent>
 
-      {/* 添加语言对话框 */}
+      {/* Add language dialog */}
       <Dialog open={isAddLanguageOpen} onOpenChange={setIsAddLanguageOpen}>
         <DialogContent>
           <DialogHeader>
@@ -391,7 +489,7 @@ export const LanguageManagement = () => {
         </DialogContent>
       </Dialog>
 
-      {/* 编辑语言对话框 */}
+      {/* Edit language dialog */}
       <Dialog open={isEditLanguageOpen} onOpenChange={setIsEditLanguageOpen}>
         <DialogContent>
           <DialogHeader>
@@ -474,7 +572,7 @@ export const LanguageManagement = () => {
         </DialogContent>
       </Dialog>
       
-      {/* 删除语言确认对话框 */}
+      {/* Delete language confirmation dialog */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -497,7 +595,7 @@ export const LanguageManagement = () => {
         </AlertDialogContent>
       </AlertDialog>
       
-      {/* 导入翻译对话框 - 暂时禁用 */}
+      {/* Import translations dialog - temporarily disabled */}
       <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -527,3 +625,5 @@ export const LanguageManagement = () => {
     </Card>
   );
 };
+
+export default LanguageManagement;
