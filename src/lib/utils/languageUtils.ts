@@ -4,7 +4,7 @@
  * Some languages are represented by multiple countries, so we choose one representative
  */
 export const languageToCountryCode: Record<string, string> = {
-  en: 'gb', // English - UK flag
+  en: 'us', // English - US flag (changed from 'gb')
   zh: 'cn', // Chinese - China flag
   fr: 'fr', // French - France flag
   de: 'de', // German - Germany flag

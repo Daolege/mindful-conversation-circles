@@ -22,15 +22,15 @@ export const SystemSettings = () => {
       
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="mb-6">
-          <TabsTrigger value="general">基本设置</TabsTrigger>
-          <TabsTrigger value="company">公司信息</TabsTrigger>
-          <TabsTrigger value="contact">联系方式</TabsTrigger>
-          <TabsTrigger value="social">社交媒体</TabsTrigger>
-          <TabsTrigger value="payment">支付图标</TabsTrigger>
-          <TabsTrigger value="legal">法律文档</TabsTrigger>
-          <TabsTrigger value="faq">常见问题</TabsTrigger>
-          <TabsTrigger value="languages">语言设置</TabsTrigger>
-          <TabsTrigger value="translations">翻译管理</TabsTrigger>
+          <TabsTrigger value="general">{t('admin:generalSettings')}</TabsTrigger>
+          <TabsTrigger value="company">{t('admin:companyInfo')}</TabsTrigger>
+          <TabsTrigger value="contact">{t('admin:contactMethods')}</TabsTrigger>
+          <TabsTrigger value="social">{t('admin:socialMedia')}</TabsTrigger>
+          <TabsTrigger value="payment">{t('admin:paymentIcons')}</TabsTrigger>
+          <TabsTrigger value="legal">{t('admin:legalDocuments')}</TabsTrigger>
+          <TabsTrigger value="faq">{t('admin:faq')}</TabsTrigger>
+          <TabsTrigger value="languages">{t('admin:languageManagement')}</TabsTrigger>
+          <TabsTrigger value="translations">{t('admin:translationEditor')}</TabsTrigger>
         </TabsList>
         
         <TabsContent value="general">

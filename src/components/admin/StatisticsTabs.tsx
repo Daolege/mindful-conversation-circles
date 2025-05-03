@@ -2,6 +2,7 @@
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { memo } from "react";
 import { motion } from "framer-motion";
+import { useTranslations } from "@/hooks/useTranslations";
 
 interface StatisticsTabsProps {
   activeTab: string;
@@ -9,6 +10,8 @@ interface StatisticsTabsProps {
 }
 
 export const StatisticsTabs = memo(({ activeTab, onTabChange }: StatisticsTabsProps) => {
+  const { t } = useTranslations();
+  
   return (
     <Tabs value={activeTab} onValueChange={onTabChange} className="w-full">
       <TabsList className="bg-transparent border-b border-gray-200 w-full flex justify-start space-x-6 pb-2">
@@ -20,7 +23,7 @@ export const StatisticsTabs = memo(({ activeTab, onTabChange }: StatisticsTabsPr
             className="relative group-hover:scale-105 transition-all duration-300 inline-block"
             whileHover={{ scale: 1.05 }}
           >
-            KPI指标仪表盘
+            {t('admin:kpiDashboard')}
           </motion.span>
         </TabsTrigger>
         <TabsTrigger 
@@ -31,7 +34,7 @@ export const StatisticsTabs = memo(({ activeTab, onTabChange }: StatisticsTabsPr
             className="relative group-hover:scale-105 transition-all duration-300 inline-block"
             whileHover={{ scale: 1.05 }}
           >
-            详细统计图表
+            {t('admin:detailedStatistics')}
           </motion.span>
         </TabsTrigger>
         <TabsTrigger 
@@ -42,7 +45,7 @@ export const StatisticsTabs = memo(({ activeTab, onTabChange }: StatisticsTabsPr
             className="relative group-hover:scale-105 transition-all duration-300 inline-block"
             whileHover={{ scale: 1.05 }}
           >
-            季度/年度对比分析
+            {t('admin:quarterlyYearlyComparison')}
           </motion.span>
         </TabsTrigger>
       </TabsList>

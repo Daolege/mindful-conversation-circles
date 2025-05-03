@@ -28,17 +28,17 @@ export function AdminSettings() {
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="mb-6 bg-gray-100/80 p-1.5 border border-gray-200 rounded-xl shadow-sm">
-          <TabsTrigger className="px-4 py-2 text-sm" value="general">基本设置</TabsTrigger>
+          <TabsTrigger className="px-4 py-2 text-sm" value="general">{t('admin:generalSettings')}</TabsTrigger>
           <TabsTrigger className="px-4 py-2 text-sm" value="company">{t('admin:companyInfo')}</TabsTrigger>
-          <TabsTrigger className="px-4 py-2 text-sm" value="contact">联系方式</TabsTrigger>
-          <TabsTrigger className="px-4 py-2 text-sm" value="social">社交媒体</TabsTrigger>
+          <TabsTrigger className="px-4 py-2 text-sm" value="contact">{t('admin:contactMethods')}</TabsTrigger>
+          <TabsTrigger className="px-4 py-2 text-sm" value="social">{t('admin:socialMedia')}</TabsTrigger>
           <TabsTrigger className="px-4 py-2 text-sm" value="payment">{t('admin:paymentIcons')}</TabsTrigger>
           <TabsTrigger className="px-4 py-2 text-sm" value="legal">{t('admin:legalDocuments')}</TabsTrigger>
-          <TabsTrigger className="px-4 py-2 text-sm" value="faq">常见问题</TabsTrigger>
+          <TabsTrigger className="px-4 py-2 text-sm" value="faq">{t('admin:faq')}</TabsTrigger>
           <TabsTrigger className="px-4 py-2 text-sm" value="exchange">{t('admin:exchangeRates')}</TabsTrigger>
           <TabsTrigger className="px-4 py-2 text-sm" value="banners">{t('home:bannerManagement')}</TabsTrigger>
-          <TabsTrigger className="px-4 py-2 text-sm" value="languages">语言设置</TabsTrigger>
-          <TabsTrigger className="px-4 py-2 text-sm" value="translations">翻译管理</TabsTrigger>
+          <TabsTrigger className="px-4 py-2 text-sm" value="languages">{t('admin:languageManagement')}</TabsTrigger>
+          <TabsTrigger className="px-4 py-2 text-sm" value="translations">{t('admin:translationEditor')}</TabsTrigger>
         </TabsList>
         
         <div className="p-6 border rounded-lg bg-white shadow-sm">

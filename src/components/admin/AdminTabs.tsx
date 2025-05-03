@@ -10,12 +10,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTranslations } from "@/hooks/useTranslations";
 
 export const AdminTabs = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("users");
   const navigate = useNavigate();
   const redirectAttemptedRef = useRef(false);
+  const { t } = useTranslations();
 
   useEffect(() => {
     console.log("AdminTabs mounted - no automatic redirects here");
@@ -47,10 +49,10 @@ export const AdminTabs = () => {
   useEffect(() => {
     if (!isLoading && user && isAdmin === false && !redirectAttemptedRef.current) {
       redirectAttemptedRef.current = true;
-      toast.error("权限不足", { description: "您没有管理员权限" });
+      toast.error(t('errors:insufficientPermissions'), { description: t('errors:adminAccessRequired') });
       navigate('/');
     }
-  }, [isAdmin, isLoading, navigate, user]);
+  }, [isAdmin, isLoading, navigate, user, t]);
 
   if (isLoading) {
     return (
@@ -92,8 +94,8 @@ export const AdminTabs = () => {
         className="w-full"
       >
         <TabsList className="mb-6 bg-gray-50/90 p-2 rounded-2xl border border-gray-200 shadow-sm">
-          <TabsTrigger value="users" className="px-6 py-3">用户管理</TabsTrigger>
-          <TabsTrigger value="orders" className="px-6 py-3">订单管理</TabsTrigger>
+          <TabsTrigger value="users" className="px-6 py-3">{t('admin:usersManagement')}</TabsTrigger>
+          <TabsTrigger value="orders" className="px-6 py-3">{t('admin:ordersManagement')}</TabsTrigger>
         </TabsList>
         
         <AnimatePresence mode="wait">

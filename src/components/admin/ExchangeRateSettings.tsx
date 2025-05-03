@@ -9,13 +9,13 @@ import { useTranslations } from "@/hooks/useTranslations";
 import { Loader2, CreditCard, History, Calendar, ArrowLeftRight, AlertCircle } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatDistanceToNow } from 'date-fns';
-import { zhCN } from 'date-fns/locale';
+import { zhCN, enUS } from 'date-fns/locale';
 import { ExchangeRate, exchangeRatesService } from '@/lib/supabaseUtils';
 import { defaultExchangeRates } from '@/lib/defaultData';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const ExchangeRateSettings = () => {
-  const { t } = useTranslations();
+  const { t, currentLanguage } = useTranslations();
   const [isLoading, setIsLoading] = useState(false);
   const [isHistoryLoading, setIsHistoryLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -181,11 +181,20 @@ const ExchangeRateSettings = () => {
     );
   }
 
+  // Get the appropriate locale for date-fns based on the current language
+  const getLocale = () => {
+    switch (currentLanguage) {
+      case 'zh': return zhCN;
+      case 'en': return enUS;
+      default: return enUS;
+    }
+  };
+
   // Format date for display
   const formatDate = (dateString: string) => {
     try {
       const date = new Date(dateString);
-      return date.toLocaleString('zh-CN', {
+      return date.toLocaleString(currentLanguage === 'zh' ? 'zh-CN' : 'en-US', {
         year: 'numeric',
         month: '2-digit',
         day: '2-digit',
@@ -202,7 +211,7 @@ const ExchangeRateSettings = () => {
   const timeAgo = (dateString: string) => {
     try {
       const date = new Date(dateString);
-      return formatDistanceToNow(date, { addSuffix: true, locale: zhCN });
+      return formatDistanceToNow(date, { addSuffix: true, locale: getLocale() });
     } catch (e) {
       return '';
     }
@@ -214,9 +223,9 @@ const ExchangeRateSettings = () => {
         <Alert className="bg-amber-50">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            当前使用示例数据。您的更改可能不会永久保存到数据库，但会在当前会话中显示。
+            {t('admin:usingSampleData')}
             <Button variant="link" className="p-0 h-auto text-amber-600" onClick={resetToSampleData}>
-              重置为默认示例数据
+              {t('admin:resetToDefaultSampleData')}
             </Button>
           </AlertDescription>
         </Alert>
@@ -227,15 +236,15 @@ const ExchangeRateSettings = () => {
         <CardHeader>
           <CardTitle className="flex items-center">
             <ArrowLeftRight className="mr-2 h-5 w-5" />
-            汇率设置
+            {t('admin:exchangeRateSettings')}
           </CardTitle>
           <CardDescription>
-            设置人民币兑美元的汇率，用于价格换算
+            {t('admin:exchangeRateDescription')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="cny_to_usd">人民币/美元汇率</Label>
+            <Label htmlFor="cny_to_usd">{t('admin:cnyToUsdRate')}</Label>
             <div className="flex items-center space-x-2">
               <Input
                 id="cny_to_usd"
@@ -244,17 +253,17 @@ const ExchangeRateSettings = () => {
                 min="0.01"
                 value={exchangeRate.rate}
                 onChange={(e) => handleChange(e.target.value)}
-                placeholder="例如: 7.23"
+                placeholder={t('admin:exchangeRatePlaceholder')}
               />
               <Button 
                 onClick={saveExchangeRate}
                 disabled={isSaving}
               >
                 {isSaving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
-                {isSaving ? '保存中...' : '保存汇率'}
+                {isSaving ? t('admin:saving') : t('admin:saveRate')}
               </Button>
             </div>
-            <p className="text-sm text-gray-500">当前值: 1美元 = {exchangeRate.rate}人民币</p>
+            <p className="text-sm text-gray-500">{t('admin:currentRateValue', { rate: exchangeRate.rate })}</p>
           </div>
         </CardContent>
       </Card>
@@ -264,10 +273,10 @@ const ExchangeRateSettings = () => {
         <CardHeader>
           <CardTitle className="flex items-center">
             <History className="mr-2 h-5 w-5" />
-            汇率修改历史
+            {t('admin:exchangeRateHistory')}
           </CardTitle>
           <CardDescription>
-            查看汇率的历史修改记录
+            {t('admin:viewExchangeRateHistory')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -279,9 +288,9 @@ const ExchangeRateSettings = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[180px]">修改时间</TableHead>
-                  <TableHead>人民币/美元汇率</TableHead>
-                  <TableHead className="text-right">操作时间</TableHead>
+                  <TableHead className="w-[180px]">{t('admin:modificationTime')}</TableHead>
+                  <TableHead>{t('admin:cnyToUsdRate')}</TableHead>
+                  <TableHead className="text-right">{t('admin:operationTime')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -308,7 +317,7 @@ const ExchangeRateSettings = () => {
             </Table>
           ) : (
             <div className="text-center py-8">
-              <p className="text-gray-500">暂无汇率修改记录</p>
+              <p className="text-gray-500">{t('admin:noExchangeRateHistory')}</p>
             </div>
           )}
         </CardContent>
