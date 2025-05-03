@@ -1,3 +1,4 @@
+
 import CourseNewEditorRefactored from "@/components/admin/CourseNewEditorRefactored";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -35,7 +36,10 @@ const CourseNewEditorPage = () => {
     audiences: false
   });
   const [loadedInitialState, setLoadedInitialState] = useState(false);
+  // Add this state to track database initialization
+  const [dbInitialized, setDbInitialized] = useState(false);
 
+  // Move this useQuery outside of any conditions to avoid the "Rendered more hooks" error
   const { data: isAdmin, isLoading } = useQuery({
     queryKey: ['admin-role', user?.id],
     queryFn: async () => {
@@ -59,6 +63,23 @@ const CourseNewEditorPage = () => {
     refetchOnMount: false,
     gcTime: 10 * 60 * 1000,
   });
+
+  // Initialize database - make sure this hook is always called in the same order
+  useEffect(() => {
+    const initializeDatabase = async () => {
+      try {
+        // Always attempt to run migrations regardless of user status
+        console.log("[CourseNewEditorPage] Running language migrations");
+        await runAllLanguageMigrations();
+        setDbInitialized(true);
+      } catch (err) {
+        console.error("[CourseNewEditorPage] Error initializing database:", err);
+        setDbInitialized(false);
+      }
+    };
+    
+    initializeDatabase();
+  }, []);
 
   useEffect(() => {
     if (!isLoading && user && isAdmin === false && !redirectAttemptedRef.current) {
@@ -294,22 +315,6 @@ const CourseNewEditorPage = () => {
       </div>
     );
   }
-
-  useEffect(() => {
-    const initializeDatabase = async () => {
-      try {
-        // Only run migration if user is an admin
-        if (user && isAdmin) {
-          console.log("[CourseNewEditorPage] Running language migrations");
-          await runAllLanguageMigrations();
-        }
-      } catch (err) {
-        console.error("[CourseNewEditorPage] Error initializing database:", err);
-      }
-    };
-    
-    initializeDatabase();
-  }, [user, isAdmin]);
   
   return (
     <div className="min-h-screen flex flex-col">
