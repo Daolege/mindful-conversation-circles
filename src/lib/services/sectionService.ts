@@ -96,22 +96,35 @@ export async function getSectionsByCourseId(courseId: number): Promise<SectionSe
           // Check for video_url column in a separate query to handle potential schema differences
           const videoUrlPromises = lecturesData ? lecturesData.map(async (lecture) => {
             // Make sure lecture is a valid object before proceeding
-            if (!lecture || typeof lecture !== 'object' || !('id' in lecture)) {
+            if (!lecture || typeof lecture !== 'object') {
               console.warn('Invalid lecture object:', lecture);
               return null;
             }
             
+            // Check if id property exists
+            if (!('id' in lecture)) {
+              console.warn('Lecture object missing id property:', lecture);
+              return null;
+            }
+            
             try {
-              const lectureId = lecture.id;
+              const lectureId = (lecture as any).id;
               const { data: videoData } = await supabase
                 .from('course_lectures')
                 .select('video_url, description')
                 .eq('id', lectureId)
                 .single();
                 
-              // Combine both objects - use type assertion to satisfy TypeScript
+              // Create a new object with safe properties
               const combinedLecture: CourseLecture = {
-                ...lecture as unknown as CourseLecture, // Force type to match CourseLecture
+                id: (lecture as any).id,
+                title: (lecture as any).title || '',
+                position: (lecture as any).position || 0,
+                duration: (lecture as any).duration || null,
+                section_id: (lecture as any).section_id || null,
+                is_free: (lecture as any).is_free || false,
+                has_homework: (lecture as any).has_homework || false,
+                requires_homework_completion: (lecture as any).requires_homework_completion || false,
                 video_url: videoData?.video_url || null,
                 description: videoData?.description || null
               };
@@ -119,8 +132,19 @@ export async function getSectionsByCourseId(courseId: number): Promise<SectionSe
               return combinedLecture;
             } catch (err) {
               console.log(`Could not fetch video_url for lecture:`, err);
-              // Return the original lecture with type assertion
-              return lecture as unknown as CourseLecture;
+              // Create a safe return object with fallback values
+              return {
+                id: (lecture as any).id,
+                title: (lecture as any).title || '',
+                position: (lecture as any).position || 0,
+                duration: (lecture as any).duration || null,
+                section_id: (lecture as any).section_id || null,
+                is_free: (lecture as any).is_free || false,
+                has_homework: (lecture as any).has_homework || false,
+                requires_homework_completion: (lecture as any).requires_homework_completion || false,
+                video_url: null,
+                description: null
+              } as CourseLecture;
             }
           }) : [];
           
