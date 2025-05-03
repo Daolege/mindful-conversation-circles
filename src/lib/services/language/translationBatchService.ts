@@ -163,12 +163,13 @@ export async function rollbackToVersion(
       return { success: false, error: new Error('Invalid translation data: item is not an object') };
     }
     
-    // Now check properties
-    if (
-      !('language_code' in currentTranslationData) || 
-      !('namespace' in currentTranslationData) || 
-      !('key' in currentTranslationData)
-    ) {
+    // Now check properties - use local variables to satisfy TypeScript
+    const hasLanguageCode = 'language_code' in currentTranslationData;
+    const hasNamespace = 'namespace' in currentTranslationData;
+    const hasKey = 'key' in currentTranslationData;
+    
+    // Check if all required properties exist
+    if (!hasLanguageCode || !hasNamespace || !hasKey) {
       return { success: false, error: new Error('Invalid translation data structure') };
     }
     
