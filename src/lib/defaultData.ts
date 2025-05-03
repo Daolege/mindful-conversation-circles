@@ -1,3 +1,4 @@
+
 // Default data for system settings components
 // This provides fallback data when database queries fail or during development
 
