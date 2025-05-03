@@ -9,6 +9,9 @@ export * from './translationBatchService';
 // Export language service (which uses the specific name 'languageService')
 export * from './languageService';
 
+// Export migration services
+export * from './migrationService';
+
 // Export from languageManagement with explicit imports to avoid conflicts
 export {
   getAllLanguages,
@@ -17,4 +20,3 @@ export {
   toggleLanguageStatus,
   deleteLanguage
 } from './languageManagement';
-

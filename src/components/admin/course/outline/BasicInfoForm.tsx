@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -15,6 +14,7 @@ import { useNavigate } from "react-router-dom";
 import { CourseFormValues } from "@/lib/types/course-new";
 import { useTranslation } from "react-i18next";
 import { getEnabledLanguages } from '@/lib/services/language/languageService';
+import { addLanguageColumnToCourses, checkCoursesLanguageColumn } from '@/lib/services/language/migrationService';
 
 // 定义表单验证模式
 const formSchema = z.object({
@@ -38,6 +38,7 @@ export const BasicInfoForm = ({ onTabChange, onCourseCreated, courseId }: BasicI
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(!!courseId);
   const [languages, setLanguages] = useState<any[]>([]);
+  const [languageColumnExists, setLanguageColumnExists] = useState<boolean | null>(null);
   const navigate = useNavigate();
   const { t } = useTranslation(['admin']);
   
@@ -55,6 +56,38 @@ export const BasicInfoForm = ({ onTabChange, onCourseCreated, courseId }: BasicI
       display_order: 0,
     }
   });
+
+  // Check if the courses_new table has the language column
+  useEffect(() => {
+    const checkLanguageColumn = async () => {
+      try {
+        const exists = await checkCoursesLanguageColumn();
+        setLanguageColumnExists(exists);
+        console.log("Language column exists:", exists);
+        
+        if (!exists) {
+          // Try to add the column
+          const added = await addLanguageColumnToCourses();
+          setLanguageColumnExists(added);
+          console.log("Language column added:", added);
+          
+          if (added) {
+            toast.success("课程数据结构已更新", {
+              description: "语言字段已添加到课程表中"
+            });
+          } else {
+            toast.error("更新课程数据结构失败", {
+              description: "无法添加语言字段，请联系管理员"
+            });
+          }
+        }
+      } catch (err) {
+        console.error("Error checking language column:", err);
+      }
+    };
+    
+    checkLanguageColumn();
+  }, []);
 
   // Load available languages from the database using the languageService
   useEffect(() => {
@@ -94,7 +127,7 @@ export const BasicInfoForm = ({ onTabChange, onCourseCreated, courseId }: BasicI
           { value: "de", label: "Deutsch" },
           { value: "es", label: "Español" },
           { value: "ja", label: "日本語" },
-          { value: "ko", label: "한国语" },
+          { value: "ko", label: "한국어" },
           { value: "ru", label: "Русский" }
         ]);
       }
@@ -162,6 +195,18 @@ export const BasicInfoForm = ({ onTabChange, onCourseCreated, courseId }: BasicI
       console.log("Submitting form values:", values);
       console.log("Language being submitted:", values.language);
       
+      // Check if language column exists before proceeding
+      if (languageColumnExists === false) {
+        // Try to add the column again
+        const added = await addLanguageColumnToCourses();
+        if (!added) {
+          toast.error("保存失败: 数据库缺少语言字段", {
+            description: "系统无法添加必要的语言字段，请联系管理员"
+          });
+          return;
+        }
+      }
+      
       if (courseId) {
         // Update existing course
         const { error } = await supabase
@@ -182,7 +227,14 @@ export const BasicInfoForm = ({ onTabChange, onCourseCreated, courseId }: BasicI
         if (error) {
           console.error("Error updating course:", error);
           console.error("Error details:", JSON.stringify(error));
-          toast.error("更新课程失败");
+          
+          if (error.code === '42703') { // PostgreSQL code for "column does not exist"
+            toast.error("保存失败: 数据库缺少语言字段", {
+              description: "请联系管理员添加必要的数据库字段"
+            });
+          } else {
+            toast.error(`更新课程失败: ${error.message}`);
+          }
           return;
         }
         

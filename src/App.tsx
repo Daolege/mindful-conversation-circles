@@ -1,5 +1,5 @@
 
-import React, { Suspense } from 'react';
+import React, { Suspense, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Home from './pages/Home';
 import Courses from './pages/Courses';
@@ -27,6 +27,7 @@ import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfUse from './pages/TermsOfUse';
 import CookiePolicy from './pages/CookiePolicy';
 import FAQ from './pages/FAQ';
+import { runAllLanguageMigrations } from './lib/services/language/migrationService';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -37,6 +38,16 @@ const queryClient = new QueryClient({
     }
   }
 });
+
+// Initialize language migrations
+(async () => {
+  try {
+    console.log('Initializing language migrations...');
+    await runAllLanguageMigrations();
+  } catch (error) {
+    console.error('Failed to initialize language migrations:', error);
+  }
+})();
 
 function App() {
   return (
