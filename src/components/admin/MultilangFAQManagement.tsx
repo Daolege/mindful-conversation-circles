@@ -3,7 +3,10 @@ import React, { useState, useEffect } from 'react';
 import { 
   getAllFaqTranslations, 
   getFaqsByLanguage,
-  FaqWithTranslation 
+  FaqWithTranslation,
+  upsertFaqTranslation,
+  createFaq,
+  deleteFromTable
 } from '@/lib/services/faqService';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTranslations } from '@/hooks/useTranslations';
@@ -34,11 +37,14 @@ import {
   Copy, 
   CheckSquare, 
   XSquare,
-  Plus 
+  Plus,
+  RefreshCw
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
+import FAQEditDialog from './FAQEditDialog';
+import { I18nDialog } from '@/components/ui/i18n-dialog';
 
 // Define interfaces
 interface EditableFaq extends FaqWithTranslation {
@@ -55,6 +61,15 @@ export const MultilangFAQManagement = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  
+  // State for edit/create dialog
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [currentFaq, setCurrentFaq] = useState<FaqWithTranslation | undefined>(undefined);
+  
+  // State for delete confirmation dialog
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [faqToDelete, setFaqToDelete] = useState<FaqWithTranslation | null>(null);
   
   useEffect(() => {
     if (selectedLanguage) {
@@ -95,6 +110,7 @@ export const MultilangFAQManagement = () => {
       console.error('Error loading FAQs:', error);
     } finally {
       setIsLoading(false);
+      setIsRefreshing(false);
     }
   };
   
@@ -119,6 +135,72 @@ export const MultilangFAQManagement = () => {
   
   const handleLanguageChange = (lang: string) => {
     setSelectedLanguage(lang);
+  };
+  
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    loadFaqs();
+  };
+  
+  const handleAddFaq = () => {
+    setCurrentFaq(undefined);
+    setEditDialogOpen(true);
+  };
+  
+  const handleEditFaq = (faq: FaqWithTranslation) => {
+    setCurrentFaq(faq);
+    setEditDialogOpen(true);
+  };
+  
+  const handleDeleteFaq = (faq: FaqWithTranslation) => {
+    setFaqToDelete(faq);
+    setDeleteDialogOpen(true);
+  };
+  
+  const confirmDeleteFaq = async () => {
+    if (!faqToDelete) return;
+    
+    try {
+      // Delete the FAQ from the database
+      await deleteFromTable('multilingual_faqs', { id: faqToDelete.id });
+      
+      // Remove from state
+      setFaqs(prev => prev.filter(f => f.id !== faqToDelete.id));
+      toast.success(t('admin:faqDeleted'));
+    } catch (error) {
+      console.error('Error deleting FAQ:', error);
+      toast.error(t('admin:errorDeletingFaq'));
+    } finally {
+      setDeleteDialogOpen(false);
+      setFaqToDelete(null);
+    }
+  };
+  
+  const toggleFeatured = async (faq: FaqWithTranslation) => {
+    try {
+      // Update the is_featured status
+      await deleteFromTable('multilingual_faqs', { 
+        is_featured: !faq.is_featured 
+      }, { 
+        id: faq.id 
+      });
+      
+      // Update in state
+      setFaqs(prev => prev.map(f => {
+        if (f.id === faq.id) {
+          return {
+            ...f,
+            is_featured: !faq.is_featured
+          };
+        }
+        return f;
+      }));
+      
+      toast.success(faq.is_featured ? t('admin:faqUnfeatured') : t('admin:faqFeatured'));
+    } catch (error) {
+      console.error('Error updating FAQ featured status:', error);
+      toast.error(t('admin:errorUpdatingFaq'));
+    }
   };
   
   const categories = [
@@ -194,10 +276,18 @@ export const MultilangFAQManagement = () => {
               
               {/* Actions */}
               <div className="flex justify-between items-center">
-                <div>
-                  <Button>
+                <div className="flex space-x-2">
+                  <Button onClick={handleAddFaq}>
                     <Plus className="h-4 w-4 mr-2" />
                     {t('admin:addFAQ')}
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={handleRefresh} 
+                    disabled={isRefreshing}
+                  >
+                    <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+                    {t('admin:refresh')}
                   </Button>
                 </div>
                 <div className="text-sm text-muted-foreground">
@@ -236,11 +326,11 @@ export const MultilangFAQManagement = () => {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuLabel>{t('admin:actions')}</DropdownMenuLabel>
-                              <DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleEditFaq(faq)}>
                                 <Edit className="h-4 w-4 mr-2" />
                                 {t('admin:edit')}
                               </DropdownMenuItem>
-                              <DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleDeleteFaq(faq)}>
                                 <Trash2 className="h-4 w-4 mr-2" />
                                 {t('admin:delete')}
                               </DropdownMenuItem>
@@ -249,12 +339,12 @@ export const MultilangFAQManagement = () => {
                                 {t('admin:clone')}
                               </DropdownMenuItem>
                               {faq.is_featured ? (
-                                <DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => toggleFeatured(faq)}>
                                   <XSquare className="h-4 w-4 mr-2" />
                                   {t('admin:unfeature')}
                                 </DropdownMenuItem>
                               ) : (
-                                <DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => toggleFeatured(faq)}>
                                   <CheckSquare className="h-4 w-4 mr-2" />
                                   {t('admin:feature')}
                                 </DropdownMenuItem>
@@ -284,6 +374,26 @@ export const MultilangFAQManagement = () => {
           </TabsContent>
         </Tabs>
       </CardContent>
+      
+      {/* Edit FAQ Dialog */}
+      <FAQEditDialog 
+        open={editDialogOpen} 
+        onOpenChange={setEditDialogOpen} 
+        faq={currentFaq}
+        onSuccess={loadFaqs} 
+      />
+      
+      {/* Delete Confirmation Dialog */}
+      <I18nDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title={t('admin:confirmDelete')}
+        description={t('admin:confirmDeleteFaqDescription')}
+        cancelText={t('admin:cancel')}
+        confirmText={t('admin:delete')}
+        onConfirm={confirmDeleteFaq}
+        variant="destructive"
+      />
     </Card>
   );
 };
