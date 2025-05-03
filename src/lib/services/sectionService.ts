@@ -114,7 +114,8 @@ export async function getSectionsByCourseId(courseId: number): Promise<SectionSe
                 return null;
               }
               
-              const lectureId = (lecture as any).id;
+              // Use optional chaining to safely access properties
+              const lectureId = (lecture as any)?.id;
               
               // If lectureId is invalid, return null (will be filtered out later)
               if (!lectureId) {
@@ -133,13 +134,13 @@ export async function getSectionsByCourseId(courseId: number): Promise<SectionSe
                 // Return a safe object with defaults
                 return {
                   id: lectureId,
-                  title: (lecture as any).title || '',
-                  position: (lecture as any).position || 0,
-                  duration: (lecture as any).duration || null,
-                  section_id: (lecture as any).section_id || null,
-                  is_free: (lecture as any).is_free || false,
-                  has_homework: (lecture as any).has_homework || false,
-                  requires_homework_completion: (lecture as any).requires_homework_completion || false,
+                  title: (lecture as any)?.title || '',
+                  position: (lecture as any)?.position || 0,
+                  duration: (lecture as any)?.duration || null,
+                  section_id: (lecture as any)?.section_id || null,
+                  is_free: (lecture as any)?.is_free || false,
+                  has_homework: (lecture as any)?.has_homework || false,
+                  requires_homework_completion: (lecture as any)?.requires_homework_completion || false,
                   video_url: null,
                   description: null
                 } as CourseLecture;
@@ -151,19 +152,20 @@ export async function getSectionsByCourseId(courseId: number): Promise<SectionSe
               let description: string | null = null;
               
               if (videoData && typeof videoData === 'object') {
-                videoUrl = 'video_url' in videoData ? (videoData.video_url as string) : null;
-                description = 'description' in videoData ? (videoData.description as string) : null;
+                // Use optional chaining and nullish coalescing for safe property access
+                videoUrl = videoData?.video_url as string ?? null;
+                description = videoData?.description as string ?? null;
               }
               
               const combinedLecture: CourseLecture = {
-                id: (lecture as any).id,
-                title: (lecture as any).title || '',
-                position: (lecture as any).position || 0,
-                duration: (lecture as any).duration || null,
-                section_id: (lecture as any).section_id || null,
-                is_free: (lecture as any).is_free || false,
-                has_homework: (lecture as any).has_homework || false,
-                requires_homework_completion: (lecture as any).requires_homework_completion || false,
+                id: (lecture as any)?.id,
+                title: (lecture as any)?.title || '',
+                position: (lecture as any)?.position || 0,
+                duration: (lecture as any)?.duration || null,
+                section_id: (lecture as any)?.section_id || null,
+                is_free: (lecture as any)?.is_free || false,
+                has_homework: (lecture as any)?.has_homework || false,
+                requires_homework_completion: (lecture as any)?.requires_homework_completion || false,
                 video_url: videoUrl,
                 description: description
               };
@@ -173,14 +175,14 @@ export async function getSectionsByCourseId(courseId: number): Promise<SectionSe
               console.log(`Could not fetch video_url for lecture:`, err);
               // Create a safe return object with fallback values
               return {
-                id: (lecture as any).id,
-                title: (lecture as any).title || '',
-                position: (lecture as any).position || 0,
-                duration: (lecture as any).duration || null,
-                section_id: (lecture as any).section_id || null,
-                is_free: (lecture as any).is_free || false,
-                has_homework: (lecture as any).has_homework || false,
-                requires_homework_completion: (lecture as any).requires_homework_completion || false,
+                id: (lecture as any)?.id,
+                title: (lecture as any)?.title || '',
+                position: (lecture as any)?.position || 0,
+                duration: (lecture as any)?.duration || null,
+                section_id: (lecture as any)?.section_id || null,
+                is_free: (lecture as any)?.is_free || false,
+                has_homework: (lecture as any)?.has_homework || false,
+                requires_homework_completion: (lecture as any)?.requires_homework_completion || false,
                 video_url: null,
                 description: null
               } as CourseLecture;
