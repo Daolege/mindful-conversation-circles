@@ -143,29 +143,27 @@ export async function rollbackToVersion(
       return { success: false, error: new Error('Translation not found') };
     }
     
-    // Type the current item correctly with a specific interface
+    // Define the type explicitly to avoid conversion issues
     interface TranslationFields {
       language_code: string;
       namespace: string;
       key: string;
     }
     
-    const currentItem = currentData[0] as TranslationFields | null;
-    
-    // Specific null check for currentItem
-    if (currentItem === null) {
-      return { success: false, error: new Error('Invalid translation data: item is null') };
+    // Check if first item is a valid object before type conversion
+    const currentTranslationData = currentData[0];
+    if (
+      !currentTranslationData || 
+      typeof currentTranslationData !== 'object' || 
+      !('language_code' in currentTranslationData) || 
+      !('namespace' in currentTranslationData) || 
+      !('key' in currentTranslationData)
+    ) {
+      return { success: false, error: new Error('Invalid translation data structure') };
     }
     
-    // Check if currentItem has all required properties
-    if (!('language_code' in currentItem) || 
-        !('namespace' in currentItem) || 
-        !('key' in currentItem) ||
-        typeof currentItem.language_code !== 'string' ||
-        typeof currentItem.namespace !== 'string' ||
-        typeof currentItem.key !== 'string') {
-      return { success: false, error: new Error('Invalid translation data: missing required properties') };
-    }
+    // After validation, we can safely assert the type
+    const currentItem = currentTranslationData as TranslationFields;
     
     // Extract properties to local variables for clarity and type safety
     const language_code: string = currentItem.language_code;
