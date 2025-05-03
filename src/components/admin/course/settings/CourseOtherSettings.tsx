@@ -48,8 +48,6 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({
     materials: false
   },
 }) => {
-  const [isFeatured, setIsFeatured] = useState<boolean>(false);
-  const [isPaidContent, setIsPaidContent] = useState<boolean>(true);
   const [courseVisibility, setCourseVisibility] = useState<string>("published");
   
   // Convert string arrays to object arrays with IDs for the editable lists
@@ -80,15 +78,13 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({
       try {
         const { data, error } = await supabase
           .from('courses_new')
-          .select('is_featured, price, status')
+          .select('status')
           .eq('id', courseId)
           .single();
 
         if (error) throw error;
 
         if (data) {
-          setIsFeatured(data.is_featured || false);
-          setIsPaidContent((data.price || 0) > 0);
           setCourseVisibility(data.status || "published");
         }
       } catch (error) {
@@ -126,18 +122,6 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({
     }
   };
 
-  const handleFeaturedChange = async (checked: boolean) => {
-    setIsFeatured(checked);
-    if (courseId && onUpdate) {
-      onUpdate('is_featured', checked);
-    }
-  };
-
-  const handlePaidContentChange = async (checked: boolean) => {
-    setIsPaidContent(checked);
-    // This is just a UI toggle, actual price changes would be managed elsewhere
-  };
-
   const handleVisibilityChange = async (value: string) => {
     setCourseVisibility(value);
     if (courseId && onUpdate) {
@@ -170,30 +154,6 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({
               <Label htmlFor="archived">已归档 - 不显示在课程列表</Label>
             </div>
           </RadioGroup>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle>课程特性</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="featured-course">精选课程</Label>
-            <Switch
-              id="featured-course"
-              checked={isFeatured}
-              onCheckedChange={handleFeaturedChange}
-            />
-          </div>
-          <div className="flex items-center justify-between">
-            <Label htmlFor="paid-content">付费内容</Label>
-            <Switch
-              id="paid-content"
-              checked={isPaidContent}
-              onCheckedChange={handlePaidContentChange}
-            />
-          </div>
         </CardContent>
       </Card>
 
