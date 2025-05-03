@@ -60,3 +60,22 @@ export const languageToCountryCode: Record<string, string> = {
   'ja': 'jp',  // Japanese -> Japan
   'ko': 'kr',  // Korean -> South Korea
 };
+
+/**
+ * Utility function to divide an array into chunks of specified size
+ * @param array The array to be chunked
+ * @param chunkSize Size of each chunk
+ * @returns Array of arrays (chunks)
+ */
+export function chunkArray<T>(array: T[], chunkSize: number): T[][] {
+  if (!array.length) {
+    return [];
+  }
+  
+  const chunks: T[][] = [];
+  for (let i = 0; i < array.length; i += chunkSize) {
+    chunks.push(array.slice(i, i + chunkSize));
+  }
+  
+  return chunks;
+}
