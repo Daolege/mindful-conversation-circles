@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { paymentIconsService, PaymentIcon } from '@/lib/supabaseUtils';
 
 const PaymentIcons: React.FC = () => {
-  // Fetch payment icons from the database
+  // Fetch payment icons from the database using our service
   const { data: paymentIcons = [] } = useQuery({
     queryKey: ['payment-icons'],
     queryFn: async () => {

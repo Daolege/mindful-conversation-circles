@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { socialMediaService, SocialMediaLink } from '@/lib/supabaseUtils';
 
 const SocialLinks: React.FC = () => {
-  // Fetch social media links from the database
+  // Fetch social media links from the database using our service
   const { data: socialLinks = [] } = useQuery({
     queryKey: ['social-media-links'],
     queryFn: async () => {

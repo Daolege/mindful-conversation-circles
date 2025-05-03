@@ -4,11 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/authHooks";
-import { handleQueryError } from "@/lib/supabaseUtils";
-
-interface CourseProgressData {
-  progress_percent: number;
-}
+import { handleQueryError, CourseProgressData } from "@/lib/supabaseUtils";
 
 interface CourseProgressProps {
   courseId: string | number;
@@ -66,7 +62,7 @@ export const CourseProgress = ({ courseId, userId, videoCount = 0 }: CourseProgr
         .eq('course_id', parsedCourseId as number)
         .single();
 
-      // Using our new generic error handler
+      // Using our universal error handler
       const result = handleQueryError<CourseProgressData>(data as CourseProgressData, error);
       
       if (isMounted.current) {

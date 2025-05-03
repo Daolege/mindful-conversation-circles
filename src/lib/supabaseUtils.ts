@@ -97,6 +97,11 @@ export interface CourseProgressData {
   progress_percent: number;
 }
 
+export interface UserRole {
+  user_id: string;
+  role: string;
+}
+
 // Universal error handler for Supabase queries
 export function handleQueryError<T>(data: T | null, error: PostgrestError | null, defaultValue?: T): T {
   if (error) {
@@ -286,4 +291,30 @@ export const aboutPageSettingsService = {
   },
   update: (updates: Partial<AboutPageSettings>) => 
     safeSupabaseMutation<AboutPageSettings>('about_page_settings').update('1', updates)
+};
+
+// User roles service
+export const userRolesService = {
+  getByUserId: async (userId: string) => {
+    // @ts-ignore - Suppressing type error for table name
+    const { data, error } = await supabase
+      .from('user_roles')
+      .select('*')
+      .eq('user_id', userId);
+    
+    return handleQueryError<UserRole[]>(data as UserRole[], error);
+  },
+  getAll: () => safeSupabaseSelect<UserRole>('user_roles').getAll(),
+  addRole: (userId: string, role: string) => 
+    safeSupabaseMutation<UserRole>('user_roles').insert({ user_id: userId, role }),
+  removeRole: async (userId: string, role: string) => {
+    // @ts-ignore - Suppressing type error for table name
+    const { data, error } = await supabase
+      .from('user_roles')
+      .delete()
+      .eq('user_id', userId)
+      .eq('role', role);
+    
+    return { data, error };
+  }
 };
