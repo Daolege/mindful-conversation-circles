@@ -9,16 +9,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useTranslations } from "@/hooks/useTranslations";
 import { Plus, Trash2, ArrowUp, ArrowDown, Loader2 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
+import { Tables } from '@/lib/supabase/database.types';
 
-type PaymentIcon = {
-  id: string;
-  name: string;
-  icon_url: string;
-  is_active: boolean;
-  display_order: number;
-  created_at: string;
-  updated_at: string;
-};
+type PaymentIcon = Tables<'payment_icons'>;
 
 const PaymentIconsManagement = () => {
   const { t } = useTranslations();

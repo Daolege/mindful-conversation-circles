@@ -9,12 +9,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { useTranslations } from "@/hooks/useTranslations";
 import { Plus, Trash2, ArrowUp, ArrowDown, Loader2 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
+import { Tables } from '@/lib/supabase/database.types';
+
+type SocialMediaLink = Tables<'social_media_links'>;
 
 const SocialMediaManagement = () => {
   const { t } = useTranslations();
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [socialLinks, setSocialLinks] = useState([]);
+  const [socialLinks, setSocialLinks] = useState<SocialMediaLink[]>([]);
 
   // Load social links on component mount
   useEffect(() => {
@@ -28,7 +31,7 @@ const SocialMediaManagement = () => {
       const { data, error } = await supabase
         .from('social_media_links')
         .select('*')
-        .order('display_order', { ascending: true });
+        .order('display_order', { ascending: true }) as { data: SocialMediaLink[] | null, error: any };
       
       if (error) {
         throw error;
@@ -53,18 +56,20 @@ const SocialMediaManagement = () => {
         icon_url: '',
         url: '',
         is_active: true,
-        display_order: socialLinks.length
+        display_order: socialLinks.length,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       }
     ]);
   };
 
   // Remove social media link
-  const removeSocialLink = (indexToRemove) => {
+  const removeSocialLink = (indexToRemove: number) => {
     setSocialLinks(socialLinks.filter((_, index) => index !== indexToRemove));
   };
 
   // Move link up in order
-  const moveLinkUp = (index) => {
+  const moveLinkUp = (index: number) => {
     if (index === 0) return;
     const newLinks = [...socialLinks];
     [newLinks[index - 1], newLinks[index]] = [newLinks[index], newLinks[index - 1]];
@@ -78,7 +83,7 @@ const SocialMediaManagement = () => {
   };
 
   // Move link down in order
-  const moveLinkDown = (index) => {
+  const moveLinkDown = (index: number) => {
     if (index === socialLinks.length - 1) return;
     const newLinks = [...socialLinks];
     [newLinks[index], newLinks[index + 1]] = [newLinks[index + 1], newLinks[index]];
@@ -92,9 +97,12 @@ const SocialMediaManagement = () => {
   };
 
   // Handle input change
-  const handleChange = (index, field, value) => {
+  const handleChange = (index: number, field: keyof SocialMediaLink, value: any) => {
     const newLinks = [...socialLinks];
-    newLinks[index][field] = value;
+    newLinks[index] = {
+      ...newLinks[index],
+      [field]: value
+    };
     setSocialLinks(newLinks);
   };
 
@@ -111,7 +119,7 @@ const SocialMediaManagement = () => {
     setIsSaving(true);
     try {
       // First delete all existing links
-      await supabase.from('social_media_links').delete().not('id', 'is', null);
+      await supabase.from('social_media_links').delete().not('id', 'is', null) as any;
       
       // Then insert the new ones
       const { error } = await supabase
@@ -122,7 +130,7 @@ const SocialMediaManagement = () => {
             display_order: index,
             id: link.id && !link.id.startsWith('temp-') ? link.id : undefined
           }))
-        );
+        ) as { error: any };
       
       if (error) {
         throw error;

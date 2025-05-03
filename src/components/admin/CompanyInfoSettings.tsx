@@ -9,25 +9,10 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslations } from "@/hooks/useTranslations";
 import { Loader2, Building, Globe, FileText } from "lucide-react";
+import { Tables } from '@/lib/supabase/database.types';
 
-// Define our own type that matches what's used in the component
-type CompanySiteSettings = {
-  id: string;
-  site_name: string;
-  site_description: string;
-  logo_url: string;
-  contact_email: string;
-  support_phone: string;
-  company_name: string;
-  company_full_name: string;
-  company_registration_number: string;
-  company_address: string;
-  copyright_text: string;
-  enable_registration: boolean;
-  maintenance_mode: boolean;
-  created_at: string;
-  updated_at: string;
-};
+// Define company site settings type from our database types
+type CompanySiteSettings = Tables<'site_settings'>;
 
 const CompanyInfoSettings = () => {
   const { t } = useTranslations();

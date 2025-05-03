@@ -704,19 +704,25 @@ export interface Database {
       exchange_rates: {
         Row: {
           id: string
-          cny_to_usd: number
+          rate: number
+          from_currency: string
+          to_currency: string
           created_at: string
           updated_at: string
         }
         Insert: {
           id?: string
-          cny_to_usd: number
+          rate: number
+          from_currency: string
+          to_currency: string
           created_at?: string
           updated_at?: string
         }
         Update: {
           id?: string
-          cny_to_usd?: number
+          rate?: number
+          from_currency?: string
+          to_currency?: string
           created_at?: string
           updated_at?: string
         }

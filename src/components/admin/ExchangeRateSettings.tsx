@@ -13,14 +13,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 import { Tables } from '@/lib/supabase/database.types';
 
-type ExchangeRate = {
-  id: string;
-  rate: number;
-  from_currency: string;
-  to_currency: string;
-  created_at: string;
-  updated_at: string;
-};
+type ExchangeRate = Tables<'exchange_rates'>;
 
 const ExchangeRateSettings = () => {
   const { t } = useTranslations();

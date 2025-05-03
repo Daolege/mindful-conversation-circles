@@ -10,15 +10,9 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslations } from "@/hooks/useTranslations";
 import { Loader2 } from "lucide-react";
+import { Tables } from '@/lib/supabase/database.types';
 
-type LegalDocument = {
-  id: string;
-  slug: string;
-  title: string;
-  content: string;
-  created_at: string;
-  updated_at: string;
-};
+type LegalDocument = Tables<'legal_documents'>;
 
 interface DocumentState {
   [key: string]: {
@@ -66,7 +60,7 @@ const LegalDocumentsManagement = () => {
   const loadDocuments = async () => {
     setIsLoading(true);
     try {
-      // We need to specify the type since we're directly using a string literal
+      // Use type casting to properly handle the table access
       const { data, error } = await supabase
         .from('legal_documents')
         .select('*') as { data: LegalDocument[] | null, error: any };
@@ -101,7 +95,7 @@ const LegalDocumentsManagement = () => {
     try {
       const { title, content } = documents[activeDocument];
       
-      // We need to specify the type since we're directly using a string literal
+      // Type casting for proper table access
       const { error } = await supabase
         .from('legal_documents')
         .upsert({
