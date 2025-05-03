@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -13,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { CourseFormValues } from "@/lib/types/course-new";
 import { useTranslation } from "react-i18next";
+import { getEnabledLanguages } from '@/lib/services/language/languageService';
 
 // 定义表单验证模式
 const formSchema = z.object({
@@ -54,21 +56,12 @@ export const BasicInfoForm = ({ onTabChange, onCourseCreated, courseId }: BasicI
     }
   });
 
-  // Load available languages from the database
+  // Load available languages from the database using the languageService
   useEffect(() => {
     const loadLanguages = async () => {
       try {
-        const { data: languagesData, error } = await supabase
-          .from('languages')
-          .select('code, name, nativeName')
-          .eq('enabled', true)
-          .order('name', { ascending: true });
+        const languagesData = await getEnabledLanguages();
           
-        if (error) {
-          console.error("Error loading languages:", error);
-          return;
-        }
-        
         if (languagesData && languagesData.length > 0) {
           // Transform to the format needed for select options
           const languageOptions = languagesData.map(lang => ({
@@ -93,6 +86,17 @@ export const BasicInfoForm = ({ onTabChange, onCourseCreated, courseId }: BasicI
         }
       } catch (err) {
         console.error("Error loading languages:", err);
+        // Fallback to hardcoded languages on error
+        setLanguages([
+          { value: "zh", label: "中文" },
+          { value: "en", label: "English" },
+          { value: "fr", label: "Français" },
+          { value: "de", label: "Deutsch" },
+          { value: "es", label: "Español" },
+          { value: "ja", label: "日本語" },
+          { value: "ko", label: "한国语" },
+          { value: "ru", label: "Русский" }
+        ]);
       }
     };
     
