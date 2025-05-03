@@ -94,30 +94,40 @@ export async function getSectionsByCourseId(courseId: number): Promise<SectionSe
           });
         } else {
           // Check for video_url column in a separate query to handle potential schema differences
-          const videoUrlPromises = (lecturesData || []).map(async (lecture) => {
+          const videoUrlPromises = lecturesData ? lecturesData.map(async (lecture) => {
+            // Make sure lecture is a valid object before proceeding
+            if (!lecture || typeof lecture !== 'object' || !('id' in lecture)) {
+              console.warn('Invalid lecture object:', lecture);
+              return null;
+            }
+            
             try {
+              const lectureId = lecture.id;
               const { data: videoData } = await supabase
                 .from('course_lectures')
                 .select('video_url, description')
-                .eq('id', lecture.id)
+                .eq('id', lectureId)
                 .single();
                 
+              // Combine both objects
               return {
                 ...lecture,
-                video_url: videoData?.video_url,
-                description: videoData?.description
-              };
+                video_url: videoData?.video_url || null,
+                description: videoData?.description || null
+              } as CourseLecture;
             } catch (err) {
-              console.log(`Could not fetch video_url for lecture ${lecture.id}:`, err);
-              return lecture;
+              console.log(`Could not fetch video_url for lecture:`, err);
+              // Return the original lecture object
+              return lecture as CourseLecture;
             }
-          });
+          }) : [];
           
-          const lecturesWithVideoUrl = await Promise.all(videoUrlPromises);
+          // Filter out any null values that might have occurred during the mapping
+          const lecturesWithVideoUrl = (await Promise.all(videoUrlPromises)).filter(Boolean) as CourseLecture[];
           
           sectionsWithLectures.push({
             ...section,
-            lectures: lecturesWithVideoUrl as CourseLecture[]
+            lectures: lecturesWithVideoUrl
           });
         }
       } catch (error) {
