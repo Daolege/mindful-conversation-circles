@@ -1,3 +1,4 @@
+
 import React from "react";
 import {
   Table,
@@ -14,11 +15,12 @@ import { Course } from "@/lib/types/course";
 import { Link } from "react-router-dom";
 
 interface SimpleCourseTabProps {
-  courses: Course[];
+  courses?: Course[];
 }
 
 export function SimpleCourseTab({ courses }: SimpleCourseTabProps) {
-  const data = [
+  // Use default mock data if no courses provided
+  const data = courses || [
     {
       id: 1,
       title: "高级前端开发",
