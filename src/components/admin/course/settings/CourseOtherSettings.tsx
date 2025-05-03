@@ -10,6 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { ListItem } from '@/lib/types/course-new';
+import { updateTable } from '@/lib/services/typeSafeSupabase';
 
 // Define props for the CourseOtherSettings component
 interface CourseOtherSettingsProps {
@@ -55,6 +56,7 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({
   const [allowsOneTimePurchase, setAllowsOneTimePurchase] = useState<boolean>(true);
   const [allowsSubscription, setAllowsSubscription] = useState<boolean>(true);
   const [purchaseMethodError, setPurchaseMethodError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   
   // State for editable section titles
   const [sectionTitles, setSectionTitles] = useState({
@@ -87,7 +89,8 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({
   useEffect(() => {
     async function loadCourseSettings() {
       if (!courseId) return;
-
+      
+      setIsLoading(true);
       try {
         const { data, error } = await supabase
           .from('courses_new')
@@ -103,9 +106,11 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({
           setAllowsOneTimePurchase(data.allows_one_time_purchase !== false);
           setAllowsSubscription(data.allows_subscription !== false);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error loading course settings:", error);
         toast.error("无法加载课程设置");
+      } finally {
+        setIsLoading(false);
       }
     }
 
@@ -140,8 +145,21 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({
 
   const handleVisibilityChange = async (value: string) => {
     setCourseVisibility(value);
-    if (courseId && onUpdate) {
-      onUpdate('status', value);
+    if (courseId) {
+      try {
+        const { error } = await updateTable('courses_new', { status: value }, { id: courseId });
+        
+        if (error) {
+          console.error("Error updating course visibility:", error);
+          toast.error("更新课程可见性失败");
+          return;
+        }
+        
+        toast.success("课程可见性已更新");
+      } catch (err) {
+        console.error("Error updating course visibility:", err);
+        toast.error("更新课程可见性失败");
+      }
     }
   };
 
@@ -183,15 +201,12 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({
     }
     
     // Save to database if courseId is available
-    if (courseId && onUpdate) {
-      const field = type === 'one_time' ? 'allows_one_time_purchase' : 'allows_subscription';
-      onUpdate(field, checked);
-      
+    if (courseId) {
       try {
-        const { error } = await supabase
-          .from('courses_new')
-          .update({ [field]: checked })
-          .eq('id', courseId);
+        const field = type === 'one_time' ? 'allows_one_time_purchase' : 'allows_subscription';
+        const updateData = { [field]: checked };
+        
+        const { error } = await updateTable('courses_new', updateData, { id: courseId });
           
         if (error) {
           console.error(`Error updating ${field}:`, error);
@@ -202,6 +217,8 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({
           } else {
             setAllowsSubscription(!checked);
           }
+        } else {
+          toast.success("购买方式已更新");
         }
       } catch (error) {
         console.error(`Error updating purchase method:`, error);
