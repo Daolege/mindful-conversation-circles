@@ -193,125 +193,128 @@ const Admin = () => {
           className="w-full"
           defaultValue={activeTab}
         >
-          <TabsList className="mb-8 w-full flex flex-wrap justify-start gap-2 bg-gray-50/90 p-3 border border-gray-200 rounded-2xl shadow-sm">
+          <TabsList className="mb-8 w-full flex flex-wrap justify-start gap-2 bg-gray-50/90 p-4 border-2 border-gray-200 rounded-2xl shadow-md">
             {[
-              { value: "overview", label: t('admin:overview') },
-              { value: "users", label: t('admin:usersManagement') },
-              { value: "courses", label: t('admin:coursesManagement') },
-              { value: "courses-new", label: t('admin:coursesManagement2') },
-              { value: "orders", label: t('admin:ordersManagement') },
-              { value: "subscriptions", label: t('admin:subscriptionsManagement') },
-              { value: "settings", label: t('admin:systemSettings') },
+              { value: "overview", label: t('admin:overview'), icon: "📊" },
+              { value: "users", label: t('admin:usersManagement'), icon: "👥" },
+              { value: "courses", label: t('admin:coursesManagement'), icon: "📚" },
+              { value: "courses-new", label: t('admin:coursesManagement2'), icon: "🆕" },
+              { value: "orders", label: t('admin:ordersManagement'), icon: "🛒" },
+              { value: "subscriptions", label: t('admin:subscriptionsManagement'), icon: "🔄" },
+              { value: "settings", label: t('admin:systemSettings'), icon: "⚙️" },
             ].map(tab => (
               <TabsTrigger 
                 key={tab.value}
                 value={tab.value} 
-                className="flex-1 px-6 py-3.5 text-sm font-medium min-w-[120px] relative overflow-hidden"
+                className="flex-1 px-8 py-4 text-base font-medium min-w-[140px] relative overflow-hidden"
               >
+                <span className="mr-2">{tab.icon}</span>
                 {tab.label}
               </TabsTrigger>
             ))}
           </TabsList>
           
-          <AnimatePresence mode="wait">
-            {activeTab === "overview" && (
-              <motion.div
-                key="overview"
-                variants={tabContentVariants}
-                initial="hidden"
-                animate="visible"
-                exit="exit"
-              >
-                <TabsContent value="overview">
-                  <DashboardStatistics />
-                </TabsContent>
-              </motion.div>
-            )}
-            
-            {activeTab === "users" && (
-              <motion.div
-                key="users"
-                variants={tabContentVariants}
-                initial="hidden"
-                animate="visible"
-                exit="exit"
-              >
-                <TabsContent value="users">
-                  <UserManagement />
-                </TabsContent>
-              </motion.div>
-            )}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <AnimatePresence mode="wait">
+              {activeTab === "overview" && (
+                <motion.div
+                  key="overview"
+                  variants={tabContentVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                >
+                  <TabsContent value="overview">
+                    <DashboardStatistics />
+                  </TabsContent>
+                </motion.div>
+              )}
+              
+              {activeTab === "users" && (
+                <motion.div
+                  key="users"
+                  variants={tabContentVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                >
+                  <TabsContent value="users">
+                    <UserManagement />
+                  </TabsContent>
+                </motion.div>
+              )}
 
-            {activeTab === "courses" && (
-              <motion.div
-                key="courses"
-                variants={tabContentVariants}
-                initial="hidden"
-                animate="visible"
-                exit="exit"
-              >
-                <TabsContent value="courses">
-                  <CourseManagement />
-                </TabsContent>
-              </motion.div>
-            )}
-            
-            {activeTab === "courses-new" && (
-              <motion.div
-                key="courses-new"
-                variants={tabContentVariants}
-                initial="hidden"
-                animate="visible"
-                exit="exit"
-              >
-                <TabsContent value="courses-new">
-                  <CourseManagementNew />
-                </TabsContent>
-              </motion.div>
-            )}
-            
-            {activeTab === "orders" && (
-              <motion.div
-                key="orders"
-                variants={tabContentVariants}
-                initial="hidden"
-                animate="visible"
-                exit="exit"
-              >
-                <TabsContent value="orders">
-                  <OrderManagement />
-                </TabsContent>
-              </motion.div>
-            )}
-            
-            {activeTab === "subscriptions" && (
-              <motion.div
-                key="subscriptions"
-                variants={tabContentVariants}
-                initial="hidden"
-                animate="visible"
-                exit="exit"
-              >
-                <TabsContent value="subscriptions">
-                  <SubscriptionPlanManagement />
-                </TabsContent>
-              </motion.div>
-            )}
-            
-            {activeTab === "settings" && (
-              <motion.div
-                key="settings"
-                variants={tabContentVariants}
-                initial="hidden"
-                animate="visible"
-                exit="exit"
-              >
-                <TabsContent value="settings">
-                  <AdminSettings />
-                </TabsContent>
-              </motion.div>
-            )}
-          </AnimatePresence>
+              {activeTab === "courses" && (
+                <motion.div
+                  key="courses"
+                  variants={tabContentVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                >
+                  <TabsContent value="courses">
+                    <CourseManagement />
+                  </TabsContent>
+                </motion.div>
+              )}
+              
+              {activeTab === "courses-new" && (
+                <motion.div
+                  key="courses-new"
+                  variants={tabContentVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                >
+                  <TabsContent value="courses-new">
+                    <CourseManagementNew />
+                  </TabsContent>
+                </motion.div>
+              )}
+              
+              {activeTab === "orders" && (
+                <motion.div
+                  key="orders"
+                  variants={tabContentVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                >
+                  <TabsContent value="orders">
+                    <OrderManagement />
+                  </TabsContent>
+                </motion.div>
+              )}
+              
+              {activeTab === "subscriptions" && (
+                <motion.div
+                  key="subscriptions"
+                  variants={tabContentVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                >
+                  <TabsContent value="subscriptions">
+                    <SubscriptionPlanManagement />
+                  </TabsContent>
+                </motion.div>
+              )}
+              
+              {activeTab === "settings" && (
+                <motion.div
+                  key="settings"
+                  variants={tabContentVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                >
+                  <TabsContent value="settings">
+                    <AdminSettings />
+                  </TabsContent>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </Tabs>
       </main>
       <Footer />
