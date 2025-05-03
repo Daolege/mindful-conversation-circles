@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { addLanguage, getAllLanguages } from './languageManagement';
@@ -246,7 +245,10 @@ export const createLanguagesTableIfNeeded = async (): Promise<boolean> => {
       return true;
     }
     
-    // We'll use direct SQL instead of RPC function that doesn't exist in the type definition
+    // We'll use raw SQL queries with the direct Supabase API approach
+    // Instead of using .from('_sql').rpc() which doesn't exist in the type definition
+    
+    // Execute the SQL to create the table
     const createTableSQL = `
       CREATE TABLE IF NOT EXISTS languages (
         id SERIAL PRIMARY KEY,
@@ -260,10 +262,9 @@ export const createLanguagesTableIfNeeded = async (): Promise<boolean> => {
       )
     `;
     
-    // Execute the SQL directly with the raw method
+    // Use supabase.rpc directly instead of chaining from .from()
     const { error: createError } = await supabase
-      .from('_sql' as any)
-      .rpc('_exec', { query: createTableSQL });
+      .rpc('exec_sql', { sql: createTableSQL });
     
     if (createError) {
       console.error('Error creating languages table:', createError);
@@ -283,9 +284,9 @@ export const createLanguagesTableIfNeeded = async (): Promise<boolean> => {
       ON CONFLICT (code) DO NOTHING
     `;
     
+    // Use supabase.rpc directly instead of chaining from .from()
     const { error: insertError } = await supabase
-      .from('_sql' as any)
-      .rpc('_exec', { query: insertDefaultsSQL });
+      .rpc('exec_sql', { sql: insertDefaultsSQL });
     
     if (insertError) {
       console.error('Error inserting default languages:', insertError);
