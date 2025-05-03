@@ -10,12 +10,16 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { Search, Save, RefreshCw } from 'lucide-react';
+import { Search, Save, RefreshCw, FileText, BarChart2, Check, X, FileUp, FileDown, History, Type } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ImportExportTranslations } from './ImportExportTranslations';
 import { TranslationItem } from '@/lib/services/languageService';
+import { Progress } from '@/components/ui/progress';
+import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
+import { TranslationStats } from './TranslationStats';
 
-const NAMESPACES = ['common', 'navigation', 'courses', 'auth', 'admin', 'checkout', 'dashboard', 'errors', 'orders'];
+const NAMESPACES = ['common', 'navigation', 'courses', 'auth', 'admin', 'checkout', 'dashboard', 'errors', 'orders', 'actions', 'home'];
 
 export const TranslationEditor = () => {
   const { t, updateTranslation, getTranslations, refreshTranslations } = useTranslations();
@@ -29,6 +33,18 @@ export const TranslationEditor = () => {
   const [editingTranslation, setEditingTranslation] = useState<TranslationItem | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [selectedTranslations, setSelectedTranslations] = useState<string[]>([]);
+  const [bulkEditMode, setBulkEditMode] = useState(false);
+  const [showMissingOnly, setShowMissingOnly] = useState(false);
+  const [rtlPreview, setRtlPreview] = useState(false);
+  
+  // Translation stats
+  const [stats, setStats] = useState({
+    total: 0,
+    translated: 0,
+    missing: 0,
+    completion: 0
+  });
   
   useEffect(() => {
     if (supportedLanguages.length > 0 && !selectedLanguage) {
@@ -50,10 +66,31 @@ export const TranslationEditor = () => {
           t.value.toLowerCase().includes(searchQuery.toLowerCase())
         )
       );
+    } else if (showMissingOnly) {
+      setFilteredTranslations(
+        translations.filter(t => !t.value || t.value.trim() === '')
+      );
     } else {
       setFilteredTranslations(translations);
     }
-  }, [searchQuery, translations]);
+  }, [searchQuery, translations, showMissingOnly]);
+  
+  useEffect(() => {
+    // Calculate statistics
+    if (translations.length > 0) {
+      const total = translations.length;
+      const missing = translations.filter(t => !t.value || t.value.trim() === '').length;
+      const translated = total - missing;
+      const completion = Math.round((translated / total) * 100);
+      
+      setStats({
+        total,
+        translated,
+        missing,
+        completion
+      });
+    }
+  }, [translations]);
   
   const loadTranslations = async () => {
     if (!selectedLanguage || !selectedNamespace) return;
@@ -66,6 +103,7 @@ export const TranslationEditor = () => {
       if (result.success && Array.isArray(result.data)) {
         setTranslations(result.data);
         setFilteredTranslations(result.data);
+        setSelectedTranslations([]);
       } else {
         toast.error(t('errors:general'), { description: result.error });
       }
@@ -79,6 +117,7 @@ export const TranslationEditor = () => {
   
   const handleEditTranslation = (translation: TranslationItem) => {
     setEditingTranslation({...translation});
+    setRtlPreview(false);
   };
   
   const handleSaveTranslation = async () => {
@@ -117,6 +156,7 @@ export const TranslationEditor = () => {
       
       if (result.success) {
         toast.success(t('admin:translationsRefreshed'));
+        loadTranslations();
       } else {
         toast.error(t('errors:general'), { description: result.error });
       }
@@ -126,6 +166,29 @@ export const TranslationEditor = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+  
+  const toggleTranslationSelection = (key: string) => {
+    setSelectedTranslations(prev => {
+      if (prev.includes(key)) {
+        return prev.filter(k => k !== key);
+      } else {
+        return [...prev, key];
+      }
+    });
+  };
+  
+  const handleToggleMissingOnly = () => {
+    setShowMissingOnly(!showMissingOnly);
+  };
+  
+  const toggleRtlPreview = () => {
+    setRtlPreview(!rtlPreview);
+  };
+  
+  const isLanguageRtl = (code: string) => {
+    const lang = supportedLanguages.find(l => l.code === code);
+    return lang?.rtl || false;
   };
   
   return (
@@ -140,12 +203,13 @@ export const TranslationEditor = () => {
         <Tabs defaultValue="edit">
           <TabsList className="mb-4">
             <TabsTrigger value="edit">{t('admin:editTranslations')}</TabsTrigger>
+            <TabsTrigger value="stats">{t('admin:translationStats')}</TabsTrigger>
             <TabsTrigger value="import">{t('admin:importExport')}</TabsTrigger>
           </TabsList>
           
           <TabsContent value="edit">
             <div className="space-y-4">
-              {/* 控制面板 */}
+              {/* Control panel */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <Label htmlFor="language-select">{t('admin:language')}</Label>
@@ -160,6 +224,7 @@ export const TranslationEditor = () => {
                       {supportedLanguages.map(lang => (
                         <SelectItem key={lang.code} value={lang.code}>
                           {lang.nativeName} ({lang.code})
+                          {lang.rtl && <span className="ml-2">(RTL)</span>}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -200,9 +265,20 @@ export const TranslationEditor = () => {
                 </div>
               </div>
               
-              {/* 操作按钮 */}
+              {/* Progress bar */}
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium">{t('admin:translationProgress')}</span>
+                  <span className="text-sm text-muted-foreground">
+                    {stats.completion}% ({stats.translated}/{stats.total})
+                  </span>
+                </div>
+                <Progress value={stats.completion} className="h-2" />
+              </div>
+              
+              {/* Action buttons */}
               <div className="flex justify-between items-center">
-                <div className="space-x-2">
+                <div className="flex items-center space-x-2">
                   <Button 
                     variant="outline" 
                     size="sm"
@@ -212,14 +288,39 @@ export const TranslationEditor = () => {
                     <RefreshCw className="h-4 w-4 mr-2" />
                     {t('admin:refreshTranslations')}
                   </Button>
+                  
+                  <Button 
+                    variant={showMissingOnly ? "default" : "outline"}
+                    size="sm"
+                    onClick={handleToggleMissingOnly}
+                  >
+                    {showMissingOnly ? <Check className="h-4 w-4 mr-2" /> : <X className="h-4 w-4 mr-2" />}
+                    {t('admin:showMissingOnly')}
+                  </Button>
+                  
+                  {isLanguageRtl(selectedLanguage) && (
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                    >
+                      <Type className="h-4 w-4 mr-2 rtl-mirror" />
+                      {t('admin:rtlPreview')}
+                    </Button>
+                  )}
                 </div>
                 
-                <div className="text-sm text-muted-foreground">
-                  {filteredTranslations.length} {t('admin:translationsFound')}
+                <div className="flex items-center space-x-2">
+                  <Badge variant="outline" className={`${stats.missing > 0 ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-green-50 text-green-700 border-green-200'}`}>
+                    {stats.missing > 0 ? t('admin:missingTranslations', { count: stats.missing }) : t('admin:allTranslated')}
+                  </Badge>
+                  
+                  <span className="text-sm text-muted-foreground">
+                    {filteredTranslations.length} {t('admin:translationsFound')}
+                  </span>
                 </div>
               </div>
               
-              {/* 翻译列表 */}
+              {/* Translation list */}
               {isLoading ? (
                 <div className="space-y-2">
                   {[1, 2, 3, 4, 5].map((i) => (
@@ -235,9 +336,25 @@ export const TranslationEditor = () => {
                     <ScrollArea className="h-[500px]">
                       <div className="space-y-4 pr-4">
                         {filteredTranslations.map((translation) => (
-                          <div key={translation.key} className="border rounded-md p-4">
+                          <div 
+                            key={translation.key} 
+                            className={`border rounded-md p-4 ${
+                              !translation.value || translation.value.trim() === '' 
+                                ? 'border-amber-200 bg-amber-50' 
+                                : 'border-gray-200'
+                            }`}
+                          >
                             <div className="flex justify-between items-start mb-2">
-                              <Label className="font-mono text-xs">{translation.key}</Label>
+                              <div className="flex items-center">
+                                {bulkEditMode && (
+                                  <Checkbox 
+                                    className="mr-2"
+                                    checked={selectedTranslations.includes(translation.key)}
+                                    onCheckedChange={() => toggleTranslationSelection(translation.key)}
+                                  />
+                                )}
+                                <Label className="font-mono text-xs">{translation.key}</Label>
+                              </div>
                               <Button 
                                 variant="ghost" 
                                 size="sm"
@@ -246,8 +363,12 @@ export const TranslationEditor = () => {
                                 {t('admin:edit')}
                               </Button>
                             </div>
-                            <div className="bg-gray-50 p-3 rounded-md break-all whitespace-pre-wrap">
-                              {translation.value || <span className="text-gray-400">(empty)</span>}
+                            <div className={`${
+                              !translation.value || translation.value.trim() === '' 
+                                ? 'bg-amber-100' 
+                                : 'bg-gray-50'
+                            } p-3 rounded-md break-all whitespace-pre-wrap`}>
+                              {translation.value || <span className="text-gray-400">({t('admin:emptyTranslation')})</span>}
                             </div>
                           </div>
                         ))}
@@ -261,7 +382,7 @@ export const TranslationEditor = () => {
                 </>
               )}
               
-              {/* 编辑对话框 */}
+              {/* Edit dialog */}
               {editingTranslation && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
                   <div className="bg-white rounded-lg p-6 max-w-lg w-full mx-4">
@@ -269,16 +390,39 @@ export const TranslationEditor = () => {
                     
                     <div className="space-y-4">
                       <div>
-                        <Label className="font-mono text-xs">{editingTranslation.key}</Label>
-                        <Textarea
-                          rows={6}
-                          value={editingTranslation.value}
-                          onChange={(e) => setEditingTranslation({
-                            ...editingTranslation,
-                            value: e.target.value
-                          })}
-                          className="font-mono mt-1"
-                        />
+                        <div className="flex justify-between items-center mb-2">
+                          <Label className="font-mono text-xs">{editingTranslation.key}</Label>
+                          {isLanguageRtl(editingTranslation.language_code) && (
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={toggleRtlPreview}
+                            >
+                              <Type className="h-4 w-4 mr-2 rtl-mirror" />
+                              {rtlPreview ? t('admin:editMode') : t('admin:rtlPreview')}
+                            </Button>
+                          )}
+                        </div>
+                        
+                        {rtlPreview ? (
+                          <div 
+                            dir="rtl" 
+                            className="border rounded-md p-4 min-h-[150px] bg-gray-50 text-right font-mono"
+                          >
+                            {editingTranslation.value}
+                          </div>
+                        ) : (
+                          <Textarea
+                            rows={6}
+                            value={editingTranslation.value}
+                            onChange={(e) => setEditingTranslation({
+                              ...editingTranslation,
+                              value: e.target.value
+                            })}
+                            className="font-mono mt-1"
+                            dir={isLanguageRtl(editingTranslation.language_code) ? "rtl" : "ltr"}
+                          />
+                        )}
                       </div>
                     </div>
                     
@@ -291,7 +435,7 @@ export const TranslationEditor = () => {
                       </Button>
                       <Button 
                         onClick={handleSaveTranslation}
-                        disabled={isSaving}
+                        disabled={isSaving || rtlPreview}
                       >
                         <Save className="h-4 w-4 mr-2" />
                         {isSaving ? t('actions:saving') : t('actions:save')}
@@ -301,6 +445,10 @@ export const TranslationEditor = () => {
                 </div>
               )}
             </div>
+          </TabsContent>
+          
+          <TabsContent value="stats">
+            <TranslationStats />
           </TabsContent>
           
           <TabsContent value="import">

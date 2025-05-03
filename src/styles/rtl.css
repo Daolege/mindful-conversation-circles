@@ -49,3 +49,33 @@
 [dir="rtl"] .rtl-grid-reverse {
   direction: rtl;
 }
+
+/* RTL for translation editor */
+[dir="rtl"] .translation-editor-rtl .key-label {
+  text-align: right;
+}
+
+[dir="rtl"] .translation-editor-rtl .translation-value {
+  text-align: right;
+}
+
+[dir="rtl"] .translation-editor-rtl .action-buttons {
+  flex-direction: row-reverse;
+}
+
+/* RTL for icons in inputs */
+[dir="rtl"] .icon-input-rtl .input-icon {
+  left: auto;
+  right: 0.75rem;
+}
+
+[dir="rtl"] .icon-input-rtl .rtl-input {
+  padding-left: 0.75rem;
+  padding-right: 2.5rem;
+}
+
+/* RTL for language switcher */
+[dir="rtl"] .language-flag {
+  margin-right: 0;
+  margin-left: 0.5rem;
+}
