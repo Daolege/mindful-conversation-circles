@@ -110,7 +110,7 @@ export async function rollbackToVersion(
       return { success: false, error: new Error('Version not found') };
     }
     
-    // Get the value to restore using non-null assertion after validation
+    // Get the version item with null check
     const versionItem = versionData[0];
     
     if (!versionItem) {
@@ -144,14 +144,14 @@ export async function rollbackToVersion(
       return { success: false, error: new Error('Translation not found') };
     }
     
-    // Get the translation data with robust type checking
+    // Get the current item with null check
     const currentItem = currentData[0];
     
     if (!currentItem) {
       return { success: false, error: new Error('Invalid translation data: item is null') };
     }
     
-    // Use type assertion after validation
+    // Use type assertion with safe check
     const typedCurrentItem = currentItem as Record<string, any>;
     
     if (!typedCurrentItem.language_code || 

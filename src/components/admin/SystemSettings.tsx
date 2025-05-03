@@ -11,6 +11,7 @@ import SocialMediaManagement from './SocialMediaManagement';
 import PaymentIconsManagement from './PaymentIconsManagement';
 import LegalDocumentsManagement from './LegalDocumentsManagement';
 import MultilangFAQManagement from './MultilangFAQManagement';
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export const SystemSettings = () => {
   const { t } = useTranslations();
@@ -21,17 +22,19 @@ export const SystemSettings = () => {
       <h2 className="text-2xl font-bold text-gray-900">{t('admin:systemSettings')}</h2>
       
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="mb-6">
-          <TabsTrigger value="general">{t('admin:generalSettings')}</TabsTrigger>
-          <TabsTrigger value="company">{t('admin:companyInfo')}</TabsTrigger>
-          <TabsTrigger value="contact">{t('admin:contactMethods')}</TabsTrigger>
-          <TabsTrigger value="social">{t('admin:socialMedia')}</TabsTrigger>
-          <TabsTrigger value="payment">{t('admin:paymentIcons')}</TabsTrigger>
-          <TabsTrigger value="legal">{t('admin:legalDocuments')}</TabsTrigger>
-          <TabsTrigger value="faq">{t('admin:faq')}</TabsTrigger>
-          <TabsTrigger value="languages">{t('admin:languageManagement')}</TabsTrigger>
-          <TabsTrigger value="translations">{t('admin:translationEditor')}</TabsTrigger>
-        </TabsList>
+        <ScrollArea className="pb-4 w-full">
+          <TabsList className="mb-6 w-max flex-nowrap">
+            <TabsTrigger value="general">{t('admin:generalSettings')}</TabsTrigger>
+            <TabsTrigger value="company">{t('admin:companyInfo')}</TabsTrigger>
+            <TabsTrigger value="contact">{t('admin:contactMethods')}</TabsTrigger>
+            <TabsTrigger value="social">{t('admin:socialMedia')}</TabsTrigger>
+            <TabsTrigger value="payment">{t('admin:paymentIcons')}</TabsTrigger>
+            <TabsTrigger value="legal">{t('admin:legalDocuments')}</TabsTrigger>
+            <TabsTrigger value="faq">{t('admin:faq')}</TabsTrigger>
+            <TabsTrigger value="languages">{t('admin:languageManagement')}</TabsTrigger>
+            <TabsTrigger value="translations">{t('admin:translationEditor')}</TabsTrigger>
+          </TabsList>
+        </ScrollArea>
         
         <TabsContent value="general">
           <ExchangeRateSettings />

@@ -1,433 +1,245 @@
 
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useTranslations } from '@/hooks/useTranslations';
-import { useLanguage } from '@/contexts/LanguageContext';
-import { Card, CardContent } from '@/components/ui/card';
+import { TranslationImport } from './TranslationImport';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Label } from '@/components/ui/label';
+import { Check, FileDown, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
-import { FileUp, FileDown, FileType, AlertCircle, CheckCircle, X, ArrowRight, Globe } from 'lucide-react';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Progress } from '@/components/ui/progress';
-import { Switch } from '@/components/ui/switch';
-import { 
-  exportTranslationsToJson, 
-  importTranslationsFromFile, 
-  validateTranslationJson 
-} from '@/lib/utils/translationUtils';
-import { getTranslationsByLanguage } from '@/lib/services/language/translationService';
-import { TranslationItem } from '@/lib/services/languageService';
+import { TranslationItem } from '@/lib/services/language/languageCore';
+import { exportTranslationsToJson } from '@/lib/utils/translationUtils';
+import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
-// Define supported file formats
-const FILE_FORMATS = ['json'];
+const NAMESPACES = [
+  'common', 'navigation', 'courses', 'auth', 'admin', 
+  'checkout', 'dashboard', 'errors', 'orders', 'actions', 'home'
+];
 
 export const ImportExportTranslations = () => {
-  const { t, importTranslations } = useTranslations();
+  const { t, getTranslations } = useTranslations();
   const { supportedLanguages } = useLanguage();
   
   const [selectedLanguage, setSelectedLanguage] = useState<string>('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [importProgress, setImportProgress] = useState(0);
-  const [showImportDetails, setShowImportDetails] = useState(false);
-  const [importPreview, setImportPreview] = useState<TranslationItem[]>([]);
+  const [selectedNamespaces, setSelectedNamespaces] = useState<string[]>(['common']);
   const [isExporting, setIsExporting] = useState(false);
-  const [selectedNamespaces, setSelectedNamespaces] = useState<string[]>([]);
-  const [allNamespaces, setAllNamespaces] = useState<string[]>([]);
-  const [selectAllNamespaces, setSelectAllNamespaces] = useState(true);
-  const [fileFormat, setFileFormat] = useState('json');
-  const [exportPartial, setExportPartial] = useState(false);
-
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [exportFormat, setExportFormat] = useState<string>('json');
+  const [showExportInfo, setShowExportInfo] = useState(false);
   
-  // Set default language when languages are loaded
-  React.useEffect(() => {
-    if (supportedLanguages.length > 0 && !selectedLanguage) {
-      setSelectedLanguage(supportedLanguages[0].code);
-    }
-  }, [supportedLanguages, selectedLanguage]);
-  
-  // Reset selected namespaces when language changes
-  React.useEffect(() => {
-    if (selectedLanguage) {
-      // This would typically fetch available namespaces for the selected language
-      const namespaces = ['common', 'navigation', 'courses', 'auth', 'admin', 'checkout', 'dashboard', 'errors', 'orders', 'actions', 'home'];
-      setAllNamespaces(namespaces);
-      
-      if (selectAllNamespaces) {
-        setSelectedNamespaces(namespaces);
+  const toggleNamespace = (namespace: string) => {
+    setSelectedNamespaces(prev => {
+      if (prev.includes(namespace)) {
+        return prev.filter(n => n !== namespace);
       } else {
-        setSelectedNamespaces([]);
+        return [...prev, namespace];
       }
-    }
-  }, [selectedLanguage, selectAllNamespaces]);
-
-  const handleSelectAllNamespaces = (checked: boolean) => {
-    setSelectAllNamespaces(checked);
-    setSelectedNamespaces(checked ? [...allNamespaces] : []);
+    });
   };
-
-  const handleNamespaceToggle = (namespace: string, checked: boolean) => {
-    if (checked) {
-      setSelectedNamespaces(prev => [...prev, namespace]);
-      if (selectedNamespaces.length + 1 === allNamespaces.length) {
-        setSelectAllNamespaces(true);
-      }
-    } else {
-      setSelectedNamespaces(prev => prev.filter(ns => ns !== namespace));
-      setSelectAllNamespaces(false);
-    }
+  
+  const selectAllNamespaces = () => {
+    setSelectedNamespaces([...NAMESPACES]);
+  };
+  
+  const clearNamespaceSelection = () => {
+    setSelectedNamespaces([]);
   };
   
   const handleExport = async () => {
     if (!selectedLanguage) {
-      toast.error(t('errors:selectLanguage'));
+      toast.error(t('admin:selectLanguageFirst'));
+      return;
+    }
+    
+    if (selectedNamespaces.length === 0) {
+      toast.error(t('admin:selectNamespaceFirst'));
       return;
     }
     
     setIsExporting(true);
     
     try {
-      // Get all translations for selected language
-      const result = await getTranslationsByLanguage(selectedLanguage);
+      // Collect translations from all selected namespaces
+      const allTranslations: TranslationItem[] = [];
       
-      if (!result || result.length === 0) {
-        toast.error(t('errors:noTranslationsToExport'));
-        setIsExporting(false);
+      for (const namespace of selectedNamespaces) {
+        const result = await getTranslations(selectedLanguage, namespace);
+        
+        if (result.success && Array.isArray(result.data)) {
+          allTranslations.push(...result.data);
+        } else {
+          console.error(`Error fetching translations for ${namespace}:`, result.error);
+        }
+      }
+      
+      if (allTranslations.length === 0) {
+        toast.error(t('admin:noTranslationsToExport'));
         return;
       }
       
-      // Filter by selected namespaces if partial export
-      let translationsToExport = result;
-      if (exportPartial && selectedNamespaces.length > 0) {
-        translationsToExport = result.filter(item => 
-          selectedNamespaces.includes(item.namespace)
-        );
+      switch (exportFormat) {
+        case 'json':
+          exportTranslationsToJson(allTranslations, selectedLanguage);
+          toast.success(t('admin:translationsExported', { count: allTranslations.length }));
+          break;
+        case 'csv':
+          // Currently not implemented
+          setShowExportInfo(true);
+          toast.info(t('admin:formatNotSupported'));
+          break;
+        case 'excel':
+          // Currently not implemented
+          setShowExportInfo(true);
+          toast.info(t('admin:formatNotSupported'));
+          break;
+        default:
+          toast.error(t('admin:invalidExportFormat'));
       }
-      
-      if (translationsToExport.length === 0) {
-        toast.error(t('errors:noMatchingTranslations'));
-        setIsExporting(false);
-        return;
-      }
-      
-      // Export to JSON
-      exportTranslationsToJson(translationsToExport, selectedLanguage);
-      
-      toast.success(t('admin:exportSuccess'));
     } catch (error) {
       console.error('Error exporting translations:', error);
-      toast.error(t('errors:exportFailed'));
+      toast.error(t('errors:general'));
     } finally {
       setIsExporting(false);
     }
   };
   
-  const triggerFileInput = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
-    }
-  };
-  
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    
-    if (!file) {
-      return;
-    }
-    
-    if (!selectedLanguage) {
-      toast.error(t('errors:selectLanguage'));
-      return;
-    }
-    
-    // Check file extension
-    const fileExt = file.name.split('.').pop()?.toLowerCase();
-    if (!fileExt || !FILE_FORMATS.includes(fileExt)) {
-      toast.error(t('errors:invalidFileFormat'));
-      return;
-    }
-    
-    setIsLoading(true);
-    setImportProgress(10);
-    
-    try {
-      // Parse file and validate format
-      const result = await importTranslationsFromFile(file, selectedLanguage);
-      setImportProgress(40);
-      
-      if (!result.success || !result.translations) {
-        toast.error(t('errors:importFailed'), { description: result.error });
-        setIsLoading(false);
-        return;
-      }
-      
-      // Show preview
-      setImportPreview(result.translations);
-      setShowImportDetails(true);
-      setImportProgress(70);
-      
-      // Clear file input
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-    } catch (error) {
-      console.error('Error importing file:', error);
-      toast.error(t('errors:importFailed'));
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  
-  const confirmImport = async () => {
-    if (importPreview.length === 0) {
-      toast.error(t('errors:noTranslationsToImport'));
-      return;
-    }
-    
-    setIsLoading(true);
-    setImportProgress(80);
-    
-    try {
-      // Import translations to the database
-      const result = await importTranslations(importPreview);
-      
-      if (result.success) {
-        toast.success(t('admin:importSuccess'), { 
-          description: t('admin:translationsImported', { count: importPreview.length }) 
-        });
-        
-        // Reset state
-        setImportPreview([]);
-        setShowImportDetails(false);
-      } else {
-        toast.error(t('errors:importFailed'), { description: result.error });
-      }
-      
-      setImportProgress(100);
-    } catch (error) {
-      console.error('Error confirming import:', error);
-      toast.error(t('errors:importFailed'));
-    } finally {
-      setIsLoading(false);
-      
-      // Reset progress after a delay
-      setTimeout(() => {
-        setImportProgress(0);
-      }, 1000);
-    }
-  };
-  
-  const cancelImport = () => {
-    setImportPreview([]);
-    setShowImportDetails(false);
-    setImportProgress(0);
-  };
-
   return (
-    <div className="space-y-6">
-      {/* Language selector */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex items-center gap-4 mb-6">
-            <Globe className="h-8 w-8 text-gray-400" />
-            <div>
-              <h3 className="text-lg font-medium">{t('admin:selectLanguageForTranslations')}</h3>
-              <p className="text-sm text-gray-500">{t('admin:selectLanguageDescription')}</p>
-            </div>
-          </div>
+    <Card className="border-none shadow-none">
+      <CardHeader className="px-0 pt-0">
+        <CardTitle>{t('admin:importExportTranslations')}</CardTitle>
+      </CardHeader>
+      <CardContent className="px-0">
+        <Tabs defaultValue="import">
+          <TabsList>
+            <TabsTrigger value="import">{t('admin:import')}</TabsTrigger>
+            <TabsTrigger value="export">{t('admin:export')}</TabsTrigger>
+          </TabsList>
           
-          <Select
-            value={selectedLanguage}
-            onValueChange={setSelectedLanguage}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder={t('admin:selectLanguage')} />
-            </SelectTrigger>
-            <SelectContent>
-              {supportedLanguages.map(lang => (
-                <SelectItem key={lang.code} value={lang.code}>
-                  {lang.nativeName} ({lang.code})
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </CardContent>
-      </Card>
-      
-      {/* Export section */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex items-center gap-4 mb-6">
-            <FileDown className="h-8 w-8 text-gray-400" />
-            <div>
-              <h3 className="text-lg font-medium">{t('admin:exportTranslations')}</h3>
-              <p className="text-sm text-gray-500">{t('admin:exportTranslationsDescription')}</p>
-            </div>
-          </div>
+          <TabsContent value="import" className="pt-4">
+            <TranslationImport />
+          </TabsContent>
           
-          <div className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <Switch 
-                id="export-partial" 
-                checked={exportPartial}
-                onCheckedChange={setExportPartial}
-              />
-              <Label htmlFor="export-partial">{t('admin:exportSelectedNamespacesOnly')}</Label>
-            </div>
-            
-            {exportPartial && (
-              <div className="border rounded-md p-4">
-                <div className="flex items-center space-x-2 mb-4">
-                  <Checkbox 
-                    id="select-all-namespaces"
-                    checked={selectAllNamespaces}
-                    onCheckedChange={handleSelectAllNamespaces}
-                  />
-                  <Label htmlFor="select-all-namespaces" className="font-medium">
-                    {t('admin:selectAllNamespaces')}
-                  </Label>
-                </div>
-                
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                  {allNamespaces.map(namespace => (
-                    <div key={namespace} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`namespace-${namespace}`}
-                        checked={selectedNamespaces.includes(namespace)}
-                        onCheckedChange={(checked) => handleNamespaceToggle(namespace, !!checked)}
-                      />
-                      <Label htmlFor={`namespace-${namespace}`} className="text-sm">
-                        {namespace}
-                      </Label>
+          <TabsContent value="export" className="pt-4">
+            <Card>
+              <CardContent className="pt-6">
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="export-language">{t('admin:selectLanguage')}</Label>
+                      <Select
+                        value={selectedLanguage}
+                        onValueChange={setSelectedLanguage}
+                      >
+                        <SelectTrigger id="export-language">
+                          <SelectValue placeholder={t('admin:selectLanguage')} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {supportedLanguages.map(lang => (
+                            <SelectItem key={lang.code} value={lang.code}>
+                              {lang.nativeName} ({lang.code})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
-                  ))}
-                </div>
-              </div>
-            )}
-            
-            <div className="flex justify-between items-center">
-              <div className="space-x-2">
-                <Label htmlFor="format-select">{t('admin:fileFormat')}</Label>
-                <Select
-                  value={fileFormat}
-                  onValueChange={setFileFormat}
-                >
-                  <SelectTrigger id="format-select" className="w-28">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="json">JSON</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <Button 
-                onClick={handleExport}
-                disabled={isExporting || !selectedLanguage || (exportPartial && selectedNamespaces.length === 0)}
-              >
-                <FileDown className="h-4 w-4 mr-2" />
-                {isExporting ? t('admin:exporting') : t('admin:exportNow')}
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-      
-      {/* Import section */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex items-center gap-4 mb-6">
-            <FileUp className="h-8 w-8 text-gray-400" />
-            <div>
-              <h3 className="text-lg font-medium">{t('admin:importTranslations')}</h3>
-              <p className="text-sm text-gray-500">{t('admin:importTranslationsDescription')}</p>
-            </div>
-          </div>
-          
-          <input 
-            type="file" 
-            ref={fileInputRef} 
-            className="hidden" 
-            accept=".json"
-            onChange={handleFileChange}
-          />
-          
-          {importProgress > 0 && (
-            <div className="mb-6">
-              <div className="flex justify-between text-sm mb-1">
-                <span>{t('admin:importProgress')}</span>
-                <span>{importProgress}%</span>
-              </div>
-              <Progress value={importProgress} className="h-2" />
-            </div>
-          )}
-          
-          {showImportDetails ? (
-            <div className="space-y-4">
-              <div className="bg-green-50 border border-green-100 p-4 rounded-md">
-                <div className="flex items-center gap-2 mb-2">
-                  <CheckCircle className="h-5 w-5 text-green-500" />
-                  <span className="font-medium text-green-700">
-                    {t('admin:fileReadyForImport')}
-                  </span>
-                </div>
-                <p className="text-sm text-green-700">
-                  {t('admin:foundTranslations', { count: importPreview.length })}
-                </p>
-              </div>
-              
-              <Accordion type="single" collapsible className="w-full">
-                <AccordionItem value="preview">
-                  <AccordionTrigger>{t('admin:previewTranslations')}</AccordionTrigger>
-                  <AccordionContent>
-                    <div className="max-h-40 overflow-y-auto border p-2 rounded-md bg-gray-50">
-                      <pre className="text-xs">{JSON.stringify(importPreview.slice(0, 5), null, 2)}</pre>
-                      {importPreview.length > 5 && (
-                        <p className="text-xs text-gray-500 mt-2 italic">
-                          {t('admin:moreTranslationsNotShown', { count: importPreview.length - 5 })}
+                    
+                    <div className="space-y-2">
+                      <Label>{t('admin:exportFormat')}</Label>
+                      <Select
+                        value={exportFormat}
+                        onValueChange={setExportFormat}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="json">JSON</SelectItem>
+                          <SelectItem value="csv">CSV (Coming Soon)</SelectItem>
+                          <SelectItem value="excel">Excel (Coming Soon)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between mb-1">
+                      <Label>{t('admin:selectNamespaces')}</Label>
+                      <div className="space-x-1">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={selectAllNamespaces}
+                        >
+                          {t('admin:selectAll')}
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={clearNamespaceSelection}
+                        >
+                          {t('admin:clear')}
+                        </Button>
+                      </div>
+                    </div>
+                    
+                    <ScrollArea className="h-[180px] border rounded-md p-4">
+                      <div className="space-y-2">
+                        {NAMESPACES.map(namespace => (
+                          <div key={namespace} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`ns-${namespace}`}
+                              checked={selectedNamespaces.includes(namespace)}
+                              onCheckedChange={() => toggleNamespace(namespace)}
+                            />
+                            <Label 
+                              htmlFor={`ns-${namespace}`}
+                              className="cursor-pointer flex-1"
+                            >
+                              {namespace}
+                              {namespace === 'common' && (
+                                <Badge className="ml-2 bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-100">
+                                  {t('admin:coreNamespace')}
+                                </Badge>
+                              )}
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
+                    </ScrollArea>
+                  </div>
+                  
+                  {showExportInfo && (
+                    <div className="flex items-start gap-2 p-4 bg-amber-50 border border-amber-200 rounded-md">
+                      <AlertTriangle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <h4 className="font-medium text-sm">{t('admin:featureInDevelopment')}</h4>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {t('admin:moreExportFormatsComingSoon')}
                         </p>
-                      )}
+                      </div>
                     </div>
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
-              
-              <div className="flex justify-between">
-                <Button 
-                  variant="outline" 
-                  onClick={cancelImport}
-                  disabled={isLoading}
-                >
-                  <X className="h-4 w-4 mr-2" />
-                  {t('actions:cancel')}
-                </Button>
-                <Button 
-                  onClick={confirmImport}
-                  disabled={isLoading}
-                >
-                  <ArrowRight className="h-4 w-4 mr-2" />
-                  {isLoading ? t('admin:importing') : t('admin:confirmImport')}
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <div className="border-2 border-dashed border-gray-300 rounded-md p-8 text-center">
-              <FileType className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h4 className="font-medium mb-2">{t('admin:dropOrSelectFile')}</h4>
-              <p className="text-sm text-gray-500 mb-4">
-                {t('admin:supportedFormats')}: {FILE_FORMATS.join(', ')}
-              </p>
-              
-              <Button onClick={triggerFileInput}>
-                <FileUp className="h-4 w-4 mr-2" />
-                {t('admin:selectFile')}
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+                  )}
+                  
+                  <Button
+                    className="w-full"
+                    disabled={isExporting || !selectedLanguage || selectedNamespaces.length === 0}
+                    onClick={handleExport}
+                  >
+                    <FileDown className="h-4 w-4 mr-2" />
+                    {isExporting 
+                      ? t('actions:exporting') 
+                      : t('admin:exportTranslations')}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </CardContent>
+    </Card>
   );
 };

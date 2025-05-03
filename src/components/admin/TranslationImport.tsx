@@ -7,10 +7,11 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from 'sonner';
 import { importTranslations } from '@/lib/services/languageService';
 import { importTranslationsFromFile } from '@/lib/utils/translationUtils';
-import { FileIcon, Upload } from 'lucide-react';
+import { FileIcon, Upload, AlertCircle } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
 export const TranslationImport = () => {
   const { t, refreshTranslations } = useTranslations();
@@ -20,15 +21,17 @@ export const TranslationImport = () => {
   const [isImporting, setIsImporting] = useState(false);
   const [importProgress, setImportProgress] = useState(0);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [error, setError] = useState<string | null>(null);
   
   const handleFileDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
+    setError(null);
     
     const files = e.dataTransfer.files;
     if (files.length > 0) {
       const file = files[0];
       if (!file.name.endsWith('.json')) {
-        toast.error(t('admin:onlyJsonAllowed'));
+        setError(t('admin:onlyJsonAllowed'));
         return;
       }
       setUploadedFile(file);
@@ -36,11 +39,12 @@ export const TranslationImport = () => {
   };
   
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setError(null);
     const files = e.target.files;
     if (files && files.length > 0) {
       const file = files[0];
       if (!file.name.endsWith('.json')) {
-        toast.error(t('admin:onlyJsonAllowed'));
+        setError(t('admin:onlyJsonAllowed'));
         e.target.value = '';
         return;
       }
@@ -50,24 +54,25 @@ export const TranslationImport = () => {
   
   const handleImport = async () => {
     if (!selectedLanguage) {
-      toast.error(t('admin:selectLanguageFirst'));
+      setError(t('admin:selectLanguageFirst'));
       return;
     }
     
     if (!uploadedFile) {
-      toast.error(t('admin:selectFileFirst'));
+      setError(t('admin:selectFileFirst'));
       return;
     }
     
     setIsImporting(true);
     setImportProgress(10);
+    setError(null);
     
     try {
       // Parse the file
       const result = await importTranslationsFromFile(uploadedFile, selectedLanguage);
       
       if (!result.success || !result.translations) {
-        toast.error(result.error || t('errors:general'));
+        setError(result.error || t('errors:general'));
         return;
       }
       
@@ -77,7 +82,7 @@ export const TranslationImport = () => {
       const importResult = await importTranslations(result.translations);
       
       if (!importResult.success) {
-        toast.error(importResult.error?.message || t('errors:general'));
+        setError(importResult.error?.message || t('errors:general'));
         return;
       }
       
@@ -98,7 +103,7 @@ export const TranslationImport = () => {
       
     } catch (error) {
       console.error('Error importing translations:', error);
-      toast.error(t('errors:general'));
+      setError(t('errors:general'));
     } finally {
       setIsImporting(false);
       setTimeout(() => setImportProgress(0), 2000);
@@ -113,6 +118,14 @@ export const TranslationImport = () => {
     <Card>
       <CardContent className="pt-6">
         <div className="space-y-6">
+          {error && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>{t('errors:importFailed')}</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+          
           <div className="space-y-2">
             <Label htmlFor="import-language">{t('admin:selectLanguage')}</Label>
             <Select
@@ -150,7 +163,10 @@ export const TranslationImport = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setUploadedFile(null)}
+                  onClick={() => {
+                    setUploadedFile(null);
+                    setError(null);
+                  }}
                 >
                   {t('admin:removeFile')}
                 </Button>
