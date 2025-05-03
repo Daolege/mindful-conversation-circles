@@ -16,7 +16,7 @@ export function StripeForm() {
           <Label htmlFor="stripeUsername">{t('checkout:stripeUsername')}</Label>
           <Input 
             id="stripeUsername" 
-            placeholder="your_username" 
+            placeholder={t('checkout:enterStripeUsername')}
           />
         </div>
         <div className="grid gap-2">
@@ -24,7 +24,7 @@ export function StripeForm() {
           <Input 
             id="stripePassword" 
             type="password" 
-            placeholder="******" 
+            placeholder={t('checkout:enterStripePassword')} 
           />
         </div>
       </div>

@@ -39,7 +39,7 @@ export function PayPalForm() {
             <Input 
               id="paypalEmail" 
               type="email" 
-              placeholder="your-email@example.com" 
+              placeholder={t('checkout:enterPaypalEmail')} 
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required

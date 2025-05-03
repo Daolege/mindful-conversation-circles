@@ -9,11 +9,13 @@ import { useAuth } from "@/contexts/authHooks";
 import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Shield, AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useTranslations } from "@/hooks/useTranslations";
 
 export const AccountDeactivation = () => {
   const { user, signOut } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { t } = useTranslations();
   
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [password, setPassword] = useState("");
@@ -34,7 +36,7 @@ export const AccountDeactivation = () => {
   const handleRequestVerificationCode = async () => {
     if (!password) {
       toast({
-        title: "请输入当前密码",
+        title: t("auth:enterCurrentPassword"),
         variant: "destructive",
       });
       return;
@@ -49,7 +51,7 @@ export const AccountDeactivation = () => {
         password,
       });
 
-      if (signInError) throw new Error("密码验证失败，请检查密码是否正确");
+      if (signInError) throw new Error(t("auth:passwordVerificationFailed"));
 
       // 发送验证邮件
       const { error: mailError } = await supabase.auth.resetPasswordForEmail(
@@ -64,12 +66,12 @@ export const AccountDeactivation = () => {
       setHasRequestedCode(true);
       setStep(2);
       toast({
-        title: "验证码已发送",
-        description: "请检查您的邮箱收取验证码",
+        title: t("auth:verificationCodeSent"),
+        description: t("auth:checkEmailForCode"),
       });
     } catch (error: any) {
       toast({
-        title: "操作失败",
+        title: t("errors:operationFailed"),
         description: error.message,
         variant: "destructive",
       });
@@ -81,7 +83,7 @@ export const AccountDeactivation = () => {
   const handleDeleteAccount = async () => {
     if (!verificationCode) {
       toast({
-        title: "请输入验证码",
+        title: t("auth:enterVerificationCode"),
         variant: "destructive",
       });
       return;
@@ -101,14 +103,14 @@ export const AccountDeactivation = () => {
       await signOut();
       
       toast({
-        title: "账户已注销",
-        description: "您的账户已成功注销，感谢您的使用",
+        title: t("auth:accountDeactivated"),
+        description: t("auth:accountSuccessfullyDeactivated"),
       });
       
       navigate("/");
     } catch (error: any) {
       toast({
-        title: "注销失败",
+        title: t("auth:deactivationFailed"),
         description: error.message,
         variant: "destructive",
       });
@@ -120,7 +122,7 @@ export const AccountDeactivation = () => {
   return (
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">
-        注销账户将永久删除您的所有数据，此操作不可撤销。
+        {t("dashboard:deactivationWarning")}
       </p>
 
       <Button 
@@ -129,7 +131,7 @@ export const AccountDeactivation = () => {
         className="flex items-center gap-2"
       >
         <AlertTriangle className="h-4 w-4" />
-        注销账户
+        {t("dashboard:deactivateAccount")}
       </Button>
 
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
@@ -137,30 +139,32 @@ export const AccountDeactivation = () => {
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2 text-destructive">
               <AlertTriangle className="h-5 w-5" />
-              确认注销账户？
+              {t("auth:confirmAccountDeactivation")}
             </AlertDialogTitle>
             <AlertDialogDescription>
               <div className="space-y-4">
                 <p>
-                  此操作将<strong className="text-destructive">永久删除</strong>您的账户和所有相关数据，包括：
+                  {t("auth:permanentDeletionWarning", { 
+                    strong: (text) => <strong className="text-destructive">{text}</strong> 
+                  })}
                 </p>
                 <ul className="list-disc pl-6 space-y-2">
-                  <li>个人资料信息</li>
-                  <li>课程学习进度</li>
-                  <li>订单和购买记录</li>
+                  <li>{t("auth:profileInformation")}</li>
+                  <li>{t("auth:courseProgress")}</li>
+                  <li>{t("auth:orderHistory")}</li>
                 </ul>
-                <p className="font-semibold">注销后，该邮箱将无法再次用于注册。</p>
+                <p className="font-semibold">{t("auth:emailReregistrationWarning")}</p>
               
                 {step === 1 ? (
                   <div className="space-y-4 pt-2">
                     <div className="space-y-2">
-                      <Label htmlFor="current-password">当前密码</Label>
+                      <Label htmlFor="current-password">{t("auth:currentPassword")}</Label>
                       <Input
                         id="current-password"
                         type="password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        placeholder="输入当前密码以验证身份"
+                        placeholder={t("auth:enterPasswordToVerify")}
                       />
                     </div>
                     
@@ -170,21 +174,21 @@ export const AccountDeactivation = () => {
                       variant="destructive"
                       className="w-full"
                     >
-                      {isLoading ? "处理中..." : "发送验证码"}
+                      {isLoading ? t("common:processing") : t("auth:sendVerificationCode")}
                     </Button>
                   </div>
                 ) : (
                   <div className="space-y-4 pt-2">
                     <div className="space-y-2">
-                      <Label htmlFor="verification-code">邮箱验证码</Label>
+                      <Label htmlFor="verification-code">{t("auth:emailVerificationCode")}</Label>
                       <Input
                         id="verification-code"
                         value={verificationCode}
                         onChange={(e) => setVerificationCode(e.target.value)}
-                        placeholder="输入发送到您邮箱的验证码"
+                        placeholder={t("auth:enterCodeSentToEmail")}
                       />
                       <p className="text-xs text-muted-foreground">
-                        验证码已发送至 {user?.email}
+                        {t("auth:codeSentTo", { email: user?.email })}
                       </p>
                     </div>
                   </div>
@@ -197,7 +201,7 @@ export const AccountDeactivation = () => {
               variant="outline"
               onClick={resetState}
             >
-              取消
+              {t("common:cancel")}
             </Button>
             {step === 2 && (
               <Button
@@ -205,7 +209,7 @@ export const AccountDeactivation = () => {
                 onClick={handleDeleteAccount}
                 disabled={isLoading || !verificationCode}
               >
-                {isLoading ? "处理中..." : "确认注销"}
+                {isLoading ? t("common:processing") : t("auth:confirmDeactivation")}
               </Button>
             )}
           </AlertDialogFooter>

@@ -14,22 +14,22 @@ export function CreditCardForm() {
       <div className="space-y-4">
         <div className="grid gap-2">
           <Label htmlFor="cardHolder">{t('checkout:cardholderName')}</Label>
-          <Input id="cardHolder" placeholder="John Doe" />
+          <Input id="cardHolder" placeholder={t('checkout:enterCardholderName')} />
         </div>
         
         <div className="grid gap-2">
           <Label htmlFor="cardNumber">{t('checkout:cardNumber')}</Label>
-          <Input id="cardNumber" placeholder="1234 5678 9012 3456" />
+          <Input id="cardNumber" placeholder={t('checkout:enterCardNumber')} />
         </div>
         
         <div className="grid grid-cols-2 gap-4">
           <div className="grid gap-2">
             <Label htmlFor="expiryDate">{t('checkout:expiryDate')}</Label>
-            <Input id="expiryDate" placeholder="MM/YY" />
+            <Input id="expiryDate" placeholder={t('checkout:enterExpiryDate')} />
           </div>
           <div className="grid gap-2">
             <Label htmlFor="cvv">{t('checkout:securityCode')}</Label>
-            <Input id="cvv" placeholder="123" type="password" />
+            <Input id="cvv" placeholder={t('checkout:enterSecurityCode')} type="password" />
           </div>
         </div>
       </div>

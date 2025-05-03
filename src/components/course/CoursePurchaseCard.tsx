@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Clock, Check, Users, ShoppingCart } from "lucide-react";
 import { useState } from "react";
 import { formatCurrency } from "@/lib/utils";
+import { useTranslations } from "@/hooks/useTranslations";
 
 interface CoursePurchaseCardProps {
   courseId: number;
@@ -30,6 +31,7 @@ export const CoursePurchaseCard = ({
 }: CoursePurchaseCardProps) => {
   const navigate = useNavigate();
   const [isHovered, setIsHovered] = useState(false);
+  const { t } = useTranslations();
 
   const handlePurchase = () => {
     // 确保传递courseId和currency到结账页面
@@ -64,7 +66,7 @@ export const CoursePurchaseCard = ({
         />
         {discount > 0 && (
           <Badge className="absolute top-4 right-4 bg-red-500 text-white font-bold py-1 px-2">
-            {discount}% 优惠
+            {discount}% {t('courses:discount')}
           </Badge>
         )}
       </div>
@@ -73,7 +75,7 @@ export const CoursePurchaseCard = ({
 
         <div className="bg-gray-50 p-4 rounded-lg mb-6">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-gray-600">价格:</span>
+            <span className="text-gray-600">{t('courses:price')}:</span>
             <div className="flex items-center gap-2">
               <span className="text-2xl font-bold text-gray-900">{formatPrice(price)}</span>
               {originalPrice && discount > 0 && (
@@ -87,7 +89,7 @@ export const CoursePurchaseCard = ({
           {duration && (
             <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
               <span className="flex items-center">
-                <Clock className="h-4 w-4 mr-1" /> 课程时长:
+                <Clock className="h-4 w-4 mr-1" /> {t('courses:duration')}:
               </span>
               <span>{duration}</span>
             </div>
@@ -96,7 +98,7 @@ export const CoursePurchaseCard = ({
           {studentCount && (
             <div className="flex items-center justify-between text-sm text-gray-600">
               <span className="flex items-center">
-                <Users className="h-4 w-4 mr-1" /> 学员人数:
+                <Users className="h-4 w-4 mr-1" /> {t('courses:studentCount')}:
               </span>
               <span>{studentCount}</span>
             </div>
@@ -113,7 +115,7 @@ export const CoursePurchaseCard = ({
             onClick={handlePurchase}
           >
             <Check className="h-4 w-4" />
-            立即购买
+            {t('courses:buyNow')}
           </Button>
           
           <Button
@@ -122,16 +124,16 @@ export const CoursePurchaseCard = ({
             onClick={handleAddToCart}
           >
             <ShoppingCart className="h-4 w-4 mr-1" />
-            加入购物车
+            {t('courses:addToCart')}
           </Button>
         </div>
         
         <div className="mt-6 pt-4 border-t border-gray-100">
           <p className="text-xs text-center text-gray-500">
-            购买即表示您同意我们的
-            <a href="/terms" className="text-knowledge-primary hover:underline mx-1">服务条款</a>
-            和
-            <a href="/privacy" className="text-knowledge-primary hover:underline mx-1">隐私政策</a>
+            {t('courses:purchaseAgreement')}
+            <a href="/terms" className="text-knowledge-primary hover:underline mx-1">{t('common:termsOfService')}</a>
+            {t('common:and')}
+            <a href="/privacy" className="text-knowledge-primary hover:underline mx-1">{t('common:privacyPolicy')}</a>
           </p>
         </div>
       </CardContent>
