@@ -96,7 +96,7 @@ export async function addLanguage(language: Omit<Language, 'id'>): Promise<{ suc
     }
     
     // Fix TypeScript null check errors with proper null guarding
-    if (Array.isArray(data) && data.length > 0 && data[0] !== null) {
+    if (data !== null && Array.isArray(data) && data.length > 0 && data[0] !== null) {
       return { success: true, data: data[0] as Language };
     }
     
