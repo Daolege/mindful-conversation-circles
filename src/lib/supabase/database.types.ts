@@ -1,3 +1,4 @@
+
 export type Json =
   | string
   | number
@@ -526,16 +527,16 @@ export interface Database {
       site_settings: {
         Row: {
           id: string
-          site_name: string
-          site_description: string
-          logo_url: string
-          contact_email: string
-          support_phone: string
-          company_name: string
-          company_full_name: string
-          company_registration_number: string
-          company_address: string
-          copyright_text: string
+          site_name: string | null
+          site_description: string | null
+          logo_url: string | null
+          contact_email: string | null
+          support_phone: string | null
+          company_name: string | null
+          company_full_name: string | null
+          company_registration_number: string | null
+          company_address: string | null
+          copyright_text: string | null
           enable_registration: boolean
           maintenance_mode: boolean
           created_at: string
@@ -543,16 +544,16 @@ export interface Database {
         }
         Insert: {
           id?: string
-          site_name?: string
-          site_description?: string
-          logo_url?: string
-          contact_email?: string
-          support_phone?: string
-          company_name?: string
-          company_full_name?: string
-          company_registration_number?: string
-          company_address?: string
-          copyright_text?: string
+          site_name?: string | null
+          site_description?: string | null
+          logo_url?: string | null
+          contact_email?: string | null
+          support_phone?: string | null
+          company_name?: string | null
+          company_full_name?: string | null
+          company_registration_number?: string | null
+          company_address?: string | null
+          copyright_text?: string | null
           enable_registration?: boolean
           maintenance_mode?: boolean
           created_at?: string
@@ -560,16 +561,16 @@ export interface Database {
         }
         Update: {
           id?: string
-          site_name?: string
-          site_description?: string
-          logo_url?: string
-          contact_email?: string
-          support_phone?: string
-          company_name?: string
-          company_full_name?: string
-          company_registration_number?: string
-          company_address?: string
-          copyright_text?: string
+          site_name?: string | null
+          site_description?: string | null
+          logo_url?: string | null
+          contact_email?: string | null
+          support_phone?: string | null
+          company_name?: string | null
+          company_full_name?: string | null
+          company_registration_number?: string | null
+          company_address?: string | null
+          copyright_text?: string | null
           enable_registration?: boolean
           maintenance_mode?: boolean
           created_at?: string
@@ -671,7 +672,7 @@ export interface Database {
         Row: {
           id: string
           type: string
-          label: string
+          label: string | null
           value: string
           is_active: boolean
           display_order: number
@@ -681,7 +682,7 @@ export interface Database {
         Insert: {
           id?: string
           type: string
-          label?: string
+          label?: string | null
           value: string
           is_active?: boolean
           display_order?: number
@@ -691,7 +692,7 @@ export interface Database {
         Update: {
           id?: string
           type?: string
-          label?: string
+          label?: string | null
           value?: string
           is_active?: boolean
           display_order?: number
