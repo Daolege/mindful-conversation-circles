@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,7 +11,16 @@ export function LogoUpload({ currentLogoUrl, onLogoUpdate }: {
   onLogoUpdate: (url: string) => void;
 }) {
   const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+
+  const handleButtonClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (fileInputRef.current && !isUploading) {
+      fileInputRef.current.click();
+    }
+  };
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -90,30 +99,31 @@ export function LogoUpload({ currentLogoUrl, onLogoUpdate }: {
           <Button
             variant="outline"
             disabled={isUploading}
+            onClick={handleButtonClick}
             className="relative"
-            asChild
+            type="button"
           >
-            <>
-              <input
-                type="file"
-                accept="image/*"
-                className="absolute inset-0 cursor-pointer opacity-0"
-                onChange={handleUpload}
-                disabled={isUploading}
-              />
-              {isUploading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  上传中...
-                </>
-              ) : (
-                <>
-                  <Upload className="mr-2 h-4 w-4" />
-                  上传新Logo
-                </>
-              )}
-            </>
+            {isUploading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                上传中...
+              </>
+            ) : (
+              <>
+                <Upload className="mr-2 h-4 w-4" />
+                上传新Logo
+              </>
+            )}
           </Button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleUpload}
+            disabled={isUploading}
+            onClick={(e) => e.stopPropagation()}
+          />
         </div>
       </div>
     </div>
