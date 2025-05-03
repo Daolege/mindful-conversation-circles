@@ -78,16 +78,18 @@ export async function getEnabledLanguages(): Promise<Language[]> {
 // 添加新语言
 export async function addLanguage(language: Omit<Language, 'id'>): Promise<{ success: boolean; data?: Language; error?: Error }> {
   try {
+    // Prepare language data without 'updated_at' field which isn't in the type
+    const languageData = {
+      code: language.code,
+      name: language.name,
+      nativeName: language.nativeName,
+      enabled: language.enabled,
+      rtl: language.rtl
+    };
+    
     const { data, error } = await insertIntoTable(
       'languages', 
-      {
-        code: language.code,
-        name: language.name,
-        nativeName: language.nativeName,
-        enabled: language.enabled,
-        rtl: language.rtl,
-        updated_at: new Date().toISOString()
-      }
+      languageData
     );
     
     if (error) {

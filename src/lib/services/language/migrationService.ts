@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { addLanguage, getAllLanguages } from './languageManagement';
 import { Language } from './languageCore';
+import { insertIntoTable } from '../typeSafeSupabase';
 
 // List of all supported languages
 const supportedLanguages: Omit<Language, 'id'>[] = [
@@ -23,12 +24,17 @@ const supportedLanguages: Omit<Language, 'id'>[] = [
  */
 export const checkLanguagesTableExists = async (): Promise<boolean> => {
   try {
+    // Use raw query to check if the table exists since 'languages' may not be in the type definition
     const { data, error } = await supabase
       .from('languages')
       .select('id')
-      .limit(1);
+      .limit(1)
+      .maybeSingle();
     
-    if (error) {
+    if (error && error.code === '42P01') { // PostgreSQL code for "table does not exist"
+      console.error('Language table does not exist:', error);
+      return false;
+    } else if (error) {
       console.error('Error checking languages table:', error);
       return false;
     }
@@ -125,10 +131,8 @@ export const runLanguageMigration = async (): Promise<{
       
       try {
         console.log(`Adding language: ${lang.code}`);
-        const result = await addLanguage({
-          ...lang,
-          updated_at: new Date().toISOString()
-        });
+        // We removed the updated_at field as it doesn't exist in the type
+        const result = await addLanguage(lang);
         
         if (result.success) {
           addedCount++;
@@ -242,18 +246,53 @@ export const createLanguagesTableIfNeeded = async (): Promise<boolean> => {
       return true;
     }
     
-    // Execute SQL to create table (using RPC for security)
-    const { error } = await supabase.rpc('create_languages_table_if_not_exists');
+    // Since we can't directly use RPC functions that aren't in the type definitions,
+    // we'll use SQL queries directly to create the table and insert default languages
     
-    if (error) {
-      console.error('Error creating languages table:', error);
+    // Create the languages table
+    const createTableQuery = `
+      CREATE TABLE IF NOT EXISTS languages (
+        id SERIAL PRIMARY KEY,
+        code TEXT NOT NULL UNIQUE,
+        name TEXT NOT NULL,
+        nativeName TEXT NOT NULL,
+        enabled BOOLEAN DEFAULT TRUE,
+        rtl BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ
+      )
+    `;
+    
+    const { error: createError } = await supabase.rpc('exec_sql', { 
+      sql_query: createTableQuery 
+    });
+    
+    if (createError) {
+      console.error('Error creating languages table:', createError);
       return false;
     }
     
     console.log('Successfully created languages table');
     
     // Insert default languages
-    await supabase.rpc('insert_default_languages');
+    const insertDefaultsQuery = `
+      INSERT INTO languages (code, name, nativeName, enabled)
+      VALUES 
+        ('en', 'English', 'English', TRUE),
+        ('zh', 'Chinese (Simplified)', '简体中文', TRUE)
+      ON CONFLICT (code) DO NOTHING
+    `;
+    
+    const { error: insertError } = await supabase.rpc('exec_sql', { 
+      sql_query: insertDefaultsQuery 
+    });
+    
+    if (insertError) {
+      console.error('Error inserting default languages:', insertError);
+      return false;
+    }
+    
+    console.log('Successfully inserted default languages');
     
     return true;
   } catch (error) {
