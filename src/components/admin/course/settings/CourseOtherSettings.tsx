@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -55,6 +56,9 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({
   const [allowsSubscription, setAllowsSubscription] = useState<boolean>(true);
   const [purchaseMethodError, setPurchaseMethodError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  
+  // Add the missing courseVisibility state
+  const [courseVisibility, setCourseVisibility] = useState<string>('published');
   
   // State for editable section titles
   const [sectionTitles, setSectionTitles] = useState({
