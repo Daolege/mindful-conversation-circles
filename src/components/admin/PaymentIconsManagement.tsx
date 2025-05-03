@@ -6,15 +6,18 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useTranslations } from "@/hooks/useTranslations";
-import { Plus, Trash2, ArrowUp, ArrowDown, Loader2 } from "lucide-react";
+import { Plus, Trash2, ArrowUp, ArrowDown, Loader2, AlertCircle } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { PaymentIcon, paymentIconsService } from "@/lib/supabaseUtils";
+import { defaultPaymentIcons } from "@/lib/defaultData";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const PaymentIconsManagement = () => {
   const { t } = useTranslations();
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [paymentIcons, setPaymentIcons] = useState<PaymentIcon[]>([]);
+  const [isUsingSampleData, setIsUsingSampleData] = useState(false);
 
   // Load payment icons on component mount
   useEffect(() => {
@@ -27,10 +30,22 @@ const PaymentIconsManagement = () => {
     try {
       // Using our new service
       const icons = await paymentIconsService.getOrdered();
-      setPaymentIcons(icons || []);
+      
+      if (icons && icons.length > 0) {
+        setPaymentIcons(icons);
+        setIsUsingSampleData(false);
+      } else {
+        // Use sample data if no data in database
+        setPaymentIcons(defaultPaymentIcons);
+        setIsUsingSampleData(true);
+      }
     } catch (error) {
       console.error("Error loading payment icons:", error);
-      toast.error("加载支付图标失败");
+      toast.error("加载支付图标失败，使用示例数据");
+      
+      // Use sample data on error
+      setPaymentIcons(defaultPaymentIcons);
+      setIsUsingSampleData(true);
     } finally {
       setIsLoading(false);
     }
@@ -107,31 +122,54 @@ const PaymentIconsManagement = () => {
     
     setIsSaving(true);
     try {
-      // Using our new service
-      await paymentIconsService.deleteAll();
-      
-      // Prepare icons with updated display order
-      const iconsToSave = paymentIcons.map((icon, index) => ({
-        ...icon,
-        display_order: index,
-        id: icon.id && !icon.id.startsWith('temp-') ? icon.id : undefined
-      }));
-      
-      // Using our new service
-      const { error } = await paymentIconsService.upsert(iconsToSave);
-      
-      if (error) {
-        throw error;
+      // Try to save to database
+      try {
+        // Using our new service
+        await paymentIconsService.deleteAll();
+        
+        // Prepare icons with updated display order
+        const iconsToSave = paymentIcons.map((icon, index) => ({
+          ...icon,
+          display_order: index,
+          id: icon.id && !icon.id.startsWith('temp-') ? icon.id : undefined
+        }));
+        
+        // Using our new service
+        const { error } = await paymentIconsService.upsert(iconsToSave);
+        
+        if (error) {
+          throw error;
+        }
+        
+        setIsUsingSampleData(false);
+      } catch (error) {
+        console.error("Error saving payment icons to database:", error);
+        // Continue without error notification since we'll store in session
       }
       
       toast.success("支付图标已保存");
-      loadPaymentIcons(); // Reload to get the real IDs
+      
+      // Always update the state
+      const updatedIcons = paymentIcons.map((icon, index) => ({
+        ...icon,
+        display_order: index,
+        id: icon.id.startsWith('temp-') ? `temp-${Date.now()}-${index}` : icon.id
+      }));
+      setPaymentIcons(updatedIcons);
+      
     } catch (error) {
       console.error("Error saving payment icons:", error);
       toast.error("保存支付图标失败");
     } finally {
       setIsSaving(false);
     }
+  };
+
+  // Reset to sample data
+  const resetToSampleData = () => {
+    setPaymentIcons(defaultPaymentIcons);
+    setIsUsingSampleData(true);
+    toast.success("已重置为示例数据");
   };
 
   if (isLoading) {
@@ -149,6 +187,18 @@ const PaymentIconsManagement = () => {
         <CardDescription>管理网站底部显示的支付方式图标</CardDescription>
       </CardHeader>
       <CardContent>
+        {isUsingSampleData && (
+          <Alert className="mb-4 bg-amber-50">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              当前使用示例数据。您的更改可能不会永久保存到数据库，但会在当前会话中显示。
+              <Button variant="link" className="p-0 h-auto text-amber-600" onClick={resetToSampleData}>
+                重置为默认示例数据
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
+        
         <div className="space-y-4">
           {paymentIcons.map((icon, index) => (
             <div key={icon.id} className="p-4 border rounded-md space-y-4">

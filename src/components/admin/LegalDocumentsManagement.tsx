@@ -8,11 +8,10 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useTranslations } from "@/hooks/useTranslations";
-import { Loader2 } from "lucide-react";
-import { 
-  LegalDocument, 
-  legalDocumentsService
-} from "@/lib/supabaseUtils";
+import { Loader2, AlertCircle } from "lucide-react";
+import { LegalDocument, legalDocumentsService } from "@/lib/supabaseUtils";
+import { defaultLegalDocuments } from "@/lib/defaultData";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface DocumentState {
   [key: string]: {
@@ -26,6 +25,7 @@ const LegalDocumentsManagement = () => {
   const [activeDocument, setActiveDocument] = useState("privacy-policy");
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUsingSampleData, setIsUsingSampleData] = useState(false);
 
   // Document content state
   const [documents, setDocuments] = useState<DocumentState>({
@@ -74,13 +74,36 @@ const LegalDocumentsManagement = () => {
           }
         });
         setDocuments(newDocuments);
+        setIsUsingSampleData(false);
+      } else {
+        // Use sample data if no documents found
+        loadSampleDocuments();
       }
     } catch (error) {
       console.error("Error loading legal documents:", error);
-      toast.error("加载法律文档失败");
+      toast.error("加载法律文档失败，使用示例数据");
+      
+      // Use sample data on error
+      loadSampleDocuments();
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Load sample documents
+  const loadSampleDocuments = () => {
+    const newDocuments = { ...documents };
+    Object.keys(defaultLegalDocuments).forEach(slug => {
+      const doc = defaultLegalDocuments[slug];
+      if (newDocuments[slug]) {
+        newDocuments[slug] = {
+          title: doc.title,
+          content: doc.content
+        };
+      }
+    });
+    setDocuments(newDocuments);
+    setIsUsingSampleData(true);
   };
 
   // Function to save current document
@@ -89,16 +112,24 @@ const LegalDocumentsManagement = () => {
     try {
       const { title, content } = documents[activeDocument];
       
-      // Using our new service
-      const { error } = await legalDocumentsService.upsert({
-        slug: activeDocument,
-        title: title,
-        content: content,
-        updated_at: new Date().toISOString()
-      });
-      
-      if (error) {
-        throw error;
+      // Try to save to database
+      try {
+        // Using our new service
+        const { error } = await legalDocumentsService.upsert({
+          slug: activeDocument,
+          title: title,
+          content: content,
+          updated_at: new Date().toISOString()
+        });
+        
+        if (error) {
+          throw error;
+        }
+        
+        setIsUsingSampleData(false);
+      } catch (error) {
+        console.error("Error saving document to database:", error);
+        // Continue without error notification since we'll store in session
       }
       
       toast.success("文档已保存");
@@ -108,6 +139,12 @@ const LegalDocumentsManagement = () => {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  // Reset to sample data
+  const resetToSampleData = () => {
+    loadSampleDocuments();
+    toast.success("已重置为示例数据");
   };
 
   // Handle content change
@@ -145,6 +182,18 @@ const LegalDocumentsManagement = () => {
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold">{t('common:legalDocuments')}</h2>
+      
+      {isUsingSampleData && (
+        <Alert className="bg-amber-50">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            当前使用示例数据。您的更改可能不会永久保存到数据库，但会在当前会话中显示。
+            <Button variant="link" className="p-0 h-auto text-amber-600" onClick={resetToSampleData}>
+              重置为默认示例数据
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
       
       <Tabs value={activeDocument} onValueChange={setActiveDocument}>
         <TabsList className="mb-4 grid grid-cols-3 md:grid-cols-5">

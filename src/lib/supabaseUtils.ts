@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { PostgrestError } from "@supabase/supabase-js";
+import { defaultPaymentIcons, defaultSocialMediaLinks, defaultLegalDocuments, defaultExchangeRates } from "./defaultData";
 
 // Define commonly used types for the Supabase tables
 export interface ContactMethod {
@@ -131,103 +132,199 @@ export const handleHomeworkQueryError = handleQueryError;
 export const handleHomeworkSubmissionsQueryError = handleQueryError;
 export const handleUserRolesQueryError = handleQueryError;
 
-// Type-safe Supabase query helper with type assertion and @ts-ignore for table name flexibility
+// Type-safe Supabase query helper with type assertion and table name handling
 export function safeSupabaseSelect<T>(tableName: string, select: string = '*') {
   return {
     async getAll() {
-      // @ts-ignore - Suppressing type error for table name
-      const { data, error } = await supabase
-        .from(tableName)
-        .select(select);
-      
-      return handleQueryError<T[]>(data as T[], error);
+      try {
+        // @ts-ignore - Intentionally ignore type error for table name
+        const { data, error } = await supabase
+          .from(tableName)
+          .select(select);
+        
+        // Return default data if error or if the API can't be reached
+        if (error) {
+          console.error(`Error querying ${tableName}:`, error);
+          // Return appropriate default data based on table name
+          if (tableName === 'payment_icons') return defaultPaymentIcons as T[];
+          if (tableName === 'social_media_links') return defaultSocialMediaLinks as T[];
+          if (tableName === 'legal_documents') return Object.values(defaultLegalDocuments) as T[];
+          if (tableName === 'exchange_rates') return defaultExchangeRates as T[];
+          throw error;
+        }
+        
+        return data as T[];
+      } catch (error) {
+        console.error(`Error in safeSupabaseSelect for ${tableName}:`, error);
+        // Return appropriate default data based on table name
+        if (tableName === 'payment_icons') return defaultPaymentIcons as T[];
+        if (tableName === 'social_media_links') return defaultSocialMediaLinks as T[];
+        if (tableName === 'legal_documents') return Object.values(defaultLegalDocuments) as T[];
+        if (tableName === 'exchange_rates') return defaultExchangeRates as T[];
+        throw error;
+      }
     },
     
     async getOne(id: string) {
-      // @ts-ignore - Suppressing type error for table name
-      const { data, error } = await supabase
-        .from(tableName)
-        .select(select)
-        .eq('id', id)
-        .single();
-      
-      return handleQueryError<T>(data as T, error);
+      try {
+        // @ts-ignore - Intentionally ignore type error for table name
+        const { data, error } = await supabase
+          .from(tableName)
+          .select(select)
+          .eq('id', id)
+          .single();
+        
+        if (error) throw error;
+        return data as T;
+      } catch (error) {
+        console.error(`Error in safeSupabaseSelect.getOne for ${tableName}:`, error);
+        throw error;
+      }
     },
 
     async getByFilter(filterField: string, filterValue: any) {
-      // @ts-ignore - Suppressing type error for table name
-      const { data, error } = await supabase
-        .from(tableName)
-        .select(select)
-        .eq(filterField, filterValue);
-      
-      return handleQueryError<T[]>(data as T[], error);
+      try {
+        // @ts-ignore - Intentionally ignore type error for table name
+        const { data, error } = await supabase
+          .from(tableName)
+          .select(select)
+          .eq(filterField, filterValue);
+        
+        if (error) throw error;
+        
+        // For legal documents, return default if not found
+        if (tableName === 'legal_documents' && filterField === 'slug' && (!data || data.length === 0)) {
+          // @ts-ignore - Type assertion
+          return [defaultLegalDocuments[filterValue]] as T[];
+        }
+        
+        return data as T[];
+      } catch (error) {
+        console.error(`Error in safeSupabaseSelect.getByFilter for ${tableName}:`, error);
+        
+        // For legal documents, return default if error
+        if (tableName === 'legal_documents' && filterField === 'slug') {
+          // @ts-ignore - Type assertion
+          return [defaultLegalDocuments[filterValue]] as T[];
+        }
+        
+        throw error;
+      }
     },
 
     async getOrdered(orderField: string = 'display_order', ascending: boolean = true) {
-      // @ts-ignore - Suppressing type error for table name
-      const { data, error } = await supabase
-        .from(tableName)
-        .select(select)
-        .order(orderField, { ascending });
-      
-      return handleQueryError<T[]>(data as T[], error);
+      try {
+        // @ts-ignore - Intentionally ignore type error for table name
+        const { data, error } = await supabase
+          .from(tableName)
+          .select(select)
+          .order(orderField, { ascending });
+        
+        // Return default data if error or if the API can't be reached
+        if (error) {
+          console.error(`Error querying ${tableName}:`, error);
+          // Return appropriate default data based on table name
+          if (tableName === 'payment_icons') return defaultPaymentIcons as T[];
+          if (tableName === 'social_media_links') return defaultSocialMediaLinks as T[];
+          if (tableName === 'exchange_rates') return defaultExchangeRates as T[];
+          throw error;
+        }
+        
+        return data as T[];
+      } catch (error) {
+        console.error(`Error in safeSupabaseSelect.getOrdered for ${tableName}:`, error);
+        // Return appropriate default data based on table name
+        if (tableName === 'payment_icons') return defaultPaymentIcons as T[];
+        if (tableName === 'social_media_links') return defaultSocialMediaLinks as T[];
+        if (tableName === 'exchange_rates') return defaultExchangeRates as T[];
+        throw error;
+      }
     }
   };
 }
 
-// Flexible Supabase mutation helper with type assertion and @ts-ignore for table name flexibility
+// Flexible Supabase mutation helper with type assertion and table name handling
 export function safeSupabaseMutation<T>(tableName: string) {
   return {
     async insert(record: Partial<T>) {
-      // @ts-ignore - Suppressing type error for table name
-      const { data, error } = await supabase
-        .from(tableName)
-        .insert(record)
-        .select();
-      
-      return { data: data as T[], error };
+      try {
+        // @ts-ignore - Intentionally ignore type error for table name
+        const { data, error } = await supabase
+          .from(tableName)
+          .insert(record)
+          .select();
+        
+        if (error) throw error;
+        return { data: data as T[], error: null };
+      } catch (error: any) {
+        console.error(`Error in safeSupabaseMutation.insert for ${tableName}:`, error);
+        return { data: null, error };
+      }
     },
     
     async update(id: string, updates: Partial<T>) {
-      // @ts-ignore - Suppressing type error for table name
-      const { data, error } = await supabase
-        .from(tableName)
-        .update(updates)
-        .eq('id', id)
-        .select();
-      
-      return { data: data as T[], error };
+      try {
+        // @ts-ignore - Intentionally ignore type error for table name
+        const { data, error } = await supabase
+          .from(tableName)
+          .update(updates)
+          .eq('id', id)
+          .select();
+        
+        if (error) throw error;
+        return { data: data as T[], error: null };
+      } catch (error: any) {
+        console.error(`Error in safeSupabaseMutation.update for ${tableName}:`, error);
+        return { data: null, error };
+      }
     },
 
     async upsert(records: Partial<T> | Partial<T>[]) {
-      // @ts-ignore - Suppressing type error for table name
-      const { data, error } = await supabase
-        .from(tableName)
-        .upsert(records)
-        .select();
-      
-      return { data: data as T[], error };
+      try {
+        // @ts-ignore - Intentionally ignore type error for table name
+        const { data, error } = await supabase
+          .from(tableName)
+          .upsert(records)
+          .select();
+        
+        if (error) throw error;
+        return { data: data as T[], error: null };
+      } catch (error: any) {
+        console.error(`Error in safeSupabaseMutation.upsert for ${tableName}:`, error);
+        return { data: null, error };
+      }
     },
     
     async delete(id: string) {
-      // @ts-ignore - Suppressing type error for table name
-      const { data, error } = await supabase
-        .from(tableName)
-        .delete()
-        .eq('id', id);
-      
-      return { data, error };
+      try {
+        // @ts-ignore - Intentionally ignore type error for table name
+        const { data, error } = await supabase
+          .from(tableName)
+          .delete()
+          .eq('id', id);
+        
+        if (error) throw error;
+        return { data, error: null };
+      } catch (error: any) {
+        console.error(`Error in safeSupabaseMutation.delete for ${tableName}:`, error);
+        return { data: null, error };
+      }
     },
 
     async deleteAll() {
-      // @ts-ignore - Suppressing type error for table name
-      const { data, error } = await supabase
-        .from(tableName)
-        .delete()
-        .not('id', 'is', null);
-      
-      return { data, error };
+      try {
+        // @ts-ignore - Intentionally ignore type error for table name
+        const { data, error } = await supabase
+          .from(tableName)
+          .delete()
+          .not('id', 'is', null);
+        
+        if (error) throw error;
+        return { data, error: null };
+      } catch (error: any) {
+        console.error(`Error in safeSupabaseMutation.deleteAll for ${tableName}:`, error);
+        return { data: null, error };
+      }
     }
   };
 }
@@ -267,13 +364,20 @@ export const exchangeRatesService = {
 
 export const siteSettingsService = {
   get: async () => {
-    // @ts-ignore - Suppressing type error for table name
-    const { data, error } = await supabase
-      .from('site_settings')
-      .select('*')
-      .single();
-    
-    return handleQueryError<SiteSettings>(data as SiteSettings, error);
+    try {
+      // @ts-ignore - Intentionally ignore type error for table name
+      const { data, error } = await supabase
+        .from('site_settings')
+        .select('*')
+        .single();
+      
+      if (error) throw error;
+      return data as SiteSettings;
+    } catch (error) {
+      console.error("Error getting site settings:", error);
+      // Return default site settings if there's an error
+      return import('./defaultData').then(module => module.defaultSiteSettings);
+    }
   },
   update: (updates: Partial<SiteSettings>) => safeSupabaseMutation<SiteSettings>('site_settings').update('1', updates)
 };
@@ -281,13 +385,20 @@ export const siteSettingsService = {
 // About page settings service
 export const aboutPageSettingsService = {
   get: async () => {
-    // @ts-ignore - Suppressing type error for table name
-    const { data, error } = await supabase
-      .from('about_page_settings')
-      .select('*')
-      .single();
-    
-    return handleQueryError<AboutPageSettings>(data as AboutPageSettings, error);
+    try {
+      // @ts-ignore - Intentionally ignore type error for table name
+      const { data, error } = await supabase
+        .from('about_page_settings')
+        .select('*')
+        .single();
+      
+      if (error) throw error;
+      return data as AboutPageSettings;
+    } catch (error) {
+      console.error("Error getting about page settings:", error);
+      // Could add default about page settings if needed
+      throw error;
+    }
   },
   update: (updates: Partial<AboutPageSettings>) => 
     safeSupabaseMutation<AboutPageSettings>('about_page_settings').update('1', updates)
@@ -296,25 +407,37 @@ export const aboutPageSettingsService = {
 // User roles service
 export const userRolesService = {
   getByUserId: async (userId: string) => {
-    // @ts-ignore - Suppressing type error for table name
-    const { data, error } = await supabase
-      .from('user_roles')
-      .select('*')
-      .eq('user_id', userId);
-    
-    return handleQueryError<UserRole[]>(data as UserRole[], error);
+    try {
+      // @ts-ignore - Intentionally ignore type error for table name
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('*')
+        .eq('user_id', userId);
+      
+      if (error) throw error;
+      return data as UserRole[];
+    } catch (error) {
+      console.error("Error getting user roles:", error);
+      return [];
+    }
   },
   getAll: () => safeSupabaseSelect<UserRole>('user_roles').getAll(),
   addRole: (userId: string, role: string) => 
     safeSupabaseMutation<UserRole>('user_roles').insert({ user_id: userId, role }),
   removeRole: async (userId: string, role: string) => {
-    // @ts-ignore - Suppressing type error for table name
-    const { data, error } = await supabase
-      .from('user_roles')
-      .delete()
-      .eq('user_id', userId)
-      .eq('role', role);
-    
-    return { data, error };
+    try {
+      // @ts-ignore - Intentionally ignore type error for table name
+      const { data, error } = await supabase
+        .from('user_roles')
+        .delete()
+        .eq('user_id', userId)
+        .eq('role', role);
+      
+      if (error) throw error;
+      return { data, error: null };
+    } catch (error: any) {
+      console.error("Error removing user role:", error);
+      return { data: null, error };
+    }
   }
 };

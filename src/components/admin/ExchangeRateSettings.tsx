@@ -1,16 +1,18 @@
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useTranslations } from "@/hooks/useTranslations";
-import { Loader2, CreditCard, History, Calendar, ArrowLeftRight } from "lucide-react";
+import { Loader2, CreditCard, History, Calendar, ArrowLeftRight, AlertCircle } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatDistanceToNow } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 import { ExchangeRate, exchangeRatesService } from '@/lib/supabaseUtils';
+import { defaultExchangeRates } from '@/lib/defaultData';
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const ExchangeRateSettings = () => {
   const { t } = useTranslations();
@@ -23,6 +25,7 @@ const ExchangeRateSettings = () => {
     to_currency: 'USD'
   });
   const [exchangeHistory, setExchangeHistory] = useState<ExchangeRate[]>([]);
+  const [isUsingSampleData, setIsUsingSampleData] = useState(false);
 
   // Load exchange rate on component mount
   useEffect(() => {
@@ -43,10 +46,31 @@ const ExchangeRateSettings = () => {
           from_currency: rates[0].from_currency,
           to_currency: rates[0].to_currency
         });
+        setIsUsingSampleData(false);
+      } else {
+        // Use sample data if no exchange rate found
+        if (defaultExchangeRates.length > 0) {
+          setExchangeRate({
+            rate: defaultExchangeRates[0].rate,
+            from_currency: defaultExchangeRates[0].from_currency,
+            to_currency: defaultExchangeRates[0].to_currency
+          });
+          setIsUsingSampleData(true);
+        }
       }
     } catch (error) {
       console.error("Error loading exchange rate:", error);
-      toast.error("加载汇率失败");
+      toast.error("加载汇率失败，使用示例数据");
+      
+      // Use sample data on error
+      if (defaultExchangeRates.length > 0) {
+        setExchangeRate({
+          rate: defaultExchangeRates[0].rate,
+          from_currency: defaultExchangeRates[0].from_currency,
+          to_currency: defaultExchangeRates[0].to_currency
+        });
+        setIsUsingSampleData(true);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -58,13 +82,39 @@ const ExchangeRateSettings = () => {
     try {
       // Using our new service
       const rates = await exchangeRatesService.getLatest();
-      setExchangeHistory(rates || []);
+      
+      if (rates && rates.length > 0) {
+        setExchangeHistory(rates);
+        setIsUsingSampleData(false);
+      } else {
+        // Use sample data if no exchange history found
+        setExchangeHistory(defaultExchangeRates);
+        setIsUsingSampleData(true);
+      }
     } catch (error) {
       console.error("Error loading exchange history:", error);
-      toast.error("加载汇率历史失败");
+      toast.error("加载汇率历史失败，使用示例数据");
+      
+      // Use sample data on error
+      setExchangeHistory(defaultExchangeRates);
+      setIsUsingSampleData(true);
     } finally {
       setIsHistoryLoading(false);
     }
+  };
+
+  // Reset to sample data
+  const resetToSampleData = () => {
+    if (defaultExchangeRates.length > 0) {
+      setExchangeRate({
+        rate: defaultExchangeRates[0].rate,
+        from_currency: defaultExchangeRates[0].from_currency,
+        to_currency: defaultExchangeRates[0].to_currency
+      });
+    }
+    setExchangeHistory(defaultExchangeRates);
+    setIsUsingSampleData(true);
+    toast.success("已重置为示例数据");
   };
 
   // Handle input change
@@ -79,21 +129,42 @@ const ExchangeRateSettings = () => {
   const saveExchangeRate = async () => {
     setIsSaving(true);
     try {
-      // Using our new service
-      const { error } = await exchangeRatesService.insert({
-        rate: exchangeRate.rate!,
-        from_currency: 'CNY',
-        to_currency: 'USD',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      });
-      
-      if (error) {
-        throw error;
+      // Try to save to database
+      try {
+        // Using our new service
+        const { error } = await exchangeRatesService.insert({
+          rate: exchangeRate.rate!,
+          from_currency: 'CNY',
+          to_currency: 'USD',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        });
+        
+        if (error) {
+          throw error;
+        }
+        
+        // Reload history if saved successfully to database
+        await loadExchangeHistory();
+        setIsUsingSampleData(false);
+      } catch (error) {
+        console.error("Error saving exchange rate to database:", error);
+        
+        // Update the history in memory
+        const newRate: ExchangeRate = {
+          id: `temp-${Date.now()}`,
+          rate: exchangeRate.rate!,
+          from_currency: 'CNY',
+          to_currency: 'USD',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+        
+        setExchangeHistory([newRate, ...exchangeHistory]);
+        setIsUsingSampleData(true);
       }
       
       toast.success("汇率已保存");
-      loadExchangeHistory();
     } catch (error) {
       console.error("Error saving exchange rate:", error);
       toast.error("保存汇率失败");
@@ -139,6 +210,18 @@ const ExchangeRateSettings = () => {
 
   return (
     <div className="space-y-6">
+      {isUsingSampleData && (
+        <Alert className="bg-amber-50">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            当前使用示例数据。您的更改可能不会永久保存到数据库，但会在当前会话中显示。
+            <Button variant="link" className="p-0 h-auto text-amber-600" onClick={resetToSampleData}>
+              重置为默认示例数据
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Current Exchange Rate */}
       <Card>
         <CardHeader>

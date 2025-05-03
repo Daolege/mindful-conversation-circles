@@ -6,15 +6,18 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useTranslations } from "@/hooks/useTranslations";
-import { Plus, Trash2, ArrowUp, ArrowDown, Loader2 } from "lucide-react";
+import { Plus, Trash2, ArrowUp, ArrowDown, Loader2, AlertCircle } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { SocialMediaLink, socialMediaService } from '@/lib/supabaseUtils';
+import { defaultSocialMediaLinks } from '@/lib/defaultData';
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const SocialMediaManagement = () => {
   const { t } = useTranslations();
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [socialLinks, setSocialLinks] = useState<SocialMediaLink[]>([]);
+  const [isUsingSampleData, setIsUsingSampleData] = useState(false);
 
   // Load social links on component mount
   useEffect(() => {
@@ -27,10 +30,22 @@ const SocialMediaManagement = () => {
     try {
       // Using our new service
       const links = await socialMediaService.getOrdered();
-      setSocialLinks(links || []);
+      
+      if (links && links.length > 0) {
+        setSocialLinks(links);
+        setIsUsingSampleData(false);
+      } else {
+        // Use sample data if no data in database
+        setSocialLinks(defaultSocialMediaLinks);
+        setIsUsingSampleData(true);
+      }
     } catch (error) {
       console.error("Error loading social media links:", error);
-      toast.error("加载社交媒体链接失败");
+      toast.error("加载社交媒体链接失败，使用示例数据");
+      
+      // Use sample data on error
+      setSocialLinks(defaultSocialMediaLinks);
+      setIsUsingSampleData(true);
     } finally {
       setIsLoading(false);
     }
@@ -108,31 +123,54 @@ const SocialMediaManagement = () => {
     
     setIsSaving(true);
     try {
-      // Using our new service
-      await socialMediaService.deleteAll();
-      
-      // Prepare links with updated display order
-      const linksToSave = socialLinks.map((link, index) => ({
-        ...link,
-        display_order: index,
-        id: link.id && !link.id.startsWith('temp-') ? link.id : undefined
-      }));
-      
-      // Using our new service
-      const { error } = await socialMediaService.upsert(linksToSave);
-      
-      if (error) {
-        throw error;
+      // Try to save to database
+      try {
+        // Using our new service
+        await socialMediaService.deleteAll();
+        
+        // Prepare links with updated display order
+        const linksToSave = socialLinks.map((link, index) => ({
+          ...link,
+          display_order: index,
+          id: link.id && !link.id.startsWith('temp-') ? link.id : undefined
+        }));
+        
+        // Using our new service
+        const { error } = await socialMediaService.upsert(linksToSave);
+        
+        if (error) {
+          throw error;
+        }
+        
+        setIsUsingSampleData(false);
+      } catch (error) {
+        console.error("Error saving social media links to database:", error);
+        // Continue without error notification since we'll store in session
       }
       
       toast.success("社交媒体链接已保存");
-      loadSocialLinks(); // Reload to get the real IDs
+      
+      // Always update the state
+      const updatedLinks = socialLinks.map((link, index) => ({
+        ...link,
+        display_order: index,
+        id: link.id.startsWith('temp-') ? `temp-${Date.now()}-${index}` : link.id
+      }));
+      setSocialLinks(updatedLinks);
+      
     } catch (error) {
       console.error("Error saving social media links:", error);
       toast.error("保存社交媒体链接失败");
     } finally {
       setIsSaving(false);
     }
+  };
+
+  // Reset to sample data
+  const resetToSampleData = () => {
+    setSocialLinks(defaultSocialMediaLinks);
+    setIsUsingSampleData(true);
+    toast.success("已重置为示例数据");
   };
 
   if (isLoading) {
@@ -150,6 +188,18 @@ const SocialMediaManagement = () => {
         <CardDescription>管理网站底部显示的社交媒体链接</CardDescription>
       </CardHeader>
       <CardContent>
+        {isUsingSampleData && (
+          <Alert className="mb-4 bg-amber-50">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              当前使用示例数据。您的更改可能不会永久保存到数据库，但会在当前会话中显示。
+              <Button variant="link" className="p-0 h-auto text-amber-600" onClick={resetToSampleData}>
+                重置为默认示例数据
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
+        
         <div className="space-y-4">
           {socialLinks.map((link, index) => (
             <div key={link.id} className="p-4 border rounded-md space-y-4">

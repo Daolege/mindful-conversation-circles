@@ -2,10 +2,11 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { paymentIconsService, PaymentIcon } from '@/lib/supabaseUtils';
+import { defaultPaymentIcons } from '@/lib/defaultData';
 
 const PaymentIcons: React.FC = () => {
   // Fetch payment icons from the database using our service
-  const { data: paymentIcons = [] } = useQuery({
+  const { data: paymentIcons = [], isError } = useQuery({
     queryKey: ['payment-icons'],
     queryFn: async () => {
       try {
@@ -19,32 +20,8 @@ const PaymentIcons: React.FC = () => {
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
-  // Default payment methods if none are found in the database
-  const defaultPaymentMethods = [
-    {
-      name: "Visa",
-      icon_url: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Inc._logo.svg/2560px-Visa_Inc._logo.svg.png"
-    },
-    {
-      name: "MasterCard",
-      icon_url: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Mastercard-logo.svg/1280px-Mastercard-logo.svg.png"
-    },
-    {
-      name: "PayPal",
-      icon_url: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/PayPal.svg/1280px-PayPal.svg.png"
-    },
-    {
-      name: "Apple Pay",
-      icon_url: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b0/Apple_Pay_logo.svg/1280px-Apple_Pay_logo.svg.png"
-    },
-    {
-      name: "Alipay",
-      icon_url: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/92/Alipay_logo.svg/1280px-Alipay_logo.svg.png"
-    }
-  ];
-
   // Use database icons if available, otherwise use defaults
-  const iconsToDisplay = paymentIcons.length > 0 ? paymentIcons : defaultPaymentMethods;
+  const iconsToDisplay = (!isError && paymentIcons.length > 0) ? paymentIcons : defaultPaymentIcons;
 
   return (
     <div className="flex flex-wrap gap-3">

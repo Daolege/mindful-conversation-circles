@@ -2,10 +2,11 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { socialMediaService, SocialMediaLink } from '@/lib/supabaseUtils';
+import { defaultSocialMediaLinks } from '@/lib/defaultData';
 
 const SocialLinks: React.FC = () => {
   // Fetch social media links from the database using our service
-  const { data: socialLinks = [] } = useQuery({
+  const { data: socialLinks = [], isError } = useQuery({
     queryKey: ['social-media-links'],
     queryFn: async () => {
       try {
@@ -19,32 +20,8 @@ const SocialLinks: React.FC = () => {
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
-  // Default social links if none are found in the database
-  const defaultSocialLinks = [
-    {
-      name: "Facebook",
-      icon_url: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Facebook_Logo_%282019%29.png/600px-Facebook_Logo_%282019%29.png",
-      url: "#"
-    },
-    {
-      name: "Instagram",
-      icon_url: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e7/Instagram_logo_2016.svg/132px-Instagram_logo_2016.svg.png",
-      url: "#"
-    },
-    {
-      name: "Twitter",
-      icon_url: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/57/X_logo_2023.png/600px-X_logo_2023.png",
-      url: "#"
-    },
-    {
-      name: "LinkedIn",
-      icon_url: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/LinkedIn_logo_initials.png/600px-LinkedIn_logo_initials.png",
-      url: "#"
-    }
-  ];
-
   // Use database links if available, otherwise use defaults
-  const linksToDisplay = socialLinks.length > 0 ? socialLinks : defaultSocialLinks;
+  const linksToDisplay = (!isError && socialLinks.length > 0) ? socialLinks : defaultSocialMediaLinks;
 
   return (
     <div className="flex space-x-4 mb-6">

@@ -4,7 +4,12 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/authHooks";
-import { handleQueryError, CourseProgressData } from "@/lib/supabaseUtils";
+import { handleQueryError } from "@/lib/supabaseUtils";
+
+// Define the CourseProgressData type here to avoid import errors
+interface CourseProgressData {
+  progress_percent: number;
+}
 
 interface CourseProgressProps {
   courseId: string | number;
