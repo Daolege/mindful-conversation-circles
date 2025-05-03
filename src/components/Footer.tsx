@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useTranslations } from "@/hooks/useTranslations";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,7 +13,6 @@ import ContactInfo from './footer/ContactInfo';
 import SocialLinks from './footer/SocialLinks';
 import GlobalOffices from './footer/GlobalOffices';
 import PaymentIcons from './footer/PaymentIcons';
-import LegalLinks from './footer/LegalLinks';
 
 // 站点设置类型
 type SiteSettings = {
@@ -117,7 +116,7 @@ const Footer = () => {
             </div>
           </div>
           
-          {/* 联系和法律信息 */}
+          {/* 联系信息 - 移除了法律链接 */}
           <div className="md:col-span-3 space-y-1.5">
             <h3 className="text-lg font-medium mb-4 text-white">{t('common:contactAndSupport')}</h3>
             <ContactInfo 
@@ -125,9 +124,6 @@ const Footer = () => {
               phones={phones.length > 0 ? phones : ["+85298211389", "+1(202)2099688"]}
               location={location}
             />
-            
-            {/* 法律链接 */}
-            <LegalLinks />
           </div>
           
           {/* 全球办公室 */}

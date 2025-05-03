@@ -14,19 +14,39 @@ const GlobalOffices: React.FC = () => {
         {t('common:globalOffices')}
       </h3>
       
-      {/* 所有国家排列在一个矩阵内 */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-2 mb-6">
-        <CountryFlag countryCode="us" countryName="United States" />
-        <CountryFlag countryCode="ca" countryName="Canada" />
-        <CountryFlag countryCode="mx" countryName="Mexico" />
-        <CountryFlag countryCode="gb" countryName="United Kingdom" />
-        <CountryFlag countryCode="de" countryName="Germany" />
-        <CountryFlag countryCode="fr" countryName="France" />
-        <CountryFlag countryCode="sg" countryName="Singapore" />
-        <CountryFlag countryCode="hk" countryName="Hong Kong" />
-        <CountryFlag countryCode="jp" countryName="Japan" />
-        <CountryFlag countryCode="au" countryName="Australia" />
-        <CountryFlag countryCode="id" countryName="Indonesia" />
+      {/* 北美地区 */}
+      <div className="mb-4">
+        <h4 className="text-white font-medium mb-2">北美地区</h4>
+        <div className="grid grid-cols-2 gap-x-6 gap-y-2">
+          <CountryFlag countryCode="us" countryName="美国" />
+          <CountryFlag countryCode="ca" countryName="加拿大" />
+        </div>
+      </div>
+      
+      {/* 欧洲地区 */}
+      <div className="mb-4">
+        <h4 className="text-white font-medium mb-2">欧洲地区</h4>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-2">
+          <CountryFlag countryCode="gb" countryName="英国" />
+          <CountryFlag countryCode="es" countryName="西班牙" />
+          <CountryFlag countryCode="fr" countryName="法国" />
+          <CountryFlag countryCode="de" countryName="德国" />
+          <CountryFlag countryCode="it" countryName="意大利" />
+          <CountryFlag countryCode="ie" countryName="爱尔兰" />
+        </div>
+      </div>
+      
+      {/* 东南亚地区 */}
+      <div className="mb-4">
+        <h4 className="text-white font-medium mb-2">东南亚地区</h4>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-2">
+          <CountryFlag countryCode="vn" countryName="越南" />
+          <CountryFlag countryCode="ph" countryName="菲律宾" />
+          <CountryFlag countryCode="my" countryName="马来西亚" />
+          <CountryFlag countryCode="th" countryName="泰国" />
+          <CountryFlag countryCode="sg" countryName="新加坡" />
+          <CountryFlag countryCode="id" countryName="印尼" />
+        </div>
       </div>
     </div>
   );
