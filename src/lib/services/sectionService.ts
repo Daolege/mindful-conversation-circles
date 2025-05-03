@@ -1,277 +1,199 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { CourseSection } from '@/lib/types/course-new';
+import { toast } from 'sonner';
 
-// 保存章节
-export const saveSection = async (sectionData: { 
-  course_id: number; 
-  title: string; 
-  position: number;
-}) => {
+export interface SectionServiceResponse<T = any> {
+  data: T | null;
+  error: Error | null;
+  success: boolean;
+}
+
+export async function getSectionsByCourseId(courseId: number): Promise<SectionServiceResponse<CourseSection[]>> {
   try {
-    console.log('[sectionService] 保存章节:', sectionData);
-    
-    if (!sectionData.course_id || isNaN(Number(sectionData.course_id))) {
-      console.error('[sectionService] 无效的课程ID:', sectionData.course_id);
-      return { data: null, error: new Error('无效的课程ID') };
+    if (!courseId) {
+      return { data: null, error: new Error('Course ID is required'), success: false };
     }
-    
+
     const { data, error } = await supabase
       .from('course_sections')
-      .insert(sectionData)
-      .select();
-      
-    if (error) {
-      console.error('[sectionService] 保存章节出错:', error);
-      return { data: null, error };
-    }
-    
-    console.log('[sectionService] 章节保存成功:', data);
-    return { data, error: null };
-  } catch (err: any) {
-    console.error('[sectionService] saveSection异常:', err);
-    return { data: null, error: err };
-  }
-};
-
-// 更新章节
-export const updateSection = async (sectionId: string, updates: Partial<CourseSection>) => {
-  try {
-    console.log(`[sectionService] 更新章节 ${sectionId}:`, updates);
-    
-    const { data, error } = await supabase
-      .from('course_sections')
-      .update(updates)
-      .eq('id', sectionId)
-      .select();
-      
-    if (error) {
-      console.error('[sectionService] 更新章节出错:', error);
-      return { data: null, error };
-    }
-    
-    console.log('[sectionService] 章节更新成功:', data);
-    return { data, error: null };
-  } catch (err: any) {
-    console.error('[sectionService] updateSection异常:', err);
-    return { data: null, error: err };
-  }
-};
-
-// 删除章节
-export const deleteSection = async (sectionId: string) => {
-  try {
-    console.log(`[sectionService] 删除章节 ${sectionId}`);
-    
-    // 首先删除所有相关的课时
-    const { error: lectureError } = await supabase
-      .from('course_lectures')
-      .delete()
-      .eq('section_id', sectionId);
-      
-    if (lectureError) {
-      console.error('[sectionService] 删除章节相关课时出错:', lectureError);
-      return { success: false, error: lectureError };
-    }
-    
-    // 然后删除章节
-    const { error } = await supabase
-      .from('course_sections')
-      .delete()
-      .eq('id', sectionId);
-      
-    if (error) {
-      console.error('[sectionService] 删除章节出错:', error);
-      return { success: false, error };
-    }
-    
-    console.log('[sectionService] 章节删除成功');
-    return { success: true, error: null };
-  } catch (err: any) {
-    console.error('[sectionService] deleteSection异常:', err);
-    return { success: false, error: err };
-  }
-};
-
-// 按课程ID获取所有章节，包括章节下的所有课时
-export const getSectionsByCourseId = async (courseId: number) => {
-  try {
-    if (!courseId || isNaN(courseId) || courseId <= 0) {
-      console.error(`[sectionService] 无效的课程ID: ${courseId}, 类型: ${typeof courseId}`);
-      return { data: null, error: new Error('无效的课程ID') };
-    }
-    
-    console.log(`[sectionService] 获取课程 ${courseId} 的章节`);
-    
-    // 获取章节
-    const { data: sections, error: sectionError } = await supabase
-      .from('course_sections')
-      .select('*')
+      .select(`
+        id, 
+        title, 
+        description,
+        position,
+        created_at,
+        updated_at,
+        course_id,
+        lectures:course_lectures(
+          id, 
+          title, 
+          description,
+          position,
+          duration,
+          video_url,
+          has_homework,
+          is_free,
+          requires_homework_completion,
+          section_id
+        )
+      `)
       .eq('course_id', courseId)
       .order('position', { ascending: true });
-      
-    if (sectionError) {
-      console.error('[sectionService] 获取章节出错:', sectionError);
-      return { data: null, error: sectionError };
-    }
-    
-    if (!sections || sections.length === 0) {
-      console.log('[sectionService] 未找到章节，返回空数组');
-      return { data: [], error: null };
-    }
-    
-    console.log('[sectionService] 找到章节数量:', sections.length);
-    
-    // 查询所有课时
-    const { data: lectures, error: lectureError } = await supabase
-      .from('course_lectures')
-      .select('*')
-      .in('section_id', sections.map(s => s.id))
-      .order('position', { ascending: true });
-      
-    if (lectureError) {
-      console.error('[sectionService] 获取课时出错:', lectureError);
-      // 即使获取课时出错，也返回章节数据
-      return { 
-        data: sections.map(s => ({ ...s, lectures: [] })), 
-        error: null 
-      };
-    }
-    
-    // 合并章节和课时
-    const sectionsWithLectures = sections.map(section => {
-      const sectionLectures = lectures ? lectures.filter(l => l.section_id === section.id) : [];
-      return {
-        ...section,
-        lectures: sectionLectures
-      };
-    });
-    
-    console.log(`[sectionService] 找到 ${sections.length} 个章节，共 ${lectures?.length || 0} 个课时`);
-    return { data: sectionsWithLectures, error: null };
-  } catch (err: any) {
-    console.error('[sectionService] getSectionsByCourseId异常:', err);
-    return { data: null, error: err };
-  }
-};
 
-// 批量更新章节顺序
-export const updateSectionsOrder = async (sections: Array<{ id: string; position: number }>) => {
+    if (error) {
+      console.error('Error fetching sections:', error);
+      return { data: null, error: new Error(error.message), success: false };
+    }
+
+    // Sort lectures by position
+    if (data) {
+      data.forEach(section => {
+        if (section.lectures) {
+          section.lectures.sort((a, b) => a.position - b.position);
+        }
+      });
+    }
+
+    return { data, error: null, success: true };
+  } catch (error: any) {
+    console.error('Error in getSectionsByCourseId:', error);
+    return { data: null, error, success: false };
+  }
+}
+
+export async function saveCourseOutline(courseId: number, sections: CourseSection[]): Promise<SectionServiceResponse> {
   try {
-    console.log('[sectionService] 批量更新章节顺序:', sections);
-    
-    const promises = sections.map(section => 
-      supabase
+    if (!courseId) {
+      return { data: null, error: new Error('Course ID is required'), success: false };
+    }
+
+    // 1. First, update or insert the sections
+    for (let i = 0; i < sections.length; i++) {
+      const section = sections[i];
+      section.position = i; // Update position based on array order
+      
+      // Upsert the section
+      const { error: sectionError } = await supabase
         .from('course_sections')
-        .update({ position: section.position })
-        .eq('id', section.id)
-    );
-    
-    await Promise.all(promises);
-    
-    console.log('[sectionService] 章节顺序更新成功');
-    return { success: true, error: null };
-  } catch (err: any) {
-    console.error('[sectionService] updateSectionsOrder异常:', err);
-    return { success: false, error: err };
-  }
-};
-
-// 保存完整课程大纲（包括章节和课时）
-export const saveCourseOutline = async (courseId: number, sections: CourseSection[]) => {
-  try {
-    console.log('[sectionService] 保存完整课程大纲:', courseId, sections);
-    
-    if (!courseId || isNaN(Number(courseId))) {
-      console.error('[sectionService] 无效的课程ID:', courseId);
-      return { success: false, error: new Error('无效的课程ID') };
-    }
-
-    // 先获取原有章节和课时
-    const { data: existingSections, error: getError } = await getSectionsByCourseId(courseId);
-    
-    if (getError) {
-      console.error('[sectionService] 获取现有章节出错:', getError);
-      return { success: false, error: getError };
-    }
-    
-    // 处理每个章节
-    for (const section of sections) {
-      if (!section.id) {
-        // 新章节
-        console.log('[sectionService] 添加新章节:', section);
-        const { error: addError } = await saveSection({
-          course_id: courseId,
+        .upsert({
+          id: section.id,
           title: section.title,
-          position: section.position
+          description: section.description || null,
+          position: section.position,
+          course_id: courseId
         });
-        
-        if (addError) {
-          console.error('[sectionService] 添加章节出错:', addError);
-          return { success: false, error: addError };
+
+      if (sectionError) {
+        console.error('Error updating section:', sectionError);
+        return { data: null, error: new Error(`Error updating section: ${sectionError.message}`), success: false };
+      }
+
+      // 2. Update or insert the lectures for this section
+      if (section.lectures && section.lectures.length > 0) {
+        for (let j = 0; j < section.lectures.length; j++) {
+          const lecture = section.lectures[j];
+          lecture.position = j; // Update position based on array order
+          
+          // Upsert the lecture
+          const { error: lectureError } = await supabase
+            .from('course_lectures')
+            .upsert({
+              id: lecture.id,
+              title: lecture.title,
+              description: lecture.description || null,
+              position: lecture.position,
+              section_id: section.id,
+              video_url: lecture.video_url || null,
+              duration: lecture.duration || null,
+              has_homework: lecture.has_homework || false,
+              is_free: lecture.is_free || false,
+              requires_homework_completion: lecture.requires_homework_completion || false
+            });
+
+          if (lectureError) {
+            console.error('Error updating lecture:', lectureError);
+            return { data: null, error: new Error(`Error updating lecture: ${lectureError.message}`), success: false };
+          }
+        }
+      }
+    }
+
+    // 3. Delete sections and lectures that are no longer present
+    // First, get current sections and lectures from DB
+    const { data: currentSections, error: fetchError } = await supabase
+      .from('course_sections')
+      .select('id, lectures:course_lectures(id)')
+      .eq('course_id', courseId);
+
+    if (fetchError) {
+      console.error('Error fetching current sections:', fetchError);
+      return { data: null, error: new Error(`Error fetching current sections: ${fetchError.message}`), success: false };
+    }
+
+    // Build arrays of IDs from the updated sections/lectures
+    const updatedSectionIds = sections.map(s => s.id);
+    const updatedLectureIds: string[] = [];
+    sections.forEach(section => {
+      if (section.lectures) {
+        section.lectures.forEach(lecture => {
+          updatedLectureIds.push(lecture.id);
+        });
+      }
+    });
+
+    // For each section in DB, check if it still exists
+    for (const dbSection of currentSections || []) {
+      if (!updatedSectionIds.includes(dbSection.id)) {
+        // Section doesn't exist in updated data, delete it
+        const { error: deleteError } = await supabase
+          .from('course_sections')
+          .delete()
+          .eq('id', dbSection.id);
+
+        if (deleteError) {
+          console.error(`Error deleting section ${dbSection.id}:`, deleteError);
+          return { data: null, error: new Error(`Error deleting section: ${deleteError.message}`), success: false };
         }
       } else {
-        // 更新现有章节
-        console.log('[sectionService] 更新章节:', section);
-        const { error: updateError } = await updateSection(section.id, {
-          title: section.title,
-          position: section.position
-        });
-        
-        if (updateError) {
-          console.error('[sectionService] 更新章节出错:', updateError);
-          return { success: false, error: updateError };
-        }
-        
-        // 处理章节下的课时
-        if (section.lectures && section.lectures.length > 0) {
-          for (const lecture of section.lectures) {
-            if (!lecture.id) {
-              // 新课时，通过lectureService添加
-              continue; // 这种情况不应该出现，因为课时都会有独立ID
-            } else {
-              // 更新课时
-              console.log('[sectionService] 更新课时:', lecture);
-              const { error: updateLectureError } = await supabase
+        // Section exists, check for lectures to delete
+        if (dbSection.lectures) {
+          for (const lecture of dbSection.lectures) {
+            if (!updatedLectureIds.includes(lecture.id)) {
+              // Lecture doesn't exist in updated data, delete it
+              const { error: deleteLectureError } = await supabase
                 .from('course_lectures')
-                .update({
-                  title: lecture.title,
-                  position: lecture.position,
-                  is_free: lecture.is_free,
-                  requires_homework_completion: lecture.requires_homework_completion
-                })
+                .delete()
                 .eq('id', lecture.id);
-              
-              if (updateLectureError) {
-                console.error('[sectionService] 更新课时出错:', updateLectureError);
-                // 继续处理其他课时，不中断流程
+
+              if (deleteLectureError) {
+                console.error(`Error deleting lecture ${lecture.id}:`, deleteLectureError);
+                return { data: null, error: new Error(`Error deleting lecture: ${deleteLectureError.message}`), success: false };
               }
             }
           }
         }
       }
     }
-    
-    // 找出需要删除的章节（在原列表中存在，但新列表中不存在的）
-    if (existingSections) {
-      const newSectionIds = sections.map(s => s.id).filter(Boolean);
-      const sectionsToDelete = existingSections.filter(s => !newSectionIds.includes(s.id));
-      
-      for (const section of sectionsToDelete) {
-        console.log('[sectionService] 删除章节:', section.id);
-        const { error: deleteError } = await deleteSection(section.id);
-        
-        if (deleteError) {
-          console.error('[sectionService] 删除章节出错:', deleteError);
-          // 继续处理其他章节，不中断流程
-        }
-      }
+
+    // Update the course's lecture_count
+    const totalLectures = sections.reduce((count, section) => {
+      return count + (section.lectures?.length || 0);
+    }, 0);
+
+    const { error: countUpdateError } = await supabase
+      .from('courses_new')
+      .update({ lecture_count: totalLectures })
+      .eq('id', courseId);
+
+    if (countUpdateError) {
+      console.warn('Error updating lecture count:', countUpdateError);
+      // Not critical, just warn
     }
-    
-    console.log('[sectionService] 课程大纲保存成功');
-    return { success: true, error: null };
-  } catch (err: any) {
-    console.error('[sectionService] saveCourseOutline异常:', err);
-    return { success: false, error: err };
+
+    return { data: true, error: null, success: true };
+  } catch (error: any) {
+    console.error('Error in saveCourseOutline:', error);
+    return { data: null, error, success: false };
   }
-};
+}

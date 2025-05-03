@@ -1,15 +1,17 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Save } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import CourseBasicForm from "./course-editor/CourseBasicForm";
-import CourseCurriculumForm from "./course-editor/CourseCurriculumForm";
 import { CourseOtherSettings } from './course/settings/CourseOtherSettings';
 import { useCourseActions } from '@/hooks/useCourseActions';
 import { useCourseEditor } from '@/hooks/useCourseEditor';
+import { CourseOutlineEditor } from './course/outline';
+import { toast } from "sonner";
+import { CourseSection } from "@/lib/types/course-new";
 
 interface CourseNewEditorRefactoredProps {
   initialCourseId: number | null;
@@ -36,16 +38,36 @@ const CourseNewEditorRefactored: React.FC<CourseNewEditorRefactoredProps> = ({
   sectionVisibility = { objectives: true, requirements: true, audiences: true, materials: false }
 }) => {
   const [activeTab, setActiveTab] = useState(initialActiveTab);
+  const [courseSections, setCourseSections] = useState<CourseSection[]>([]);
+  const [hasOutlineChanges, setHasOutlineChanges] = useState(false);
   const navigate = useNavigate();
   const { isEditMode, saveCourse, saving, handleBack } = useCourseActions(initialCourseId?.toString() || 'new');
   const courseEditorContext = useCourseEditor();
   
   const handleTabChange = (value: string) => {
+    // If there are unsaved changes in the outline, confirm before changing tabs
+    if (value !== 'curriculum' && hasOutlineChanges) {
+      const confirm = window.confirm("您有未保存的大纲更改，确定要离开吗？");
+      if (!confirm) {
+        return;
+      }
+    }
+    
     setActiveTab(value);
   };
 
   const handleSave = async (formValues: any) => {
-    await saveCourse(formValues, []);
+    await saveCourse(formValues, courseSections);
+  };
+
+  const handleSectionsChange = (sections: CourseSection[]) => {
+    setCourseSections(sections);
+    setHasOutlineChanges(true);
+  };
+
+  const handleOutlineSaveSuccess = () => {
+    setHasOutlineChanges(false);
+    toast.success("课程大纲保存成功");
   };
 
   return (
@@ -88,7 +110,11 @@ const CourseNewEditorRefactored: React.FC<CourseNewEditorRefactoredProps> = ({
               </div>
             </Card>
           ) : (
-            <CourseCurriculumForm courseId={initialCourseId!} />
+            <CourseOutlineEditor 
+              courseId={initialCourseId!}
+              onSectionsChange={handleSectionsChange}
+              onSaveSuccess={handleOutlineSaveSuccess}
+            />
           )}
         </TabsContent>
 
