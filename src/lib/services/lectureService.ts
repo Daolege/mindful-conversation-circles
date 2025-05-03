@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { CourseLecture } from '@/lib/types/course-new';
 
@@ -106,5 +105,83 @@ export async function getLectures(sectionId: string): Promise<LectureServiceResp
   } catch (error: any) {
     console.error('Error in getLectures:', error);
     return { data: null, error, success: false };
+  }
+}
+
+export interface VideoUploadResponse {
+  url: string;
+  path: string;
+}
+
+export async function uploadLectureVideo(
+  lectureId: string, 
+  file: File,
+  onProgress?: (progress: number) => void
+): Promise<LectureServiceResponse<VideoUploadResponse>> {
+  try {
+    if (!lectureId || !file) {
+      return { 
+        data: null, 
+        error: new Error('Lecture ID and file are required'), 
+        success: false 
+      };
+    }
+
+    const fileExt = file.name.split('.').pop();
+    const filePath = `lectures/${lectureId}/${Date.now()}.${fileExt}`;
+    
+    const { error: uploadError, data } = await supabase.storage
+      .from('course_videos')
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: true,
+        onUploadProgress: (progress) => {
+          if (onProgress) {
+            const percent = Math.round((progress.loaded / progress.total) * 100);
+            onProgress(percent);
+          }
+        }
+      });
+
+    if (uploadError) {
+      console.error('Video upload error:', uploadError);
+      return { 
+        data: null, 
+        error: new Error(uploadError.message), 
+        success: false 
+      };
+    }
+
+    // Get public URL for the uploaded file
+    const { data: { publicUrl } } = supabase.storage
+      .from('course_videos')
+      .getPublicUrl(filePath);
+
+    // Update the lecture with the video URL
+    const { error: updateError } = await supabase
+      .from('course_lectures')
+      .update({ video_url: publicUrl })
+      .eq('id', lectureId);
+
+    if (updateError) {
+      console.error('Error updating lecture with video URL:', updateError);
+      // We still return success since the file was uploaded
+    }
+
+    return { 
+      data: { 
+        url: publicUrl, 
+        path: filePath 
+      }, 
+      error: null, 
+      success: true 
+    };
+  } catch (error: any) {
+    console.error('Error in uploadLectureVideo:', error);
+    return { 
+      data: null, 
+      error, 
+      success: false 
+    };
   }
 }

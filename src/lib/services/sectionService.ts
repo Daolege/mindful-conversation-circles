@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { CourseSection } from '@/lib/types/course-new';
 import { toast } from 'sonner';
@@ -7,6 +6,36 @@ export interface SectionServiceResponse<T = any> {
   data: T | null;
   error: Error | null;
   success: boolean;
+}
+
+export interface SectionData {
+  id?: string;
+  course_id: number;
+  title: string;
+  position: number;
+}
+
+export async function saveSection(sectionData: SectionData): Promise<SectionServiceResponse<CourseSection[]>> {
+  try {
+    const { data, error } = await supabase
+      .from('course_sections')
+      .insert({
+        course_id: sectionData.course_id,
+        title: sectionData.title,
+        position: sectionData.position
+      })
+      .select();
+
+    if (error) {
+      console.error('Error saving section:', error);
+      return { data: null, error: new Error(error.message), success: false };
+    }
+
+    return { data, error: null, success: true };
+  } catch (error: any) {
+    console.error('Error in saveSection:', error);
+    return { data: null, error, success: false };
+  }
 }
 
 export async function getSectionsByCourseId(courseId: number): Promise<SectionServiceResponse<CourseSection[]>> {
@@ -19,8 +48,7 @@ export async function getSectionsByCourseId(courseId: number): Promise<SectionSe
       .from('course_sections')
       .select(`
         id, 
-        title, 
-        description,
+        title,
         position,
         created_at,
         updated_at,
