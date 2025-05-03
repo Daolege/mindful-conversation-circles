@@ -150,11 +150,21 @@ export async function rollbackToVersion(
       key: string;
     }
     
-    // Check if first item is a valid object before type conversion
+    // Get the first item, which could be null or undefined
     const currentTranslationData = currentData[0];
+    
+    // Null check before accessing properties
+    if (!currentTranslationData) {
+      return { success: false, error: new Error('Invalid translation data: item is null') };
+    }
+    
+    // Type guard to ensure it's an object before accessing properties
+    if (typeof currentTranslationData !== 'object') {
+      return { success: false, error: new Error('Invalid translation data: item is not an object') };
+    }
+    
+    // Now check properties
     if (
-      !currentTranslationData || 
-      typeof currentTranslationData !== 'object' || 
       !('language_code' in currentTranslationData) || 
       !('namespace' in currentTranslationData) || 
       !('key' in currentTranslationData)
