@@ -151,6 +151,47 @@ export type Database = {
           },
         ]
       }
+      course_highlights: {
+        Row: {
+          content: string
+          course_id: number
+          created_at: string
+          icon: string
+          id: string
+          is_visible: boolean
+          position: number
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          course_id: number
+          created_at?: string
+          icon: string
+          id?: string
+          is_visible?: boolean
+          position?: number
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          course_id?: number
+          created_at?: string
+          icon?: string
+          id?: string
+          is_visible?: boolean
+          position?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_highlights_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses_new"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       course_learning_objectives: {
         Row: {
           content: string
@@ -567,6 +608,36 @@ export type Database = {
           status?: string
           title?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      default_course_highlights: {
+        Row: {
+          content: string
+          created_at: string
+          icon: string
+          id: string
+          is_visible: boolean
+          position: number
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          icon: string
+          id?: string
+          is_visible?: boolean
+          position?: number
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          icon?: string
+          id?: string
+          is_visible?: boolean
+          position?: number
+          updated_at?: string
         }
         Relationships: []
       }
@@ -1373,6 +1444,10 @@ export type Database = {
       has_role: {
         Args: { role: Database["public"]["Enums"]["user_role"] }
         Returns: boolean
+      }
+      reset_course_highlights: {
+        Args: { p_course_id: number }
+        Returns: undefined
       }
       update_course_progress: {
         Args: {

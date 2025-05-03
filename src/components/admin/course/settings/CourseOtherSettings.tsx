@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -51,8 +50,6 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({
     materials: false
   },
 }) => {
-  const [courseVisibility, setCourseVisibility] = useState<string>("published");
-  
   // Purchase method states
   const [allowsOneTimePurchase, setAllowsOneTimePurchase] = useState<boolean>(true);
   const [allowsSubscription, setAllowsSubscription] = useState<boolean>(true);

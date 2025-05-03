@@ -719,6 +719,65 @@ export interface Database {
           created_at?: string
           updated_at?: string
         }
+      },
+      course_highlights: {
+        Row: {
+          id: string
+          course_id: number
+          icon: string
+          content: string
+          position: number
+          is_visible: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Insert: {
+          id?: string
+          course_id: number
+          icon: string
+          content: string
+          position?: number
+          is_visible?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          course_id?: number
+          icon?: string
+          content?: string
+          position?: number
+          is_visible?: boolean
+          updated_at?: string
+        }
+      },
+      default_course_highlights: {
+        Row: {
+          id: string
+          icon: string
+          content: string
+          position: number
+          is_visible: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Insert: {
+          id?: string
+          icon: string
+          content: string
+          position?: number
+          is_visible?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          icon?: string
+          content?: string
+          position?: number
+          is_visible?: boolean
+          updated_at?: string
+        }
       }
     },
     Views: {
@@ -809,6 +868,10 @@ export interface Database {
       delete_order: {
         Args: Record<string, unknown>
         Returns: unknown
+      },
+      reset_course_highlights: {
+        Args: { p_course_id: number }
+        Returns: void
       }
     },
     Enums: {

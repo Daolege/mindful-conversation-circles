@@ -38,7 +38,7 @@ export interface Database {
           updated_at?: string
         }
         Relationships: []
-      }
+      },
       languages: {
         Row: {
           id: number
@@ -71,7 +71,7 @@ export interface Database {
           updated_at?: string
         }
         Relationships: []
-      }
+      },
       order_items: {
         Row: {
           id?: number
@@ -729,6 +729,74 @@ export interface Database {
           updated_at?: string
         }
         Relationships: []
+      },
+      course_highlights: {
+        Row: {
+          id: string
+          course_id: number
+          icon: string
+          content: string
+          position: number
+          is_visible: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Insert: {
+          id?: string
+          course_id: number
+          icon: string
+          content: string
+          position?: number
+          is_visible?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          course_id?: number
+          icon?: string
+          content?: string
+          position?: number
+          is_visible?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_highlights_course_id_fkey"
+            columns: ["course_id"]
+            referencedRelation: "courses_new"
+            referencedColumns: ["id"]
+          }
+        ]
+      },
+      default_course_highlights: {
+        Row: {
+          id: string
+          icon: string
+          content: string
+          position: number
+          is_visible: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Insert: {
+          id?: string
+          icon: string
+          content: string
+          position?: number
+          is_visible?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          icon?: string
+          content?: string
+          position?: number
+          is_visible?: boolean
+          updated_at?: string
+        }
+        Relationships: []
       }
     }
     Views: {
@@ -738,6 +806,10 @@ export interface Database {
       upsert_translations_batch: {
         Args: { translations_json: Json }
         Returns: undefined
+      },
+      reset_course_highlights: {
+        Args: { p_course_id: number }
+        Returns: void
       }
     }
     Enums: {

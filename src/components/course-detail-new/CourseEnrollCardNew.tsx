@@ -89,22 +89,25 @@ export const CourseEnrollCardNew: React.FC<CourseEnrollCardNewProps> = ({ course
           </Button>
 
           {/* Course features */}
-          <div className={`space-y-3 text-sm ${isMobile ? 'grid grid-cols-2 gap-2' : ''}`}>
-            <div className="flex items-center animate-in fade-in duration-300">
-              <Video className="h-4 w-4 text-gray-500 mr-2" />
-              <span>{t('courses:hdVideo')}</span>
-            </div>
-            <div className="flex items-center animate-in fade-in duration-300">
-              <Clock className="h-4 w-4 text-gray-500 mr-2" />
-              <span>{t('courses:learnAnytime')}</span>
-            </div>
-            <div className="flex items-center animate-in fade-in duration-300">
-              <BookOpen className="h-4 w-4 text-gray-500 mr-2" />
-              <span>{t('courses:noBarrier')}</span>
-            </div>
-            <div className="flex items-center animate-in fade-in duration-300">
-              <Globe className="h-4 w-4 text-gray-500 mr-2" />
-              <span>{t('courses:courseLanguage', { language: course.language || '中文' })}</span>
+          <div className="space-y-4">
+            <h4 className="text-sm font-medium">课程亮点</h4>
+            <div className={`space-y-3 text-sm ${isMobile ? 'grid grid-cols-2 gap-2' : ''}`}>
+              <div className="flex items-center animate-in fade-in duration-300">
+                <Video className="h-4 w-4 text-gray-500 mr-2" />
+                <span>{t('courses:hdVideo')}</span>
+              </div>
+              <div className="flex items-center animate-in fade-in duration-300">
+                <Clock className="h-4 w-4 text-gray-500 mr-2" />
+                <span>{t('courses:learnAnytime')}</span>
+              </div>
+              <div className="flex items-center animate-in fade-in duration-300">
+                <BookOpen className="h-4 w-4 text-gray-500 mr-2" />
+                <span>{t('courses:noBarrier')}</span>
+              </div>
+              <div className="flex items-center animate-in fade-in duration-300">
+                <Globe className="h-4 w-4 text-gray-500 mr-2" />
+                <span>{t('courses:courseLanguage', { language: course.language || '中文' })}</span>
+              </div>
             </div>
           </div>
         </div>
