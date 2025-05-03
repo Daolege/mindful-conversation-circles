@@ -86,6 +86,7 @@ export const useTranslations = () => {
         
         // Safe type check before accessing translationData properties
         if (typeof translationData === 'object' && 
+            translationData !== null &&
             'id' in translationData && 
             translationData.id !== null && 
             translationData.id !== undefined) {

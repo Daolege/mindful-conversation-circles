@@ -184,7 +184,11 @@ export async function deleteLanguage(languageId: number): Promise<{ success: boo
         return { success: false, error: new Error('Language data has no code property') };
       }
       
-      if (typeof langData.code === 'string' && langData.code !== null) {
+      // Ensure langData and langData.code are not null before accessing
+      if (langData !== null && 
+          'code' in langData && 
+          langData.code !== null && 
+          typeof langData.code === 'string') {
         const langCode = langData.code;
         
         if (langCode === 'en' || langCode === 'zh') {

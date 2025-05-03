@@ -97,11 +97,9 @@ i18n.use({
             return acc;
           }
           
-          // Check if they are strings and not null
-          if (typeof item.key !== 'string' || 
-              typeof item.value !== 'string' ||
-              item.key === null ||
-              item.value === null) {
+          // Check if key and value are not null and are strings
+          if (item.key === null || item.value === null ||
+              typeof item.key !== 'string' || typeof item.value !== 'string') {
             return acc;
           }
           
