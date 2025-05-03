@@ -20,8 +20,26 @@ export type TranslationItem = {
 };
 
 export const useTranslations = () => {
-  const { t, i18n } = useTranslation(['common', 'navigation', 'courses', 'auth', 'admin', 'checkout', 'dashboard', 'errors', 'orders', 'actions', 'home']);
+  const { t: originalT, i18n } = useTranslation(['common', 'navigation', 'courses', 'auth', 'admin', 'checkout', 'dashboard', 'errors', 'orders', 'actions', 'home']);
   const { isRTL } = useLanguage();
+  
+  // Wrapper for t function to ensure string return type
+  const t = (key: string, options?: any): string => {
+    const translated = originalT(key, options);
+    
+    // Ensure we always return a string
+    if (typeof translated === 'string') {
+      return translated;
+    }
+    
+    // If it's not a string (e.g., it's an object), return the key as fallback
+    if (key.includes(':')) {
+      const keyWithoutNamespace = key.split(':')[1];
+      return keyWithoutNamespace || key;
+    }
+    
+    return key;
+  };
   
   // 更新或添加单个翻译项
   const updateTranslation = async (
@@ -143,19 +161,8 @@ export const useTranslations = () => {
     }
   };
   
-  // Helper function to translate with fallback
-  const translate = (key: string, options?: any) => {
-    const result = t(key, options);
-    // If translation is missing (returns the key), try with a fallback 
-    if (result === key && key.includes(':')) {
-      const keyWithoutNamespace = key.split(':')[1];
-      return t(keyWithoutNamespace, options) || key;
-    }
-    return result;
-  };
-  
   return {
-    t: translate,
+    t,
     i18n,
     currentLanguage: i18n.language,
     changeLanguage: (lang: string) => i18n.changeLanguage(lang),

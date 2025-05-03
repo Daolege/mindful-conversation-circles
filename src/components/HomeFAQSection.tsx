@@ -47,7 +47,7 @@ const HomeFAQSection = () => {
   }
 
   // Filter FAQs based on search term and active tab
-  const filteredFaqs = faqs.filter((faq) => {
+  const filteredFaqs = Array.isArray(faqs) ? faqs.filter((faq) => {
     const matchesSearch =
       !searchTerm ||
       faq.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -56,7 +56,7 @@ const HomeFAQSection = () => {
     const matchesCategory = activeTab === "all" || faq.category === activeTab;
 
     return matchesSearch && matchesCategory;
-  });
+  }) : [];
 
   // Group FAQs by category for display
   const getCategoryTitle = (category) => {
