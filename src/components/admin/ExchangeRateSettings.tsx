@@ -125,7 +125,8 @@ const ExchangeRateSettings = () => {
       const result = await exchangeRatesService.getAllHistory(
         page, 
         itemsPerPage,
-        dateFilter
+        dateFilter && dateFilter.from && dateFilter.to ? 
+          { from: dateFilter.from, to: dateFilter.to } : undefined
       );
       
       if (result && result.data && result.data.length > 0) {

@@ -451,23 +451,32 @@ export const exchangeRatesService = {
       
       // Convert legacy data format if needed
       const formattedData = data.map(item => {
+        if (!item) return null; // Skip null or undefined items
+        
         if ('rate' in item) {
           return item as ExchangeRate;
         } else if ('cny_to_usd' in item) {
           // Convert legacy format
           return {
-            id: item.id,
+            id: item.id || '',
             rate: (item as any).cny_to_usd,
             from_currency: 'CNY',
             to_currency: 'USD',
-            created_at: item.created_at,
-            updated_at: item.updated_at,
+            created_at: item.created_at || new Date().toISOString(),
+            updated_at: item.updated_at || new Date().toISOString(),
             cny_to_usd: (item as any).cny_to_usd
           } as ExchangeRate;
         }
         // Fallback for unexpected data structure
-        return item as ExchangeRate;
-      });
+        return {
+          id: item.id || '',
+          rate: 0,
+          from_currency: 'CNY',
+          to_currency: 'USD',
+          created_at: item.created_at || new Date().toISOString(),
+          updated_at: item.updated_at || new Date().toISOString()
+        } as ExchangeRate;
+      }).filter(item => item !== null) as ExchangeRate[]; // Remove null items and assert type
       
       return { 
         data: formattedData, 
