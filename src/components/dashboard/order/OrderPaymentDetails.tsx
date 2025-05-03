@@ -4,7 +4,7 @@ import { formatAmount } from "@/lib/utils/currencyUtils";
 import { PaymentMethod, PaymentStatus } from "@/types/order";
 import { TFunction } from "i18next";
 import { Check, X, AlertTriangle, Clock } from "lucide-react";
-import { useTranslations as useCustomTranslations } from "@/hooks/useTranslations";
+import { useTranslations } from "@/hooks/useTranslations";
 
 // Payment status icons
 const PaymentStatusIcon = ({ status }: { status: PaymentStatus }) => {
@@ -44,7 +44,7 @@ interface OrderPaymentDetailsProps {
 }
 
 export default function OrderPaymentDetails({ order, t }: OrderPaymentDetailsProps) {
-  const { t: tCustom } = useCustomTranslations();
+  const { t: tCustom } = useTranslations();
   
   if (!order.payment) {
     return <div className="text-sm text-gray-500">{tCustom('orders:noPaymentInfo')}</div>;

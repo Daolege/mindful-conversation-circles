@@ -2,7 +2,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import dayjs from "dayjs";
 import { 
   Card, 
   CardContent, 
@@ -13,11 +12,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { format } from "date-fns";
 import LocalizedCurrency from "@/components/LocalizedCurrency";
 import OrderLineItems from "./OrderLineItems";
 import OrderPaymentDetails from "./OrderPaymentDetails";
 import { getOrderById } from "@/lib/services/orderService";
-import { useTranslations as useCustomTranslations } from "@/hooks/useTranslations";
+import { useTranslations } from "@/hooks/useTranslations";
 import { OrderStatus } from "@/types/order";
 import { useTranslation } from "react-i18next";
 
@@ -32,14 +32,14 @@ export default function OrderItem({
   onRefund,
   showRefundButton = false,
 }: OrderItemProps) {
-  const { t: tCustom } = useCustomTranslations();
+  const { t: tCustom } = useTranslations();
   // Using original i18n t function for components that need TFunction type
   const { t } = useTranslation();
   const [isRefunding, setIsRefunding] = useState(false);
 
   const { data: orderData, isLoading } = useQuery({
-    queryKey: ['order', orderId],
-    queryFn: () => getOrderById(orderId),
+    queryKey: ['order', orderId.toString()],
+    queryFn: () => getOrderById(orderId.toString()),
   });
 
   const handleRefundClick = async () => {
@@ -103,7 +103,7 @@ export default function OrderItem({
             </Badge>
           </CardTitle>
           <span className="text-sm text-gray-500">
-            {dayjs(order.created_at).format('YYYY-MM-DD HH:mm')}
+            {format(new Date(order.created_at), 'yyyy-MM-dd HH:mm')}
           </span>
         </div>
       </CardHeader>
