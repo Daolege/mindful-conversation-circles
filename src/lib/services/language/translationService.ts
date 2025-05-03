@@ -42,22 +42,33 @@ export async function getTranslationsByLanguage(languageCode: string): Promise<T
     
     if (Array.isArray(data)) {
       const validTranslations = data.filter((item): item is NonNullable<typeof item> => {
-        if (item === null) return false;
+        // First check if item is null
+        if (item === null) {
+          return false;
+        }
         
+        // Now that we know item is not null, check its properties
         // Check object type
-        if (typeof item !== 'object') return false;
+        if (typeof item !== 'object') {
+          return false;
+        }
         
-        // Check all required properties exist
-        if (!('language_code' in item)) return false;
-        if (!('namespace' in item)) return false;
-        if (!('key' in item)) return false;
-        if (!('value' in item)) return false;
+        // Check all required properties exist and are not null
+        if (!('language_code' in item) || item.language_code === null) {
+          return false;
+        }
         
-        // Check none of the properties are null
-        if (item.language_code === null) return false;
-        if (item.namespace === null) return false;
-        if (item.key === null) return false;
-        if (item.value === null) return false;
+        if (!('namespace' in item) || item.namespace === null) {
+          return false;
+        }
+        
+        if (!('key' in item) || item.key === null) {
+          return false;
+        }
+        
+        if (!('value' in item) || item.value === null) {
+          return false;
+        }
         
         return true;
       });

@@ -161,20 +161,32 @@ export const useTranslations = () => {
       // Ensure we return a valid array of TranslationItem objects
       const validItems = Array.isArray(data) ? 
         data.filter((item): item is NonNullable<typeof item> => {
-          if (item === null) return false;
+          // First check if item is null
+          if (item === null) {
+            return false;
+          }
           
+          // Now item is definitely not null, we can check its properties
           // Explicit check for each property
-          if (typeof item !== 'object') return false;
-          if (!('language_code' in item)) return false;
-          if (!('namespace' in item)) return false;
-          if (!('key' in item)) return false;
-          if (!('value' in item)) return false;
+          if (typeof item !== 'object') {
+            return false;
+          }
           
-          // Null checks for each property
-          if (item.language_code === null) return false;
-          if (item.namespace === null) return false;
-          if (item.key === null) return false;
-          if (item.value === null) return false;
+          if (!('language_code' in item) || item.language_code === null) {
+            return false;
+          }
+          
+          if (!('namespace' in item) || item.namespace === null) {
+            return false;
+          }
+          
+          if (!('key' in item) || item.key === null) {
+            return false;
+          }
+          
+          if (!('value' in item) || item.value === null) {
+            return false;
+          }
           
           return true;
         }) : [];

@@ -18,14 +18,24 @@ export async function getAllLanguages(): Promise<Language[]> {
     // Check if data is valid
     if (Array.isArray(data) && data.length > 0) {
       const validLanguages = data.filter((item): item is NonNullable<typeof item> => {
-        if (item === null) return false;
+        // First check if item is null
+        if (item === null) {
+          return false;
+        }
         
+        // Now we know item is not null, we can safely check its properties
         // Check each required property
-        if (typeof item !== 'object') return false;
-        if (!('id' in item)) return false;
-        if (!('code' in item)) return false;
-        if (item.id === null) return false;
-        if (item.code === null) return false;
+        if (typeof item !== 'object') {
+          return false;
+        }
+        
+        if (!('id' in item) || item.id === null) {
+          return false;
+        }
+        
+        if (!('code' in item) || item.code === null) {
+          return false;
+        }
         
         return true;
       });
@@ -59,14 +69,24 @@ export async function getEnabledLanguages(): Promise<Language[]> {
     // Check if data is valid
     if (Array.isArray(data) && data.length > 0) {
       const validLanguages = data.filter((item): item is NonNullable<typeof item> => {
-        if (item === null) return false;
+        // First check if item is null
+        if (item === null) {
+          return false;
+        }
         
+        // Now we know item is not null, we can safely check its properties
         // Check each required property
-        if (typeof item !== 'object') return false;
-        if (!('id' in item)) return false;
-        if (!('code' in item)) return false; 
-        if (item.id === null) return false;
-        if (item.code === null) return false;
+        if (typeof item !== 'object') {
+          return false;
+        }
+        
+        if (!('id' in item) || item.id === null) {
+          return false;
+        }
+        
+        if (!('code' in item) || item.code === null) {
+          return false;
+        }
         
         return true;
       });
@@ -172,14 +192,17 @@ export async function deleteLanguage(languageId: number): Promise<{ success: boo
     if (Array.isArray(language) && language.length > 0) {
       const langData = language[0];
       
+      // Null check for langData
       if (langData === null) {
         return { success: false, error: new Error('Invalid language data received') };
       }
       
+      // Type check for langData
       if (typeof langData !== 'object') {
         return { success: false, error: new Error('Invalid language data type') };
       }
       
+      // Check if code property exists
       if (!('code' in langData)) {
         return { success: false, error: new Error('Language data has no code property') };
       }

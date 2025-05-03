@@ -104,7 +104,7 @@ i18n.use({
           }
           
           // Now it's safe to add to the accumulator
-          acc[item.key] = item.value;
+          acc[item.key as string] = item.value as string;
           return acc;
         }, {} as Record<string, string>);
         
