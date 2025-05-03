@@ -68,34 +68,64 @@ export async function getSectionsByCourseId(courseId: number): Promise<SectionSe
     const sectionsWithLectures: CourseSection[] = [];
 
     for (const section of sectionsData) {
-      const { data: lecturesData, error: lecturesError } = await supabase
-        .from('course_lectures')
-        .select(`
-          id, 
-          title, 
-          position,
-          duration,
-          video_url,
-          has_homework,
-          is_free,
-          requires_homework_completion,
-          section_id,
-          description
-        `)
-        .eq('section_id', section.id)
-        .order('position', { ascending: true });
+      try {
+        // First check what columns exist in the course_lectures table
+        const { data: lecturesData, error: lecturesError } = await supabase
+          .from('course_lectures')
+          .select(`
+            id, 
+            title, 
+            position,
+            duration,
+            section_id,
+            is_free,
+            has_homework,
+            requires_homework_completion
+          `)
+          .eq('section_id', section.id)
+          .order('position', { ascending: true });
 
-      if (lecturesError) {
-        console.error(`Error fetching lectures for section ${section.id}:`, lecturesError);
-        // Continue with empty lectures array rather than failing the whole request
+        if (lecturesError) {
+          console.error(`Error fetching lectures for section ${section.id}:`, lecturesError);
+          // Continue with empty lectures array rather than failing the whole request
+          sectionsWithLectures.push({
+            ...section,
+            lectures: []
+          });
+        } else {
+          // Check for video_url column in a separate query to handle potential schema differences
+          const videoUrlPromises = (lecturesData || []).map(async (lecture) => {
+            try {
+              const { data: videoData } = await supabase
+                .from('course_lectures')
+                .select('video_url, description')
+                .eq('id', lecture.id)
+                .single();
+                
+              return {
+                ...lecture,
+                video_url: videoData?.video_url,
+                description: videoData?.description
+              };
+            } catch (err) {
+              console.log(`Could not fetch video_url for lecture ${lecture.id}:`, err);
+              return lecture;
+            }
+          });
+          
+          const lecturesWithVideoUrl = await Promise.all(videoUrlPromises);
+          
+          sectionsWithLectures.push({
+            ...section,
+            lectures: lecturesWithVideoUrl as CourseLecture[]
+          });
+        }
+      } catch (error) {
+        console.error(`Error processing section ${section.id}:`, error);
+        // Add section without lectures rather than failing
         sectionsWithLectures.push({
           ...section,
           lectures: []
-        });
-      } else {
-        sectionsWithLectures.push({
-          ...section,
-          lectures: lecturesData || []
         });
       }
     }
