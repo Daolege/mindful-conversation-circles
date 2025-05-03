@@ -17,14 +17,17 @@ export async function getAllLanguages(): Promise<Language[]> {
     
     // Check if data is valid
     if (Array.isArray(data) && data.length > 0) {
-      const validLanguages = data.filter((item): item is NonNullable<typeof item> => 
-        item !== null && 
-        typeof item === 'object' && 
-        'id' in item && 
-        'code' in item &&
-        item.id !== null &&
-        item.code !== null
-      );
+      const validLanguages = data.filter((item): item is NonNullable<typeof item> => {
+        if (item === null) return false;
+        
+        return (
+          typeof item === 'object' && 
+          'id' in item && 
+          'code' in item &&
+          item.id !== null &&
+          item.code !== null
+        );
+      });
       
       if (validLanguages.length > 0) {
         return validLanguages as unknown as Language[];
@@ -54,14 +57,17 @@ export async function getEnabledLanguages(): Promise<Language[]> {
     
     // Check if data is valid
     if (Array.isArray(data) && data.length > 0) {
-      const validLanguages = data.filter((item): item is NonNullable<typeof item> => 
-        item !== null && 
-        typeof item === 'object' && 
-        'id' in item && 
-        'code' in item &&
-        item.id !== null &&
-        item.code !== null
-      );
+      const validLanguages = data.filter((item): item is NonNullable<typeof item> => {
+        if (item === null) return false;
+        
+        return (
+          typeof item === 'object' && 
+          'id' in item && 
+          'code' in item &&
+          item.id !== null &&
+          item.code !== null
+        );
+      });
       
       if (validLanguages.length > 0) {
         return validLanguages as unknown as Language[];
@@ -164,8 +170,11 @@ export async function deleteLanguage(languageId: number): Promise<{ success: boo
     if (Array.isArray(language) && language.length > 0) {
       const langData = language[0];
       
-      if (langData !== null && 
-          typeof langData === 'object' && 
+      if (langData === null) {
+        return { success: false, error: new Error('Invalid language data received') };
+      }
+      
+      if (typeof langData === 'object' && 
           'code' in langData && 
           typeof langData.code === 'string' && 
           langData.code !== null) {

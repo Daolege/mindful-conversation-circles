@@ -41,18 +41,21 @@ export async function getTranslationsByLanguage(languageCode: string): Promise<T
     }
     
     if (Array.isArray(data)) {
-      const validTranslations = data.filter((item): item is NonNullable<typeof item> => 
-        item !== null &&
-        typeof item === 'object' &&
-        'language_code' in item &&
-        'namespace' in item &&
-        'key' in item &&
-        'value' in item &&
-        item.language_code !== null &&
-        item.namespace !== null &&
-        item.key !== null &&
-        item.value !== null
-      );
+      const validTranslations = data.filter((item): item is NonNullable<typeof item> => {
+        if (item === null) return false;
+        
+        return (
+          typeof item === 'object' &&
+          'language_code' in item &&
+          'namespace' in item &&
+          'key' in item &&
+          'value' in item &&
+          item.language_code !== null &&
+          item.namespace !== null &&
+          item.key !== null &&
+          item.value !== null
+        );
+      });
       
       return validTranslations as unknown as TranslationItem[];
     }

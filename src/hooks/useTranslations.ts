@@ -141,18 +141,21 @@ export const useTranslations = () => {
       
       // Ensure we return a valid array of TranslationItem objects
       const validItems = Array.isArray(data) ? 
-        data.filter((item): item is NonNullable<typeof item> => 
-          item !== null && 
-          typeof item === 'object' &&
-          'language_code' in item &&
-          'namespace' in item &&
-          'key' in item &&
-          'value' in item &&
-          item.language_code !== null &&
-          item.namespace !== null &&
-          item.key !== null &&
-          item.value !== null
-        ) : [];
+        data.filter((item): item is NonNullable<typeof item> => {
+          if (item === null) return false;
+          
+          return (
+            typeof item === 'object' &&
+            'language_code' in item &&
+            'namespace' in item &&
+            'key' in item &&
+            'value' in item &&
+            item.language_code !== null &&
+            item.namespace !== null &&
+            item.key !== null &&
+            item.value !== null
+          );
+        }) : [];
       
       // We've filtered out null items, safe to type assert now
       const translations = validItems as unknown as TranslationItem[];
