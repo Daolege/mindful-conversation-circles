@@ -55,83 +55,78 @@ export const useTranslations = () => {
       );
       
       if (selectError) throw selectError;
-      
-      // Check if existingTranslation is array and has valid data
-      if (existingTranslation && 
-          Array.isArray(existingTranslation) && 
-          existingTranslation.length > 0) {
+
+      // Early return pattern for better readability
+      // If no data returned or empty array, insert new translation
+      if (!existingTranslation || 
+          !Array.isArray(existingTranslation) || 
+          existingTranslation.length === 0) {
         
-        const translationData = existingTranslation[0];
-        
-        // If translationData is null or not valid, treat as new translation
-        if (translationData === null || typeof translationData !== 'object' || !('id' in translationData)) {
-          const { error: insertError } = await insertIntoTable(
-            'translations',
-            {
-              language_code: language,
-              namespace,
-              key,
-              value,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            }
-          );
-          
-          if (insertError) throw insertError;
-          return { success: true };
-        }
-        
-        // Ensure translationData is not null and has a valid ID before updating
-        if (translationData !== null && isValidTranslationRecord(translationData)) {
-          // 更新已有翻译
-          const translationId = translationData.id;
-          
-          const { error: updateError } = await updateTable(
-            'translations',
-            { value, updated_at: new Date().toISOString() },
-            { id: translationId }
-          );
-          
-          if (updateError) throw updateError;
-        } else {
-          // If we have a record but no valid ID, treat as new translation
-          const { error: insertError } = await insertIntoTable(
-            'translations',
-            {
-              language_code: language,
-              namespace,
-              key,
-              value,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            }
-          );
-          
-          if (insertError) throw insertError;
-        }
-      } else {
-        // 添加新翻译
-        const { error: insertError } = await insertIntoTable(
-          'translations',
-          {
-            language_code: language,
-            namespace,
-            key,
-            value,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          }
-        );
-          
-        if (insertError) throw insertError;
+        return await insertNewTranslation(language, namespace, key, value);
       }
       
-      // 重新加载该命名空间的翻译
+      // Get the first item from the array
+      const translationData = existingTranslation[0];
+      
+      // If the translation data is invalid or null, insert new translation
+      if (!translationData || !isValidTranslationRecord(translationData)) {
+        return await insertNewTranslation(language, namespace, key, value);
+      }
+      
+      // At this point, we know translationData is valid and has an ID
+      const translationId = translationData.id;
+      
+      // Update the existing translation
+      const { error: updateError } = await updateTable(
+        'translations',
+        { value, updated_at: new Date().toISOString() },
+        { id: translationId }
+      );
+      
+      if (updateError) throw updateError;
+      
+      // Reload the translations for this namespace
+      await i18n.reloadResources([language], [namespace]);
+      
+      return { success: true };
+      
+    } catch (error) {
+      console.error('Error updating translation:', error);
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
+  };
+  
+  // Helper function to insert a new translation
+  const insertNewTranslation = async (
+    language: string,
+    namespace: string,
+    key: string,
+    value: string
+  ) => {
+    try {
+      const { error: insertError } = await insertIntoTable(
+        'translations',
+        {
+          language_code: language,
+          namespace,
+          key,
+          value,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }
+      );
+      
+      if (insertError) throw insertError;
+      
+      // Reload the translations for this namespace
       await i18n.reloadResources([language], [namespace]);
       
       return { success: true };
     } catch (error) {
-      console.error('Error updating translation:', error);
+      console.error('Error inserting translation:', error);
       return { 
         success: false, 
         error: error instanceof Error ? error.message : 'Unknown error'
