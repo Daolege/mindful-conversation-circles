@@ -17,10 +17,10 @@ export function AdminSettings() {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="mb-4">
           <TabsTrigger value="system">{t('admin:systemSettings')}</TabsTrigger>
-          <TabsTrigger value="company">公司信息</TabsTrigger>
-          <TabsTrigger value="legal">法律文档</TabsTrigger>
-          <TabsTrigger value="payment">支付图标</TabsTrigger>
-          <TabsTrigger value="exchange">汇率设置</TabsTrigger>
+          <TabsTrigger value="company">{t('admin:companyInfo')}</TabsTrigger>
+          <TabsTrigger value="legal">{t('admin:legalDocuments')}</TabsTrigger>
+          <TabsTrigger value="payment">{t('admin:paymentIcons')}</TabsTrigger>
+          <TabsTrigger value="exchange">{t('admin:exchangeRates')}</TabsTrigger>
         </TabsList>
         
         <TabsContent value="system">
