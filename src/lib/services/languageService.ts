@@ -48,7 +48,7 @@ export async function getAllLanguages(): Promise<Language[]> {
     
     // Check if data is valid
     if (Array.isArray(data) && data.length > 0) {
-      const validLanguages = data.filter(item => 
+      const validLanguages = data.filter((item): item is NonNullable<typeof item> => 
         item !== null && 
         typeof item === 'object' && 
         'id' in item && 
@@ -56,7 +56,7 @@ export async function getAllLanguages(): Promise<Language[]> {
       );
       
       if (validLanguages.length > 0) {
-        return validLanguages as Language[];
+        return validLanguages as unknown as Language[];
       }
     }
     
@@ -83,7 +83,7 @@ export async function getEnabledLanguages(): Promise<Language[]> {
     
     // Check if data is valid
     if (Array.isArray(data) && data.length > 0) {
-      const validLanguages = data.filter(item => 
+      const validLanguages = data.filter((item): item is NonNullable<typeof item> => 
         item !== null && 
         typeof item === 'object' && 
         'id' in item && 
@@ -91,7 +91,7 @@ export async function getEnabledLanguages(): Promise<Language[]> {
       );
       
       if (validLanguages.length > 0) {
-        return validLanguages as Language[];
+        return validLanguages as unknown as Language[];
       }
     }
     
@@ -186,7 +186,8 @@ export async function deleteLanguage(languageId: number): Promise<{ success: boo
       return { success: false, error: fetchError as unknown as Error };
     }
     
-    if (Array.isArray(language) && language.length > 0 && language[0] && typeof language[0] === 'object' && 'code' in language[0] && language[0].code) {
+    if (Array.isArray(language) && language.length > 0 && language[0] !== null && 
+        typeof language[0] === 'object' && 'code' in language[0] && language[0].code !== null) {
       const langCode = language[0].code as string;
       if (langCode === 'en' || langCode === 'zh') {
         return { 
@@ -253,7 +254,7 @@ export async function getTranslationsByLanguage(languageCode: string): Promise<T
     }
     
     if (Array.isArray(data)) {
-      const validTranslations = data.filter(item => 
+      const validTranslations = data.filter((item): item is NonNullable<typeof item> => 
         item !== null &&
         typeof item === 'object' &&
         'language_code' in item &&
@@ -262,7 +263,7 @@ export async function getTranslationsByLanguage(languageCode: string): Promise<T
         'value' in item
       );
       
-      return validTranslations as TranslationItem[];
+      return validTranslations as unknown as TranslationItem[];
     }
     
     return [];

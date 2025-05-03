@@ -68,10 +68,15 @@ export const useTranslations = () => {
           existingTranslation[0].id !== null) {
         
         // 更新已有翻译
+        const translationId = existingTranslation[0].id;
+        if (translationId === null) {
+          throw new Error('Translation ID is null');
+        }
+        
         const { error: updateError } = await updateTable(
           'translations',
           { value, updated_at: new Date().toISOString() },
-          { id: existingTranslation[0].id }
+          { id: translationId }
         );
         
         if (updateError) throw updateError;
@@ -118,7 +123,7 @@ export const useTranslations = () => {
       
       // Ensure we return a valid array of TranslationItem objects
       const validItems = Array.isArray(data) ? 
-        data.filter(item => 
+        data.filter((item): item is NonNullable<typeof item> => 
           item !== null && 
           typeof item === 'object' &&
           'language_code' in item &&
@@ -127,8 +132,8 @@ export const useTranslations = () => {
           'value' in item
         ) : [];
       
-      // Type assertion after validation - this is safe now
-      const translations = validItems as TranslationItem[];
+      // We've filtered out null items, safe to type assert now
+      const translations = validItems as unknown as TranslationItem[];
       
       return { 
         success: true, 

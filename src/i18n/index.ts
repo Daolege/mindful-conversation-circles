@@ -83,7 +83,7 @@ i18n.use({
       if (!error && data && Array.isArray(data) && data.length > 0) {
         const translations = data.reduce((acc: Record<string, string>, item) => {
           // Only proceed if item is an object with key and value properties
-          if (item && 
+          if (item !== null && 
               typeof item === 'object' && 
               item !== null &&
               'key' in item && 
