@@ -36,9 +36,15 @@ export const createCourseNew = async (courseData: Partial<CourseNew> & { title: 
   try {
     console.log('[courseNewService] 创建新课程:', courseData);
     
+    // Make sure to handle language field explicitly
+    const dataToInsert = {
+      ...courseData,
+      language: courseData.language || courseData.category || 'zh', // Use language, fallback to category
+    };
+    
     const { data, error } = await supabase
       .from('courses_new')
-      .insert(courseData)
+      .insert(dataToInsert)
       .select();
       
     if (error) {
@@ -59,14 +65,23 @@ export const updateCourseNew = async (courseId: number, updates: Partial<CourseN
   try {
     console.log(`[courseNewService] 更新课程 ${courseId}:`, updates);
     
+    // Make sure to handle language field explicitly
+    const dataToUpdate = {
+      ...updates,
+      // If language is being updated, make sure it's set properly
+      ...(updates.language !== undefined && { language: updates.language }),
+      updated_at: new Date().toISOString()
+    };
+    
     const { data, error } = await supabase
       .from('courses_new')
-      .update(updates)
+      .update(dataToUpdate)
       .eq('id', courseId)
       .select();
       
     if (error) {
       console.error('[courseNewService] 更新课程出错:', error);
+      console.error('[courseNewService] 错误详情:', JSON.stringify(error));
       return { data: null, error };
     }
     

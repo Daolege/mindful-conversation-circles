@@ -1,4 +1,3 @@
-
 export type Json =
   | string
   | number
@@ -487,6 +486,7 @@ export interface Database {
           thumbnail_url?: string
           instructor_id?: string
           category?: string
+          language?: string  // Add language field to match our application code
           status?: string
           is_featured?: boolean
           display_order?: number
@@ -502,6 +502,7 @@ export interface Database {
           thumbnail_url?: string
           instructor_id?: string
           category?: string
+          language?: string  // Add language field to match our application code
           status?: string
           is_featured?: boolean
           display_order?: number
@@ -517,6 +518,7 @@ export interface Database {
           thumbnail_url?: string
           instructor_id?: string
           category?: string
+          language?: string  // Add language field to match our application code
           status?: string
           is_featured?: boolean
           display_order?: number

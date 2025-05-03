@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getCourseNewById } from "@/lib/services/courseNewService";
 import { CourseEditorProvider } from "@/components/admin/course-editor/CourseEditorContext";
 import { getObjectives, getRequirements, getAudiences } from "@/lib/services/courseSettingsService";
+import { runAllLanguageMigrations } from '@/lib/services/language/migrationService';
 
 const CourseNewEditorPage = () => {
   const { user, loading } = useAuth();
@@ -294,6 +295,22 @@ const CourseNewEditorPage = () => {
     );
   }
 
+  useEffect(() => {
+    const initializeDatabase = async () => {
+      try {
+        // Only run migration if user is an admin
+        if (user && isAdmin) {
+          console.log("[CourseNewEditorPage] Running language migrations");
+          await runAllLanguageMigrations();
+        }
+      } catch (err) {
+        console.error("[CourseNewEditorPage] Error initializing database:", err);
+      }
+    };
+    
+    initializeDatabase();
+  }, [user, isAdmin]);
+  
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />

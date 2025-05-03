@@ -35,10 +35,11 @@ interface BasicInfoFormProps {
 export const BasicInfoForm = ({ onTabChange, onCourseCreated, courseId }: BasicInfoFormProps) => {
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(!!courseId);
+  const [languages, setLanguages] = useState<any[]>([]);
   const navigate = useNavigate();
   const { t } = useTranslation(['admin']);
   
-  // 初始化表单
+  // Initialize form
   const form = useForm<CourseFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -53,17 +54,50 @@ export const BasicInfoForm = ({ onTabChange, onCourseCreated, courseId }: BasicI
     }
   });
 
-  // 语言选项
-  const languageOptions = [
-    { value: "zh", label: "中文" },
-    { value: "en", label: "English" },
-    { value: "fr", label: "Français" },
-    { value: "de", label: "Deutsch" },
-    { value: "es", label: "Español" },
-    { value: "ja", label: "日本語" },
-    { value: "ko", label: "한국어" },
-    { value: "ru", label: "Русский" }
-  ];
+  // Load available languages from the database
+  useEffect(() => {
+    const loadLanguages = async () => {
+      try {
+        const { data: languagesData, error } = await supabase
+          .from('languages')
+          .select('code, name, nativeName')
+          .eq('enabled', true)
+          .order('name', { ascending: true });
+          
+        if (error) {
+          console.error("Error loading languages:", error);
+          return;
+        }
+        
+        if (languagesData && languagesData.length > 0) {
+          // Transform to the format needed for select options
+          const languageOptions = languagesData.map(lang => ({
+            value: lang.code,
+            label: `${lang.nativeName} (${lang.name})`
+          }));
+          
+          setLanguages(languageOptions);
+          console.log("Loaded languages:", languageOptions.length);
+        } else {
+          // Fallback to hardcoded languages if none found in database
+          setLanguages([
+            { value: "zh", label: "中文" },
+            { value: "en", label: "English" },
+            { value: "fr", label: "Français" },
+            { value: "de", label: "Deutsch" },
+            { value: "es", label: "Español" },
+            { value: "ja", label: "日本語" },
+            { value: "ko", label: "한국어" },
+            { value: "ru", label: "Русский" }
+          ]);
+        }
+      } catch (err) {
+        console.error("Error loading languages:", err);
+      }
+    };
+    
+    loadLanguages();
+  }, []);
 
   // If there's courseId, load existing course data
   useEffect(() => {
@@ -85,10 +119,13 @@ export const BasicInfoForm = ({ onTabChange, onCourseCreated, courseId }: BasicI
         }
         
         if (data) {
-          // Set form values - handle different data structures
-          // Use type assertion to handle the language property which might be missing in the database response
+          // Make sure we handle the language field correctly
           const courseData = data as any;
-          const languageValue = courseData.language || courseData.category || "zh"; // Use language or fallback to category
+          // Use explicit language field first, then fallback to category if needed
+          const languageValue = courseData.language || courseData.category || "zh";
+          
+          console.log("Loaded course data:", courseData);
+          console.log("Language value:", languageValue);
           
           form.reset({
             title: courseData.title || "",
@@ -117,6 +154,10 @@ export const BasicInfoForm = ({ onTabChange, onCourseCreated, courseId }: BasicI
     try {
       setLoading(true);
       
+      // Log the values being sent to the server
+      console.log("Submitting form values:", values);
+      console.log("Language being submitted:", values.language);
+      
       if (courseId) {
         // Update existing course
         const { error } = await supabase
@@ -126,7 +167,7 @@ export const BasicInfoForm = ({ onTabChange, onCourseCreated, courseId }: BasicI
             description: values.description,
             price: values.price,
             original_price: values.original_price,
-            language: values.language,
+            language: values.language, // Make sure language is included
             currency: values.currency,
             status: values.status,
             display_order: values.display_order,
@@ -136,6 +177,7 @@ export const BasicInfoForm = ({ onTabChange, onCourseCreated, courseId }: BasicI
         
         if (error) {
           console.error("Error updating course:", error);
+          console.error("Error details:", JSON.stringify(error));
           toast.error("更新课程失败");
           return;
         }
@@ -299,7 +341,7 @@ export const BasicInfoForm = ({ onTabChange, onCourseCreated, courseId }: BasicI
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {languageOptions.map(option => (
+                    {languages.map(option => (
                       <SelectItem key={option.value} value={option.value}>
                         {option.label}
                       </SelectItem>
