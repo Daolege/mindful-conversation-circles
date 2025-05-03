@@ -110,21 +110,22 @@ export async function rollbackToVersion(
       return { success: false, error: new Error('Version not found') };
     }
     
-    // Type the first item correctly
-    const firstItem = data[0] as { new_value?: string } | null;
+    // Get the value to restore - we'll use a more direct approach with robust type checking
+    const firstItem = data[0];
     
-    // Specific null check for firstItem
-    if (firstItem === null) {
+    // Explicit null check
+    if (firstItem === null || firstItem === undefined) {
       return { success: false, error: new Error('Invalid data format: item is null') };
     }
     
-    // Check if firstItem has the new_value property
-    if (!('new_value' in firstItem) || typeof firstItem.new_value !== 'string') {
+    // Type check and property access in one go using a type guard
+    if (typeof firstItem !== 'object' || !('new_value' in firstItem) || 
+        typeof firstItem.new_value !== 'string') {
       return { success: false, error: new Error('Invalid data format: missing or invalid new_value') };
     }
     
-    // Now we can safely use firstItem.new_value
-    const valueToRestore: string = firstItem.new_value;
+    // Now we can safely access the new_value
+    const valueToRestore = firstItem.new_value;
     
     // Get the current translation to update
     const { data: currentData, error: currentError } = await selectFromTable(
@@ -143,48 +144,28 @@ export async function rollbackToVersion(
       return { success: false, error: new Error('Translation not found') };
     }
     
-    // Define the type explicitly to avoid conversion issues
-    interface TranslationFields {
-      language_code: string;
-      namespace: string;
-      key: string;
-    }
+    // Get the translation data with robust type checking
+    const currentItem = currentData[0];
     
-    // Safely get the first item
-    const currentTranslationData = currentData[0];
-    
-    // Proper null check
-    if (currentTranslationData === null || currentTranslationData === undefined) {
+    // Explicit null check
+    if (currentItem === null || currentItem === undefined) {
       return { success: false, error: new Error('Invalid translation data: item is null') };
     }
     
-    // Create a non-null reference to the data after we've checked it
-    const nonNullData = currentTranslationData;
-    
-    // Type guard to ensure it's an object before accessing properties
-    if (typeof nonNullData !== 'object') {
-      return { success: false, error: new Error('Invalid translation data: item is not an object') };
-    }
-    
-    // Now check properties with the non-null reference
-    const hasLanguageCode = 'language_code' in nonNullData;
-    const hasNamespace = 'namespace' in nonNullData;
-    const hasKey = 'key' in nonNullData;
-    
-    // Check if all required properties exist
-    if (!hasLanguageCode || !hasNamespace || !hasKey) {
+    // Type guard for required properties
+    if (typeof currentItem !== 'object' || 
+        !('language_code' in currentItem) || 
+        !('namespace' in currentItem) || 
+        !('key' in currentItem)) {
       return { success: false, error: new Error('Invalid translation data structure') };
     }
     
-    // After validation, we can safely assert the type
-    const currentItem = nonNullData as TranslationFields;
+    // Type assertion with confidence - we've verified the structure
+    const language_code = currentItem.language_code as string;
+    const namespace = currentItem.namespace as string;
+    const key = currentItem.key as string;
     
-    // Extract properties to local variables for clarity and type safety
-    const language_code: string = currentItem.language_code;
-    const namespace: string = currentItem.namespace;
-    const key: string = currentItem.key;
-    
-    // Now create and send the update with explicit typing
+    // Create update item
     const updateItem: TranslationItem = {
       id: translationId,
       language_code,
