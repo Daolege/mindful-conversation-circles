@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Navbar from "@/components/Navbar";
@@ -227,7 +228,7 @@ const Admin = () => {
                   animate="visible"
                   exit="exit"
                 >
-                  <TabsContent value="overview">
+                  <TabsContent value="overview" forceMount>
                     <DashboardStatistics />
                   </TabsContent>
                 </motion.div>
@@ -241,7 +242,7 @@ const Admin = () => {
                   animate="visible"
                   exit="exit"
                 >
-                  <TabsContent value="users">
+                  <TabsContent value="users" forceMount>
                     <UserManagement />
                   </TabsContent>
                 </motion.div>
@@ -255,7 +256,7 @@ const Admin = () => {
                   animate="visible"
                   exit="exit"
                 >
-                  <TabsContent value="courses">
+                  <TabsContent value="courses" forceMount>
                     <CourseManagement />
                   </TabsContent>
                 </motion.div>
@@ -269,7 +270,7 @@ const Admin = () => {
                   animate="visible"
                   exit="exit"
                 >
-                  <TabsContent value="courses-new">
+                  <TabsContent value="courses-new" forceMount>
                     <CourseManagementNew />
                   </TabsContent>
                 </motion.div>
@@ -283,7 +284,7 @@ const Admin = () => {
                   animate="visible"
                   exit="exit"
                 >
-                  <TabsContent value="orders">
+                  <TabsContent value="orders" forceMount>
                     <OrderManagement />
                   </TabsContent>
                 </motion.div>
@@ -297,7 +298,7 @@ const Admin = () => {
                   animate="visible"
                   exit="exit"
                 >
-                  <TabsContent value="subscriptions">
+                  <TabsContent value="subscriptions" forceMount>
                     <SubscriptionPlanManagement />
                   </TabsContent>
                 </motion.div>
@@ -311,7 +312,7 @@ const Admin = () => {
                   animate="visible"
                   exit="exit"
                 >
-                  <TabsContent value="settings">
+                  <TabsContent value="settings" forceMount>
                     <AdminSettings />
                   </TabsContent>
                 </motion.div>

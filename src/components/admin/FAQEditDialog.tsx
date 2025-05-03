@@ -94,13 +94,27 @@ export const FAQEditDialog: React.FC<FAQEditDialogProps> = ({
     }
   }, [faq]);
   
-  // Reset form when dialog closes
+  // Reset form and states when dialog opens/closes
   useEffect(() => {
     if (!open) {
-      // Reset saving state on dialog close
-      setIsSaving(false);
+      // Reset all states on dialog close with a delay to avoid state conflicts
+      const timer = setTimeout(() => {
+        setIsSaving(false);
+        setIsLoading(false);
+        
+        if (!faq) {
+          // Only reset these if we were creating a new FAQ
+          setTranslations({});
+          setCategory('general');
+          setIsFeatured(false);
+          setDisplayOrder(0);
+          setIsActive(true);
+        }
+      }, 100);
+      
+      return () => clearTimeout(timer);
     }
-  }, [open]);
+  }, [open, faq]);
   
   // Set default active language if not set
   useEffect(() => {
@@ -130,7 +144,7 @@ export const FAQEditDialog: React.FC<FAQEditDialogProps> = ({
     // Check that active language has both question and answer
     if (activeLanguage && translations[activeLanguage]) {
       const { question, answer } = translations[activeLanguage];
-      if (!question.trim() || !answer.trim()) {
+      if (!question?.trim() || !answer?.trim()) {
         toast.error(t('admin:errorIncompleteCurrentTranslation'));
         return false;
       }
@@ -143,6 +157,7 @@ export const FAQEditDialog: React.FC<FAQEditDialogProps> = ({
     if (!validateForm()) return;
     
     setIsSaving(true);
+    
     try {
       let faqId: number;
       
@@ -194,11 +209,13 @@ export const FAQEditDialog: React.FC<FAQEditDialogProps> = ({
         onSuccess();
       }
       
-      // Close dialog after successful save
+      // First mark as not saving
+      setIsSaving(false);
+      
+      // Close dialog after a short delay to ensure state updates have completed
       setTimeout(() => {
-        setIsSaving(false);
         onOpenChange(false);
-      }, 300);
+      }, 150);
       
     } catch (error) {
       console.error('Error saving FAQ:', error);
@@ -214,14 +231,19 @@ export const FAQEditDialog: React.FC<FAQEditDialogProps> = ({
     { value: 'other', label: t('admin:otherCategory') }
   ];
   
+  const handleDialogChange = (newOpen: boolean) => {
+    // Prevent closing the dialog while saving is in progress
+    if (isSaving && !newOpen) {
+      return;
+    }
+    
+    onOpenChange(newOpen);
+  };
+  
   return (
     <Dialog 
       open={open} 
-      onOpenChange={(newOpen) => {
-        // Only allow closing if not currently saving
-        if (isSaving && !newOpen) return;
-        onOpenChange(newOpen);
-      }}
+      onOpenChange={handleDialogChange}
     >
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
