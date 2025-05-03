@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { StatCard } from "@/components/admin/StatCard";
 import { QuickActionButton } from "@/components/admin/QuickActionButton";
 import {
@@ -17,8 +17,10 @@ import { StatsSkeleton } from "@/components/admin/StatsSkeleton";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useTranslations } from "@/hooks/useTranslations";
 
 export const DashboardStatistics = () => {
+  const { t } = useTranslations();
   const [isDemo, setIsDemo] = useState(false);
   const [showSkeleton, setShowSkeleton] = useState(true);
   const [visibleSections, setVisibleSections] = useState<string[]>([]);
@@ -62,7 +64,7 @@ export const DashboardStatistics = () => {
 
         if (error) {
           console.error("Error fetching dashboard stats:", error);
-          toast.error("获取统计数据失败");
+          toast.error(t('errors:fetchStatsFailed'));
           throw error;
         }
 
@@ -70,7 +72,7 @@ export const DashboardStatistics = () => {
         return data;
       } catch (error) {
         console.error("Error in dashboard stats query:", error);
-        toast.error("获取统计数据失败");
+        toast.error(t('errors:fetchStatsFailed'));
         throw error;
       }
     },
@@ -124,30 +126,30 @@ export const DashboardStatistics = () => {
   }, [visibleSections]);
 
   const handleExport = () => {
-    alert("导出功能正在开发中...");
+    alert(t('admin:exportFeatureInDevelopment'));
   };
 
   const handleSync = () => {
-    toast.info("正在同步数据...");
+    toast.info(t('admin:syncingData'));
     refetch().then(() => {
-      toast.success("数据同步成功");
+      toast.success(t('admin:dataSyncSuccess'));
     }).catch(() => {
-      toast.error("数据同步失败");
+      toast.error(t('admin:dataSyncFailed'));
     });
   };
 
   const getPaymentTypeInfo = (type: string) => {
     switch (type) {
       case 'alipay':
-        return { icon: WalletIcon, name: '支付宝' };
+        return { icon: WalletIcon, name: t('admin:alipay') };
       case 'wechat':
-        return { icon: WalletIcon, name: '微信支付' };
+        return { icon: WalletIcon, name: t('admin:wechatPay') };
       case 'creditcard':
-        return { icon: CreditCardIcon, name: '信用卡' };
+        return { icon: CreditCardIcon, name: t('admin:creditCard') };
       case 'bank':
-        return { icon: CreditCardIcon, name: '银行转账' };
+        return { icon: CreditCardIcon, name: t('admin:bankTransfer') };
       default:
-        return { icon: DollarSign, name: type || '其他支付方式' };
+        return { icon: DollarSign, name: type || t('admin:otherPaymentMethod') };
     }
   };
 
@@ -165,41 +167,41 @@ export const DashboardStatistics = () => {
   return (
     <div className="space-y-12 max-w-[1400px] mx-auto px-4">
       <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-semibold text-gray-900">统计分析</h1>
+        <h1 className="text-2xl font-semibold text-gray-900">{t('admin:statisticsAnalysis')}</h1>
         <div className="flex gap-2">
-          <QuickActionButton icon={ArrowDownToLine} label="导出数据" onClick={handleExport} />
-          <QuickActionButton icon={RefreshCcw} label="同步数据" onClick={handleSync} />
+          <QuickActionButton icon={ArrowDownToLine} label={t('admin:exportData')} onClick={handleExport} />
+          <QuickActionButton icon={RefreshCcw} label={t('admin:syncData')} onClick={handleSync} />
         </div>
       </div>
 
       {/* 用户统计概览 */}
       <section id="stats-section-user" className="space-y-4">
-        <h2 className="text-xl font-semibold text-gray-800">用户统计概览</h2>
+        <h2 className="text-xl font-semibold text-gray-800">{t('admin:userStatsOverview')}</h2>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <StatCard
-            title="新增用户（本月）"
+            title={t('admin:newUsersThisMonth')}
             value={stats?.newUsersThisMonth || 0}
-            description="本月新注册的用户数量"
+            description={t('admin:newlyRegisteredUsers')}
             icon={User}
             trend={stats?.monthlyUserGrowthRate}
-            trendValue="较上月增长"
+            trendValue={t('admin:growthFromLastMonth')}
             isLoading={isFetching}
             category="user"
           />
           <StatCard
-            title="新增用户（年度）"
+            title={t('admin:newUsersThisYear')}
             value={stats?.newUsersThisYear || 0}
-            description="今年新注册的用户数量"
+            description={t('admin:newlyRegisteredUsersThisYear')}
             icon={User}
             trend={stats?.yearlyUserGrowthRate}
-            trendValue="较去年增长"
+            trendValue={t('admin:growthFromLastYear')}
             isLoading={isFetching}
             category="user"
           />
           <StatCard
-            title="累计用户数"
+            title={t('admin:totalUsers')}
             value={stats?.totalUsers || 0}
-            description="平台所有注册用户数量"
+            description={t('admin:allRegisteredUsers')}
             icon={User}
             isLoading={isFetching}
             category="user"
@@ -210,32 +212,32 @@ export const DashboardStatistics = () => {
       {/* 课程统计概览 - 仅在可见时渲染 */}
       {visibleSections.includes("course") && (
         <section id="stats-section-course" className="space-y-4">
-          <h2 className="text-xl font-semibold text-gray-800">课程统计概览</h2>
+          <h2 className="text-xl font-semibold text-gray-800">{t('admin:courseStatsOverview')}</h2>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <StatCard
-              title="新增课程（本月）"
+              title={t('admin:newCoursesThisMonth')}
               value={stats?.newCoursesThisMonth || 0}
-              description="本月新上线的课程数量"
+              description={t('admin:newlyLaunchedCoursesThisMonth')}
               icon={FileVideo2}
               trend={stats?.monthlyCoursesGrowthRate}
-              trendValue="较上月增长"
+              trendValue={t('admin:growthFromLastMonth')}
               isLoading={isFetching}
               category="course"
             />
             <StatCard
-              title="新增课程（年度）"
+              title={t('admin:newCoursesThisYear')}
               value={stats?.newCoursesThisYear || 0}
-              description="今年新上线的课程数量"
+              description={t('admin:newlyLaunchedCoursesThisYear')}
               icon={FileVideo2}
               trend={stats?.yearlyCoursesGrowthRate}
-              trendValue="较去年增长"
+              trendValue={t('admin:growthFromLastYear')}
               isLoading={isFetching}
               category="course"
             />
             <StatCard
-              title="累计课程数"
+              title={t('admin:totalCourses')}
               value={stats?.totalCourses || 0}
-              description="平台所有上线课程数量"
+              description={t('admin:allLaunchedCourses')}
               icon={FileVideo2}
               isLoading={isFetching}
               category="course"
@@ -252,36 +254,36 @@ export const DashboardStatistics = () => {
       {/* 财务统计概览 - 仅在可见时渲染 */}
       {visibleSections.includes("financial") && (
         <section id="stats-section-financial" className="space-y-4">
-          <h2 className="text-xl font-semibold text-gray-800">财务统计概览</h2>
+          <h2 className="text-xl font-semibold text-gray-800">{t('admin:financialStatsOverview')}</h2>
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             <StatCard
-              title="本月收入"
+              title={t('admin:monthlyRevenue')}
               value={`¥${(stats?.monthlyRevenue || 0).toLocaleString()}`}
-              description={`${stats?.monthlyOrders || 0} 笔订单`}
+              description={t('admin:ordersCount', { count: stats?.monthlyOrders || 0 })}
               icon={DollarSign}
               isLoading={isFetching}
               category="financial"
             />
             <StatCard
-              title="本季度收入"
+              title={t('admin:quarterlyRevenue')}
               value={`¥${(stats?.quarterlyRevenue || 0).toLocaleString()}`}
-              description={`${stats?.quarterlyOrders || 0} 笔订单`}
+              description={t('admin:ordersCount', { count: stats?.quarterlyOrders || 0 })}
               icon={CreditCardIcon}
               isLoading={isFetching}
               category="financial"
             />
             <StatCard
-              title="年度收入"
+              title={t('admin:yearlyRevenue')}
               value={`¥${(stats?.yearlyRevenue || 0).toLocaleString()}`}
-              description={`${stats?.yearlyOrders || 0} 笔订单`}
+              description={t('admin:ordersCount', { count: stats?.yearlyOrders || 0 })}
               icon={Calculator}
               isLoading={isFetching}
               category="financial"
             />
             <StatCard
-              title="累计收入"
+              title={t('admin:totalRevenue')}
               value={`¥${(stats?.totalRevenue || 0).toLocaleString()}`}
-              description={`${stats?.totalOrders || 0} 笔订单`}
+              description={t('admin:ordersCount', { count: stats?.totalOrders || 0 })}
               icon={Calculator}
               isLoading={isFetching}
               category="financial"
@@ -298,7 +300,7 @@ export const DashboardStatistics = () => {
       {/* 支付方式统计 - 仅在可见时渲染 */}
       {visibleSections.includes("payment") && (
         <section id="stats-section-payment" className="space-y-4">
-          <h2 className="text-xl font-semibold text-gray-800">支付方式统计</h2>
+          <h2 className="text-xl font-semibold text-gray-800">{t('admin:paymentMethodStats')}</h2>
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             {Array.isArray(stats?.paymentStats) && stats?.paymentStats.length > 0 ? (
               stats.paymentStats.map((stat: any, index: number) => {
@@ -308,7 +310,7 @@ export const DashboardStatistics = () => {
                     key={`${stat.paymentType}-${index}`}
                     title={name}
                     value={`¥${(stat.totalAmount || 0).toLocaleString()}`}
-                    description={`${stat.transactionCount || 0} 笔交易`}
+                    description={t('admin:transactionsCount', { count: stat.transactionCount || 0 })}
                     icon={PaymentIcon}
                     isLoading={isFetching}
                     category="payment"
@@ -317,7 +319,7 @@ export const DashboardStatistics = () => {
               })
             ) : (
               <div className="col-span-4 text-center py-8 text-gray-500">
-                暂无支付方式统计数据
+                {t('admin:noPaymentMethodStatsData')}
               </div>
             )}
           </div>

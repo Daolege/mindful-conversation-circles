@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { AlertCircle } from "lucide-react";
@@ -8,6 +9,7 @@ import { getAllCoursesNew } from "@/lib/services/courseNewService";
 import CourseGrid from "./courses/CourseGrid";
 import LoadingState from "./courses/LoadingState";
 import { transformCourseNewToOld } from "@/lib/utils/courseTransformers";
+import { useTranslations } from "@/hooks/useTranslations";
 
 const mockCourses: Course[] = [
   {
@@ -223,6 +225,7 @@ const mockCourses: Course[] = [
 ];
 
 const FeaturedCourses = () => {
+  const { t } = useTranslations();
   const [visibleCount, setVisibleCount] = useState(6);
   const [coursesData, setCoursesData] = useState<Course[]>([]);
   const hasToasted = useRef(false);
@@ -261,8 +264,8 @@ const FeaturedCourses = () => {
       
       if (!hasToasted.current) {
         toast({
-          title: "使用示例数据",
-          description: "无法从服务器获取课程，正在展示示例数据",
+          title: t('common:usingSampleData'),
+          description: t('common:errorFetchingCourses'),
           variant: "default",
         });
         hasToasted.current = true;
@@ -274,7 +277,7 @@ const FeaturedCourses = () => {
       setCoursesData(transformedMockCourses);
       dataFetchedRef.current = true;
     }
-  }, [coursesResponse, isError, error, toast, coursesData.length]);
+  }, [coursesResponse, isError, error, toast, coursesData.length, t]);
 
   const filteredCourses = useMemo(() => {
     return coursesData;
@@ -302,7 +305,7 @@ const FeaturedCourses = () => {
         <div className="bg-orange-100 border-l-4 border-orange-500 text-orange-700 p-4 mb-6 rounded">
           <div className="flex items-center">
             <AlertCircle className="h-5 w-5 mr-2" />
-            <p>正在显示示例课程数据，稍后再试获取最新课程</p>
+            <p>{t('common:showingSampleCoursesData')}</p>
           </div>
         </div>
       )}
