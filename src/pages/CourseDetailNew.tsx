@@ -58,7 +58,7 @@ const CourseDetailNew = () => {
   const courseData: CourseWithDetails = {
     ...courseResponse.data,
     category: courseResponse.data.category || 'default', // Ensure category is provided
-    description: courseResponse.data.description || '', // Set a default empty string for description
+    description: courseResponse.data.description || '', // Provide default empty string for description
     // Ensure all required properties for CourseWithDetails
     showObjectives: true,
     showRequirements: true,
