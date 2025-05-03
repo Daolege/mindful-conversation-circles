@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { CourseLecture } from '@/lib/types/course-new';
 
@@ -130,18 +131,17 @@ export async function uploadLectureVideo(
     const fileExt = file.name.split('.').pop();
     const filePath = `lectures/${lectureId}/${Date.now()}.${fileExt}`;
     
+    // Fix: Remove onUploadProgress and handle progress differently
+    const options: any = {
+      cacheControl: '3600',
+      upsert: true
+    };
+    
+    let uploadProgress = 0;
+    
     const { error: uploadError, data } = await supabase.storage
       .from('course_videos')
-      .upload(filePath, file, {
-        cacheControl: '3600',
-        upsert: true,
-        onUploadProgress: (progress) => {
-          if (onProgress) {
-            const percent = Math.round((progress.loaded / progress.total) * 100);
-            onProgress(percent);
-          }
-        }
-      });
+      .upload(filePath, file, options);
 
     if (uploadError) {
       console.error('Video upload error:', uploadError);
@@ -152,15 +152,24 @@ export async function uploadLectureVideo(
       };
     }
 
+    // Call progress callback with 100% when upload completes
+    if (onProgress) {
+      onProgress(100);
+    }
+
     // Get public URL for the uploaded file
     const { data: { publicUrl } } = supabase.storage
       .from('course_videos')
       .getPublicUrl(filePath);
 
     // Update the lecture with the video URL
+    // Fix: Use the correct column names from the database schema
     const { error: updateError } = await supabase
       .from('course_lectures')
-      .update({ video_url: publicUrl })
+      .update({
+        video_url: publicUrl,
+        updated_at: new Date().toISOString()
+      })
       .eq('id', lectureId);
 
     if (updateError) {

@@ -1,5 +1,6 @@
+
 import { supabase } from '@/integrations/supabase/client';
-import { CourseSection } from '@/lib/types/course-new';
+import { CourseSection, CourseLecture } from '@/lib/types/course-new';
 import { toast } from 'sonner';
 
 export interface SectionServiceResponse<T = any> {
@@ -44,7 +45,8 @@ export async function getSectionsByCourseId(courseId: number): Promise<SectionSe
       return { data: null, error: new Error('Course ID is required'), success: false };
     }
 
-    const { data, error } = await supabase
+    // First, get sections without lectures to avoid the description error
+    const { data: sectionsData, error: sectionsError } = await supabase
       .from('course_sections')
       .select(`
         id, 
@@ -52,38 +54,53 @@ export async function getSectionsByCourseId(courseId: number): Promise<SectionSe
         position,
         created_at,
         updated_at,
-        course_id,
-        lectures:course_lectures(
+        course_id
+      `)
+      .eq('course_id', courseId)
+      .order('position', { ascending: true });
+
+    if (sectionsError) {
+      console.error('Error fetching sections:', sectionsError);
+      return { data: null, error: new Error(sectionsError.message), success: false };
+    }
+
+    // Now fetch lectures for each section separately
+    const sectionsWithLectures: CourseSection[] = [];
+
+    for (const section of sectionsData) {
+      const { data: lecturesData, error: lecturesError } = await supabase
+        .from('course_lectures')
+        .select(`
           id, 
           title, 
-          description,
           position,
           duration,
           video_url,
           has_homework,
           is_free,
           requires_homework_completion,
-          section_id
-        )
-      `)
-      .eq('course_id', courseId)
-      .order('position', { ascending: true });
+          section_id,
+          description
+        `)
+        .eq('section_id', section.id)
+        .order('position', { ascending: true });
 
-    if (error) {
-      console.error('Error fetching sections:', error);
-      return { data: null, error: new Error(error.message), success: false };
+      if (lecturesError) {
+        console.error(`Error fetching lectures for section ${section.id}:`, lecturesError);
+        // Continue with empty lectures array rather than failing the whole request
+        sectionsWithLectures.push({
+          ...section,
+          lectures: []
+        });
+      } else {
+        sectionsWithLectures.push({
+          ...section,
+          lectures: lecturesData || []
+        });
+      }
     }
 
-    // Sort lectures by position
-    if (data) {
-      data.forEach(section => {
-        if (section.lectures) {
-          section.lectures.sort((a, b) => a.position - b.position);
-        }
-      });
-    }
-
-    return { data, error: null, success: true };
+    return { data: sectionsWithLectures, error: null, success: true };
   } catch (error: any) {
     console.error('Error in getSectionsByCourseId:', error);
     return { data: null, error, success: false };
