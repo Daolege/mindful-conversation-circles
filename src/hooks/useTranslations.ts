@@ -63,6 +63,7 @@ export const useTranslations = () => {
           Array.isArray(existingTranslation) && 
           existingTranslation.length > 0 && 
           typeof existingTranslation[0] === 'object' &&
+          existingTranslation[0] !== null &&
           'id' in existingTranslation[0]) {
         
         // 更新已有翻译

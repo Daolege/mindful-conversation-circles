@@ -1,15 +1,18 @@
 
 {
   "students": "Students",
+  "studentsEnrolled": " Students Enrolled",
   "anyTimeStudy": "Study Anytime",
   "hot": "Hot",
   "instructorRecommendedCourses": "Instructor Recommended Courses",
   "expertTeamRecommendations": "Courses carefully selected by our expert team",
   "viewDetails": "View Details",
+  "viewNow": "View Now",
   "price": "Price",
   "language": "Language",
   "chineseLanguage": "Chinese",
   "englishLanguage": "English",
   "japaneseLanguage": "Japanese",
-  "koreanLanguage": "Korean"
+  "koreanLanguage": "Korean",
+  "courseThumbnail": "Course Image"
 }

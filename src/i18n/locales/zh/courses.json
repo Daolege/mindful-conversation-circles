@@ -1,15 +1,18 @@
 
 {
   "students": "学员",
+  "studentsEnrolled": "人已学习",
   "anyTimeStudy": "随时学习",
   "hot": "热门",
   "instructorRecommendedCourses": "讲师推荐课程",
   "expertTeamRecommendations": "由我们的专家团队精心挑选的课程",
   "viewDetails": "查看详情",
+  "viewNow": "立即查看",
   "price": "价格",
   "language": "语言",
   "chineseLanguage": "中文",
   "englishLanguage": "英文",
   "japaneseLanguage": "日文",
-  "koreanLanguage": "韩文"
+  "koreanLanguage": "韩文",
+  "courseThumbnail": "课程图片"
 }

@@ -15,13 +15,14 @@ export async function selectFromTable<T = any>(
   }
 ) {
   let query = supabase
-    .from(table)
+    .from(table as any)
     .select(columns);
 
   // Apply filters if provided
   if (filter) {
     Object.entries(filter).forEach(([key, value]) => {
-      query = query.eq(key, value) as PostgrestFilterBuilder<any, any, any>;
+      // Type assertion to handle dynamic query building
+      query = query.eq(key, value) as any;
     });
   }
 
@@ -46,8 +47,8 @@ export async function insertIntoTable<T = any>(
   data: Record<string, any> | Record<string, any>[]
 ) {
   return supabase
-    .from(table)
-    .insert(data);
+    .from(table as any)
+    .insert(data as any);
 }
 
 /**
@@ -59,7 +60,7 @@ export async function updateTable<T = any>(
   filter: Record<string, any>
 ) {
   let query = supabase
-    .from(table)
+    .from(table as any)
     .update(data);
 
   // Apply filters
@@ -78,7 +79,7 @@ export async function deleteFromTable(
   filter: Record<string, any>
 ) {
   let query = supabase
-    .from(table)
+    .from(table as any)
     .delete();
 
   // Apply filters

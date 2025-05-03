@@ -6,6 +6,8 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Users, Clock, Star } from "lucide-react";
 import { CourseNew } from "@/lib/types/course-new";
+import { useTranslations } from "@/hooks/useTranslations";
+import LocalizedCurrency from "@/components/LocalizedCurrency";
 
 interface CourseCardNewProps {
   course: CourseNew;
@@ -13,6 +15,8 @@ interface CourseCardNewProps {
 }
 
 const CourseCardNew = ({ course, variantIndex = 0 }: CourseCardNewProps) => {
+  const { t } = useTranslations();
+  
   // Calculate discount percentage if there's an original price
   const hasDiscount = course.original_price && course.original_price > course.price;
   const discount = hasDiscount 
@@ -36,7 +40,7 @@ const CourseCardNew = ({ course, variantIndex = 0 }: CourseCardNewProps) => {
               />
             ) : (
               <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                <span className="text-gray-400">课程图片</span>
+                <span className="text-gray-400">{t('courses:courseThumbnail')}</span>
               </div>
             )}
             
@@ -44,7 +48,7 @@ const CourseCardNew = ({ course, variantIndex = 0 }: CourseCardNewProps) => {
             {hasDiscount && (
               <div className="absolute top-0 left-0">
                 <div className="bg-black text-white px-3 py-1 font-medium">
-                  {discount}% OFF
+                  {discount}% {t('common:off')}
                 </div>
               </div>
             )}
@@ -61,15 +65,15 @@ const CourseCardNew = ({ course, variantIndex = 0 }: CourseCardNewProps) => {
             <div className="flex items-center space-x-4 text-xs text-gray-500 mb-3">
               <div className="flex items-center">
                 <Users className="w-3.5 h-3.5 mr-1" />
-                <span>{course.enrollment_count || 0}人已学习</span>
+                <span>{course.enrollment_count || 0}{t('courses:studentsEnrolled')}</span>
               </div>
               <div className="flex items-center">
                 <Clock className="w-3.5 h-3.5 mr-1" />
-                <span>随时学习</span>
+                <span>{t('courses:anyTimeStudy')}</span>
               </div>
               {course.is_featured && (
                 <Badge variant="outline" className="bg-black text-white border-black text-[10px] py-0">
-                  热门
+                  {t('courses:hot')}
                 </Badge>
               )}
             </div>
@@ -99,13 +103,17 @@ const CourseCardNew = ({ course, variantIndex = 0 }: CourseCardNewProps) => {
             {/* Price section */}
             <div className="flex justify-between items-center pt-3 border-t border-gray-100">
               <div className="flex items-baseline gap-2">
-                <span className="text-xl font-bold text-gray-900">¥{course.price}</span>
+                <span className="text-xl font-bold text-gray-900">
+                  <LocalizedCurrency amount={course.price} currency="CNY" />
+                </span>
                 {hasDiscount && (
-                  <span className="text-sm text-gray-400 line-through">¥{course.original_price}</span>
+                  <span className="text-sm text-gray-400 line-through">
+                    <LocalizedCurrency amount={course.original_price || 0} currency="CNY" />
+                  </span>
                 )}
               </div>
               <Badge className="bg-black hover:bg-gray-800 cursor-pointer">
-                立即查看
+                {t('courses:viewNow')}
               </Badge>
             </div>
           </div>

@@ -3,6 +3,7 @@ import React from 'react';
 import { Card } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
+import { useTranslations } from "@/hooks/useTranslations";
 
 interface CourseCardProps {
   title: string;
@@ -20,6 +21,7 @@ export const CourseCard: React.FC<CourseCardProps> = ({
   isNewCourse
 }) => {
   const location = useLocation();
+  const { t } = useTranslations();
   
   // Determine if this is a new course from location state if not explicitly provided
   const isNewCourseFromState = location.state?.isNewCourse;
@@ -40,7 +42,7 @@ export const CourseCard: React.FC<CourseCardProps> = ({
           className="text-sm text-gray-500 hover:text-gray-700 flex items-center"
         >
           <ArrowLeft className="h-4 w-4 mr-1" />
-          返回课程详情
+          {t("common:back")}
         </Link>
       </div>
       
