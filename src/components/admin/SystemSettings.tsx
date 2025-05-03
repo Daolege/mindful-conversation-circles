@@ -12,6 +12,7 @@ import PaymentIconsManagement from './PaymentIconsManagement';
 import LegalDocumentsManagement from './LegalDocumentsManagement';
 import MultilangFAQManagement from './MultilangFAQManagement';
 import { ScrollArea } from "@/components/ui/scroll-area";
+import GeneralSettings from './GeneralSettings';
 
 export const SystemSettings = () => {
   const { t } = useTranslations();
@@ -33,6 +34,7 @@ export const SystemSettings = () => {
                 <TabsTrigger className="px-3 py-1.5" value="payment">{t('admin:paymentIcons')}</TabsTrigger>
                 <TabsTrigger className="px-3 py-1.5" value="legal">{t('admin:legalDocuments')}</TabsTrigger>
                 <TabsTrigger className="px-3 py-1.5" value="faq">{t('admin:faq')}</TabsTrigger>
+                <TabsTrigger className="px-3 py-1.5" value="exchange">{t('admin:exchangeRates')}</TabsTrigger>
                 <TabsTrigger className="px-3 py-1.5" value="languages">{t('admin:languageManagement')}</TabsTrigger>
                 <TabsTrigger className="px-3 py-1.5" value="translations">{t('admin:translationEditor')}</TabsTrigger>
               </TabsList>
@@ -41,7 +43,7 @@ export const SystemSettings = () => {
         </div>
         
         <TabsContent value="general">
-          <ExchangeRateSettings />
+          <GeneralSettings />
         </TabsContent>
 
         <TabsContent value="company">
@@ -66,6 +68,10 @@ export const SystemSettings = () => {
 
         <TabsContent value="faq">
           <MultilangFAQManagement />
+        </TabsContent>
+        
+        <TabsContent value="exchange">
+          <ExchangeRateSettings />
         </TabsContent>
         
         <TabsContent value="languages">

@@ -13,6 +13,7 @@ import SocialMediaManagement from "./SocialMediaManagement";
 import MultilangFAQManagement from "./MultilangFAQManagement";
 import { LanguageManagement } from './LanguageManagement';
 import { TranslationEditor } from './TranslationEditor';
+import GeneralSettings from "./GeneralSettings";
 
 export function AdminSettings() {
   const [activeTab, setActiveTab] = useState("general");
@@ -43,7 +44,7 @@ export function AdminSettings() {
         
         <div className="p-6 border rounded-lg bg-white shadow-sm">
           <TabsContent value="general">
-            <ExchangeRateSettings />
+            <GeneralSettings />
           </TabsContent>
 
           <TabsContent value="company">
