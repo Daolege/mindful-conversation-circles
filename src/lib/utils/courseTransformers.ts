@@ -15,7 +15,7 @@ export const transformCourseNewToOld = (courseNew: CourseNew): Course => {
     description: courseNew.description || '',
     price: courseNew.price,
     originalprice: courseNew.original_price || null,
-    category: courseNew.category || '',
+    category: courseNew.language || 'zh', // Map language to category for backward compatibility
     featured: courseNew.is_featured || false,
     display_order: courseNew.display_order || 0,
     enrollment_count: courseNew.enrollment_count || 0,

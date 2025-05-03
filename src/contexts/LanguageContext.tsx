@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { getEnabledLanguages } from '@/lib/services/languageService';
+import { getEnabledLanguages } from '@/lib/services/language/languageService';
 import { useQuery } from '@tanstack/react-query';
 import { Language, rtlLanguages, languageToCountryCode } from '@/lib/services/language/languageCore';
 

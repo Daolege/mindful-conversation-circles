@@ -3,42 +3,28 @@ import { Course } from "./course";
 export interface Course {
   id: number;
   title: string;
-  description?: string;
-  instructor?: string;
-  instructorid?: number;
-  instructorId?: number; // Alternative name
+  description: string;
   price: number;
   originalprice?: number | null;
-  rating?: number;
-  studentcount?: number;
-  ratingcount?: number;
-  lectures?: number;
-  whatyouwilllearn?: string[];
-  requirements?: string[];
-  target_audience?: string[];
-  language?: string;
+  category: string; // Keep for backward compatibility, now represents language
+  featured?: boolean;
+  display_order?: number;
+  imageUrl?: string | null;
+  enrollment_count?: number;
+  studentCount?: number;
+  lastupdated?: string;
+  lastUpdated?: string;
+  language: string; // Primary language field
   level?: string;
   duration?: string;
-  highlights?: string[];
-  materialsVisible?: boolean;
-  materials?: CourseMaterial[];
-  enrollment_count?: number;
-  display_order?: number;
-  featured?: boolean;
+  requirements?: string[];
+  whatYouWillLearn?: string[];
+  whatyouwilllearn?: string[];
+  lectures?: number;
+  rating?: number;
+  ratingCount?: number;
+  currency: string;
   published_at?: string;
-  imageurl?: string;
-  imageUrl?: string; // Alternative name
-  lastUpdated?: string;
-  lastupdated?: string; // Both versions are used in different files
-  studentCount?: number; // Alternative name for studentcount
-  ratingCount?: number; // Alternative name for ratingcount
-  whatYouWillLearn?: string[]; // Alternative name for whatyouwilllearn
-  subscription_plans?: any; // Used in Checkout.tsx
-  
-  // Additional fields for database compatibility
-  currency?: string;
-  video_url?: string;
-  syllabus?: any;
 }
 
 export interface CourseWithDetails extends Course {
@@ -201,3 +187,18 @@ export interface CourseSyllabusSection {
 
 // JSON type for compatibility
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
+
+// Update the defaultCourse with both category and language fields
+export const defaultCourse: Course = {
+  id: 0,
+  title: '',
+  description: '',
+  price: 0,
+  category: 'zh',
+  language: 'zh',
+  currency: 'cny',
+  featured: false,
+  ratingCount: 0,
+  rating: 0,
+  display_order: 0
+};
