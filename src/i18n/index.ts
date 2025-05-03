@@ -81,7 +81,7 @@ i18n.use({
       
       // 转换为键值对
       if (!error && data && Array.isArray(data) && data.length > 0) {
-        const translations = data.reduce((acc, item) => {
+        const translations = data.reduce((acc: Record<string, string>, item) => {
           // Only proceed if item is an object with key and value properties
           if (item && 
               typeof item === 'object' && 

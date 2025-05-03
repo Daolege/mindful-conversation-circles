@@ -186,7 +186,7 @@ export async function deleteLanguage(languageId: number): Promise<{ success: boo
       return { success: false, error: fetchError as unknown as Error };
     }
     
-    if (Array.isArray(language) && language.length > 0 && language[0] && typeof language[0] === 'object' && 'code' in language[0]) {
+    if (Array.isArray(language) && language.length > 0 && language[0] && typeof language[0] === 'object' && 'code' in language[0] && language[0].code) {
       const langCode = language[0].code as string;
       if (langCode === 'en' || langCode === 'zh') {
         return { 

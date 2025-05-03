@@ -64,7 +64,8 @@ export const useTranslations = () => {
           existingTranslation.length > 0 && 
           existingTranslation[0] !== null &&
           typeof existingTranslation[0] === 'object' &&
-          'id' in existingTranslation[0]) {
+          'id' in existingTranslation[0] &&
+          existingTranslation[0].id !== null) {
         
         // 更新已有翻译
         const { error: updateError } = await updateTable(
@@ -126,7 +127,7 @@ export const useTranslations = () => {
           'value' in item
         ) : [];
       
-      // Type assertion after validation
+      // Type assertion after validation - this is safe now
       const translations = validItems as TranslationItem[];
       
       return { 
