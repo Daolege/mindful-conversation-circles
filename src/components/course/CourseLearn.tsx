@@ -17,11 +17,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CourseMaterials } from "@/components/course/CourseMaterials";
 import { HomeworkModule } from "@/components/course/HomeworkModule";
 import { handleCourseProgressQueryError } from "@/lib/supabaseUtils";
+import { useTranslations } from "@/hooks/useTranslations";
 
 const CourseLearn = () => {
   const { courseId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useTranslations();
   const [selectedLecture, setSelectedLecture] = useState<{
     videoUrl?: string;
     title?: string;
@@ -130,8 +132,8 @@ const CourseLearn = () => {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-bold mb-4">未找到课程</h2>
-          <Button onClick={() => navigate('/my-courses')}>返回我的课程</Button>
+          <h2 className="text-2xl font-bold mb-4">{t('errors:courseNotFound')}</h2>
+          <Button onClick={() => navigate('/my-courses')}>{t('courses:returnToMyCourses')}</Button>
         </div>
       </div>
     );
@@ -148,7 +150,7 @@ const CourseLearn = () => {
             onClick={() => navigate('/my-courses')}
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
-            返回我的课程
+            {t('courses:returnToMyCourses')}
           </Button>
           <h1 className="text-2xl font-bold">{course?.title}</h1>
         </div>
@@ -176,8 +178,8 @@ const CourseLearn = () => {
             <div className="bg-white rounded-lg shadow-sm">
               <Tabs defaultValue="syllabus" className="w-full">
                 <TabsList className="w-full grid grid-cols-2">
-                  <TabsTrigger value="syllabus">课程大纲</TabsTrigger>
-                  <TabsTrigger value="materials">课程附件</TabsTrigger>
+                  <TabsTrigger value="syllabus">{t('courses:syllabus')}</TabsTrigger>
+                  <TabsTrigger value="materials">{t('courses:courseMaterials')}</TabsTrigger>
                 </TabsList>
                 
                 <TabsContent value="syllabus" className="p-4">
@@ -188,7 +190,7 @@ const CourseLearn = () => {
                           <div className="flex justify-between w-full">
                             <span className="font-medium">{section.title}</span>
                             <Badge variant="outline" className="text-black">
-                              {section.lectures?.length || 0} 讲
+                              {section.lectures?.length || 0} {t('courses:lessons')}
                             </Badge>
                           </div>
                         </AccordionTrigger>
@@ -213,7 +215,7 @@ const CourseLearn = () => {
                                     variant={completedLectures?.[lecture.title] ? "default" : "outline"} 
                                     className="text-black"
                                   >
-                                    {completedLectures?.[lecture.title] ? '已学' : '未学'}
+                                    {completedLectures?.[lecture.title] ? t('courses:completed') : t('courses:notStarted')}
                                   </Badge>
                                   <span className="text-sm text-gray-500">
                                     {lecture.duration}

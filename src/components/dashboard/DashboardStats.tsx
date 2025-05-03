@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { BookUser, Clock } from "lucide-react"
 import { Progress } from "@/components/ui/progress"
 import { useEffect, useRef, memo } from "react"
+import { useTranslations } from "@/hooks/useTranslations"
 
 interface DashboardStatsProps {
   totalCourses: number
@@ -19,6 +20,7 @@ export const DashboardStats = memo(({
   const renderCountRef = useRef(0);
   const lastRenderTimeRef = useRef(Date.now());
   const prevPropsRef = useRef({ totalCourses: -1, completedCourses: -1, averageProgress: -1 });
+  const { t } = useTranslations();
   
   useEffect(() => {
     const now = Date.now();
@@ -38,24 +40,24 @@ export const DashboardStats = memo(({
     
     // 仅在开发环境和有变化时记录详细日志
     if (import.meta.env.DEV && (renderCountRef.current === 1 || propsChanged)) {
-      console.log(`[DashboardStats] 组件渲染 #${renderCountRef.current}，stats=${JSON.stringify({
+      console.log(`[DashboardStats] ${t('dashboard:componentRender')} #${renderCountRef.current}, stats=${JSON.stringify({
         totalCourses,
         completedCourses,
         averageProgress
-      })}, 距上次渲染: ${timeSinceLastRender}ms, 数据变化: ${propsChanged}`);
+      })}, ${t('dashboard:timeSinceLastRender')}: ${timeSinceLastRender}ms, ${t('dashboard:dataChanged')}: ${propsChanged}`);
     }
     
     // 监测重复渲染但props未变化的情况
     if (timeSinceLastRender < 50 && renderCountRef.current > 1 && !propsChanged) {
-      console.warn(`[DashboardStats] 警告：不必要的渲染 (${timeSinceLastRender}ms)! Props未变化却触发重新渲染`);
+      console.warn(`[DashboardStats] ${t('dashboard:unnecessaryRenderWarning')} (${timeSinceLastRender}ms)! ${t('dashboard:propsUnchangedWarning')}`);
     }
     
     return () => {
       if (import.meta.env.DEV) {
-        console.log('[DashboardStats] 组件卸载');
+        console.log(`[DashboardStats] ${t('dashboard:componentUnmounted')}`);
       }
     };
-  }, [totalCourses, completedCourses, averageProgress]);
+  }, [totalCourses, completedCourses, averageProgress, t]);
 
   return (
     <div className="grid gap-4 md:grid-cols-3">
@@ -63,7 +65,7 @@ export const DashboardStats = memo(({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <BookUser className="h-5 w-5 text-knowledge-primary" />
-            总课程数
+            {t('dashboard:totalCourses')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -75,7 +77,7 @@ export const DashboardStats = memo(({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Clock className="h-5 w-5 text-knowledge-primary" />
-            已完成课程
+            {t('dashboard:completedCourses')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -86,7 +88,7 @@ export const DashboardStats = memo(({
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            总体进度
+            {t('dashboard:overallProgress')}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">

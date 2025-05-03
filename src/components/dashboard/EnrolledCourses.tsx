@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Link } from "react-router-dom"
 import { UserCourse } from "@/types/dashboard"
@@ -10,6 +11,7 @@ import { useAuth } from "@/contexts/authHooks"
 import { enrollUserInSampleCourses } from "@/lib/services/userEnrollmentService"
 import { InfiniteScroll } from "./common/InfiniteScroll"
 import { TooltipProvider } from "@/components/ui/tooltip"
+import { useTranslations } from "@/hooks/useTranslations"
 
 const COURSES_PER_PAGE = 6;
 
@@ -23,6 +25,7 @@ export const EnrolledCourses = memo(({
   const [displayLimit, setDisplayLimit] = useState(COURSES_PER_PAGE);
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
+  const { t } = useTranslations();
 
   const displayCourses = coursesWithProgress?.slice(0, displayLimit);
   const hasMore = coursesWithProgress ? displayLimit < coursesWithProgress.length : false;
@@ -37,32 +40,32 @@ export const EnrolledCourses = memo(({
   
   const handleGenerateSampleData = useCallback(async () => {
     if (!user?.id) {
-      toast.error('请先登录');
+      toast.error(t('errors:pleaseLoginFirst'));
       return;
     }
     
-    toast.loading('正在生成示例数据...');
+    toast.loading(t('common:generatingSampleData'));
     try {
       await enrollUserInSampleCourses(user.id);
-      toast.success('已添加示例数据', {
-        description: '请刷新页面查看',
+      toast.success(t('common:sampleDataAdded'), {
+        description: t('common:pleaseRefreshToView'),
         action: {
-          label: '刷新',
+          label: t('common:refresh'),
           onClick: () => window.location.reload()
         }
       });
     } catch (error) {
       console.error('Error generating sample data:', error);
-      toast.error('生成示例数据失败');
+      toast.error(t('errors:sampleDataGenerationFailed'));
     }
-  }, [user]);
+  }, [user, t]);
 
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="flex items-center gap-2">
           <Book className="h-5 w-5 text-knowledge-primary" />
-          我报名的课程
+          {t('courses:myEnrolledCourses')}
         </CardTitle>
         {(!displayCourses || displayCourses.length === 0) && (
           <Button 
@@ -72,7 +75,7 @@ export const EnrolledCourses = memo(({
             className="flex items-center gap-2"
           >
             <RefreshCcw className="h-4 w-4" />
-            <span>添加示例数据</span>
+            <span>{t('common:addSampleData')}</span>
           </Button>
         )}
       </CardHeader>
@@ -98,15 +101,15 @@ export const EnrolledCourses = memo(({
                         <div className="text-sm text-muted-foreground mt-1 space-y-1">
                           <div className="flex items-center gap-2">
                             <Languages className="h-4 w-4" />
-                            <span>授课语言: 中文</span>
+                            <span>{t('courses:teachingLanguage')}: {t('courses:chinese')}</span>
                           </div>
                           <div className="flex items-center gap-2">
                             <Book className="h-4 w-4" />
-                            <span>{item.courses.syllabus?.length || 0} 章节</span>
+                            <span>{item.courses.syllabus?.length || 0} {t('courses:chapters')}</span>
                           </div>
                           <div className="flex items-center gap-2">
                             <Calendar className="h-4 w-4" />
-                            <span>报名时间: {format(new Date(item.purchased_at), 'yyyy-MM-dd')}</span>
+                            <span>{t('courses:enrollmentDate')}: {format(new Date(item.purchased_at), 'yyyy-MM-dd')}</span>
                           </div>
                         </div>
                         {item.course_progress && item.course_progress.length > 0 && (
@@ -118,7 +121,7 @@ export const EnrolledCourses = memo(({
                               ></div>
                             </div>
                             <div className="text-xs text-muted-foreground mt-1">
-                              进度: {item.course_progress[0]?.progress_percent || 0}%
+                              {t('courses:progress')}: {item.course_progress[0]?.progress_percent || 0}%
                             </div>
                           </div>
                         )}
@@ -126,7 +129,7 @@ export const EnrolledCourses = memo(({
                       <Link to={`/courses/${item.course_id}`}>
                         <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
                           <ExternalLink className="h-4 w-4" />
-                          <span className="sr-only">查看课程</span>
+                          <span className="sr-only">{t('courses:viewCourse')}</span>
                         </Button>
                       </Link>
                     </div>
@@ -137,7 +140,7 @@ export const EnrolledCourses = memo(({
                   <div className="text-center pt-2">
                     <Link to="/dashboard?tab=courses">
                       <Button variant="link">
-                        查看全部课程
+                        {t('courses:viewAllCourses')}
                       </Button>
                     </Link>
                   </div>
@@ -146,12 +149,12 @@ export const EnrolledCourses = memo(({
             </InfiniteScroll>
           ) : (
             <div className="text-center py-12">
-              <p className="text-muted-foreground mb-4">暂无报名课程</p>
-              <p className="text-sm text-muted-foreground mb-6">您可以浏览课程列表，找到感兴趣的课程进行报名</p>
+              <p className="text-muted-foreground mb-4">{t('courses:noEnrolledCourses')}</p>
+              <p className="text-sm text-muted-foreground mb-6">{t('courses:browseCoursesDescription')}</p>
               <div className="flex justify-center gap-4">
                 <Link to="/courses">
                   <Button variant="outline">
-                    浏览全部课程
+                    {t('courses:browseAllCourses')}
                   </Button>
                 </Link>
               </div>

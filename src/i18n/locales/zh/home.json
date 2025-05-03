@@ -1,13 +1,13 @@
 
 {
-  "platformStats": "平台数据",
-  "platformDescription": "智慧园致力于提供优质的在线教育，让知识改变更多人的生活",
+  "platformStats": "平台统计",
+  "platformDescription": "加入我们快速增长的全球学员和讲师社区",
   "activeStudents": "活跃学员",
-  "activeStudentsDesc": "来自全国各地的学习者",
+  "activeStudentsDesc": "在我们的平台上积极参与学习的学生",
   "professionalCourses": "专业课程",
-  "professionalCoursesDesc": "涵盖各个领域的精品课程",
+  "professionalCoursesDesc": "由行业专家设计的全面课程",
   "industryExperts": "行业专家",
-  "industryExpertsDesc": "一流的教师与行业导师",
+  "industryExpertsDesc": "教授实用技能的顶尖专业人士",
   "partnerCompanies": "合作企业",
-  "partnerCompaniesDesc": "提供实习与就业机会"
+  "partnerCompaniesDesc": "信任我们平台进行员工培训的公司"
 }

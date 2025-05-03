@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/authHooks";
 import { generateMockData } from "@/lib/services/mockDataService";
+import { useTranslations } from "@/hooks/useTranslations";
 
 export function EnrolledCoursesNew({ coursesWithProgress, showAll = false }: { 
   coursesWithProgress: any[];
@@ -15,6 +16,7 @@ export function EnrolledCoursesNew({ coursesWithProgress, showAll = false }: {
 }) {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useTranslations();
   const [isGeneratingData, setIsGeneratingData] = useState(false);
 
   const displayedCourses = showAll 
@@ -25,7 +27,7 @@ export function EnrolledCoursesNew({ coursesWithProgress, showAll = false }: {
     if (!user?.id || isGeneratingData) return;
     
     setIsGeneratingData(true);
-    toast.loading('正在生成示例数据...', { id: 'generating-data' });
+    toast.loading(t('common:generatingSampleData'), { id: 'generating-data' });
     
     try {
       const result = await generateMockData(user.id);
@@ -33,24 +35,24 @@ export function EnrolledCoursesNew({ coursesWithProgress, showAll = false }: {
       toast.dismiss('generating-data');
       
       if (result.success && result.courses) {
-        toast.success("示例数据已生成", {
-          description: "课程数据已添加到您的账户，请刷新页面查看",
+        toast.success(t('common:sampleDataGenerated'), {
+          description: t('common:courseDataAdded'),
           action: {
-            label: '刷新',
+            label: t('common:refresh'),
             onClick: () => window.location.reload()
           }
         });
       } else {
-        toast.error("生成示例数据失败", {
-          description: "请稍后再试或联系管理员"
+        toast.error(t('errors:sampleDataGenerationFailed'), {
+          description: t('errors:tryAgainLaterOrContactAdmin')
         });
         console.error('Mock data generation failed:', result);
       }
     } catch (err) {
       toast.dismiss('generating-data');
       console.error("Error generating mock data:", err);
-      toast.error("生成示例数据时发生错误", {
-        description: err instanceof Error ? err.message : "未知错误"
+      toast.error(t('errors:errorGeneratingSampleData'), {
+        description: err instanceof Error ? err.message : t('errors:unknownError')
       });
     } finally {
       setIsGeneratingData(false);
@@ -68,15 +70,15 @@ export function EnrolledCoursesNew({ coursesWithProgress, showAll = false }: {
   if (coursesWithProgress?.length === 0) {
     return (
       <div className="bg-muted/50 border rounded-lg p-8 text-center">
-        <h3 className="text-lg font-medium mb-2">尚未购买课程</h3>
-        <p className="text-muted-foreground mb-6">您尚未购买任何课程，浏览所有课程找到适合您的学习内容</p>
+        <h3 className="text-lg font-medium mb-2">{t('courses:noPurchasedCourses')}</h3>
+        <p className="text-muted-foreground mb-6">{t('courses:browseCoursesMessage')}</p>
         
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <Button 
             onClick={() => navigate('/courses')} 
             className="min-w-[150px]"
           >
-            浏览课程
+            {t('courses:browseCourses')}
           </Button>
           
           <Button 
@@ -90,7 +92,7 @@ export function EnrolledCoursesNew({ coursesWithProgress, showAll = false }: {
             ) : (
               <Plus className="mr-2 h-4 w-4" />
             )}
-            添加示例数据
+            {t('common:addSampleData')}
           </Button>
         </div>
       </div>
@@ -101,14 +103,14 @@ export function EnrolledCoursesNew({ coursesWithProgress, showAll = false }: {
     <div className="space-y-6">
       {!showAll && (
         <div className="flex justify-between items-center">
-          <h3 className="text-lg font-semibold">我的课程</h3>
+          <h3 className="text-lg font-semibold">{t('courses:myCourses')}</h3>
           {coursesWithProgress?.length > 3 && (
             <Button 
               variant="link" 
               className="text-knowledge-primary"
               onClick={() => navigate('/dashboard?tab=courses')}
             >
-              查看全部
+              {t('common:viewAll')}
             </Button>
           )}
         </div>
@@ -129,7 +131,7 @@ export function EnrolledCoursesNew({ coursesWithProgress, showAll = false }: {
               <CardContent className="pt-4">
                 <h4 className="font-medium mb-2 h-14 line-clamp-2">{course?.title}</h4>
                 <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
-                  <span>{isCompleted ? '已完成' : '进行中'}</span>
+                  <span>{isCompleted ? t('courses:completed') : t('courses:inProgress')}</span>
                   <span>{progress}%</span>
                 </div>
                 <Progress value={progress} className="h-2" />
@@ -139,7 +141,7 @@ export function EnrolledCoursesNew({ coursesWithProgress, showAll = false }: {
                     className="w-full"
                     variant={isCompleted ? "outline" : "default"}
                   >
-                    {isCompleted ? '复习课程' : '继续学习'}
+                    {isCompleted ? t('courses:reviewCourse') : t('courses:continueLearning')}
                   </Button>
                 </div>
               </CardContent>

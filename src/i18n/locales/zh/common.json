@@ -80,5 +80,13 @@
   "continue_shopping": "继续购物",
   "usingSampleData": "使用示例数据",
   "errorFetchingCourses": "无法从服务器获取课程，正在展示示例数据",
-  "showingSampleCoursesData": "正在显示示例课程数据，稍后再试获取最新课程"
+  "showingSampleCoursesData": "正在显示示例课程数据，稍后再试获取最新课程",
+  "viewAll": "查看全部",
+  "refresh": "刷新",
+  "addSampleData": "添加示例数据",
+  "generatingSampleData": "正在生成示例数据...",
+  "sampleDataGenerated": "示例数据已生成",
+  "courseDataAdded": "课程数据已添加到您的账户，请刷新页面查看",
+  "sampleDataAdded": "已添加示例数据",
+  "pleaseRefreshToView": "请刷新页面查看"
 }

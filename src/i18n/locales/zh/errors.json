@@ -32,5 +32,11 @@
   "adminOnlyPage": "此页面仅限管理员访问",
   "checkingAdminRoleError": "检查管理员角色时出错：",
   "adminRoleCheckError": "管理员角色检查出错：",
-  "fetchStatsFailed": "获取统计数据失败"
+  "fetchStatsFailed": "获取统计数据失败",
+  "sampleDataGenerationFailed": "生成示例数据失败",
+  "tryAgainLaterOrContactAdmin": "请稍后再试或联系管理员",
+  "errorGeneratingSampleData": "生成示例数据时发生错误",
+  "unknownError": "未知错误",
+  "pleaseLoginFirst": "请先登录",
+  "updateCourseProgressFailed": "更新课程进度失败，请重试"
 }

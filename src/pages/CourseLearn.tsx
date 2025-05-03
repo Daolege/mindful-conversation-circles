@@ -22,6 +22,7 @@ import { CourseLearnHeader } from "@/components/course/CourseLearnHeader";
 import { CourseSyllabus } from "@/components/course/CourseSyllabus";
 import { CourseWithDetails } from "@/lib/types/course-new";
 import { DatabaseFixInitializer } from "@/components/course/DatabaseFixInitializer";
+import { useTranslations } from "@/hooks/useTranslations";
 
 const CourseLearn = () => {
   const { courseId } = useParams();
@@ -29,6 +30,7 @@ const CourseLearn = () => {
   const [searchParams] = useSearchParams();
   const isNewCourse = searchParams.get('source') === 'new';
   const { user } = useAuth();
+  const { t } = useTranslations();
   const [selectedLecture, setSelectedLecture] = useState<{
     videoUrl?: string;
     title?: string;
@@ -45,7 +47,7 @@ const CourseLearn = () => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       e.preventDefault();
       e.returnValue = ''; // Required for Chrome
-      return '您确定要离开当前课程学习页面吗？您的学习进度可能不会保存。';
+      return t('courses:leaveWarningMessage');
     };
 
     window.addEventListener('beforeunload', handleBeforeUnload);
@@ -53,7 +55,7 @@ const CourseLearn = () => {
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
-  }, []);
+  }, [t]);
 
   // Query for standard course
   const { 
@@ -115,6 +117,9 @@ const CourseLearn = () => {
       }
       
       return data?.reduce((acc: Record<string, boolean>, curr) => {
+        // Skip if item is null or not valid
+        if (!curr) return acc;
+        
         acc[curr.lecture_id] = curr.completed;
         return acc;
       }, {}) || {};
@@ -140,7 +145,7 @@ const CourseLearn = () => {
     syllabusData = convertNewCourseToSyllabusFormat(newCourse);
     console.log('Converted syllabus data:', {
       sections: syllabusData.length,
-      firstSectionTitle: syllabusData[0]?.title || 'No sections'
+      firstSectionTitle: syllabusData[0]?.title || t('courses:noSections')
     });
   } else if (standardCourse?.syllabus) {
     // Handle standard course syllabus
@@ -214,14 +219,14 @@ const CourseLearn = () => {
 
       if (error) {
         console.error('Error marking lecture as complete:', error);
-        toast.error('更新课程进度失败，请重试');
+        toast.error(t('errors:updateCourseProgressFailed'));
       } else {
         await refetchCompletedLectures();
-        toast.success('所有作业已完成，课程进度已更新');
+        toast.success(t('courses:homeworkCompleted'));
       }
     } catch (error) {
       console.error('Error marking lecture as complete:', error);
-      toast.error('更新课程进度失败');
+      toast.error(t('errors:updateCourseProgressFailed'));
     }
   };
 
@@ -285,8 +290,8 @@ const CourseLearn = () => {
     
     // Show toast error
     useEffect(() => {
-      toast.error(`未找到课程 (ID: ${courseId})`);
-    }, [courseId]);
+      toast.error(t('errors:courseNotFound', { id: courseId }));
+    }, [courseId, t]);
     
     return <CourseNotFound />;
   }
@@ -331,8 +336,8 @@ const CourseLearn = () => {
             <div className="bg-white rounded-lg shadow-sm">
               <Tabs defaultValue="syllabus" className="w-full">
                 <TabsList className="w-full grid grid-cols-2">
-                  <TabsTrigger value="syllabus">课程大纲</TabsTrigger>
-                  <TabsTrigger value="materials">课程附件</TabsTrigger>
+                  <TabsTrigger value="syllabus">{t('courses:syllabus')}</TabsTrigger>
+                  <TabsTrigger value="materials">{t('courses:courseMaterials')}</TabsTrigger>
                 </TabsList>
                 
                 <TabsContent value="syllabus" className="p-4">
@@ -357,17 +362,17 @@ const CourseLearn = () => {
       <Dialog open={showExitWarning} onOpenChange={setShowExitWarning}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>确定要离开当前课程学习页面吗？</DialogTitle>
+            <DialogTitle>{t('courses:confirmLeaveTitle')}</DialogTitle>
             <DialogDescription>
-              您的学习进度已保存，但未完成的作业将不会被保存。
+              {t('courses:confirmLeaveDescription')}
             </DialogDescription>
           </DialogHeader>
           <div className="flex justify-end gap-2 mt-4">
             <Button variant="outline" onClick={() => setShowExitWarning(false)}>
-              继续学习
+              {t('courses:continueLearning')}
             </Button>
             <Button onClick={() => navigate('/my-courses')}>
-              确认离开
+              {t('courses:confirmLeave')}
             </Button>
           </div>
         </DialogContent>

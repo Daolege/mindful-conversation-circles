@@ -32,5 +32,11 @@
   "adminOnlyPage": "This page is only accessible to administrators",
   "checkingAdminRoleError": "Error checking admin role:",
   "adminRoleCheckError": "Error in admin role check:",
-  "fetchStatsFailed": "Failed to fetch statistics"
+  "fetchStatsFailed": "Failed to fetch statistics",
+  "sampleDataGenerationFailed": "Sample data generation failed",
+  "tryAgainLaterOrContactAdmin": "Please try again later or contact admin",
+  "errorGeneratingSampleData": "Error generating sample data",
+  "unknownError": "Unknown error",
+  "pleaseLoginFirst": "Please login first",
+  "updateCourseProgressFailed": "Failed to update course progress, please try again"
 }

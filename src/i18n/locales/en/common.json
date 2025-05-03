@@ -80,5 +80,13 @@
   "continue_shopping": "Continue Shopping",
   "usingSampleData": "Using Sample Data",
   "errorFetchingCourses": "Failed to fetch courses from the server, showing sample data",
-  "showingSampleCoursesData": "Currently showing sample course data, try again later for the latest courses"
+  "showingSampleCoursesData": "Currently showing sample course data, try again later for the latest courses",
+  "viewAll": "View All",
+  "refresh": "Refresh",
+  "addSampleData": "Add Sample Data",
+  "generatingSampleData": "Generating sample data...",
+  "sampleDataGenerated": "Sample data generated",
+  "courseDataAdded": "Course data has been added to your account, refresh to view",
+  "sampleDataAdded": "Sample data has been added",
+  "pleaseRefreshToView": "Please refresh the page to view"
 }
