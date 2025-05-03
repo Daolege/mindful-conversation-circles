@@ -95,20 +95,22 @@ export async function addLanguage(language: Omit<Language, 'id'>): Promise<{ suc
       return { success: false, error: error as unknown as Error };
     }
     
-    // Fix TypeScript error with proper type assertions and checks
-    if (data !== null && data !== undefined) {
-      // Check if data is an array with proper type assertion
-      if (Array.isArray(data)) {
-        // Now TypeScript knows data is an array and can safely access length property
-        if (data.length > 0) {
-          const firstItem = data[0];
-          if (firstItem) {
-            return { success: true, data: firstItem as Language };
-          }
+    // Completely rewritten type handling for the data response
+    if (data) {
+      // Ensure data is an array
+      const dataArray = Array.isArray(data) ? data : [];
+      
+      // Check if array has items
+      if (dataArray.length > 0) {
+        const firstItem = dataArray[0];
+        // Make sure first item exists before returning it
+        if (firstItem && typeof firstItem === 'object') {
+          return { success: true, data: firstItem as Language };
         }
       }
     }
     
+    // If we couldn't extract the language data, just return success
     return { success: true };
   } catch (error) {
     console.error('Unexpected error in addLanguage:', error);
