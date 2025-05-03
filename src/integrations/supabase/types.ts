@@ -517,6 +517,7 @@ export type Database = {
           enrollment_count: number | null
           id: number
           is_featured: boolean | null
+          language: string | null
           lecture_count: number | null
           original_price: number | null
           price: number
@@ -534,6 +535,7 @@ export type Database = {
           enrollment_count?: number | null
           id?: number
           is_featured?: boolean | null
+          language?: string | null
           lecture_count?: number | null
           original_price?: number | null
           price?: number
@@ -551,6 +553,7 @@ export type Database = {
           enrollment_count?: number | null
           id?: number
           is_featured?: boolean | null
+          language?: string | null
           lecture_count?: number | null
           original_price?: number | null
           price?: number
