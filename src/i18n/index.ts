@@ -88,7 +88,9 @@ i18n.use({
               'key' in item && 
               'value' in item && 
               typeof item.key === 'string' && 
-              typeof item.value === 'string') {
+              typeof item.value === 'string' && 
+              item.key !== null &&
+              item.value !== null) {
             acc[item.key] = item.value;
           }
           return acc;

@@ -21,7 +21,9 @@ export async function getAllLanguages(): Promise<Language[]> {
         item !== null && 
         typeof item === 'object' && 
         'id' in item && 
-        'code' in item
+        'code' in item &&
+        item.id !== null &&
+        item.code !== null
       );
       
       if (validLanguages.length > 0) {
@@ -56,7 +58,9 @@ export async function getEnabledLanguages(): Promise<Language[]> {
         item !== null && 
         typeof item === 'object' && 
         'id' in item && 
-        'code' in item
+        'code' in item &&
+        item.id !== null &&
+        item.code !== null
       );
       
       if (validLanguages.length > 0) {
@@ -163,7 +167,8 @@ export async function deleteLanguage(languageId: number): Promise<{ success: boo
       if (langData !== null && 
           typeof langData === 'object' && 
           'code' in langData && 
-          typeof langData.code === 'string') {
+          typeof langData.code === 'string' && 
+          langData.code !== null) {
         
         const langCode = langData.code;
         

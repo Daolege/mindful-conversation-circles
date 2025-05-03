@@ -147,7 +147,11 @@ export const useTranslations = () => {
           'language_code' in item &&
           'namespace' in item &&
           'key' in item &&
-          'value' in item
+          'value' in item &&
+          item.language_code !== null &&
+          item.namespace !== null &&
+          item.key !== null &&
+          item.value !== null
         ) : [];
       
       // We've filtered out null items, safe to type assert now

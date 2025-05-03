@@ -47,7 +47,11 @@ export async function getTranslationsByLanguage(languageCode: string): Promise<T
         'language_code' in item &&
         'namespace' in item &&
         'key' in item &&
-        'value' in item
+        'value' in item &&
+        item.language_code !== null &&
+        item.namespace !== null &&
+        item.key !== null &&
+        item.value !== null
       );
       
       return validTranslations as unknown as TranslationItem[];
