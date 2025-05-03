@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,7 +18,7 @@ import {
 } from 'recharts';
 import { Loader2, DollarSign, Users, CreditCard, TrendingUp } from "lucide-react";
 import { format, subDays } from "date-fns";
-import { handleOrderStatsQueryError, OrderStats } from "@/lib/supabaseUtils";
+import { handleQueryError, OrderStats } from "@/lib/supabaseUtils";
 
 export function StatisticsPanel() {
   const { data: totalSales, isLoading: isLoadingSales } = useQuery({
@@ -31,7 +30,7 @@ export function StatisticsPanel() {
         .in('status', ['completed', 'paid'] as any[])
         .order('created_at', { ascending: false });
 
-      return handleOrderStatsQueryError(data, error);
+      return handleQueryError<OrderStats[]>(data as OrderStats[], error);
     },
   });
 

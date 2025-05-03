@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { paymentIconsService, PaymentIcon } from '@/lib/supabaseUtils';
 
 const PaymentIcons: React.FC = () => {
   // Fetch payment icons from the database
@@ -9,17 +9,8 @@ const PaymentIcons: React.FC = () => {
     queryKey: ['payment-icons'],
     queryFn: async () => {
       try {
-        const { data, error } = await supabase
-          .from('payment_icons')
-          .select('*')
-          .eq('is_active', true)
-          .order('display_order', { ascending: true });
-        
-        if (error) {
-          throw error;
-        }
-        
-        return data || [];
+        // Use our service function instead of direct Supabase call
+        return await paymentIconsService.getAll();
       } catch (error) {
         console.error("Error fetching payment icons:", error);
         return [];

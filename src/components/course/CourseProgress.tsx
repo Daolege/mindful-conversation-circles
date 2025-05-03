@@ -1,9 +1,14 @@
+
 import { Progress } from "@/components/ui/progress";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/authHooks";
-import { handleCourseProgressQueryError, CourseProgressData } from "@/lib/supabaseUtils";
+import { handleQueryError } from "@/lib/supabaseUtils";
+
+interface CourseProgressData {
+  progress_percent: number;
+}
 
 interface CourseProgressProps {
   courseId: string | number;
@@ -61,11 +66,12 @@ export const CourseProgress = ({ courseId, userId, videoCount = 0 }: CourseProgr
         .eq('course_id', parsedCourseId as number)
         .single();
 
-      const result = handleCourseProgressQueryError([data as CourseProgressData], error);
+      // Using our new generic error handler
+      const result = handleQueryError<CourseProgressData>(data as CourseProgressData, error);
       
       if (isMounted.current) {
-        console.log(`[CourseProgress] 获取进度成功: ${result[0]?.progress_percent || 0}%`);
-        setProgress(result[0]?.progress_percent || 0);
+        console.log(`[CourseProgress] 获取进度成功: ${result?.progress_percent || 0}%`);
+        setProgress(result?.progress_percent || 0);
         dataFetchedRef.current = true; // 标记数据已获取
       }
     } catch (error) {

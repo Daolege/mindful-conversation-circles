@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { socialMediaService, SocialMediaLink } from '@/lib/supabaseUtils';
 
 const SocialLinks: React.FC = () => {
   // Fetch social media links from the database
@@ -9,17 +9,8 @@ const SocialLinks: React.FC = () => {
     queryKey: ['social-media-links'],
     queryFn: async () => {
       try {
-        const { data, error } = await supabase
-          .from('social_media_links')
-          .select('*')
-          .eq('is_active', true)
-          .order('display_order', { ascending: true });
-        
-        if (error) {
-          throw error;
-        }
-        
-        return data || [];
+        // Use our service function instead of direct Supabase call
+        return await socialMediaService.getAll();
       } catch (error) {
         console.error("Error fetching social media links:", error);
         return [];

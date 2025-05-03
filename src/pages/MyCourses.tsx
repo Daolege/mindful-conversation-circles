@@ -28,6 +28,7 @@ const MyCourses = () => {
         `)
         .eq('user_id', user.id);
 
+      // Using our unified error handler
       const processedData = handleQueryError(data, error, []);
       
       // Transform the course data to normalize field names

@@ -71,6 +71,32 @@ export interface SiteSettings {
   updated_at: string;
 }
 
+// Additional types needed based on errors
+export interface AboutPageSettings {
+  id: string;
+  title: string;
+  subtitle: string;
+  story: string;
+  mission: string;
+  vision: string;
+  team_members: any; // Consider using a more specific type
+  stats: any; // Consider using a more specific type
+  is_visible: boolean;
+  updated_at: string;
+  updated_by: string;
+}
+
+export interface OrderStats {
+  id: string;
+  amount: number;
+  status: string;
+  created_at: string;
+}
+
+export interface CourseProgressData {
+  progress_percent: number;
+}
+
 // Universal error handler for Supabase queries
 export function handleQueryError<T>(data: T | null, error: PostgrestError | null, defaultValue?: T): T {
   if (error) {
@@ -93,7 +119,14 @@ export const handleAboutPageQueryError = handleQueryError;
 export const handleCoursesQueryError = handleQueryError;
 export const handleInstructorsQueryError = handleQueryError;
 
-// Type-safe Supabase query helper with type assertion
+// Additional error handlers for specific tables
+export const handleOrderStatsQueryError = handleQueryError;
+export const handleCourseProgressQueryError = handleQueryError;
+export const handleHomeworkQueryError = handleQueryError;
+export const handleHomeworkSubmissionsQueryError = handleQueryError;
+export const handleUserRolesQueryError = handleQueryError;
+
+// Type-safe Supabase query helper with type assertion and @ts-ignore for table name flexibility
 export function safeSupabaseSelect<T>(tableName: string, select: string = '*') {
   return {
     async getAll() {
@@ -138,7 +171,7 @@ export function safeSupabaseSelect<T>(tableName: string, select: string = '*') {
   };
 }
 
-// Flexible Supabase mutation helper with type assertion
+// Flexible Supabase mutation helper with type assertion and @ts-ignore for table name flexibility
 export function safeSupabaseMutation<T>(tableName: string) {
   return {
     async insert(record: Partial<T>) {
@@ -238,4 +271,19 @@ export const siteSettingsService = {
     return handleQueryError<SiteSettings>(data as SiteSettings, error);
   },
   update: (updates: Partial<SiteSettings>) => safeSupabaseMutation<SiteSettings>('site_settings').update('1', updates)
+};
+
+// About page settings service
+export const aboutPageSettingsService = {
+  get: async () => {
+    // @ts-ignore - Suppressing type error for table name
+    const { data, error } = await supabase
+      .from('about_page_settings')
+      .select('*')
+      .single();
+    
+    return handleQueryError<AboutPageSettings>(data as AboutPageSettings, error);
+  },
+  update: (updates: Partial<AboutPageSettings>) => 
+    safeSupabaseMutation<AboutPageSettings>('about_page_settings').update('1', updates)
 };
