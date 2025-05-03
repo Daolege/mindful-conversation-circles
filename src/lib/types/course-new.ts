@@ -1,3 +1,4 @@
+
 import { Course } from "./course";
 
 export interface CourseSection {
@@ -21,7 +22,17 @@ export interface CourseLecture {
   requires_homework_completion?: boolean;
 }
 
-export interface CourseWithDetails extends Course {
+// Define and export CourseMaterial interface
+export interface CourseMaterial {
+  id: string;
+  course_id: number;
+  name: string;
+  url: string;
+  position: number;
+  is_visible: boolean;
+}
+
+export interface CourseWithDetails extends Omit<Course, 'language'> {
   sections?: CourseSection[];
   learning_objectives?: string[];
   requirements?: string[];
@@ -33,7 +44,7 @@ export interface CourseWithDetails extends Course {
   materials?: CourseMaterial[];
   status?: 'published' | 'draft' | 'archived';
   thumbnail_url?: string;
-  language?: string; // Make sure language is explicitly defined
+  language?: string; // Make language optional in CourseWithDetails
 }
 
 // Add the CourseNew interface for admin components
