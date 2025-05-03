@@ -95,11 +95,12 @@ export async function addLanguage(language: Omit<Language, 'id'>): Promise<{ suc
       return { success: false, error: error as unknown as Error };
     }
     
-    // Fix the type checking issue with clear type guards
+    // Fix the TypeScript error by ensuring data is properly typed as an array
     if (data) {
-      // Explicitly check if data is an array and has elements
-      if (Array.isArray(data) && data.length > 0) {
-        const firstItem = data[0];
+      // Explicitly check and type the data
+      const dataArray = Array.isArray(data) ? data : [];
+      if (dataArray.length > 0) {
+        const firstItem = dataArray[0];
         if (firstItem) {
           return { success: true, data: firstItem as Language };
         }
