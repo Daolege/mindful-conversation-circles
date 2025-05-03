@@ -13,7 +13,6 @@ import { DashboardStatistics } from "@/components/admin/DashboardStatistics";
 import { AdminSettings } from "@/components/admin/AdminSettings";
 import { CourseManagement } from "@/components/admin/CourseManagement";
 import CourseManagementNew from "@/components/admin/CourseManagementNew";
-import { SystemSettings } from "@/components/admin/SystemSettings";
 import { SubscriptionPlanManagement } from "@/components/admin/SubscriptionPlanManagement";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -308,7 +307,7 @@ const Admin = () => {
                 exit="exit"
               >
                 <TabsContent value="settings">
-                  <SystemSettings />
+                  <AdminSettings />
                 </TabsContent>
               </motion.div>
             )}
