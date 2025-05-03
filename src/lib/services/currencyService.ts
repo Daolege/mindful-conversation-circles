@@ -64,7 +64,7 @@ export const getSavingsPercentage = (order: Order): number => {
 };
 
 /**
- * Get the display text for a payment method
+ * Get the payment method display text
  */
 export const getPaymentMethodDisplay = (paymentMethod?: string, t?: TFunction): string => {
   if (!paymentMethod) return t ? t('orders:unknown') : '未知';
@@ -105,7 +105,7 @@ export const getExchangeRateDisplay = (
 };
 
 /**
- * Get the actual payment amount to display (handles cases with multiple amount properties)
+ * Get the actual payment amount to display
  */
 export const getActualPaymentAmount = (order: Order): { amount: number, currency: string } => {
   // Default values
@@ -138,7 +138,6 @@ export const getActualPaymentAmount = (order: Order): { amount: number, currency
  * Default exchange rate function
  */
 export const getDefaultExchangeRate = (): number => {
-  // You can customize this with a more dynamic approach later
   return 7.23; // CNY to USD default exchange rate
 };
 
@@ -173,19 +172,27 @@ export const getLatestExchangeRate = (rates: ExchangeRate[] | undefined | null, 
   // Look for an exact match first
   const exactMatch = rates.find(
     rate => 
-      rate.from_currency.toLowerCase() === fromCurrency.toLowerCase() && 
-      rate.to_currency.toLowerCase() === toCurrency.toLowerCase()
+      rate.from_currency?.toLowerCase() === fromCurrency.toLowerCase() && 
+      rate.to_currency?.toLowerCase() === toCurrency.toLowerCase()
   );
   
   if (exactMatch) {
     return exactMatch.rate;
   }
   
+  // For backwards compatibility, check for CNY to USD using the legacy field
+  if (fromCurrency.toLowerCase() === 'cny' && toCurrency.toLowerCase() === 'usd') {
+    const legacyMatch = rates.find(rate => rate.cny_to_usd !== undefined);
+    if (legacyMatch && legacyMatch.cny_to_usd) {
+      return legacyMatch.cny_to_usd;
+    }
+  }
+  
   // If no exact match, check for reverse match
   const reverseMatch = rates.find(
     rate => 
-      rate.from_currency.toLowerCase() === toCurrency.toLowerCase() && 
-      rate.to_currency.toLowerCase() === fromCurrency.toLowerCase()
+      rate.from_currency?.toLowerCase() === toCurrency.toLowerCase() && 
+      rate.to_currency?.toLowerCase() === fromCurrency.toLowerCase()
   );
   
   if (reverseMatch) {

@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { PostgrestError } from "@supabase/supabase-js";
 import { defaultPaymentIcons, defaultSocialMediaLinks, defaultLegalDocuments, defaultExchangeRates } from "./defaultData";
@@ -426,18 +425,27 @@ export const exchangeRatesService = {
         rate: rate.rate,
         from_currency: rate.from_currency,
         to_currency: rate.to_currency,
+        // For backward compatibility with old schema
+        cny_to_usd: rate.from_currency === 'CNY' && rate.to_currency === 'USD' ? rate.rate : undefined,
         created_at: rate.created_at || new Date().toISOString(),
         updated_at: rate.updated_at || new Date().toISOString()
       };
+      
+      console.log("Inserting exchange rate data:", insertData);
       
       const { data, error } = await supabase
         .from('exchange_rates')
         .insert(insertData)
         .select();
       
-      console.log("Exchange rate inserted:", data, error);
+      if (error) {
+        console.error("Error inserting exchange rate:", error);
+        throw error;
+      }
       
-      return { data, error };
+      console.log("Exchange rate inserted successfully:", data);
+      
+      return { data, error: null };
     } catch (error) {
       console.error("Error in exchangeRatesService.insert:", error);
       return { data: null, error };

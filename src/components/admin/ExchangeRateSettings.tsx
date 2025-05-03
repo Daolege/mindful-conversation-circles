@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,7 @@ const ExchangeRateSettings = () => {
   });
   const [exchangeHistory, setExchangeHistory] = useState<ExchangeRate[]>([]);
   const [isUsingSampleData, setIsUsingSampleData] = useState(false);
+  const [hasError, setHasError] = useState(false);
 
   // Load exchange rate on component mount
   useEffect(() => {
@@ -35,6 +37,7 @@ const ExchangeRateSettings = () => {
   // Function to load current exchange rate
   const loadExchangeRate = async () => {
     setIsLoading(true);
+    setHasError(false);
     try {
       // Using our updated service
       const rates = await exchangeRatesService.getLatest();
@@ -59,7 +62,8 @@ const ExchangeRateSettings = () => {
       }
     } catch (error) {
       console.error("Error loading exchange rate:", error);
-      toast.error("加载汇率失败，使用示例数据");
+      toast.error(t('admin:errorLoadingExchangeRate'));
+      setHasError(true);
       
       // Use sample data on error
       if (defaultExchangeRates.length > 0) {
@@ -92,7 +96,7 @@ const ExchangeRateSettings = () => {
       }
     } catch (error) {
       console.error("Error loading exchange history:", error);
-      toast.error("加载汇率历史失败，使用示例数据");
+      toast.error(t('admin:errorLoadingExchangeHistory'));
       
       // Use sample data on error
       setExchangeHistory(defaultExchangeRates);
@@ -113,14 +117,19 @@ const ExchangeRateSettings = () => {
     }
     setExchangeHistory(defaultExchangeRates);
     setIsUsingSampleData(true);
-    toast.success("已重置为示例数据");
+    toast.success(t('admin:resetToSampleDataSuccess'));
   };
 
   // Handle input change
   const handleChange = (value: string) => {
+    const numValue = parseFloat(value);
+    if (isNaN(numValue)) {
+      return;
+    }
+    
     setExchangeRate(prev => ({
       ...prev,
-      rate: parseFloat(value),
+      rate: numValue,
     }));
   };
 
@@ -130,53 +139,43 @@ const ExchangeRateSettings = () => {
     try {
       // Ensure we have the required fields before saving
       if (!exchangeRate.rate) {
-        throw new Error("汇率值不能为空");
+        throw new Error(t('admin:rateCannotBeEmpty'));
       }
       
       // Try to save to database
-      try {
-        // Using our updated service with improved persistence
-        const { data, error } = await exchangeRatesService.insert({
-          rate: exchangeRate.rate,
-          from_currency: exchangeRate.from_currency || 'CNY',
-          to_currency: exchangeRate.to_currency || 'USD',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        });
-        
-        if (error) {
-          throw error;
-        }
-        
-        console.log("Exchange rate saved successfully:", data);
-        
-        // Reload history if saved successfully to database
-        await loadExchangeHistory();
-        setIsUsingSampleData(false);
-        toast.success("汇率已成功保存到数据库");
-      } catch (error) {
-        console.error("Error saving exchange rate to database:", error);
-        toast.error("保存汇率到数据库失败，仅在内存中更新");
-        
-        // Update the history in memory
-        const newRate: ExchangeRate = {
-          id: `temp-${Date.now()}`,
-          rate: exchangeRate.rate,
-          from_currency: exchangeRate.from_currency || 'CNY',
-          to_currency: exchangeRate.to_currency || 'USD',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        };
-        
-        setExchangeHistory([newRate, ...exchangeHistory]);
-        setIsUsingSampleData(true);
+      const { data, error } = await exchangeRatesService.insert({
+        rate: exchangeRate.rate,
+        from_currency: exchangeRate.from_currency || 'CNY',
+        to_currency: exchangeRate.to_currency || 'USD',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      });
+      
+      if (error) {
+        throw error;
       }
+      
+      console.log("Exchange rate saved successfully:", data);
+      
+      // Reload history if saved successfully to database
+      await loadExchangeHistory();
+      setIsUsingSampleData(false);
+      toast.success(t('admin:exchangeRateSavedSuccess'));
+      setHasError(false);
     } catch (error) {
       console.error("Error saving exchange rate:", error);
-      toast.error("保存汇率失败");
+      toast.error(t('admin:errorSavingExchangeRate'));
+      setHasError(true);
     } finally {
       setIsSaving(false);
     }
+  };
+
+  // Retry connection if there was an error
+  const retryConnection = () => {
+    loadExchangeRate();
+    loadExchangeHistory();
+    toast.info(t('admin:retryingConnection'));
   };
 
   if (isLoading) {
@@ -225,6 +224,18 @@ const ExchangeRateSettings = () => {
 
   return (
     <div className="space-y-6">
+      {hasError && (
+        <Alert variant="destructive" className="bg-red-50">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            {t('admin:databaseConnectionError')}
+            <Button variant="link" className="p-0 h-auto text-red-600" onClick={retryConnection}>
+              {t('admin:retryConnection')}
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
+
       {isUsingSampleData && (
         <Alert className="bg-amber-50">
           <AlertCircle className="h-4 w-4" />
@@ -311,7 +322,7 @@ const ExchangeRateSettings = () => {
                     <TableCell>
                       <div className="font-medium">{item.rate}</div>
                       <div className="text-sm text-gray-500">
-                        1{item.to_currency} = {item.rate}{item.from_currency}
+                        1 {item.to_currency} = {item.rate} {item.from_currency}
                       </div>
                     </TableCell>
                     <TableCell className="text-right text-gray-500">

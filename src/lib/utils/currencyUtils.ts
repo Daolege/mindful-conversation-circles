@@ -26,13 +26,34 @@ export const formatAmount = (amount: number, currency: string = 'CNY'): string =
 /**
  * Converts an amount from one currency to another using the exchange rate
  * @param amount The amount to convert
+ * @param fromCurrency The source currency
+ * @param toCurrency The target currency
  * @param exchangeRate The exchange rate to apply
  * @returns Converted amount
  */
-export const convertCurrency = (amount: number, exchangeRate: number): number => {
+export const convertCurrency = (
+  amount: number, 
+  fromCurrency: string = 'CNY',
+  toCurrency: string = 'USD',
+  exchangeRate: number = 7.23
+): number => {
   if (typeof amount !== 'number' || typeof exchangeRate !== 'number') {
     console.warn('Invalid parameters for convertCurrency:', { amount, exchangeRate });
     return 0;
   }
-  return amount * exchangeRate;
+  
+  if (fromCurrency.toLowerCase() === toCurrency.toLowerCase()) {
+    return amount;
+  }
+  
+  if (fromCurrency.toLowerCase() === 'cny' && toCurrency.toLowerCase() === 'usd') {
+    return amount / exchangeRate;
+  }
+  
+  if (fromCurrency.toLowerCase() === 'usd' && toCurrency.toLowerCase() === 'cny') {
+    return amount * exchangeRate;
+  }
+  
+  // Default case
+  return amount;
 };
