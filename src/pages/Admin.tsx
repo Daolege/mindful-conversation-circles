@@ -6,7 +6,7 @@ import { useAuth } from "@/contexts/authHooks";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
-import { Loader2, LayoutDashboard, Users, BookOpen, ShoppingCart, Repeat, Settings, Globe } from "lucide-react";
+import { Loader2, LayoutDashboard, Users, BookOpen, ShoppingCart, Repeat, Settings } from "lucide-react";
 import { UserManagement } from "@/components/admin/UserManagement";
 import { OrderManagement } from "@/components/admin/OrderManagement";
 import { DashboardStatistics } from "@/components/admin/DashboardStatistics";
@@ -184,7 +184,6 @@ const Admin = () => {
     { value: "courses-new", label: t('admin:coursesManagement2'), icon: BookOpen },
     { value: "orders", label: t('admin:ordersManagement'), icon: ShoppingCart },
     { value: "subscriptions", label: t('admin:subscriptionsManagement'), icon: Repeat },
-    { value: "languages", label: t('admin:languageManagement'), icon: Globe },
     { value: "settings", label: t('admin:systemSettings'), icon: Settings }
   ];
 
@@ -302,20 +301,6 @@ const Admin = () => {
                 >
                   <TabsContent value="subscriptions" forceMount>
                     <SubscriptionPlanManagement />
-                  </TabsContent>
-                </motion.div>
-              )}
-              
-              {activeTab === "languages" && (
-                <motion.div
-                  key="languages"
-                  variants={tabContentVariants}
-                  initial="hidden"
-                  animate="visible"
-                  exit="exit"
-                >
-                  <TabsContent value="languages" forceMount>
-                    <LanguageManagement />
                   </TabsContent>
                 </motion.div>
               )}
