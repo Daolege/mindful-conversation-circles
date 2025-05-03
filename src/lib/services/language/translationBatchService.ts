@@ -54,10 +54,23 @@ export async function getTranslationHistory(
       return { success: false, data: [], error: error as unknown as Error };
     }
     
-    return { 
-      success: true, 
-      data: Array.isArray(data) ? data as TranslationHistoryItem[] : [] 
-    };
+    // Ensure we're properly casting the data to TranslationHistoryItem[]
+    if (Array.isArray(data)) {
+      // Type guard to check if items match the expected structure
+      const historyItems = data.filter((item): item is TranslationHistoryItem => 
+        item !== null && 
+        typeof item === 'object' &&
+        'translation_id' in item &&
+        'language_code' in item &&
+        'namespace' in item &&
+        'key' in item &&
+        'new_value' in item
+      ) as TranslationHistoryItem[];
+      
+      return { success: true, data: historyItems };
+    }
+    
+    return { success: false, data: [], error: new Error('Invalid data format') };
   } catch (error) {
     console.error('Unexpected error in getTranslationHistory:', error);
     return { success: false, data: [], error: error as Error };
@@ -89,6 +102,11 @@ export async function rollbackToVersion(
       return { success: false, error: error as unknown as Error };
     }
     
+    // Type guard to ensure data has the expected structure
+    if (!('new_value' in data[0])) {
+      return { success: false, error: new Error('Invalid data format') };
+    }
+    
     // Get the value from the fetched version
     const valueToRestore = data[0].new_value;
     
@@ -104,6 +122,13 @@ export async function rollbackToVersion(
       const error = currentError || new Error('Translation not found');
       console.error('Error fetching current translation:', error);
       return { success: false, error: error as unknown as Error };
+    }
+    
+    // Type guard to ensure currentData has the expected structure
+    if (!('language_code' in currentData[0]) || 
+        !('namespace' in currentData[0]) || 
+        !('key' in currentData[0])) {
+      return { success: false, error: new Error('Invalid translation data format') };
     }
     
     const currentTranslation = currentData[0];
