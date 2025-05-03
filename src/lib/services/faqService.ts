@@ -97,7 +97,7 @@ export async function getFeaturedFaqsByLanguage(languageCode: string, limit: num
 // Create a new FAQ
 export async function createFaq(faq: Omit<MultiFaq, 'id'>) {
   try {
-    const { data, error } = await insertIntoTable(
+    const { data: insertResult, error } = await insertIntoTable(
       'multilingual_faqs',
       {
         category: faq.category || 'general',
@@ -123,8 +123,11 @@ export async function createFaq(faq: Omit<MultiFaq, 'id'>) {
       };
     }
     
+    // Fix TypeScript error by explicitly typing insertResult
+    const dataArray = Array.isArray(insertResult) ? insertResult : [];
+    
     // Handle the data safely, checking for proper array type first
-    if (!data || !Array.isArray(data) || data.length === 0) {
+    if (!dataArray || dataArray.length === 0) {
       console.error('[faqService] No data returned from FAQ creation');
       return {
         data: {
@@ -137,7 +140,7 @@ export async function createFaq(faq: Omit<MultiFaq, 'id'>) {
       };
     }
     
-    return { data: data[0], error: null };
+    return { data: dataArray[0], error: null };
   } catch (err) {
     console.error('[faqService] Unexpected error in createFaq:', err);
     return { 

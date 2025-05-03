@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   getAllFaqTranslations, 
@@ -178,7 +179,7 @@ export const MultilangFAQManagement = () => {
   
   const toggleFeatured = async (faq: FaqWithTranslation) => {
     try {
-      // Update the is_featured status using the updateFaq function instead
+      // Update the is_featured status using the updateFaq function
       await updateFaq(faq.id, { is_featured: !faq.is_featured });
       
       // Update in state
