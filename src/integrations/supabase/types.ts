@@ -509,6 +509,8 @@ export type Database = {
       }
       courses_new: {
         Row: {
+          allows_one_time_purchase: boolean
+          allows_subscription: boolean
           category: string | null
           created_at: string | null
           currency: string
@@ -527,6 +529,8 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          allows_one_time_purchase?: boolean
+          allows_subscription?: boolean
           category?: string | null
           created_at?: string | null
           currency?: string
@@ -545,6 +549,8 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          allows_one_time_purchase?: boolean
+          allows_subscription?: boolean
           category?: string | null
           created_at?: string | null
           currency?: string
