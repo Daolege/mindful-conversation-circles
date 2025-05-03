@@ -49,14 +49,14 @@ export async function getAllLanguages(): Promise<Language[]> {
     // Check if data is valid
     if (Array.isArray(data) && data.length > 0) {
       const validLanguages = data.filter(item => 
-        item && 
+        item !== null && 
         typeof item === 'object' && 
         'id' in item && 
         'code' in item
-      ) as Language[];
+      );
       
       if (validLanguages.length > 0) {
-        return validLanguages;
+        return validLanguages as Language[];
       }
     }
     
@@ -84,14 +84,14 @@ export async function getEnabledLanguages(): Promise<Language[]> {
     // Check if data is valid
     if (Array.isArray(data) && data.length > 0) {
       const validLanguages = data.filter(item => 
-        item && 
+        item !== null && 
         typeof item === 'object' && 
         'id' in item && 
         'code' in item
-      ) as Language[];
+      );
       
       if (validLanguages.length > 0) {
-        return validLanguages;
+        return validLanguages as Language[];
       }
     }
     
@@ -187,7 +187,7 @@ export async function deleteLanguage(languageId: number): Promise<{ success: boo
     }
     
     if (Array.isArray(language) && language.length > 0 && language[0] && typeof language[0] === 'object' && 'code' in language[0]) {
-      const langCode = language[0].code;
+      const langCode = language[0].code as string;
       if (langCode === 'en' || langCode === 'zh') {
         return { 
           success: false, 
@@ -253,14 +253,16 @@ export async function getTranslationsByLanguage(languageCode: string): Promise<T
     }
     
     if (Array.isArray(data)) {
-      return data.filter(item => 
-        item &&
+      const validTranslations = data.filter(item => 
+        item !== null &&
         typeof item === 'object' &&
         'language_code' in item &&
         'namespace' in item &&
         'key' in item &&
         'value' in item
-      ) as TranslationItem[];
+      );
+      
+      return validTranslations as TranslationItem[];
     }
     
     return [];

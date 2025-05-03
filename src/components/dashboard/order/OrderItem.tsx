@@ -18,7 +18,7 @@ import OrderLineItems from "./OrderLineItems";
 import OrderPaymentDetails from "./OrderPaymentDetails";
 import { getOrderById } from "@/lib/services/orderService";
 import { useTranslations } from "@/hooks/useTranslations";
-import { OrderStatus } from "@/lib/types/order";
+import { Order, OrderStatus } from "@/types/order";
 import { useTranslation } from "react-i18next";
 
 interface OrderItemProps {
@@ -84,7 +84,7 @@ export default function OrderItem({
   }
 
   // Extract the order from the orderData structure
-  const order = orderData.data;
+  const order = orderData.data as Order;
   
   // Map for status colors using string literals instead of enum values
   const statusColor: Record<string, string> = {
@@ -144,7 +144,7 @@ export default function OrderItem({
           )}
           
           {showRefundButton && 
-           order.status === 'completed' && 
+           order.status === OrderStatus.COMPLETED && 
            onRefund && (
             <Button 
               variant="destructive" 

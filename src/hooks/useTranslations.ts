@@ -62,8 +62,8 @@ export const useTranslations = () => {
       if (existingTranslation && 
           Array.isArray(existingTranslation) && 
           existingTranslation.length > 0 && 
-          typeof existingTranslation[0] === 'object' &&
           existingTranslation[0] !== null &&
+          typeof existingTranslation[0] === 'object' &&
           'id' in existingTranslation[0]) {
         
         // 更新已有翻译
@@ -116,7 +116,7 @@ export const useTranslations = () => {
       if (error) throw error;
       
       // Ensure we return a valid array of TranslationItem objects
-      const translations: TranslationItem[] = Array.isArray(data) ? 
+      const validItems = Array.isArray(data) ? 
         data.filter(item => 
           item !== null && 
           typeof item === 'object' &&
@@ -124,7 +124,10 @@ export const useTranslations = () => {
           'namespace' in item &&
           'key' in item &&
           'value' in item
-        ) as TranslationItem[] : [];
+        ) : [];
+      
+      // Type assertion after validation
+      const translations = validItems as TranslationItem[];
       
       return { 
         success: true, 

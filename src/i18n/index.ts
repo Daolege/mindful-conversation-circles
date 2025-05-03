@@ -83,7 +83,13 @@ i18n.use({
       if (!error && data && Array.isArray(data) && data.length > 0) {
         const translations = data.reduce((acc, item) => {
           // Only proceed if item is an object with key and value properties
-          if (item && typeof item === 'object' && 'key' in item && 'value' in item && item.key && item.value) {
+          if (item && 
+              typeof item === 'object' && 
+              item !== null &&
+              'key' in item && 
+              'value' in item && 
+              typeof item.key === 'string' && 
+              typeof item.value === 'string') {
             acc[item.key] = item.value;
           }
           return acc;

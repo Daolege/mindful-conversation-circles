@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/authHooks';
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { ArrowLeft } from 'lucide-react';
-import { Order } from '@/lib/types/order';
+import { Order } from '@/types/order';
 import { getOrderById } from '@/lib/services/orderQueryService';
 import { useToast } from '@/hooks/use-toast';
 import { OrderDetailSkeleton } from '@/components/dashboard/order/OrderDetailSkeleton';
@@ -91,7 +91,7 @@ const OrderDetail = () => {
       }
 
       console.log(t('checkout:successfullyRetrievedOrderDetails'), orderData);
-      setOrder(orderData);
+      setOrder(orderData as unknown as Order);
       setLoading(false);
     } catch (err: any) {
       console.error(t('errors:errorFetchingOrderDetails'), err);
