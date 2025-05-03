@@ -5,6 +5,7 @@ import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { EditableListComponent } from './EditableListComponent';
+import { EditableCourseHighlightsComponent, CourseHighlight } from './EditableCourseHighlightsComponent';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/integrations/supabase/client';
@@ -65,6 +66,11 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({
     audience: "适合人群"
   });
   
+  // Course highlights state
+  const [courseHighlights, setCourseHighlights] = useState<CourseHighlight[]>([]);
+  const [lectureCount, setLectureCount] = useState<number>(0);
+  const [courseLanguage, setCourseLanguage] = useState<string>("中文");
+  
   // Convert string arrays to object arrays with IDs for the editable lists
   const formatArrayToListItems = (arr: string[]): ListItem[] => {
     return arr.map((item, index) => ({
@@ -92,9 +98,10 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({
       
       setIsLoading(true);
       try {
+        // Load basic course settings
         const { data, error } = await supabase
           .from('courses_new')
-          .select('status, allows_one_time_purchase, allows_subscription')
+          .select('status, allows_one_time_purchase, allows_subscription, language, lecture_count')
           .eq('id', courseId)
           .single();
 
@@ -105,6 +112,38 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({
           // Set purchase method states with defaults if fields are null
           setAllowsOneTimePurchase(data.allows_one_time_purchase !== false);
           setAllowsSubscription(data.allows_subscription !== false);
+          setCourseLanguage(data.language || "中文");
+          setLectureCount(data.lecture_count || 0);
+        }
+        
+        // Load course highlights
+        const { data: highlightsData, error: highlightsError } = await supabase
+          .from('course_highlights')
+          .select('*')
+          .eq('course_id', courseId)
+          .order('position');
+          
+        if (highlightsError) throw highlightsError;
+        
+        if (highlightsData && highlightsData.length > 0) {
+          setCourseHighlights(highlightsData);
+        } else {
+          // If no highlights exist, copy from defaults
+          const { data: defaultHighlights, error: defaultError } = await supabase
+            .from('default_course_highlights')
+            .select('*')
+            .order('position');
+            
+          if (!defaultError && defaultHighlights) {
+            // Transform default highlights for this course
+            const courseSpecificHighlights = defaultHighlights.map(item => ({
+              ...item,
+              id: `temp-${Date.now()}-${item.position}`,
+              course_id: courseId
+            }));
+            
+            setCourseHighlights(courseSpecificHighlights);
+          }
         }
       } catch (error: any) {
         console.error("Error loading course settings:", error);
@@ -120,6 +159,43 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({
   // Convert list items back to string arrays for saving
   const formatListItemsToArray = (items: ListItem[]): string[] => {
     return items.map(item => item.text);
+  };
+
+  // Handle course highlights changes
+  const handleCourseHighlightsChange = async (newHighlights: CourseHighlight[]) => {
+    setCourseHighlights(newHighlights);
+    
+    if (!courseId) return;
+    
+    try {
+      // First delete all existing highlights for this course
+      const { error: deleteError } = await supabase
+        .from('course_highlights')
+        .delete()
+        .eq('course_id', courseId);
+        
+      if (deleteError) throw deleteError;
+      
+      // Then insert the new highlights
+      const highlightsToInsert = newHighlights.map((highlight, index) => ({
+        icon: highlight.icon,
+        content: highlight.content,
+        position: index,
+        is_visible: highlight.is_visible,
+        course_id: courseId
+      }));
+      
+      const { error: insertError } = await supabase
+        .from('course_highlights')
+        .insert(highlightsToInsert);
+        
+      if (insertError) throw insertError;
+      
+      toast.success("课程亮点已更新");
+    } catch (error) {
+      console.error("Error saving course highlights:", error);
+      toast.error("保存课程亮点失败");
+    }
   };
 
   const handleLearningObjectivesChange = (newItems: ListItem[]) => {
@@ -293,6 +369,15 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({
         </Card>
       </div>
 
+      {/* Course Highlights section - positioned above the other editable lists */}
+      <EditableCourseHighlightsComponent 
+        courseId={courseId}
+        highlights={courseHighlights}
+        onChange={handleCourseHighlightsChange}
+        lectureCount={lectureCount}
+        courseLanguage={courseLanguage}
+      />
+      
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <EditableListComponent
           title={sectionTitles.objectives}
