@@ -61,4 +61,11 @@ BEGIN
   BEFORE INSERT OR UPDATE ON exchange_rates
   FOR EACH ROW
   EXECUTE FUNCTION sync_exchange_rate_fields();
+  
+  -- Add index for faster querying by date range
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_indexes WHERE indexname = 'exchange_rates_created_at_idx'
+  ) THEN
+    CREATE INDEX exchange_rates_created_at_idx ON exchange_rates (created_at DESC);
+  END IF;
 END $$;

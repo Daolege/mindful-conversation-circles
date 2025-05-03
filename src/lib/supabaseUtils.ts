@@ -413,6 +413,79 @@ export const exchangeRatesService = {
     }
   },
   
+  getAllHistory: async (page: number = 1, pageSize: number = 10, dateRange?: { from: Date, to: Date } | null) => {
+    try {
+      let query = supabase
+        .from('exchange_rates')
+        .select('*', { count: 'exact' });
+      
+      // Add date filtering if provided
+      if (dateRange && dateRange.from && dateRange.to) {
+        query = query.gte('created_at', dateRange.from.toISOString())
+                    .lte('created_at', dateRange.to.toISOString());
+      }
+      
+      // Add pagination
+      const from = (page - 1) * pageSize;
+      const to = from + pageSize - 1;
+      
+      const { data, error, count } = await query
+        .order('created_at', { ascending: false })
+        .range(from, to);
+      
+      if (error) {
+        console.error("Error fetching exchange rate history:", error);
+        throw error;
+      }
+      
+      // Handle empty results
+      if (!data || data.length === 0) {
+        console.log("No exchange rate history found, using defaults");
+        return { 
+          data: defaultExchangeRates, 
+          count: defaultExchangeRates.length,
+          page,
+          pageSize
+        };
+      }
+      
+      // Convert legacy data format if needed
+      const formattedData = data.map(item => {
+        if ('rate' in item) {
+          return item as ExchangeRate;
+        } else if ('cny_to_usd' in item) {
+          // Convert legacy format
+          return {
+            id: item.id,
+            rate: (item as any).cny_to_usd,
+            from_currency: 'CNY',
+            to_currency: 'USD',
+            created_at: item.created_at,
+            updated_at: item.updated_at,
+            cny_to_usd: (item as any).cny_to_usd
+          } as ExchangeRate;
+        }
+        // Fallback for unexpected data structure
+        return item as ExchangeRate;
+      });
+      
+      return { 
+        data: formattedData, 
+        count: count || formattedData.length,
+        page,
+        pageSize
+      };
+    } catch (error) {
+      console.error("Error in exchangeRatesService.getAllHistory:", error);
+      return { 
+        data: defaultExchangeRates, 
+        count: defaultExchangeRates.length,
+        page: 1,
+        pageSize: 10
+      };
+    }
+  },
+  
   insert: async (rate: Partial<ExchangeRate>) => {
     try {
       // Make sure required fields are provided

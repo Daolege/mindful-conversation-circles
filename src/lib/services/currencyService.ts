@@ -1,4 +1,3 @@
-
 /**
  * Currency and payment utility functions
  */
@@ -201,4 +200,27 @@ export const getLatestExchangeRate = (rates: ExchangeRate[] | undefined | null, 
   
   // Return default if no match found
   return getDefaultExchangeRate();
+};
+
+/**
+ * Format exchange rate value with fixed decimal places
+ */
+export const formatExchangeRate = (rate?: number): string => {
+  if (rate === undefined || rate === null) {
+    return '0.00';
+  }
+  
+  // Format with up to 4 decimal places, but trim trailing zeros
+  return rate.toFixed(4).replace(/\.?0+$/, '');
+};
+
+/**
+ * Get the currency pair display in readable format
+ */
+export const getCurrencyPairDisplay = (fromCurrency?: string, toCurrency?: string): string => {
+  if (!fromCurrency || !toCurrency) {
+    return '';
+  }
+  
+  return `${fromCurrency.toUpperCase()}/${toCurrency.toUpperCase()}`;
 };
