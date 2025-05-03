@@ -57,7 +57,7 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({
   const [purchaseMethodError, setPurchaseMethodError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   
-  // Add the missing courseVisibility state
+  // Course visibility state
   const [courseVisibility, setCourseVisibility] = useState<string>('published');
   
   // State for editable section titles
@@ -370,45 +370,51 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({
         </Card>
       </div>
 
-      {/* Course Highlights section - positioned above the other editable lists */}
-      <EditableCourseHighlightsComponent 
-        courseId={courseId}
-        highlights={courseHighlights}
-        onChange={handleCourseHighlightsChange}
-        lectureCount={lectureCount}
-        courseLanguage={courseLanguage}
-      />
-      
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <EditableListComponent
-          title={sectionTitles.objectives}
-          titleEditable={true}
-          onTitleChange={(title) => handleSectionTitleChange('objectives', title)}
-          description="列出学习者完成课程后将获得的技能"
-          items={learningObjectivesList}
-          onChange={handleLearningObjectivesChange}
-          placeholder="例如: 掌握基础Python语法"
-        />
+      {/* Course settings layout - split into two columns */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Left column with Course Highlights */}
+        <div>
+          <EditableCourseHighlightsComponent 
+            courseId={courseId}
+            highlights={courseHighlights}
+            onChange={handleCourseHighlightsChange}
+            lectureCount={lectureCount}
+            courseLanguage={courseLanguage}
+          />
+        </div>
+        
+        {/* Right column with editable lists */}
+        <div className="space-y-6">
+          <EditableListComponent
+            title={sectionTitles.objectives}
+            titleEditable={true}
+            onTitleChange={(title) => handleSectionTitleChange('objectives', title)}
+            description="列出学习者完成课程后将获得的技能"
+            items={learningObjectivesList}
+            onChange={handleLearningObjectivesChange}
+            placeholder="例如: 掌握基础Python语法"
+          />
 
-        <EditableListComponent
-          title={sectionTitles.requirements}
-          titleEditable={true}
-          onTitleChange={(title) => handleSectionTitleChange('requirements', title)}
-          description="列出参加课程所需的先决条件"
-          items={requirementsList}
-          onChange={handleRequirementsChange}
-          placeholder="例如: 基本计算机操作技能"
-        />
+          <EditableListComponent
+            title={sectionTitles.requirements}
+            titleEditable={true}
+            onTitleChange={(title) => handleSectionTitleChange('requirements', title)}
+            description="列出参加课程所需的先决条件"
+            items={requirementsList}
+            onChange={handleRequirementsChange}
+            placeholder="例如: 基本计算机操作技能"
+          />
 
-        <EditableListComponent
-          title={sectionTitles.audience}
-          titleEditable={true}
-          onTitleChange={(title) => handleSectionTitleChange('audience', title)}
-          description="说明这门课程适合哪类学习者"
-          items={targetAudienceList}
-          onChange={handleTargetAudienceChange}
-          placeholder="例如: 初学者, 想转行的专业人士"
-        />
+          <EditableListComponent
+            title={sectionTitles.audience}
+            titleEditable={true}
+            onTitleChange={(title) => handleSectionTitleChange('audience', title)}
+            description="说明这门课程适合哪类学习者"
+            items={targetAudienceList}
+            onChange={handleTargetAudienceChange}
+            placeholder="例如: 初学者, 想转行的专业人士"
+          />
+        </div>
       </div>
     </div>
   );
