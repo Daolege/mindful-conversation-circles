@@ -31,10 +31,10 @@ export async function getAllLanguages(): Promise<Language[]> {
     
     // Check if data is valid
     if (Array.isArray(data) && data.length > 0) {
-      const validLanguages = data.filter(isValidLanguage);
+      const validLanguages = data.filter(item => isValidLanguage(item));
       
       if (validLanguages.length > 0) {
-        return validLanguages;
+        return validLanguages as Language[];
       }
     }
     
@@ -61,10 +61,10 @@ export async function getEnabledLanguages(): Promise<Language[]> {
     
     // Check if data is valid
     if (Array.isArray(data) && data.length > 0) {
-      const validLanguages = data.filter(isValidLanguage);
+      const validLanguages = data.filter(item => isValidLanguage(item));
       
       if (validLanguages.length > 0) {
-        return validLanguages;
+        return validLanguages as Language[];
       }
     }
     
@@ -172,7 +172,7 @@ export async function deleteLanguage(languageId: number): Promise<{ success: boo
     if (Array.isArray(language) && language.length > 0) {
       const langData = language[0];
       
-      if (isValidLanguageCode(langData)) {
+      if (langData && isValidLanguageCode(langData)) {
         const langCode = langData.code;
         
         if (langCode === 'en' || langCode === 'zh') {

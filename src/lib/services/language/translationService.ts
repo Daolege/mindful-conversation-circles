@@ -64,7 +64,7 @@ export async function getTranslationsByLanguage(languageCode: string): Promise<T
     };
     
     // Filter and map valid translations
-    const validTranslations = data.filter(isValidTranslation);
+    const validTranslations = data.filter(item => isValidTranslation(item)) as TranslationItem[];
     
     return validTranslations;
   } catch (error) {

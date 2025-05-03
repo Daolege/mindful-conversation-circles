@@ -7,17 +7,7 @@ import {
   updateTable
 } from '@/lib/services/typeSafeSupabase';
 import { useLanguage } from '@/contexts/LanguageContext';
-
-// Define TranslationItem type directly here to avoid circular dependencies
-export type TranslationItem = {
-  id?: number;
-  language_code: string;
-  namespace: string;
-  key: string;
-  value: string;
-  created_at?: string;
-  updated_at?: string;
-};
+import { TranslationItem } from '@/lib/services/language/languageCore';
 
 export const useTranslations = () => {
   const { t: originalT, i18n } = useTranslation(['common', 'navigation', 'courses', 'auth', 'admin', 'checkout', 'dashboard', 'errors', 'orders', 'actions', 'home']);
@@ -183,7 +173,9 @@ export const useTranslations = () => {
       if (error) throw error;
       
       // Ensure we return a valid array of TranslationItem objects
-      const validItems = Array.isArray(data) ? data.filter(isValidTranslation) : [];
+      const validItems = Array.isArray(data) 
+        ? data.filter(item => isValidTranslation(item))
+        : [];
       
       // We've filtered out null items, safe to type assert now
       const translations = validItems as TranslationItem[];
