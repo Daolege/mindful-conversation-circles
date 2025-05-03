@@ -1,0 +1,51 @@
+
+/* RTL support styles */
+[dir="rtl"] * {
+  letter-spacing: 0;
+}
+
+[dir="rtl"] .select-rtl .select-trigger,
+[dir="rtl"] .select-rtl .select-content {
+  text-align: right;
+}
+
+[dir="rtl"] .input-rtl {
+  text-align: right;
+}
+
+[dir="rtl"] .form-label-rtl {
+  text-align: right;
+}
+
+[dir="rtl"] .checkbox-label-rtl {
+  padding-right: 8px;
+  padding-left: 0;
+}
+
+[dir="rtl"] .rtl-mirror {
+  transform: scaleX(-1);
+}
+
+[dir="rtl"] .rtl-margin-right {
+  margin-right: 0;
+  margin-left: 0.5rem;
+}
+
+[dir="rtl"] .rtl-padding-right {
+  padding-right: 0;
+  padding-left: 0.5rem;
+}
+
+/* RTL for flex items */
+[dir="rtl"] .rtl-flex-row-reverse {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .rtl-text-right {
+  text-align: right;
+}
+
+/* RTL grid layout corrections */
+[dir="rtl"] .rtl-grid-reverse {
+  direction: rtl;
+}

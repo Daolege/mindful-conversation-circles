@@ -96,7 +96,7 @@ const Footer = () => {
   
   // 构建版权信息
   const copyrightText = siteSettings?.copyright_text || 
-    `© ${new Date().getFullYear()} ${siteSettings?.company_name || 'SecondRise'}. ${siteSettings?.company_full_name || 'Mandarin (Hong Kong) International Limited'}. 版权所有`;
+    `© ${new Date().getFullYear()} ${siteSettings?.company_name || 'SecondRise'}. ${siteSettings?.company_full_name || 'Mandarin (Hong Kong) International Limited'}. ${t('common:allRightsReserved')}`;
   
   return (
     <footer className="bg-[#1C1C1C] text-white pt-12 pb-8">

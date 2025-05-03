@@ -1,4 +1,3 @@
-
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
@@ -6,10 +5,36 @@ import Backend from 'i18next-http-backend';
 import { supabase } from '@/integrations/supabase/client';
 import { selectFromTable } from '@/lib/services/typeSafeSupabase';
 
-// Import translations
+// Default namespaces
+const namespaces = [
+  'common', 
+  'navigation', 
+  'courses', 
+  'auth', 
+  'admin', 
+  'checkout', 
+  'dashboard', 
+  'errors', 
+  'orders', 
+  'actions', 
+  'home'
+];
+
+// Supported languages
+const supportedLanguages = [
+  'en', 'zh', 'fr', 'de', 'ru', 
+  'ar', 'es', 'vi', 'th', 'pt', 
+  'ja', 'ko'
+];
+
+// Define RTL languages
+const rtlLanguages = ['ar'];
+
+// Import base translations for English and Chinese
+// Note: Other languages will be loaded from the database
 import enCommon from './locales/en/common.json';
-import enCourses from './locales/en/courses.json';
 import enNavigation from './locales/en/navigation.json';
+import enCourses from './locales/en/courses.json';
 import enAuth from './locales/en/auth.json';
 import enAdmin from './locales/en/admin.json';
 import enCheckout from './locales/en/checkout.json';
@@ -56,18 +81,22 @@ i18n.use({
           return acc;
         }, {} as Record<string, string>);
         
-        callback(null, translations);
-        return;
+        // If we have database translations, use them
+        if (Object.keys(translations).length > 0) {
+          callback(null, translations);
+          return;
+        }
       }
       
-      // 如果数据库没有翻译，使用内置翻译
+      // If database has no translations or there was an error, use built-in translations
       let translationsObj = {};
       
+      // Only English and Chinese have built-in translations
       if (language === 'en') {
         switch (namespace) {
           case 'common': translationsObj = enCommon; break;
-          case 'courses': translationsObj = enCourses; break;
           case 'navigation': translationsObj = enNavigation; break;
+          case 'courses': translationsObj = enCourses; break;
           case 'auth': translationsObj = enAuth; break;
           case 'admin': translationsObj = enAdmin; break;
           case 'checkout': translationsObj = enCheckout; break;
@@ -80,8 +109,8 @@ i18n.use({
       } else if (language === 'zh') {
         switch (namespace) {
           case 'common': translationsObj = zhCommon; break;
-          case 'courses': translationsObj = zhCourses; break;
           case 'navigation': translationsObj = zhNavigation; break;
+          case 'courses': translationsObj = zhCourses; break;
           case 'auth': translationsObj = zhAuth; break;
           case 'admin': translationsObj = zhAdmin; break;
           case 'checkout': translationsObj = zhCheckout; break;
@@ -103,10 +132,10 @@ i18n.use({
 .use(LanguageDetector)
 .use(initReactI18next)
 .init({
-  supportedLngs: ['en', 'zh'],
-  fallbackLng: 'zh',
+  supportedLngs: supportedLanguages,
+  fallbackLng: ['zh', 'en'],
   defaultNS: 'common',
-  ns: ['common', 'navigation', 'courses', 'auth', 'admin', 'checkout', 'dashboard', 'errors', 'orders', 'actions', 'home'],
+  ns: namespaces,
   interpolation: {
     escapeValue: false,
   },
@@ -117,6 +146,26 @@ i18n.use({
   react: {
     useSuspense: false, // Disable suspense to prevent loading flickers
   },
+  // Set language direction (RTL support)
+  language: i18n.language,
+  // This function will run when language changes to set the correct document dir
+  // for RTL languages
+  load: 'languageOnly'
 });
+
+// Set the correct document direction based on language
+const setDocumentDirection = (language: string) => {
+  const dir = rtlLanguages.includes(language) ? 'rtl' : 'ltr';
+  document.documentElement.dir = dir;
+  document.documentElement.lang = language;
+  // Add a data attribute for easier styling
+  document.documentElement.setAttribute('data-language', language);
+};
+
+// Set initial direction
+setDocumentDirection(i18n.language);
+
+// Update direction when language changes
+i18n.on('languageChanged', setDocumentDirection);
 
 export default i18n;

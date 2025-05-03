@@ -3,8 +3,10 @@ import { useTranslation } from 'react-i18next';
 import { 
   selectFromTable, 
   insertIntoTable, 
-  callRpcFunction 
+  callRpcFunction,
+  updateTable
 } from '@/lib/services/typeSafeSupabase';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 // Define TranslationItem type directly here to avoid circular dependencies
 export type TranslationItem = {
@@ -18,7 +20,8 @@ export type TranslationItem = {
 };
 
 export const useTranslations = () => {
-  const { t, i18n } = useTranslation(['common', 'navigation', 'courses', 'auth', 'admin', 'checkout', 'dashboard', 'errors', 'orders', 'actions']);
+  const { t, i18n } = useTranslation(['common', 'navigation', 'courses', 'auth', 'admin', 'checkout', 'dashboard', 'errors', 'orders', 'actions', 'home']);
+  const { isRTL } = useLanguage();
   
   // 更新或添加单个翻译项
   const updateTranslation = async (
@@ -39,9 +42,9 @@ export const useTranslations = () => {
       
       if (existingTranslation && existingTranslation.length > 0 && existingTranslation[0].id) {
         // 更新已有翻译
-        const { error: updateError } = await selectFromTable(
+        const { error: updateError } = await updateTable(
           'translations',
-          '*', 
+          { value, updated_at: new Date().toISOString() },
           { id: existingTranslation[0].id }
         );
         
@@ -140,12 +143,23 @@ export const useTranslations = () => {
     }
   };
   
+  // Helper function to translate with fallback
+  const translate = (key: string, options?: any) => {
+    const result = t(key, options);
+    // If translation is missing (returns the key), try with a fallback 
+    if (result === key && key.includes(':')) {
+      const keyWithoutNamespace = key.split(':')[1];
+      return t(keyWithoutNamespace, options) || key;
+    }
+    return result;
+  };
+  
   return {
-    t,
+    t: translate,
     i18n,
     currentLanguage: i18n.language,
     changeLanguage: (lang: string) => i18n.changeLanguage(lang),
-    isRTL: i18n.dir() === 'rtl',
+    isRTL,
     updateTranslation,
     getTranslations,
     refreshTranslations,

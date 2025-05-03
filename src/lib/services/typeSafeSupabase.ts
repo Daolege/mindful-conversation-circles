@@ -1,165 +1,101 @@
 
-/**
- * TypeScript-Safe Supabase Wrapper
- * 
- * This module provides simplified database access functions that bypass strict TypeScript checking
- * while maintaining runtime safety through explicit type casting.
- */
-
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from "@/integrations/supabase/client";
+import { PostgrestFilterBuilder } from "@supabase/postgrest-js";
 
 /**
- * Generic function to select data from any table with proper type casting
+ * Type-safe function to select data from a table
  */
-export async function selectFromTable<T>(
-  tableName: string,
-  columns: string = '*',
-  filters?: Record<string, any>
-): Promise<{ data: T[] | null; error: any }> {
-  try {
-    // Create the query - use any type to bypass TypeScript's strict checking
-    let query = (supabase as any).from(tableName).select(columns);
-    
-    // Apply filters if provided
-    if (filters && typeof filters === 'object') {
-      Object.entries(filters).forEach(([key, value]) => {
-        query = query.eq(key, value);
-      });
-    }
-    
-    // Execute the query
-    const { data, error } = await query;
-    
-    // Return typed results
-    return { data: data as T[] | null, error };
-  } catch (error) {
-    console.error(`Error in selectFromTable for ${tableName}:`, error);
-    return { data: null, error };
+export async function selectFromTable<T = any>(
+  table: string,
+  columns: string,
+  filter?: Record<string, any>,
+  options?: {
+    limit?: number;
+    order?: { column: string; ascending: boolean };
   }
-}
+) {
+  let query = supabase
+    .from(table)
+    .select(columns);
 
-/**
- * Generic function to insert data into any table
- */
-export async function insertIntoTable<T>(
-  tableName: string,
-  data: Record<string, any> | Record<string, any>[],
-  returning: string = '*'
-): Promise<{ data: T[] | null; error: any }> {
-  try {
-    // Use any type to bypass TypeScript's strict checking
-    const result = await (supabase as any).from(tableName).insert(data).select(returning);
-    return { data: result.data as T[] | null, error: result.error };
-  } catch (error) {
-    console.error(`Error in insertIntoTable for ${tableName}:`, error);
-    return { data: null, error };
-  }
-}
-
-/**
- * Generic function to update data in any table
- */
-export async function updateTable(
-  tableName: string,
-  updates: Record<string, any>,
-  filters: Record<string, any>
-): Promise<{ data: any; error: any }> {
-  try {
-    // Use any type to bypass TypeScript's strict checking
-    let query = (supabase as any).from(tableName).update(updates);
-    
-    // Apply filters
-    Object.entries(filters).forEach(([key, value]) => {
-      query = query.eq(key, value);
+  // Apply filters if provided
+  if (filter) {
+    Object.entries(filter).forEach(([key, value]) => {
+      query = query.eq(key, value) as PostgrestFilterBuilder<any, any, any>;
     });
-    
-    const result = await query;
-    return { data: result.data, error: result.error };
-  } catch (error) {
-    console.error(`Error in updateTable for ${tableName}:`, error);
-    return { data: null, error };
   }
+
+  // Apply limit if provided
+  if (options?.limit) {
+    query = query.limit(options.limit);
+  }
+
+  // Apply order if provided
+  if (options?.order) {
+    query = query.order(options.order.column, { ascending: options.order.ascending });
+  }
+
+  return query;
 }
 
 /**
- * Generic function to delete data from any table
+ * Type-safe function to insert data into a table
+ */
+export async function insertIntoTable<T = any>(
+  table: string,
+  data: Record<string, any> | Record<string, any>[]
+) {
+  return supabase
+    .from(table)
+    .insert(data);
+}
+
+/**
+ * Type-safe function to update data in a table
+ */
+export async function updateTable<T = any>(
+  table: string,
+  data: Record<string, any>,
+  filter: Record<string, any>
+) {
+  let query = supabase
+    .from(table)
+    .update(data);
+
+  // Apply filters
+  Object.entries(filter).forEach(([key, value]) => {
+    query = query.eq(key, value) as any;
+  });
+
+  return query;
+}
+
+/**
+ * Type-safe function to delete data from a table
  */
 export async function deleteFromTable(
-  tableName: string,
-  filters: Record<string, any>
-): Promise<{ data: any; error: any }> {
-  try {
-    // Use any type to bypass TypeScript's strict checking
-    let query = (supabase as any).from(tableName).delete();
-    
-    // Apply filters
-    Object.entries(filters).forEach(([key, value]) => {
-      query = query.eq(key, value);
-    });
-    
-    const result = await query;
-    return { data: result.data, error: result.error };
-  } catch (error) {
-    console.error(`Error in deleteFromTable for ${tableName}:`, error);
-    return { data: null, error };
-  }
+  table: string,
+  filter: Record<string, any>
+) {
+  let query = supabase
+    .from(table)
+    .delete();
+
+  // Apply filters
+  Object.entries(filter).forEach(([key, value]) => {
+    query = query.eq(key, value) as any;
+  });
+
+  return query;
 }
 
 /**
- * Function to call RPC functions safely
+ * Type-safe function to call an RPC function
  */
-export async function callRpcFunction<T>(
+export async function callRpcFunction(
   functionName: string,
   params?: Record<string, any>
-): Promise<{ data: T | null; error: any }> {
-  try {
-    // Use any type to bypass TypeScript's strict checking for RPC functions
-    const { data, error } = await (supabase as any).rpc(functionName, params);
-    return { data: data as T, error };
-  } catch (error) {
-    console.error(`Error calling RPC function ${functionName}:`, error);
-    return { data: null, error };
-  }
-}
-
-/**
- * Simplified function specifically for translations
- */
-export async function getTranslations(language: string, namespace: string) {
-  return selectFromTable(
-    'translations',
-    'id, language_code, namespace, key, value',
-    { language_code: language, namespace: namespace }
-  );
-}
-
-/**
- * Simplified function to insert translations
- */
-export async function insertTranslation(
-  language: string,
-  namespace: string,
-  key: string,
-  value: string
 ) {
-  return insertIntoTable('translations', {
-    language_code: language,
-    namespace,
-    key,
-    value,
-    created_at: new Date().toISOString()
-  });
-}
-
-/**
- * Simplified function to batch import translations
- */
-export async function batchImportTranslations(translations: any[]): Promise<{ success: boolean; error?: any }> {
-  try {
-    const { error } = await callRpcFunction('upsert_translations_batch', { translations_json: translations });
-    return { success: !error, error };
-  } catch (error) {
-    console.error('Error in batchImportTranslations:', error);
-    return { success: false, error };
-  }
+  return supabase
+    .rpc(functionName, params || {});
 }
