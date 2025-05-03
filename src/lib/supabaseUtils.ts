@@ -449,8 +449,11 @@ export const exchangeRatesService = {
         };
       }
       
+      // Explicitly type our data for safety
+      type RawDataItem = Record<string, any>;
+      
       // Convert legacy data format if needed
-      const formattedData = data.map(item => {
+      const formattedData = (data as RawDataItem[]).map(item => {
         if (!item) return null; // Skip null or undefined items
         
         if ('rate' in item) {
@@ -459,12 +462,12 @@ export const exchangeRatesService = {
           // Convert legacy format
           return {
             id: item.id || '',
-            rate: (item as any).cny_to_usd,
+            rate: item.cny_to_usd,
             from_currency: 'CNY',
             to_currency: 'USD',
             created_at: item.created_at || new Date().toISOString(),
             updated_at: item.updated_at || new Date().toISOString(),
-            cny_to_usd: (item as any).cny_to_usd
+            cny_to_usd: item.cny_to_usd
           } as ExchangeRate;
         }
         // Fallback for unexpected data structure
