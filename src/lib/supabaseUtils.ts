@@ -431,19 +431,51 @@ export const exchangeRatesService = {
         updated_at: rate.updated_at || new Date().toISOString()
       };
       
-      console.log("Inserting exchange rate data:", insertData);
+      console.log("Preparing exchange rate data:", insertData);
       
-      const { data, error } = await supabase
+      // Check if a record with the same currency pair already exists
+      const { data: existingRates, error: queryError } = await supabase
         .from('exchange_rates')
-        .insert(insertData)
-        .select();
+        .select('id')
+        .eq('from_currency', rate.from_currency)
+        .eq('to_currency', rate.to_currency)
+        .limit(1);
+      
+      if (queryError) {
+        console.error("Error checking for existing records:", queryError);
+        throw queryError;
+      }
+      
+      let result;
+      
+      // If the record exists, update it instead of inserting
+      if (existingRates && existingRates.length > 0) {
+        console.log("Updating existing exchange rate record:", existingRates[0].id);
+        result = await supabase
+          .from('exchange_rates')
+          .update(insertData)
+          .eq('id', existingRates[0].id)
+          .select();
+      } else {
+        // No existing record, perform insert
+        console.log("Inserting new exchange rate record");
+        result = await supabase
+          .from('exchange_rates')
+          .insert(insertData)
+          .select();
+      }
+      
+      const { data, error } = result;
       
       if (error) {
-        console.error("Error inserting exchange rate:", error);
+        if (error.code === '23505') { // Unique violation error code
+          console.error("Unique constraint violation. This currency pair already exists.");
+          throw new Error("This currency pair already exists in the database");
+        }
         throw error;
       }
       
-      console.log("Exchange rate inserted successfully:", data);
+      console.log("Exchange rate saved successfully:", data);
       
       return { data, error: null };
     } catch (error) {

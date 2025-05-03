@@ -27,6 +27,15 @@ BEGIN
       to_currency = 'USD' 
   WHERE rate IS NULL AND cny_to_usd IS NOT NULL;
 
+  -- Create unique constraint if it doesn't exist
+  -- This prevents duplicate entries for the same currency pair
+  BEGIN
+    ALTER TABLE exchange_rates 
+    ADD CONSTRAINT unique_currency_pair UNIQUE (from_currency, to_currency);
+    EXCEPTION WHEN duplicate_table THEN
+      RAISE NOTICE 'Unique constraint already exists';
+  END;
+
   -- Create trigger to keep fields in sync
   DROP TRIGGER IF EXISTS sync_exchange_rate_fields ON exchange_rates;
   

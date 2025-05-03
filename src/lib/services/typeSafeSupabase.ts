@@ -101,3 +101,25 @@ export async function callRpcFunction(
   return supabase
     .rpc(functionName as any, params || {});
 }
+
+/**
+ * Type-safe function to upsert data (insert or update based on constraint)
+ * @param table The table name
+ * @param data The data to upsert
+ * @param onConflict Optional column to handle conflict on
+ */
+export async function upsertIntoTable<T = any>(
+  table: string,
+  data: Record<string, any> | Record<string, any>[],
+  onConflict?: string
+) {
+  let query = supabase
+    .from(table as any)
+    .upsert(data);
+    
+  if (onConflict) {
+    query = query.onConflict(onConflict);
+  }
+  
+  return query;
+}

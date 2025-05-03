@@ -6,13 +6,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useTranslations } from "@/hooks/useTranslations";
-import { Loader2, CreditCard, History, Calendar, ArrowLeftRight, AlertCircle } from "lucide-react";
+import { Loader2, CreditCard, History, Calendar, ArrowLeftRight, AlertCircle, RefreshCw } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatDistanceToNow } from 'date-fns';
 import { zhCN, enUS } from 'date-fns/locale';
 import { ExchangeRate, exchangeRatesService } from '@/lib/supabaseUtils';
 import { defaultExchangeRates } from '@/lib/defaultData';
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { checkSupabaseConnection } from '@/integrations/supabase/client';
 
 const ExchangeRateSettings = () => {
   const { t, currentLanguage } = useTranslations();
@@ -27,17 +28,39 @@ const ExchangeRateSettings = () => {
   const [exchangeHistory, setExchangeHistory] = useState<ExchangeRate[]>([]);
   const [isUsingSampleData, setIsUsingSampleData] = useState(false);
   const [hasError, setHasError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [connectionStatus, setConnectionStatus] = useState<'checking' | 'connected' | 'disconnected'>('checking');
 
-  // Load exchange rate on component mount
+  // Check connection on mount
   useEffect(() => {
-    loadExchangeRate();
-    loadExchangeHistory();
+    checkConnection();
   }, []);
+
+  // Load exchange rate on component mount or when connection is established
+  useEffect(() => {
+    if (connectionStatus === 'connected') {
+      loadExchangeRate();
+      loadExchangeHistory();
+    }
+  }, [connectionStatus]);
+
+  // Function to check database connection
+  const checkConnection = async () => {
+    setConnectionStatus('checking');
+    const isConnected = await checkSupabaseConnection();
+    setConnectionStatus(isConnected ? 'connected' : 'disconnected');
+    setHasError(!isConnected);
+    
+    if (!isConnected) {
+      setErrorMessage(t('admin:databaseConnectionError'));
+      setIsUsingSampleData(true);
+    }
+  };
 
   // Function to load current exchange rate
   const loadExchangeRate = async () => {
     setIsLoading(true);
-    setHasError(false);
+    setErrorMessage('');
     try {
       // Using our updated service
       const rates = await exchangeRatesService.getLatest();
@@ -64,6 +87,7 @@ const ExchangeRateSettings = () => {
       console.error("Error loading exchange rate:", error);
       toast.error(t('admin:errorLoadingExchangeRate'));
       setHasError(true);
+      setErrorMessage(t('admin:errorLoadingExchangeRate'));
       
       // Use sample data on error
       if (defaultExchangeRates.length > 0) {
@@ -135,7 +159,14 @@ const ExchangeRateSettings = () => {
 
   // Save exchange rate
   const saveExchangeRate = async () => {
+    if (connectionStatus !== 'connected') {
+      toast.error(t('admin:databaseConnectionError'));
+      setErrorMessage(t('admin:databaseConnectionRequired'));
+      return;
+    }
+
     setIsSaving(true);
+    setErrorMessage('');
     try {
       // Ensure we have the required fields before saving
       if (!exchangeRate.rate) {
@@ -152,6 +183,11 @@ const ExchangeRateSettings = () => {
       });
       
       if (error) {
+        // Handle specific error cases
+        if (error.message && error.message.includes('already exists')) {
+          toast.warning(t('admin:currencyPairExists'));
+          throw new Error(t('admin:currencyPairExists'));
+        }
         throw error;
       }
       
@@ -162,20 +198,33 @@ const ExchangeRateSettings = () => {
       setIsUsingSampleData(false);
       toast.success(t('admin:exchangeRateSavedSuccess'));
       setHasError(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error saving exchange rate:", error);
-      toast.error(t('admin:errorSavingExchangeRate'));
+      toast.error(error.message || t('admin:errorSavingExchangeRate'));
       setHasError(true);
+      setErrorMessage(error.message || t('admin:errorSavingExchangeRate'));
     } finally {
       setIsSaving(false);
     }
   };
 
   // Retry connection if there was an error
-  const retryConnection = () => {
-    loadExchangeRate();
-    loadExchangeHistory();
+  const retryConnection = async () => {
+    setErrorMessage('');
+    setHasError(false);
     toast.info(t('admin:retryingConnection'));
+    
+    try {
+      await checkConnection();
+      if (connectionStatus === 'connected') {
+        loadExchangeRate();
+        loadExchangeHistory();
+      }
+    } catch (error) {
+      console.error("Failed to reconnect:", error);
+      setHasError(true);
+      setErrorMessage(t('admin:reconnectionFailed'));
+    }
   };
 
   if (isLoading) {
@@ -224,11 +273,29 @@ const ExchangeRateSettings = () => {
 
   return (
     <div className="space-y-6">
-      {hasError && (
+      {connectionStatus === 'disconnected' && (
+        <Alert variant="destructive" className="bg-red-50">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription className="flex items-center justify-between">
+            <span>{t('admin:databaseConnectionError')}</span>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={retryConnection}
+              className="ml-2 bg-white"
+            >
+              <RefreshCw className="h-4 w-4 mr-2" />
+              {t('admin:retryConnection')}
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {hasError && errorMessage && (
         <Alert variant="destructive" className="bg-red-50">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            {t('admin:databaseConnectionError')}
+            {errorMessage}
             <Button variant="link" className="p-0 h-auto text-red-600" onClick={retryConnection}>
               {t('admin:retryConnection')}
             </Button>
@@ -274,7 +341,7 @@ const ExchangeRateSettings = () => {
               />
               <Button 
                 onClick={saveExchangeRate}
-                disabled={isSaving}
+                disabled={isSaving || connectionStatus !== 'connected'}
               >
                 {isSaving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
                 {isSaving ? t('admin:saving') : t('admin:saveRate')}
@@ -287,14 +354,25 @@ const ExchangeRateSettings = () => {
 
       {/* Exchange Rate History */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <History className="mr-2 h-5 w-5" />
-            {t('admin:exchangeRateHistory')}
-          </CardTitle>
-          <CardDescription>
-            {t('admin:viewExchangeRateHistory')}
-          </CardDescription>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle className="flex items-center">
+              <History className="mr-2 h-5 w-5" />
+              {t('admin:exchangeRateHistory')}
+            </CardTitle>
+            <CardDescription>
+              {t('admin:viewExchangeRateHistory')}
+            </CardDescription>
+          </div>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={loadExchangeHistory}
+            disabled={isHistoryLoading}
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${isHistoryLoading ? 'animate-spin' : ''}`} />
+            {t('admin:refresh')}
+          </Button>
         </CardHeader>
         <CardContent>
           {isHistoryLoading ? (
