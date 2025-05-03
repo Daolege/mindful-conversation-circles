@@ -95,8 +95,9 @@ export async function addLanguage(language: Omit<Language, 'id'>): Promise<{ suc
       return { success: false, error: error as unknown as Error };
     }
     
-    // Fix TypeScript null check errors with proper null guarding
+    // Fix the type checking issue with clear type guards
     if (data) {
+      // Explicitly check if data is an array and has elements
       if (Array.isArray(data) && data.length > 0) {
         const firstItem = data[0];
         if (firstItem) {
