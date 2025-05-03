@@ -55,27 +55,27 @@ export async function getTranslationHistory(
     }
     
     // Ensure we're properly handling the data
-    if (Array.isArray(data)) {
-      // Safely cast data to any[] first, then filter
-      const safeData = data as any[];
-      
-      // Filter items that match our expected structure
-      const historyItems = safeData.filter((item): item is TranslationHistoryItem => {
-        return item !== null && 
-          typeof item === 'object' &&
-          'id' in item &&
-          'translation_id' in item &&
-          'language_code' in item &&
-          'namespace' in item &&
-          'key' in item &&
-          'new_value' in item &&
-          'version' in item;
-      });
-      
-      return { success: true, data: historyItems };
+    if (!Array.isArray(data)) {
+      return { success: false, data: [], error: new Error('Invalid data format: not an array') };
     }
     
-    return { success: false, data: [], error: new Error('Invalid data format') };
+    // Safely cast data to any[] first, then filter
+    const safeData = data as any[];
+    
+    // Filter items that match our expected structure
+    const historyItems = safeData.filter((item): item is TranslationHistoryItem => {
+      return item !== null && 
+        typeof item === 'object' &&
+        'id' in item &&
+        'translation_id' in item &&
+        'language_code' in item &&
+        'namespace' in item &&
+        'key' in item &&
+        'new_value' in item &&
+        'version' in item;
+    });
+    
+    return { success: true, data: historyItems };
   } catch (error) {
     console.error('Unexpected error in getTranslationHistory:', error);
     return { success: false, data: [], error: error as Error };
@@ -101,26 +101,30 @@ export async function rollbackToVersion(
       { limit: 1 }
     );
     
-    if (fetchError || !Array.isArray(data) || data.length === 0) {
-      const error = fetchError || new Error('Version not found');
-      console.error('Error fetching version:', error);
-      return { success: false, error: error as unknown as Error };
+    if (fetchError) {
+      console.error('Error fetching version:', fetchError);
+      return { success: false, error: fetchError as unknown as Error };
     }
     
-    const firstItem = data[0];
-    
-    // Type guard to ensure data has the expected structure
-    if (firstItem === null || typeof firstItem !== 'object') {
-      return { success: false, error: new Error('Invalid data format') };
+    if (!Array.isArray(data) || data.length === 0) {
+      return { success: false, error: new Error('Version not found') };
     }
     
-    // Additional check to ensure new_value exists
-    if (!firstItem || !('new_value' in firstItem) || firstItem.new_value === undefined) {
-      return { success: false, error: new Error('Invalid data format: missing new_value') };
+    // Type the first item correctly
+    const firstItem = data[0] as { new_value?: string } | null;
+    
+    // Specific null check for firstItem
+    if (firstItem === null) {
+      return { success: false, error: new Error('Invalid data format: item is null') };
     }
     
-    // At this point, we know firstItem is not null and has the new_value property
-    const valueToRestore = firstItem.new_value;
+    // Check if firstItem has the new_value property
+    if (!('new_value' in firstItem) || typeof firstItem.new_value !== 'string') {
+      return { success: false, error: new Error('Invalid data format: missing or invalid new_value') };
+    }
+    
+    // Now we can safely use firstItem.new_value
+    const valueToRestore: string = firstItem.new_value;
     
     // Get the current translation to update
     const { data: currentData, error: currentError } = await selectFromTable(
@@ -130,43 +134,54 @@ export async function rollbackToVersion(
       { limit: 1 }
     );
     
-    if (currentError || !Array.isArray(currentData) || currentData.length === 0) {
-      const error = currentError || new Error('Translation not found');
-      console.error('Error fetching current translation:', error);
-      return { success: false, error: error as unknown as Error };
+    if (currentError) {
+      console.error('Error fetching current translation:', currentError);
+      return { success: false, error: currentError as unknown as Error };
     }
     
-    const currentItem = currentData[0];
-    
-    // Type guard to ensure currentData has the expected structure
-    if (currentItem === null || typeof currentItem !== 'object') {
-      return { success: false, error: new Error('Invalid translation data format') };
+    if (!Array.isArray(currentData) || currentData.length === 0) {
+      return { success: false, error: new Error('Translation not found') };
     }
     
-    // Additional checks to ensure all required properties exist
-    if (!currentItem || 
-        !('language_code' in currentItem) || 
+    // Type the current item correctly with a specific interface
+    interface TranslationFields {
+      language_code: string;
+      namespace: string;
+      key: string;
+    }
+    
+    const currentItem = currentData[0] as TranslationFields | null;
+    
+    // Specific null check for currentItem
+    if (currentItem === null) {
+      return { success: false, error: new Error('Invalid translation data: item is null') };
+    }
+    
+    // Check if currentItem has all required properties
+    if (!('language_code' in currentItem) || 
         !('namespace' in currentItem) || 
         !('key' in currentItem) ||
-        currentItem.language_code === undefined ||
-        currentItem.namespace === undefined ||
-        currentItem.key === undefined) {
+        typeof currentItem.language_code !== 'string' ||
+        typeof currentItem.namespace !== 'string' ||
+        typeof currentItem.key !== 'string') {
       return { success: false, error: new Error('Invalid translation data: missing required properties') };
     }
     
-    // At this point, we know currentItem is not null and has all required properties
-    const language_code = currentItem.language_code;
-    const namespace = currentItem.namespace;
-    const key = currentItem.key;
+    // Extract properties to local variables for clarity and type safety
+    const language_code: string = currentItem.language_code;
+    const namespace: string = currentItem.namespace;
+    const key: string = currentItem.key;
     
-    // Now we can safely create the TranslationItem object
-    const updateResult = await batchUpdateTranslations([{
+    // Now create and send the update with explicit typing
+    const updateItem: TranslationItem = {
       id: translationId,
       language_code,
       namespace,
       key,
       value: valueToRestore
-    } as TranslationItem]);
+    };
+    
+    const updateResult = await batchUpdateTranslations([updateItem]);
     
     return { 
       success: updateResult.success,
