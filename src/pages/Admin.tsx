@@ -6,7 +6,7 @@ import { useAuth } from "@/contexts/authHooks";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
-import { Loader2, LayoutDashboard, Users, BookOpen, ShoppingCart, Repeat, Settings, HelpCircle } from "lucide-react";
+import { Loader2, LayoutDashboard, Users, BookOpen, ShoppingCart, Repeat, Settings } from "lucide-react";
 import { UserManagement } from "@/components/admin/UserManagement";
 import { OrderManagement } from "@/components/admin/OrderManagement";
 import { DashboardStatistics } from "@/components/admin/DashboardStatistics";
@@ -14,7 +14,6 @@ import { AdminSettings } from "@/components/admin/AdminSettings";
 import { CourseManagement } from "@/components/admin/CourseManagement";
 import CourseManagementNew from "@/components/admin/CourseManagementNew";
 import { SubscriptionPlanManagement } from "@/components/admin/SubscriptionPlanManagement";
-import { MultilangFAQManagement } from "@/components/admin/MultilangFAQManagement";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslations } from '@/hooks/useTranslations';
@@ -183,7 +182,6 @@ const Admin = () => {
     { value: "courses-new", label: t('admin:coursesManagement2'), icon: BookOpen },
     { value: "orders", label: t('admin:ordersManagement'), icon: ShoppingCart },
     { value: "subscriptions", label: t('admin:subscriptionsManagement'), icon: Repeat },
-    { value: "faqs", label: t('admin:faqManagement'), icon: HelpCircle },
     { value: "settings", label: t('admin:systemSettings'), icon: Settings }
   ];
 
@@ -248,7 +246,7 @@ const Admin = () => {
                   </TabsContent>
                 </motion.div>
               )}
-
+              
               {activeTab === "courses" && (
                 <motion.div
                   key="courses"
@@ -301,20 +299,6 @@ const Admin = () => {
                 >
                   <TabsContent value="subscriptions">
                     <SubscriptionPlanManagement />
-                  </TabsContent>
-                </motion.div>
-              )}
-              
-              {activeTab === "faqs" && (
-                <motion.div
-                  key="faqs"
-                  variants={tabContentVariants}
-                  initial="hidden"
-                  animate="visible"
-                  exit="exit"
-                >
-                  <TabsContent value="faqs">
-                    <MultilangFAQManagement />
                   </TabsContent>
                 </motion.div>
               )}
