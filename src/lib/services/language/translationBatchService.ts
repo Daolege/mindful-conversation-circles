@@ -94,7 +94,7 @@ export async function rollbackToVersion(
 ): Promise<{ success: boolean; error?: Error }> {
   try {
     // First get the version we want to restore
-    const { data, error: fetchError } = await selectFromTable(
+    const { data: versionData, error: fetchError } = await selectFromTable(
       'translation_history',
       'new_value',
       { translation_id: translationId, version },
@@ -106,26 +106,26 @@ export async function rollbackToVersion(
       return { success: false, error: fetchError as unknown as Error };
     }
     
-    if (!Array.isArray(data) || data.length === 0) {
+    if (!Array.isArray(versionData) || versionData.length === 0) {
       return { success: false, error: new Error('Version not found') };
     }
     
-    // Get the value to restore - we'll use a more direct approach with robust type checking
-    const firstItem = data[0];
+    // Get the value to restore using non-null assertion after validation
+    const versionItem = versionData[0];
     
-    // Explicit null check
-    if (firstItem === null || firstItem === undefined) {
+    if (!versionItem) {
       return { success: false, error: new Error('Invalid data format: item is null') };
     }
     
-    // Type check and property access in one go using a type guard
-    if (typeof firstItem !== 'object' || !('new_value' in firstItem) || 
-        typeof firstItem.new_value !== 'string') {
+    // Use type assertion after validation
+    const typedItem = versionItem as Record<string, any>;
+    
+    if (!('new_value' in typedItem) || typeof typedItem.new_value !== 'string') {
       return { success: false, error: new Error('Invalid data format: missing or invalid new_value') };
     }
     
     // Now we can safely access the new_value
-    const valueToRestore = firstItem.new_value;
+    const valueToRestore = typedItem.new_value;
     
     // Get the current translation to update
     const { data: currentData, error: currentError } = await selectFromTable(
@@ -147,23 +147,23 @@ export async function rollbackToVersion(
     // Get the translation data with robust type checking
     const currentItem = currentData[0];
     
-    // Explicit null check
-    if (currentItem === null || currentItem === undefined) {
+    if (!currentItem) {
       return { success: false, error: new Error('Invalid translation data: item is null') };
     }
     
-    // Type guard for required properties
-    if (typeof currentItem !== 'object' || 
-        !('language_code' in currentItem) || 
-        !('namespace' in currentItem) || 
-        !('key' in currentItem)) {
+    // Use type assertion after validation
+    const typedCurrentItem = currentItem as Record<string, any>;
+    
+    if (!typedCurrentItem.language_code || 
+        !typedCurrentItem.namespace || 
+        !typedCurrentItem.key) {
       return { success: false, error: new Error('Invalid translation data structure') };
     }
     
-    // Type assertion with confidence - we've verified the structure
-    const language_code = currentItem.language_code as string;
-    const namespace = currentItem.namespace as string;
-    const key = currentItem.key as string;
+    // Type assertion with confidence - we've verified the values exist
+    const language_code = typedCurrentItem.language_code as string;
+    const namespace = typedCurrentItem.namespace as string;
+    const key = typedCurrentItem.key as string;
     
     // Create update item
     const updateItem: TranslationItem = {
