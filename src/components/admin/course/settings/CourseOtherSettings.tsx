@@ -3,9 +3,10 @@ import React, { useEffect, useState } from 'react';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { EditableListComponent } from './EditableListComponent';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { ListItem } from '@/lib/types/course-new';
@@ -50,6 +51,11 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({
 }) => {
   const [courseVisibility, setCourseVisibility] = useState<string>("published");
   
+  // Purchase method states
+  const [allowsOneTimePurchase, setAllowsOneTimePurchase] = useState<boolean>(true);
+  const [allowsSubscription, setAllowsSubscription] = useState<boolean>(true);
+  const [purchaseMethodError, setPurchaseMethodError] = useState<string | null>(null);
+  
   // State for editable section titles
   const [sectionTitles, setSectionTitles] = useState({
     objectives: "学习目标",
@@ -85,7 +91,7 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({
       try {
         const { data, error } = await supabase
           .from('courses_new')
-          .select('status')
+          .select('status, allows_one_time_purchase, allows_subscription')
           .eq('id', courseId)
           .single();
 
@@ -93,6 +99,9 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({
 
         if (data) {
           setCourseVisibility(data.status || "published");
+          // Set purchase method states with defaults if fields are null
+          setAllowsOneTimePurchase(data.allows_one_time_purchase !== false);
+          setAllowsSubscription(data.allows_subscription !== false);
         }
       } catch (error) {
         console.error("Error loading course settings:", error);
@@ -143,34 +152,129 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({
     }));
     // Note: We're only changing the UI display, not saving these titles to the backend
   };
+  
+  const handlePurchaseMethodChange = async (type: 'one_time' | 'subscription', checked: boolean) => {
+    // Update local state based on checkbox type
+    if (type === 'one_time') {
+      setAllowsOneTimePurchase(checked);
+      
+      // If trying to uncheck when subscription is also unchecked
+      if (!checked && !allowsSubscription) {
+        setAllowsOneTimePurchase(true); // Force keep checked
+        setPurchaseMethodError("必须至少选择一种购买方式");
+        return;
+      }
+    } else {
+      setAllowsSubscription(checked);
+      
+      // If trying to uncheck when one-time is also unchecked
+      if (!checked && !allowsOneTimePurchase) {
+        setAllowsSubscription(true); // Force keep checked
+        setPurchaseMethodError("必须至少选择一种购买方式");
+        return;
+      }
+    }
+    
+    // Clear error if we have at least one option selected
+    if ((type === 'one_time' && checked) || (type === 'subscription' && checked) || 
+       (type === 'one_time' && !checked && allowsSubscription) || 
+       (type === 'subscription' && !checked && allowsOneTimePurchase)) {
+      setPurchaseMethodError(null);
+    }
+    
+    // Save to database if courseId is available
+    if (courseId && onUpdate) {
+      const field = type === 'one_time' ? 'allows_one_time_purchase' : 'allows_subscription';
+      onUpdate(field, checked);
+      
+      try {
+        const { error } = await supabase
+          .from('courses_new')
+          .update({ [field]: checked })
+          .eq('id', courseId);
+          
+        if (error) {
+          console.error(`Error updating ${field}:`, error);
+          toast.error(`更新购买方式失败`);
+          // Revert the state change if there was an error
+          if (type === 'one_time') {
+            setAllowsOneTimePurchase(!checked);
+          } else {
+            setAllowsSubscription(!checked);
+          }
+        }
+      } catch (error) {
+        console.error(`Error updating purchase method:`, error);
+        toast.error(`更新购买方式失败`);
+      }
+    }
+  };
 
   return (
     <div className="space-y-8 py-4">
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle>课程可见性</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <RadioGroup 
-            value={courseVisibility}
-            onValueChange={handleVisibilityChange}
-            className="flex flex-col space-y-2 mt-2"
-          >
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="published" id="published" />
-              <Label htmlFor="published">已发布 - 所有用户可见</Label>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle>课程可见性</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <RadioGroup 
+              value={courseVisibility}
+              onValueChange={handleVisibilityChange}
+              className="flex flex-col space-y-2 mt-2"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="published" id="published" />
+                <Label htmlFor="published">已发布 - 所有用户可见</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="draft" id="draft" />
+                <Label htmlFor="draft">草稿 - 仅管理员可见</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="archived" id="archived" />
+                <Label htmlFor="archived">已归档 - 不显示在课程列表</Label>
+              </div>
+            </RadioGroup>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle>购买方式</CardTitle>
+            <CardDescription>选择课程支持的购买方式（至少选择一项）</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col space-y-4">
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="oneTimePurchase" 
+                  checked={allowsOneTimePurchase} 
+                  onCheckedChange={(checked) => handlePurchaseMethodChange('one_time', checked === true)}
+                />
+                <Label htmlFor="oneTimePurchase" className="font-medium">
+                  单次购买
+                </Label>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="subscription" 
+                  checked={allowsSubscription} 
+                  onCheckedChange={(checked) => handlePurchaseMethodChange('subscription', checked === true)}
+                />
+                <Label htmlFor="subscription" className="font-medium">
+                  订阅计划
+                </Label>
+              </div>
+              
+              {purchaseMethodError && (
+                <div className="text-sm text-red-500">{purchaseMethodError}</div>
+              )}
             </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="draft" id="draft" />
-              <Label htmlFor="draft">草稿 - 仅管理员可见</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="archived" id="archived" />
-              <Label htmlFor="archived">已归档 - 不显示在课程列表</Label>
-            </div>
-          </RadioGroup>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <EditableListComponent
