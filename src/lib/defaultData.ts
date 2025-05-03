@@ -1,4 +1,3 @@
-
 // Default data for system settings components
 // This provides fallback data when database queries fail or during development
 
@@ -103,7 +102,7 @@ export const defaultLegalDocuments: Record<string, LegalDocument> = {
     id: "default-privacy-policy",
     slug: "privacy-policy",
     title: "隐私政策",
-    content: "# 隐私政策\n\n本隐私政策描述了我们如何收集、使用和披露您的个人信息。\n\n## 信息收集\n\n我们收集的信息可能包括：\n\n- 基本身份信息（姓名、电子邮件地址等）\n- 设备和浏览器信息\n- 使用数据和活动信息\n\n## 信息使用\n\n我们使用收集的信息：\n\n- 提供和维护服务\n- 处理支付和发送通知\n- 提高我们的服务质量\n\n## 信息共享\n\n我们不会出售您的个人信息。我们可能会与以下方共享信息：\n\n- 服务提供商\n- 商业合作伙伴\n- 法律要求的情况\n\n## 联系我们\n\n如果您对我们的隐私政策有任何疑问，请联系我们。\n\n最后更新日期：2025年5月3日",
+    content: "# 隐私政策\n\n本隐私政策描述了我们如何收集、使用和披露您的个人信息。\n\n## 信息收集\n\n我们收集的信息可能包括：\n\n- 基本身份信息（姓名、���子邮件地址等）\n- 设备和浏览器信息\n- 使用数据和活动信息\n\n## 信息使用\n\n我们使用收集的信息：\n\n- 提供和维护服务\n- 处理支付和发送通知\n- 提高我们的服务质量\n\n## 信息共享\n\n我们不会出售您的个人信息。我们可能会与以下方共享信息：\n\n- 服务提供商\n- 商业合作伙伴\n- 法律要求的情况\n\n## 联系我们\n\n如果您对我们的隐私政策有任何疑问，请联系我们。\n\n最后更新日期：2025年5月3日",
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   },
@@ -142,30 +141,22 @@ export const defaultLegalDocuments: Record<string, LegalDocument> = {
 };
 
 // Default exchange rates
-export const defaultExchangeRates: ExchangeRate[] = [
+export const defaultExchangeRates = [
   {
-    id: "default-rate-1",
-    rate: 7.23,
-    from_currency: "CNY",
-    to_currency: "USD",
+    id: 'default-1',
+    rate: 7.23, // CNY to USD
+    from_currency: 'CNY',
+    to_currency: 'USD',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   },
   {
-    id: "default-rate-2",
-    rate: 7.22,
-    from_currency: "CNY",
-    to_currency: "USD",
+    id: 'default-2',
+    rate: 7.20, // Historical rate example
+    from_currency: 'CNY',
+    to_currency: 'USD',
     created_at: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
     updated_at: new Date(Date.now() - 86400000).toISOString()
-  },
-  {
-    id: "default-rate-3",
-    rate: 7.25,
-    from_currency: "CNY",
-    to_currency: "USD",
-    created_at: new Date(Date.now() - 172800000).toISOString(), // 2 days ago
-    updated_at: new Date(Date.now() - 172800000).toISOString()
   }
 ];
 
@@ -341,7 +332,7 @@ export const defaultFaqs = [
     is_featured: false,
     is_active: true,
     question: "如果我不满意课程，可以退款吗？",
-    answer: "是的，我们提供30天退款保证。如果您在购买课程后的30天内不满意，可以申请全额退款。请联系我们的客服团队，他们将指导您完成退款流程。",
+    answer: "是的，我们提供30天退款保证。如果您在购买课程后的30天内不满意，可以申请全额退款。请联系我们的客服团队，他��将指导您完成退款流程。",
     language_code: "zh"
   },
   {

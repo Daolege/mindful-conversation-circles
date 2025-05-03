@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -37,7 +36,7 @@ const ExchangeRateSettings = () => {
   const loadExchangeRate = async () => {
     setIsLoading(true);
     try {
-      // Using our new service
+      // Using our updated service
       const rates = await exchangeRatesService.getLatest();
       
       if (rates && rates.length > 0) {
@@ -80,7 +79,7 @@ const ExchangeRateSettings = () => {
   const loadExchangeHistory = async () => {
     setIsHistoryLoading(true);
     try {
-      // Using our new service
+      // Using our updated service
       const rates = await exchangeRatesService.getLatest();
       
       if (rates && rates.length > 0) {
@@ -131,11 +130,11 @@ const ExchangeRateSettings = () => {
     try {
       // Try to save to database
       try {
-        // Using our new service
-        const { error } = await exchangeRatesService.insert({
+        // Using our updated service with improved persistence
+        const { data, error } = await exchangeRatesService.insert({
           rate: exchangeRate.rate!,
-          from_currency: 'CNY',
-          to_currency: 'USD',
+          from_currency: exchangeRate.from_currency || 'CNY',
+          to_currency: exchangeRate.to_currency || 'USD',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         });
@@ -144,18 +143,22 @@ const ExchangeRateSettings = () => {
           throw error;
         }
         
+        console.log("Exchange rate saved successfully:", data);
+        
         // Reload history if saved successfully to database
         await loadExchangeHistory();
         setIsUsingSampleData(false);
+        toast.success("汇率已成功保存到数据库");
       } catch (error) {
         console.error("Error saving exchange rate to database:", error);
+        toast.error("保存汇率到数据库失败，仅在内存中更新");
         
         // Update the history in memory
         const newRate: ExchangeRate = {
           id: `temp-${Date.now()}`,
           rate: exchangeRate.rate!,
-          from_currency: 'CNY',
-          to_currency: 'USD',
+          from_currency: exchangeRate.from_currency || 'CNY',
+          to_currency: exchangeRate.to_currency || 'USD',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         };
@@ -163,8 +166,6 @@ const ExchangeRateSettings = () => {
         setExchangeHistory([newRate, ...exchangeHistory]);
         setIsUsingSampleData(true);
       }
-      
-      toast.success("汇率已保存");
     } catch (error) {
       console.error("Error saving exchange rate:", error);
       toast.error("保存汇率失败");

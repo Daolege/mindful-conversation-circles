@@ -1,8 +1,10 @@
+
 /**
  * Currency and payment utility functions
  */
 import { Order } from '../types/order';
 import { TFunction } from 'i18next';
+import { ExchangeRate } from '../supabaseUtils';
 
 /**
  * Format an amount with the correct currency symbol
@@ -137,7 +139,7 @@ export const getActualPaymentAmount = (order: Order): { amount: number, currency
  */
 export const getDefaultExchangeRate = (): number => {
   // You can customize this with a more dynamic approach later
-  return 7.23; // USD to CNY default exchange rate
+  return 7.23; // CNY to USD default exchange rate
 };
 
 /**
@@ -148,14 +150,48 @@ export const convertCurrency = (amount: number, fromCurrency: string, toCurrency
     return amount;
   }
   
-  if (fromCurrency.toLowerCase() === 'usd' && toCurrency.toLowerCase() === 'cny') {
-    return amount * exchangeRate;
-  }
-  
   if (fromCurrency.toLowerCase() === 'cny' && toCurrency.toLowerCase() === 'usd') {
     return amount / exchangeRate;
   }
   
+  if (fromCurrency.toLowerCase() === 'usd' && toCurrency.toLowerCase() === 'cny') {
+    return amount * exchangeRate;
+  }
+  
   // Default case
   return amount;
+};
+
+/**
+ * Get the latest exchange rate from a list of rates
+ */
+export const getLatestExchangeRate = (rates: ExchangeRate[] | undefined | null, fromCurrency: string = 'CNY', toCurrency: string = 'USD'): number => {
+  if (!rates || rates.length === 0) {
+    return getDefaultExchangeRate();
+  }
+  
+  // Look for an exact match first
+  const exactMatch = rates.find(
+    rate => 
+      rate.from_currency.toLowerCase() === fromCurrency.toLowerCase() && 
+      rate.to_currency.toLowerCase() === toCurrency.toLowerCase()
+  );
+  
+  if (exactMatch) {
+    return exactMatch.rate;
+  }
+  
+  // If no exact match, check for reverse match
+  const reverseMatch = rates.find(
+    rate => 
+      rate.from_currency.toLowerCase() === toCurrency.toLowerCase() && 
+      rate.to_currency.toLowerCase() === fromCurrency.toLowerCase()
+  );
+  
+  if (reverseMatch) {
+    return 1 / reverseMatch.rate; // Invert the rate for reverse conversion
+  }
+  
+  // Return default if no match found
+  return getDefaultExchangeRate();
 };

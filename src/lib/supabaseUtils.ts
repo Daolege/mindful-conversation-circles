@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { PostgrestError } from "@supabase/supabase-js";
 import { defaultPaymentIcons, defaultSocialMediaLinks, defaultLegalDocuments, defaultExchangeRates } from "./defaultData";
@@ -358,8 +357,69 @@ export const legalDocumentsService = {
 };
 
 export const exchangeRatesService = {
-  getLatest: () => safeSupabaseSelect<ExchangeRate>('exchange_rates').getOrdered('created_at', false),
-  insert: (rate: Partial<ExchangeRate>) => safeSupabaseMutation<ExchangeRate>('exchange_rates').insert(rate)
+  getLatest: async () => {
+    try {
+      // First try to get data with the new structure
+      const { data: newStructureData, error: newStructureError } = await supabase
+        .from('exchange_rates')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (newStructureError) {
+        throw newStructureError;
+      }
+      
+      if (newStructureData && newStructureData.length > 0) {
+        // Check if we have the new structure with rate field
+        if ('rate' in newStructureData[0]) {
+          console.log("Using new exchange_rates structure with rate field");
+          return newStructureData as ExchangeRate[];
+        }
+        
+        // If we have the old structure with cny_to_usd field, convert it
+        if ('cny_to_usd' in newStructureData[0]) {
+          console.log("Using old exchange_rates structure with cny_to_usd field, converting");
+          return newStructureData.map(item => ({
+            id: item.id,
+            rate: item.cny_to_usd,
+            from_currency: 'CNY',
+            to_currency: 'USD',
+            created_at: item.created_at,
+            updated_at: item.updated_at
+          })) as ExchangeRate[];
+        }
+      }
+      
+      // If no data or unrecognized structure, use default data
+      console.log("No exchange_rates data found, using defaults");
+      return defaultExchangeRates;
+    } catch (error) {
+      console.error("Error in exchangeRatesService.getLatest:", error);
+      return defaultExchangeRates;
+    }
+  },
+  
+  insert: async (rate: Partial<ExchangeRate>) => {
+    try {
+      // We'll store the data using both old and new structure fields for compatibility
+      const insertData = {
+        ...rate,
+        cny_to_usd: rate.rate // Store in old field for backward compatibility
+      };
+      
+      const { data, error } = await supabase
+        .from('exchange_rates')
+        .insert(insertData)
+        .select();
+      
+      console.log("Exchange rate inserted:", data, error);
+      
+      return { data, error };
+    } catch (error) {
+      console.error("Error in exchangeRatesService.insert:", error);
+      return { data: null, error };
+    }
+  }
 };
 
 export const siteSettingsService = {
