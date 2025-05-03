@@ -107,6 +107,7 @@ export async function rollbackToVersion(
       return { success: false, error: error as unknown as Error };
     }
     
+    // Safe access to firstItem - use a non-null assertion after the check
     const firstItem = data[0];
     
     // Type guard to ensure data has the expected structure
@@ -115,11 +116,13 @@ export async function rollbackToVersion(
     }
     
     // Additional check to ensure new_value exists
+    // Since we've checked firstItem is not null and is an object, we can safely access it
     if (!('new_value' in firstItem) || firstItem.new_value === undefined) {
       return { success: false, error: new Error('Invalid data format: missing new_value') };
     }
     
     // At this point, firstItem is definitely not null and has new_value
+    // We've done thorough checks above, so we can safely access properties
     const valueToRestore = firstItem.new_value;
     
     // Get the current translation to update
@@ -136,6 +139,7 @@ export async function rollbackToVersion(
       return { success: false, error: error as unknown as Error };
     }
     
+    // Safe access to currentItem with proper null check
     const currentItem = currentData[0];
     
     // Type guard to ensure currentData has the expected structure
@@ -144,6 +148,7 @@ export async function rollbackToVersion(
     }
     
     // Additional checks to ensure all required properties exist
+    // We've checked currentItem is not null and is an object, so we can safely access it
     if (!('language_code' in currentItem) || 
         !('namespace' in currentItem) || 
         !('key' in currentItem) ||
@@ -154,7 +159,7 @@ export async function rollbackToVersion(
     }
     
     // At this point, currentItem is definitely not null and has all required properties
-    // Update the translation with the historical value
+    // Safe to use the properties due to the checks above
     const updateResult = await batchUpdateTranslations([{
       id: translationId,
       language_code: currentItem.language_code,
