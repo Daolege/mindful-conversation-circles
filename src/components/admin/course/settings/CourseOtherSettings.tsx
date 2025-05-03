@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -13,6 +14,13 @@ import { toast } from 'sonner';
 import { ListItem } from '@/lib/types/course-new';
 import { updateTable } from '@/lib/services/typeSafeSupabase';
 import { getEnrollmentGuides, saveEnrollmentGuides } from '@/lib/services/courseEnrollmentGuideService';
+import { 
+  updateObjectivesVisibility, 
+  updateRequirementsVisibility, 
+  updateAudiencesVisibility, 
+  saveMaterialsVisibility 
+} from '@/lib/services/courseSettingsService';
+import { EyeIcon, EyeOffIcon } from 'lucide-react';
 
 // Define props for the CourseOtherSettings component
 interface CourseOtherSettingsProps {
@@ -58,8 +66,14 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({
   const [purchaseMethodError, setPurchaseMethodError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   
-  // Course visibility state
-  const [courseVisibility, setCourseVisibility] = useState<string>('published');
+  // Course visibility state - Changed default to "draft" instead of "published"
+  const [courseVisibility, setCourseVisibility] = useState<string>('draft');
+  
+  // Section visibility states
+  const [objectivesVisible, setObjectivesVisible] = useState<boolean>(sectionVisibility.objectives);
+  const [requirementsVisible, setRequirementsVisible] = useState<boolean>(sectionVisibility.requirements);
+  const [audiencesVisible, setAudiencesVisible] = useState<boolean>(sectionVisibility.audiences);
+  const [materialsVisible, setMaterialsVisible] = useState<boolean>(sectionVisibility.materials);
   
   // State for editable section titles
   const [sectionTitles, setSectionTitles] = useState({
@@ -113,7 +127,7 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({
         if (error) throw error;
 
         if (data) {
-          setCourseVisibility(data.status || "published");
+          setCourseVisibility(data.status || "draft"); // Set default as draft if not specified
           // Set purchase method states with defaults if fields are null
           setAllowsOneTimePurchase(data.allows_one_time_purchase !== false);
           setAllowsSubscription(data.allows_subscription !== false);
@@ -167,6 +181,16 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({
 
     loadCourseSettings();
   }, [courseId]);
+
+  // Initialize section visibility states from props
+  useEffect(() => {
+    if (sectionVisibility) {
+      setObjectivesVisible(sectionVisibility.objectives);
+      setRequirementsVisible(sectionVisibility.requirements);
+      setAudiencesVisible(sectionVisibility.audiences);
+      setMaterialsVisible(sectionVisibility.materials);
+    }
+  }, [sectionVisibility]);
 
   // Convert list items back to string arrays for saving
   const formatListItemsToArray = (items: ListItem[]): string[] => {
@@ -266,6 +290,57 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({
         console.error("Error updating course visibility:", err);
         toast.error("更新课程可见性失败");
       }
+    }
+  };
+
+  // Handle section visibility toggle
+  const handleSectionVisibilityChange = async (section: 'objectives' | 'requirements' | 'audiences' | 'materials', isVisible: boolean) => {
+    if (!courseId) return;
+    
+    try {
+      let result;
+      
+      // Update state based on section
+      switch(section) {
+        case 'objectives':
+          setObjectivesVisible(isVisible);
+          result = await updateObjectivesVisibility(courseId, isVisible);
+          break;
+        case 'requirements':
+          setRequirementsVisible(isVisible);
+          result = await updateRequirementsVisibility(courseId, isVisible);
+          break;
+        case 'audiences':
+          setAudiencesVisible(isVisible);
+          result = await updateAudiencesVisibility(courseId, isVisible);
+          break;
+        case 'materials':
+          setMaterialsVisible(isVisible);
+          result = await saveMaterialsVisibility(courseId, isVisible);
+          break;
+      }
+      
+      if (result && !result.error) {
+        const sectionNames: Record<string, string> = {
+          objectives: '学习目标',
+          requirements: '课程要求',
+          audiences: '适合人群',
+          materials: '课程附件'
+        };
+        
+        toast.success(`${sectionNames[section]}${isVisible ? '已显示' : '已隐藏'}`);
+        
+        // Update localStorage
+        const visibilityKey = `course_${courseId}_section_visibility`;
+        const currentVisibility = JSON.parse(localStorage.getItem(visibilityKey) || '{}');
+        currentVisibility[section] = isVisible;
+        localStorage.setItem(visibilityKey, JSON.stringify(currentVisibility));
+      }
+    } catch (err) {
+      console.error(`Error updating ${section} visibility:`, err);
+      toast.error(`更新${section === 'objectives' ? '学习目标' : 
+                    section === 'requirements' ? '课程要求' : 
+                    section === 'audiences' ? '适合人群' : '课程附件'}可见性失败`);
     }
   };
 
@@ -399,6 +474,73 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({
         </Card>
       </div>
 
+      {/* Section Visibility Toggles */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle>课程章节显示设置</CardTitle>
+          <CardDescription>控制课程详情页面各个章节的可见性</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex items-center justify-between p-4 border rounded-lg">
+              <div>
+                <h3 className="font-medium">学习目标</h3>
+                <p className="text-sm text-gray-500">控制学习目标章节在课程详情页的显示</p>
+              </div>
+              <div className="flex items-center gap-2">
+                {objectivesVisible ? <EyeIcon size={16} className="text-green-500" /> : <EyeOffIcon size={16} className="text-gray-400" />}
+                <Switch
+                  checked={objectivesVisible}
+                  onCheckedChange={(checked) => handleSectionVisibilityChange('objectives', checked)}
+                />
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-between p-4 border rounded-lg">
+              <div>
+                <h3 className="font-medium">课程要求</h3>
+                <p className="text-sm text-gray-500">控制课程要求章节在课程详情页的显示</p>
+              </div>
+              <div className="flex items-center gap-2">
+                {requirementsVisible ? <EyeIcon size={16} className="text-green-500" /> : <EyeOffIcon size={16} className="text-gray-400" />}
+                <Switch
+                  checked={requirementsVisible}
+                  onCheckedChange={(checked) => handleSectionVisibilityChange('requirements', checked)}
+                />
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-between p-4 border rounded-lg">
+              <div>
+                <h3 className="font-medium">适合人群</h3>
+                <p className="text-sm text-gray-500">控制适合人群章节在课程详情页的显示</p>
+              </div>
+              <div className="flex items-center gap-2">
+                {audiencesVisible ? <EyeIcon size={16} className="text-green-500" /> : <EyeOffIcon size={16} className="text-gray-400" />}
+                <Switch
+                  checked={audiencesVisible}
+                  onCheckedChange={(checked) => handleSectionVisibilityChange('audiences', checked)}
+                />
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-between p-4 border rounded-lg">
+              <div>
+                <h3 className="font-medium">课程附件</h3>
+                <p className="text-sm text-gray-500">控制课程附件章节在课程详情页的显示</p>
+              </div>
+              <div className="flex items-center gap-2">
+                {materialsVisible ? <EyeIcon size={16} className="text-green-500" /> : <EyeOffIcon size={16} className="text-gray-400" />}
+                <Switch
+                  checked={materialsVisible}
+                  onCheckedChange={(checked) => handleSectionVisibilityChange('materials', checked)}
+                />
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Course settings layout - split into two columns */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Left column with Course Highlights */}
@@ -428,6 +570,8 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({
             items={learningObjectivesList}
             onChange={handleLearningObjectivesChange}
             placeholder="例如: 掌握基础Python语法"
+            isVisible={objectivesVisible}
+            onVisibilityChange={(visible) => handleSectionVisibilityChange('objectives', visible)}
           />
 
           <EditableListComponent
@@ -438,6 +582,8 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({
             items={requirementsList}
             onChange={handleRequirementsChange}
             placeholder="例如: 基本计算机操作技能"
+            isVisible={requirementsVisible}
+            onVisibilityChange={(visible) => handleSectionVisibilityChange('requirements', visible)}
           />
 
           <EditableListComponent
@@ -448,6 +594,8 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({
             items={targetAudienceList}
             onChange={handleTargetAudienceChange}
             placeholder="例如: 初学者, 想转行的专业人士"
+            isVisible={audiencesVisible}
+            onVisibilityChange={(visible) => handleSectionVisibilityChange('audiences', visible)}
           />
         </div>
       </div>
