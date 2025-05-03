@@ -37,5 +37,18 @@
   "notProvided": "未提供",
   "discountSavings": "优惠节省",
   "savedComparedToOriginal": "与原价相比，您节省了{percentage}%",
-  "customerId": "客户ID"
+  "customerId": "客户ID",
+  "selectPaymentPlan": "选择支付方案",
+  "singlePurchase": "单次购买",
+  "singlePurchaseDesc": "一次性付款，永久访问内容",
+  "subscription": "订阅",
+  "subscriptionDesc": "按月/季/年付费，更多优惠",
+  "subscriptionNotAvailable": "此课程暂不支持订阅",
+  "confirmOrder": "确认订单",
+  "summary": "订单摘要",
+  "coursePrice": "课程价格",
+  "discount": "折扣",
+  "tax": "税费",
+  "total": "总计",
+  "proceedToPayment": "继续支付"
 }

@@ -37,5 +37,18 @@
   "notProvided": "Not Provided",
   "discountSavings": "Discount Savings",
   "savedComparedToOriginal": "You saved {percentage}% compared to original price",
-  "customerId": "Customer ID"
+  "customerId": "Customer ID",
+  "selectPaymentPlan": "Select Payment Plan",
+  "singlePurchase": "Single Purchase",
+  "singlePurchaseDesc": "One-time payment, lifetime access to content",
+  "subscription": "Subscription",
+  "subscriptionDesc": "Pay monthly/quarterly/yearly for more benefits",
+  "subscriptionNotAvailable": "This course does not support subscription",
+  "confirmOrder": "Confirm Order",
+  "summary": "Summary",
+  "coursePrice": "Course Price",
+  "discount": "Discount",
+  "tax": "Tax",
+  "total": "Total",
+  "proceedToPayment": "Proceed to Payment"
 }

@@ -65,11 +65,11 @@ export const useTranslations = () => {
           existingTranslation[0] !== null &&
           typeof existingTranslation[0] === 'object' &&
           'id' in existingTranslation[0] &&
-          existingTranslation[0].id !== null) {
+          existingTranslation[0]?.id !== null) {
         
         // 更新已有翻译
-        const translationId = existingTranslation[0].id;
-        if (translationId === null) {
+        const translationId = existingTranslation[0]?.id;
+        if (translationId === null || translationId === undefined) {
           throw new Error('Translation ID is null');
         }
         
