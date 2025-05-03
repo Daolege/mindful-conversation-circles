@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getEnabledLanguages } from '@/lib/services/language/languageService';
 import { useQuery } from '@tanstack/react-query';
-import { Language, rtlLanguages, languageToCountryCode } from '@/lib/services/language/languageCore';
+import { Language, rtlLanguages, languageToCountryCode, defaultLanguages } from '@/lib/services/language/languageCore';
 
 interface LanguageContextType {
   currentLanguage: string;
@@ -14,11 +14,6 @@ interface LanguageContextType {
   getCountryCode: (languageCode: string) => string;
   isLanguageLoading: boolean;
 }
-
-const defaultLanguages: Language[] = [
-  { id: 1, code: 'en', name: 'English', nativeName: 'English', enabled: true, rtl: false },
-  { id: 2, code: 'zh', name: 'Chinese (Simplified)', nativeName: '简体中文', enabled: true, rtl: false }
-];
 
 const LanguageContext = createContext<LanguageContextType>({
   currentLanguage: 'zh',

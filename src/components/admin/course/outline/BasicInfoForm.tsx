@@ -85,13 +85,15 @@ export const BasicInfoForm = ({ onTabChange, onCourseCreated, courseId }: BasicI
         }
         
         if (data) {
-          // Set form values
+          // Set form values - handle different data structures
+          const languageValue = data.language || data.category || "zh"; // Use language or fallback to category
+          
           form.reset({
             title: data.title || "",
             description: data.description || "",
             price: data.price || 0,
             original_price: data.original_price,
-            language: data.language || data.category || "zh", // Use category as fallback
+            language: languageValue,
             currency: data.currency || "cny",
             status: (data.status as "draft" | "published" | "archived") || "draft",
             display_order: data.display_order || 0,

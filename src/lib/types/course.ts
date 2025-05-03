@@ -1,4 +1,6 @@
-import { Course } from "./course";
+
+// Remove conflicting import
+// import { Course } from "./course";
 
 export interface Course {
   id: number;
