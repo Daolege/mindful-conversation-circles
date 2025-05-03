@@ -156,11 +156,13 @@ export async function getSectionsByCourseId(courseId: number): Promise<SectionSe
                 // Use optional chaining and nullish coalescing for safe property access
                 // We need to explicitly check if properties exist on videoData to avoid TS errors
                 if (videoData && 'video_url' in videoData) {
-                  videoUrl = videoData.video_url as string ?? null;
+                  // Use type assertion with safechecks
+                  videoUrl = (videoData as { video_url?: string }).video_url ?? null;
                 }
                 
                 if (videoData && 'description' in videoData) {
-                  description = videoData.description as string ?? null;
+                  // Use type assertion with safechecks
+                  description = (videoData as { description?: string }).description ?? null;
                 }
               }
               
