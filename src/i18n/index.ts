@@ -1,4 +1,3 @@
-
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
@@ -83,7 +82,7 @@ i18n.use({
       if (!error && data && Array.isArray(data) && data.length > 0) {
         const translations = data.reduce((acc, item) => {
           // Only proceed if item is an object with key and value properties
-          if (item && typeof item === 'object' && item !== null && 'key' in item && 'value' in item) {
+          if (item !== null && typeof item === 'object' && 'key' in item && 'value' in item) {
             const entry = item as TranslationEntry;
             acc[entry.key] = entry.value;
           }

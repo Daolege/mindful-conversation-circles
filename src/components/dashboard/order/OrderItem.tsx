@@ -18,7 +18,7 @@ import OrderLineItems from "./OrderLineItems";
 import OrderPaymentDetails from "./OrderPaymentDetails";
 import { getOrderById } from "@/lib/services/orderService";
 import { useTranslations } from "@/hooks/useTranslations";
-import { OrderStatus } from "@/types/order";
+import { OrderStatus } from "@/lib/types/order";
 import { useTranslation } from "react-i18next";
 
 interface OrderItemProps {
@@ -69,7 +69,8 @@ export default function OrderItem({
     );
   }
 
-  if (!orderData || !orderData.order) {
+  // Handle the case where orderData has different structure
+  if (!orderData || !orderData.data) {
     return (
       <Card className="mb-6 border-red-200 bg-red-50">
         <CardHeader className="pb-3">
@@ -82,7 +83,8 @@ export default function OrderItem({
     );
   }
 
-  const { order } = orderData;
+  // Extract the order from the orderData structure
+  const order = orderData.data;
   
   const statusColor = {
     [OrderStatus.COMPLETED]: "bg-green-500",
@@ -99,7 +101,7 @@ export default function OrderItem({
           <CardTitle className="text-base flex flex-wrap items-center gap-2">
             <span>{tCustom('orders:order')}: #{order.order_number}</span>
             <Badge className={statusColor[order.status as OrderStatus]}>
-              {tCustom(`orders:status.${order.status.toLowerCase()}`)}
+              {tCustom(`orders:${order.status.toLowerCase()}`)}
             </Badge>
           </CardTitle>
           <span className="text-sm text-gray-500">
@@ -134,7 +136,7 @@ export default function OrderItem({
               asChild
             >
               <Link to={order.invoice_url} target="_blank">
-                {tCustom('orders:viewInvoice')}
+                {tCustom('orders:downloadInvoice')}
               </Link>
             </Button>
           )}
@@ -148,7 +150,7 @@ export default function OrderItem({
               onClick={handleRefundClick}
               disabled={isRefunding}
             >
-              {isRefunding ? tCustom('orders:processing') : tCustom('orders:refund')}
+              {isRefunding ? tCustom('orders:processing') : tCustom('orders:requestRefund')}
             </Button>
           )}
         </div>

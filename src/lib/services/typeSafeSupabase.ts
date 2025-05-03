@@ -15,7 +15,7 @@ export async function selectFromTable<T = any>(
   }
 ) {
   let query = supabase
-    .from(table as any)
+    .from(table)
     .select(columns);
 
   // Apply filters if provided
@@ -47,8 +47,8 @@ export async function insertIntoTable<T = any>(
   data: Record<string, any> | Record<string, any>[]
 ) {
   return supabase
-    .from(table as any)
-    .insert(data as any);
+    .from(table)
+    .insert(data);
 }
 
 /**
@@ -60,7 +60,7 @@ export async function updateTable<T = any>(
   filter: Record<string, any>
 ) {
   let query = supabase
-    .from(table as any)
+    .from(table)
     .update(data);
 
   // Apply filters
@@ -79,7 +79,7 @@ export async function deleteFromTable(
   filter: Record<string, any>
 ) {
   let query = supabase
-    .from(table as any)
+    .from(table)
     .delete();
 
   // Apply filters
@@ -97,6 +97,7 @@ export async function callRpcFunction(
   functionName: string,
   params?: Record<string, any>
 ) {
+  // Use type assertion to allow any string function name
   return supabase
-    .rpc(functionName, params || {});
+    .rpc(functionName as any, params || {});
 }

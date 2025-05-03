@@ -14,5 +14,18 @@
   "englishLanguage": "English",
   "japaneseLanguage": "Japanese",
   "koreanLanguage": "Korean",
-  "courseThumbnail": "Course Image"
+  "courseThumbnail": "Course Image",
+  "freeCourse": "Free Course",
+  "startLearning": "Start Learning",
+  "courseDuration": "Course Duration",
+  "hours": "Hours",
+  "lectures": "Lectures",
+  "back": "Back",
+  "curriculum": "Curriculum",
+  "courseDetails": "Course Details",
+  "courseRequirements": "Course Requirements",
+  "courseDescription": "Course Description",
+  "whatYouWillLearn": "What You'll Learn",
+  "enrollNow": "Enroll Now",
+  "courseCompleteRate": "Complete Rate"
 }

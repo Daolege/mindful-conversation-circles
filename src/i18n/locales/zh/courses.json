@@ -14,5 +14,18 @@
   "englishLanguage": "英文",
   "japaneseLanguage": "日文",
   "koreanLanguage": "韩文",
-  "courseThumbnail": "课程图片"
+  "courseThumbnail": "课程图片",
+  "freeCourse": "免费课程",
+  "startLearning": "开始学习",
+  "courseDuration": "课程时长",
+  "hours": "小时",
+  "lectures": "课时",
+  "back": "返回",
+  "curriculum": "课程大纲",
+  "courseDetails": "课程详情",
+  "courseRequirements": "课程要求",
+  "courseDescription": "课程描述",
+  "whatYouWillLearn": "你将学到什么",
+  "enrollNow": "立即报名",
+  "courseCompleteRate": "完课率"
 }

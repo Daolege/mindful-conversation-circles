@@ -26,5 +26,8 @@
   "discount": "折扣",
   "tax": "税费",
   "total": "总计",
-  "needsReview": "需要审核"
+  "needsReview": "需要审核",
+  "order": "订单",
+  "viewInvoice": "查看发票",
+  "refund": "退款"
 }

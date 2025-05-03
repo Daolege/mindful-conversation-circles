@@ -26,5 +26,8 @@
   "discount": "Discount",
   "tax": "Tax",
   "total": "Total",
-  "needsReview": "Needs Review"
+  "needsReview": "Needs Review",
+  "order": "Order",
+  "viewInvoice": "View Invoice",
+  "refund": "Refund"
 }

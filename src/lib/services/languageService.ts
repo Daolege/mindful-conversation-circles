@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import i18n from "@/i18n";
 import { Tables } from "@/lib/supabase/database.types";
@@ -47,10 +46,17 @@ export async function getAllLanguages(): Promise<Language[]> {
     }
     
     // Check if data is valid
-    if (Array.isArray(data) && data.length > 0 && 
-        typeof data[0] === 'object' && data[0] !== null && 
-        'id' in data[0] && 'code' in data[0]) {
-      return data as Language[];
+    if (Array.isArray(data) && data.length > 0) {
+      const validLanguages = data.filter(item => 
+        item !== null && 
+        typeof item === 'object' && 
+        'id' in item && 
+        'code' in item
+      ) as Language[];
+      
+      if (validLanguages.length > 0) {
+        return validLanguages;
+      }
     }
     
     return defaultLanguages;
@@ -75,10 +81,17 @@ export async function getEnabledLanguages(): Promise<Language[]> {
     }
     
     // Check if data is valid
-    if (Array.isArray(data) && data.length > 0 && 
-        typeof data[0] === 'object' && data[0] !== null && 
-        'id' in data[0] && 'code' in data[0]) {
-      return data as Language[];
+    if (Array.isArray(data) && data.length > 0) {
+      const validLanguages = data.filter(item => 
+        item !== null && 
+        typeof item === 'object' && 
+        'id' in item && 
+        'code' in item
+      ) as Language[];
+      
+      if (validLanguages.length > 0) {
+        return validLanguages;
+      }
     }
     
     return defaultLanguages;
@@ -172,7 +185,7 @@ export async function deleteLanguage(languageId: number): Promise<{ success: boo
       return { success: false, error: fetchError as unknown as Error };
     }
     
-    if (Array.isArray(language) && language.length > 0 && typeof language[0] === 'object' && language[0] !== null && 'code' in language[0]) {
+    if (Array.isArray(language) && language.length > 0 && language[0] !== null && typeof language[0] === 'object' && 'code' in language[0]) {
       const langCode = language[0].code;
       if (langCode === 'en' || langCode === 'zh') {
         return { 
@@ -240,8 +253,8 @@ export async function getTranslationsByLanguage(languageCode: string): Promise<T
     
     if (Array.isArray(data)) {
       return data.filter(item => 
-        typeof item === 'object' && 
         item !== null &&
+        typeof item === 'object' &&
         'language_code' in item &&
         'namespace' in item &&
         'key' in item &&

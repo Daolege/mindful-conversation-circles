@@ -118,8 +118,8 @@ export const useTranslations = () => {
       // Ensure we return a valid array of TranslationItem objects
       const translations: TranslationItem[] = Array.isArray(data) ? 
         data.filter(item => 
+          item !== null && 
           typeof item === 'object' &&
-          item !== null &&
           'language_code' in item &&
           'namespace' in item &&
           'key' in item &&
