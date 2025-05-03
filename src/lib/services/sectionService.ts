@@ -108,12 +108,17 @@ export async function getSectionsByCourseId(courseId: number): Promise<SectionSe
             }
             
             try {
-              // Add null check before accessing lecture properties
-              const lectureId = lecture ? (lecture as any).id : null;
+              // Safe type casting with explicit null check
+              if (lecture === null) {
+                console.warn('Cannot process null lecture object');
+                return null;
+              }
               
-              // If lectureId is null, return a default lecture object
-              if (lectureId === null) {
-                console.warn('Cannot fetch video data for lecture with null id');
+              const lectureId = (lecture as any).id;
+              
+              // If lectureId is invalid, return null (will be filtered out later)
+              if (!lectureId) {
+                console.warn('Cannot fetch video data for lecture with invalid id');
                 return null;
               }
               
@@ -127,7 +132,7 @@ export async function getSectionsByCourseId(courseId: number): Promise<SectionSe
                 console.log(`Error fetching video data: ${videoError.message}`);
                 // Return a safe object with defaults
                 return {
-                  id: (lecture as any).id,
+                  id: lectureId,
                   title: (lecture as any).title || '',
                   position: (lecture as any).position || 0,
                   duration: (lecture as any).duration || null,
@@ -139,8 +144,17 @@ export async function getSectionsByCourseId(courseId: number): Promise<SectionSe
                   description: null
                 } as CourseLecture;
               }
-                
+              
               // Create a new object with safe properties
+              // Use type assertion and ensure videoData is valid
+              let videoUrl: string | null = null;
+              let description: string | null = null;
+              
+              if (videoData && typeof videoData === 'object') {
+                videoUrl = 'video_url' in videoData ? (videoData.video_url as string) : null;
+                description = 'description' in videoData ? (videoData.description as string) : null;
+              }
+              
               const combinedLecture: CourseLecture = {
                 id: (lecture as any).id,
                 title: (lecture as any).title || '',
@@ -150,8 +164,8 @@ export async function getSectionsByCourseId(courseId: number): Promise<SectionSe
                 is_free: (lecture as any).is_free || false,
                 has_homework: (lecture as any).has_homework || false,
                 requires_homework_completion: (lecture as any).requires_homework_completion || false,
-                video_url: videoData ? videoData.video_url : null,
-                description: videoData ? videoData.description : null
+                video_url: videoUrl,
+                description: description
               };
               
               return combinedLecture;
