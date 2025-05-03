@@ -83,7 +83,7 @@ i18n.use({
       if (!error && data && Array.isArray(data) && data.length > 0) {
         const translations = data.reduce((acc: Record<string, string>, item) => {
           // Null check first
-          if (item === null) {
+          if (!item) {
             return acc;
           }
           
@@ -98,13 +98,13 @@ i18n.use({
           }
           
           // Check if key and value are not null and are strings
-          if (item.key === null || item.value === null ||
+          if (!item || item.key === null || item.value === null ||
               typeof item.key !== 'string' || typeof item.value !== 'string') {
             return acc;
           }
           
           // Now it's safe to add to the accumulator
-          acc[item.key as string] = item.value as string;
+          acc[item.key] = item.value;
           return acc;
         }, {} as Record<string, string>);
         

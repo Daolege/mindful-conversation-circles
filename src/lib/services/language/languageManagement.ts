@@ -19,7 +19,7 @@ export async function getAllLanguages(): Promise<Language[]> {
     if (Array.isArray(data) && data.length > 0) {
       const validLanguages = data.filter((item): item is NonNullable<typeof item> => {
         // First check if item is null
-        if (item === null) {
+        if (!item) {
           return false;
         }
         
@@ -29,11 +29,11 @@ export async function getAllLanguages(): Promise<Language[]> {
           return false;
         }
         
-        if (!('id' in item) || item.id === null) {
+        if (!('id' in item) || !item.id) {
           return false;
         }
         
-        if (!('code' in item) || item.code === null) {
+        if (!('code' in item) || !item.code) {
           return false;
         }
         
@@ -70,7 +70,7 @@ export async function getEnabledLanguages(): Promise<Language[]> {
     if (Array.isArray(data) && data.length > 0) {
       const validLanguages = data.filter((item): item is NonNullable<typeof item> => {
         // First check if item is null
-        if (item === null) {
+        if (!item) {
           return false;
         }
         
@@ -80,11 +80,11 @@ export async function getEnabledLanguages(): Promise<Language[]> {
           return false;
         }
         
-        if (!('id' in item) || item.id === null) {
+        if (!('id' in item) || !item.id) {
           return false;
         }
         
-        if (!('code' in item) || item.code === null) {
+        if (!('code' in item) || !item.code) {
           return false;
         }
         
@@ -192,8 +192,8 @@ export async function deleteLanguage(languageId: number): Promise<{ success: boo
     if (Array.isArray(language) && language.length > 0) {
       const langData = language[0];
       
-      // Null check for langData
-      if (langData === null) {
+      // Strict null check for langData
+      if (!langData) {
         return { success: false, error: new Error('Invalid language data received') };
       }
       
@@ -208,9 +208,9 @@ export async function deleteLanguage(languageId: number): Promise<{ success: boo
       }
       
       // Ensure langData and langData.code are not null before accessing
-      if (langData !== null && 
+      if (langData && 
           'code' in langData && 
-          langData.code !== null && 
+          langData.code && 
           typeof langData.code === 'string') {
         const langCode = langData.code;
         

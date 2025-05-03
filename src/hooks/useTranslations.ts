@@ -66,7 +66,7 @@ export const useTranslations = () => {
         const translationData = existingTranslation[0];
         
         // Add null check before accessing translationData properties
-        if (translationData === null) {
+        if (!translationData) {
           // If translationData is null, treat as new translation
           const { error: insertError } = await insertIntoTable(
             'translations',
@@ -88,8 +88,7 @@ export const useTranslations = () => {
         if (typeof translationData === 'object' && 
             translationData !== null &&
             'id' in translationData && 
-            translationData.id !== null && 
-            translationData.id !== undefined) {
+            typeof translationData.id === 'number') {
             
           // 更新已有翻译
           const translationId = translationData.id;
@@ -172,19 +171,19 @@ export const useTranslations = () => {
             return false;
           }
           
-          if (!('language_code' in item) || item.language_code === null) {
+          if (!item || !('language_code' in item) || item.language_code === null) {
             return false;
           }
           
-          if (!('namespace' in item) || item.namespace === null) {
+          if (!item || !('namespace' in item) || item.namespace === null) {
             return false;
           }
           
-          if (!('key' in item) || item.key === null) {
+          if (!item || !('key' in item) || item.key === null) {
             return false;
           }
           
-          if (!('value' in item) || item.value === null) {
+          if (!item || !('value' in item) || item.value === null) {
             return false;
           }
           
