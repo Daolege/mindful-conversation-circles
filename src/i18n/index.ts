@@ -85,7 +85,6 @@ i18n.use({
           // Only proceed if item is an object with key and value properties
           if (item !== null && 
               typeof item === 'object' && 
-              item !== null &&
               'key' in item && 
               'value' in item && 
               typeof item.key === 'string' && 
