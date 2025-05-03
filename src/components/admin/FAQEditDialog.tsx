@@ -6,6 +6,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogClose
 } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -92,6 +93,14 @@ export const FAQEditDialog: React.FC<FAQEditDialogProps> = ({
       setTranslations({});
     }
   }, [faq]);
+  
+  // Reset form when dialog closes
+  useEffect(() => {
+    if (!open) {
+      // Reset saving state on dialog close
+      setIsSaving(false);
+    }
+  }, [open]);
   
   // Set default active language if not set
   useEffect(() => {
@@ -185,11 +194,15 @@ export const FAQEditDialog: React.FC<FAQEditDialogProps> = ({
         onSuccess();
       }
       
-      onOpenChange(false);
+      // Close dialog after successful save
+      setTimeout(() => {
+        setIsSaving(false);
+        onOpenChange(false);
+      }, 300);
+      
     } catch (error) {
       console.error('Error saving FAQ:', error);
       toast.error(t('admin:errorSavingFaq'));
-    } finally {
       setIsSaving(false);
     }
   };
@@ -202,7 +215,14 @@ export const FAQEditDialog: React.FC<FAQEditDialogProps> = ({
   ];
   
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog 
+      open={open} 
+      onOpenChange={(newOpen) => {
+        // Only allow closing if not currently saving
+        if (isSaving && !newOpen) return;
+        onOpenChange(newOpen);
+      }}
+    >
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
@@ -301,9 +321,11 @@ export const FAQEditDialog: React.FC<FAQEditDialogProps> = ({
         </div>
         
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSaving}>
-            {t('admin:cancel')}
-          </Button>
+          <DialogClose asChild>
+            <Button variant="outline" disabled={isSaving}>
+              {t('admin:cancel')}
+            </Button>
+          </DialogClose>
           <Button onClick={handleSave} disabled={isSaving}>
             {isSaving ? (
               <>
