@@ -527,6 +527,198 @@ export interface Database {
           created_at?: string
           updated_at?: string
         }
+      },
+      site_settings: {
+        Row: {
+          id: string
+          site_name: string
+          site_description: string
+          logo_url: string
+          contact_email: string
+          support_phone: string
+          company_name: string
+          company_full_name: string
+          company_registration_number: string
+          company_address: string
+          copyright_text: string
+          enable_registration: boolean
+          maintenance_mode: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          site_name?: string
+          site_description?: string
+          logo_url?: string
+          contact_email?: string
+          support_phone?: string
+          company_name?: string
+          company_full_name?: string
+          company_registration_number?: string
+          company_address?: string
+          copyright_text?: string
+          enable_registration?: boolean
+          maintenance_mode?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          site_name?: string
+          site_description?: string
+          logo_url?: string
+          contact_email?: string
+          support_phone?: string
+          company_name?: string
+          company_full_name?: string
+          company_registration_number?: string
+          company_address?: string
+          copyright_text?: string
+          enable_registration?: boolean
+          maintenance_mode?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      },
+      legal_documents: {
+        Row: {
+          id: string
+          slug: string
+          title: string
+          content: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          slug: string
+          title: string
+          content: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          slug?: string
+          title?: string
+          content?: string
+          created_at?: string
+          updated_at?: string
+        }
+      },
+      payment_icons: {
+        Row: {
+          id: string
+          name: string
+          icon_url: string
+          is_active: boolean
+          display_order: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          icon_url: string
+          is_active?: boolean
+          display_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          icon_url?: string
+          is_active?: boolean
+          display_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+      },
+      social_media_links: {
+        Row: {
+          id: string
+          name: string
+          icon_url: string
+          url: string
+          is_active: boolean
+          display_order: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          icon_url: string
+          url: string
+          is_active?: boolean
+          display_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          icon_url?: string
+          url?: string
+          is_active?: boolean
+          display_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+      },
+      contact_methods: {
+        Row: {
+          id: string
+          type: string
+          label: string
+          value: string
+          is_active: boolean
+          display_order: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          type: string
+          label?: string
+          value: string
+          is_active?: boolean
+          display_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          type?: string
+          label?: string
+          value?: string
+          is_active?: boolean
+          display_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+      },
+      exchange_rates: {
+        Row: {
+          id: string
+          cny_to_usd: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          cny_to_usd: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          cny_to_usd?: number
+          created_at?: string
+          updated_at?: string
+        }
       }
     },
     Views: {

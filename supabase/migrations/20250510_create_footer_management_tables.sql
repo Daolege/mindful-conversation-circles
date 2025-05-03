@@ -55,40 +55,61 @@ CREATE TABLE IF NOT EXISTS "exchange_rates" (
 -- Add new columns to site_settings table if they don't exist
 DO $$
 BEGIN
-  -- Company name
-  IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
-                 WHERE table_name = 'site_settings' AND column_name = 'company_name') THEN
-    ALTER TABLE site_settings ADD COLUMN company_name TEXT;
-  END IF;
+  -- Create site_settings table if it doesn't exist
+  IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'site_settings') THEN
+    CREATE TABLE "site_settings" (
+      "id" TEXT PRIMARY KEY DEFAULT 'default',
+      "site_name" TEXT,
+      "site_description" TEXT,
+      "logo_url" TEXT,
+      "contact_email" TEXT,
+      "support_phone" TEXT,
+      "company_name" TEXT,
+      "company_full_name" TEXT,
+      "company_registration_number" TEXT,
+      "company_address" TEXT,
+      "copyright_text" TEXT,
+      "enable_registration" BOOLEAN DEFAULT TRUE,
+      "maintenance_mode" BOOLEAN DEFAULT FALSE,
+      "created_at" TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      "updated_at" TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    );
+  ELSE
+    -- Company name
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                  WHERE table_name = 'site_settings' AND column_name = 'company_name') THEN
+      ALTER TABLE site_settings ADD COLUMN company_name TEXT;
+    END IF;
 
-  -- Company full name
-  IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
-                 WHERE table_name = 'site_settings' AND column_name = 'company_full_name') THEN
-    ALTER TABLE site_settings ADD COLUMN company_full_name TEXT;
-  END IF;
+    -- Company full name
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                  WHERE table_name = 'site_settings' AND column_name = 'company_full_name') THEN
+      ALTER TABLE site_settings ADD COLUMN company_full_name TEXT;
+    END IF;
 
-  -- Company address
-  IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
-                 WHERE table_name = 'site_settings' AND column_name = 'company_address') THEN
-    ALTER TABLE site_settings ADD COLUMN company_address TEXT;
-  END IF;
+    -- Company address
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                  WHERE table_name = 'site_settings' AND column_name = 'company_address') THEN
+      ALTER TABLE site_settings ADD COLUMN company_address TEXT;
+    END IF;
 
-  -- Company registration number
-  IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
-                 WHERE table_name = 'site_settings' AND column_name = 'company_registration_number') THEN
-    ALTER TABLE site_settings ADD COLUMN company_registration_number TEXT;
-  END IF;
+    -- Company registration number
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                  WHERE table_name = 'site_settings' AND column_name = 'company_registration_number') THEN
+      ALTER TABLE site_settings ADD COLUMN company_registration_number TEXT;
+    END IF;
 
-  -- Copyright text
-  IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
-                 WHERE table_name = 'site_settings' AND column_name = 'copyright_text') THEN
-    ALTER TABLE site_settings ADD COLUMN copyright_text TEXT;
-  END IF;
+    -- Copyright text
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                  WHERE table_name = 'site_settings' AND column_name = 'copyright_text') THEN
+      ALTER TABLE site_settings ADD COLUMN copyright_text TEXT;
+    END IF;
 
-  -- Logo URL
-  IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
-                 WHERE table_name = 'site_settings' AND column_name = 'logo_url') THEN
-    ALTER TABLE site_settings ADD COLUMN logo_url TEXT;
+    -- Logo URL
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                  WHERE table_name = 'site_settings' AND column_name = 'logo_url') THEN
+      ALTER TABLE site_settings ADD COLUMN logo_url TEXT;
+    END IF;
   END IF;
 END $$;
 
@@ -118,3 +139,7 @@ INSERT INTO exchange_rates (cny_to_usd)
 SELECT 7.23
 WHERE NOT EXISTS (SELECT 1 FROM exchange_rates);
 
+-- Insert default site settings if table is empty
+INSERT INTO site_settings (id, site_name, site_description, company_name, company_full_name)
+SELECT 'default', 'SecondRise', '跨境电商学习平台', 'SecondRise', 'Mandarin (Hong Kong) International Limited'
+WHERE NOT EXISTS (SELECT 1 FROM site_settings WHERE id = 'default');

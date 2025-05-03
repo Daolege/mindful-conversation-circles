@@ -10,6 +10,16 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslations } from "@/hooks/useTranslations";
 import { Loader2 } from "lucide-react";
+import { Tables } from '@/lib/supabase/database.types';
+
+type LegalDocument = Tables<'legal_documents'>;
+
+interface DocumentState {
+  [key: string]: {
+    title: string;
+    content: string;
+  }
+}
 
 const LegalDocumentsManagement = () => {
   const { t } = useTranslations();
@@ -18,7 +28,7 @@ const LegalDocumentsManagement = () => {
   const [isSaving, setIsSaving] = useState(false);
 
   // Document content state
-  const [documents, setDocuments] = useState({
+  const [documents, setDocuments] = useState<DocumentState>({
     "privacy-policy": {
       title: "隐私政策",
       content: "",
@@ -60,7 +70,7 @@ const LegalDocumentsManagement = () => {
       
       if (data && data.length > 0) {
         const newDocuments = { ...documents };
-        data.forEach(doc => {
+        data.forEach((doc: LegalDocument) => {
           if (newDocuments[doc.slug]) {
             newDocuments[doc.slug] = {
               title: doc.title,
@@ -107,7 +117,7 @@ const LegalDocumentsManagement = () => {
   };
 
   // Handle content change
-  const handleContentChange = (e) => {
+  const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const { value } = e.target;
     setDocuments(prev => ({
       ...prev,
@@ -119,7 +129,7 @@ const LegalDocumentsManagement = () => {
   };
 
   // Handle title change
-  const handleTitleChange = (e) => {
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { value } = e.target;
     setDocuments(prev => ({
       ...prev,

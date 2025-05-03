@@ -9,13 +9,16 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslations } from "@/hooks/useTranslations";
 import { Loader2, Building, Globe, FileText } from "lucide-react";
+import { Tables } from '@/lib/supabase/database.types';
+
+type SiteSettings = Tables<'site_settings'>;
 
 const CompanyInfoSettings = () => {
   const { t } = useTranslations();
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   
-  const [companyInfo, setCompanyInfo] = useState({
+  const [companyInfo, setCompanyInfo] = useState<Partial<SiteSettings>>({
     company_name: '',
     company_full_name: '',
     company_registration_number: '',
@@ -69,7 +72,7 @@ const CompanyInfoSettings = () => {
   };
 
   // Handle input change
-  const handleChange = (field, value) => {
+  const handleChange = (field: keyof SiteSettings, value: string) => {
     setCompanyInfo(prev => ({
       ...prev,
       [field]: value
@@ -128,7 +131,7 @@ const CompanyInfoSettings = () => {
               <Label htmlFor="company_name">公司名称</Label>
               <Input
                 id="company_name"
-                value={companyInfo.company_name}
+                value={companyInfo.company_name || ''}
                 onChange={(e) => handleChange('company_name', e.target.value)}
                 placeholder="例如: SecondRise"
               />
@@ -138,7 +141,7 @@ const CompanyInfoSettings = () => {
               <Label htmlFor="company_full_name">公司全称</Label>
               <Input
                 id="company_full_name"
-                value={companyInfo.company_full_name}
+                value={companyInfo.company_full_name || ''}
                 onChange={(e) => handleChange('company_full_name', e.target.value)}
                 placeholder="例如: Mandarin (Hong Kong) International Limited"
               />
@@ -150,7 +153,7 @@ const CompanyInfoSettings = () => {
               <Label htmlFor="company_registration_number">公司注册号</Label>
               <Input
                 id="company_registration_number"
-                value={companyInfo.company_registration_number}
+                value={companyInfo.company_registration_number || ''}
                 onChange={(e) => handleChange('company_registration_number', e.target.value)}
                 placeholder="公司注册编号"
               />
@@ -160,7 +163,7 @@ const CompanyInfoSettings = () => {
               <Label htmlFor="logo_url">LOGO链接</Label>
               <Input
                 id="logo_url"
-                value={companyInfo.logo_url}
+                value={companyInfo.logo_url || ''}
                 onChange={(e) => handleChange('logo_url', e.target.value)}
                 placeholder="LOGO图片URL"
               />
@@ -171,7 +174,7 @@ const CompanyInfoSettings = () => {
             <Label htmlFor="company_address">公司地址</Label>
             <Textarea
               id="company_address"
-              value={companyInfo.company_address}
+              value={companyInfo.company_address || ''}
               onChange={(e) => handleChange('company_address', e.target.value)}
               placeholder="公司注册地址"
               rows={2}
@@ -182,7 +185,7 @@ const CompanyInfoSettings = () => {
             <Label htmlFor="copyright_text">版权信息</Label>
             <Input
               id="copyright_text"
-              value={companyInfo.copyright_text}
+              value={companyInfo.copyright_text || ''}
               onChange={(e) => handleChange('copyright_text', e.target.value)}
               placeholder="例如: © 2025 SecondRise. 版权所有"
             />
@@ -208,7 +211,7 @@ const CompanyInfoSettings = () => {
               <Label htmlFor="site_name">网站名称</Label>
               <Input
                 id="site_name"
-                value={companyInfo.site_name}
+                value={companyInfo.site_name || ''}
                 onChange={(e) => handleChange('site_name', e.target.value)}
                 placeholder="网站名称"
               />
@@ -218,7 +221,7 @@ const CompanyInfoSettings = () => {
               <Label htmlFor="site_description">网站描述</Label>
               <Input
                 id="site_description"
-                value={companyInfo.site_description}
+                value={companyInfo.site_description || ''}
                 onChange={(e) => handleChange('site_description', e.target.value)}
                 placeholder="简短描述网站内容"
               />
@@ -230,7 +233,7 @@ const CompanyInfoSettings = () => {
               <Label htmlFor="contact_email">联系邮箱</Label>
               <Input
                 id="contact_email"
-                value={companyInfo.contact_email}
+                value={companyInfo.contact_email || ''}
                 onChange={(e) => handleChange('contact_email', e.target.value)}
                 placeholder="联系邮箱"
               />
@@ -240,7 +243,7 @@ const CompanyInfoSettings = () => {
               <Label htmlFor="support_phone">客服电话</Label>
               <Input
                 id="support_phone"
-                value={companyInfo.support_phone}
+                value={companyInfo.support_phone || ''}
                 onChange={(e) => handleChange('support_phone', e.target.value)}
                 placeholder="客服电话"
               />

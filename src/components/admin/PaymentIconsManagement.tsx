@@ -9,12 +9,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { useTranslations } from "@/hooks/useTranslations";
 import { Plus, Trash2, ArrowUp, ArrowDown, Loader2 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
+import { Tables } from '@/lib/supabase/database.types';
+
+type PaymentIcon = Tables<'payment_icons'>;
 
 const PaymentIconsManagement = () => {
   const { t } = useTranslations();
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [paymentIcons, setPaymentIcons] = useState([]);
+  const [paymentIcons, setPaymentIcons] = useState<PaymentIcon[]>([]);
 
   // Load payment icons on component mount
   useEffect(() => {
@@ -52,18 +55,20 @@ const PaymentIconsManagement = () => {
         name: '',
         icon_url: '',
         is_active: true,
-        display_order: paymentIcons.length
+        display_order: paymentIcons.length,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       }
     ]);
   };
 
   // Remove payment icon
-  const removePaymentIcon = (indexToRemove) => {
+  const removePaymentIcon = (indexToRemove: number) => {
     setPaymentIcons(paymentIcons.filter((_, index) => index !== indexToRemove));
   };
 
   // Move icon up in order
-  const moveIconUp = (index) => {
+  const moveIconUp = (index: number) => {
     if (index === 0) return;
     const newIcons = [...paymentIcons];
     [newIcons[index - 1], newIcons[index]] = [newIcons[index], newIcons[index - 1]];
@@ -77,7 +82,7 @@ const PaymentIconsManagement = () => {
   };
 
   // Move icon down in order
-  const moveIconDown = (index) => {
+  const moveIconDown = (index: number) => {
     if (index === paymentIcons.length - 1) return;
     const newIcons = [...paymentIcons];
     [newIcons[index], newIcons[index + 1]] = [newIcons[index + 1], newIcons[index]];
@@ -91,9 +96,12 @@ const PaymentIconsManagement = () => {
   };
 
   // Handle input change
-  const handleChange = (index, field, value) => {
+  const handleChange = (index: number, field: keyof PaymentIcon, value: any) => {
     const newIcons = [...paymentIcons];
-    newIcons[index][field] = value;
+    newIcons[index] = {
+      ...newIcons[index],
+      [field]: value
+    };
     setPaymentIcons(newIcons);
   };
 

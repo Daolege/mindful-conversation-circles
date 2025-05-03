@@ -11,16 +11,19 @@ import { Loader2, CreditCard, History, Calendar, ArrowLeftRight } from "lucide-r
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatDistanceToNow } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
+import { Tables } from '@/lib/supabase/database.types';
+
+type ExchangeRate = Tables<'exchange_rates'>;
 
 const ExchangeRateSettings = () => {
   const { t } = useTranslations();
   const [isLoading, setIsLoading] = useState(false);
   const [isHistoryLoading, setIsHistoryLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [exchangeRate, setExchangeRate] = useState({
+  const [exchangeRate, setExchangeRate] = useState<Partial<ExchangeRate>>({
     cny_to_usd: 7.23,
   });
-  const [exchangeHistory, setExchangeHistory] = useState([]);
+  const [exchangeHistory, setExchangeHistory] = useState<ExchangeRate[]>([]);
 
   // Load exchange rate on component mount
   useEffect(() => {
@@ -80,7 +83,7 @@ const ExchangeRateSettings = () => {
   };
 
   // Handle input change
-  const handleChange = (field, value) => {
+  const handleChange = (field: keyof ExchangeRate, value: string) => {
     setExchangeRate(prev => ({
       ...prev,
       [field]: parseFloat(value),
@@ -95,7 +98,7 @@ const ExchangeRateSettings = () => {
       const { error } = await supabase
         .from('exchange_rates')
         .insert({
-          cny_to_usd: exchangeRate.cny_to_usd,
+          cny_to_usd: exchangeRate.cny_to_usd!,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         });
@@ -123,7 +126,7 @@ const ExchangeRateSettings = () => {
   }
 
   // Format date for display
-  const formatDate = (dateString) => {
+  const formatDate = (dateString: string) => {
     try {
       const date = new Date(dateString);
       return date.toLocaleString('zh-CN', {
@@ -140,7 +143,7 @@ const ExchangeRateSettings = () => {
   };
 
   // Format time ago for display
-  const timeAgo = (dateString) => {
+  const timeAgo = (dateString: string) => {
     try {
       const date = new Date(dateString);
       return formatDistanceToNow(date, { addSuffix: true, locale: zhCN });
