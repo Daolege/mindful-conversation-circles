@@ -7,7 +7,7 @@ interface CountryFlagProps {
 }
 
 export const CountryFlag: React.FC<CountryFlagProps> = ({ countryCode, countryName }) => (
-  <div className="flex items-center space-x-2 mb-2 group">
+  <div className="flex items-center space-x-2 group">
     <img 
       src={`https://flagcdn.com/24x18/${countryCode.toLowerCase()}.png`}
       srcSet={`https://flagcdn.com/48x36/${countryCode.toLowerCase()}.png 2x,

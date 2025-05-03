@@ -24,7 +24,7 @@ const PaymentIcons: React.FC = () => {
   const iconsToDisplay = (!isError && paymentIcons.length > 0) ? paymentIcons : defaultPaymentIcons;
 
   return (
-    <div className="flex flex-wrap gap-2.5">
+    <div className="flex flex-wrap gap-2">
       {iconsToDisplay.map((method, index) => (
         <div 
           key={`payment-${index}`} 

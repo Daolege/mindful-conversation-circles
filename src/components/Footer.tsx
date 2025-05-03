@@ -14,7 +14,6 @@ import ContactInfo from './footer/ContactInfo';
 import SocialLinks from './footer/SocialLinks';
 import GlobalOffices from './footer/GlobalOffices';
 import PaymentIcons from './footer/PaymentIcons';
-import LegalLinks from './footer/LegalLinks';
 
 // 站点设置类型
 type SiteSettings = {
@@ -101,26 +100,29 @@ const Footer = () => {
   return (
     <footer className="bg-[#1a202c] text-white pt-12 pb-8">
       <div className="container mx-auto px-4">
-        {/* 优化的网格布局 - 改进了响应式断点和列宽比例 */}
+        {/* 顶部区域 - 添加语言切换器到右侧 */}
+        <div className="flex justify-between items-center mb-8">
+          <Logo variant="default" />
+          <LanguageSwitcher variant="footer" className="bg-[#333333] text-white border-[#404040]" />
+        </div>
+        
+        {/* 优化的网格布局 */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-x-8 gap-y-10">
-          {/* 公司信息 - 调整了列宽 */}
+          {/* 公司信息 */}
           <div className="lg:col-span-4 flex flex-col space-y-6">
-            <div className="flex items-center mb-2">
-              <Logo variant="default" />
-            </div>
             <p className="text-[#999999] text-sm leading-relaxed mb-4">{siteSettings?.site_description || t('common:footerCompanyDescription')}</p>
             
             {/* 社交媒体链接 */}
             <SocialLinks />
             
-            {/* 支付方式图标 - 添加了更好的间距和响应式布局 */}
+            {/* 支付方式图标 */}
             <div>
               <h4 className="text-[#999999] font-medium mb-3">{t('common:acceptedPayments')}</h4>
               <PaymentIcons />
             </div>
           </div>
           
-          {/* 中间区域 - 联系信息和法律链接 */}
+          {/* 中间区域 - 联系信息 */}
           <div className="lg:col-span-3 flex flex-col space-y-6">
             {/* 联系信息 */}
             <div>
@@ -131,48 +133,29 @@ const Footer = () => {
                 location={location}
               />
             </div>
-            
-            {/* 添加法律链接到中间区域，仅在小屏幕显示 */}
-            <div className="block lg:hidden mt-4">
-              <LegalLinks />
-            </div>
           </div>
           
-          {/* 右侧区域 - 全球办公室和法律链接 */}
+          {/* 右侧区域 - 全球办公室 */}
           <div className="lg:col-span-5">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-6">
-              {/* 全球办公室 */}
-              <div className="md:col-span-2">
-                <GlobalOffices />
-              </div>
-              
-              {/* 法律链接只在大屏幕显示 */}
-              <div className="hidden lg:block">
-                <LegalLinks />
-              </div>
-            </div>
+            <GlobalOffices />
           </div>
         </div>
         
         {/* 使用更明显的分隔线 */}
         <Separator className="my-8 bg-[#3A3A3A] opacity-60" />
         
-        {/* 改进的底部版权区域 - 更好的响应式对齐 */}
+        {/* 改进的底部版权区域 */}
         <div className="flex flex-col sm:flex-row justify-between items-center text-[#999999] text-sm">
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 mb-4 sm:mb-0">
             <p className="text-center sm:text-left">{copyrightText}</p>
           </div>
           
-          {/* 法律链接作为内联链接显示在移动视图 */}
+          {/* 法律链接作为内联链接 */}
           <div className="flex space-x-4 sm:space-x-6 mb-6 sm:mb-0 text-xs sm:text-sm">
             <a href="/privacy-policy" className="hover:text-white transition-colors">{t('common:privacyPolicy')}</a>
             <a href="/terms-of-use" className="hover:text-white transition-colors">{t('common:termsOfUse')}</a>
             <a href="/cookie-policy" className="hover:text-white transition-colors">{t('common:cookiePolicy')}</a>
-          </div>
-          
-          {/* 语言切换器 */}
-          <div className="mt-4 sm:mt-0">
-            <LanguageSwitcher variant="footer" className="bg-[#333333] text-white border-[#404040]" />
+            <a href="/faq" className="hover:text-white transition-colors">{t('common:faq')}</a>
           </div>
         </div>
       </div>

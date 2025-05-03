@@ -1,6 +1,7 @@
 
 import React from 'react';
-import { Mail, Phone, MapPin } from 'lucide-react';
+import { Mail, MapPin } from 'lucide-react';
+import { WhatsApp } from 'lucide-react';
 
 interface ContactInfoProps {
   emails?: string[];
@@ -10,15 +11,15 @@ interface ContactInfoProps {
 
 const ContactInfo: React.FC<ContactInfoProps> = ({ emails, phones, location }) => {
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       {emails && emails.map((email, index) => (
         <a 
           key={`email-${index}`} 
           href={`mailto:${email}`} 
-          className="flex items-center group hover:bg-[#2d3748] rounded-md p-1 -ml-1 transition-colors"
+          className="flex items-center group hover:bg-[#2d3748] rounded-md p-2 -ml-1 transition-colors duration-300"
         >
-          <Mail className="h-4 w-4 mr-2.5 text-[#999999] group-hover:text-white transition-colors" />
-          <span className="text-sm text-[#BBBBBB] group-hover:text-white transition-colors">
+          <Mail className="h-4 w-4 mr-3 text-[#999999] group-hover:text-white transition-colors duration-300" />
+          <span className="text-sm text-[#BBBBBB] group-hover:text-white transition-colors duration-300">
             {email}
           </span>
         </a>
@@ -28,19 +29,19 @@ const ContactInfo: React.FC<ContactInfoProps> = ({ emails, phones, location }) =
         <a 
           key={`phone-${index}`} 
           href={`https://wa.me/${phone.replace(/\D/g, '')}`} 
-          className="flex items-center group hover:bg-[#2d3748] rounded-md p-1 -ml-1 transition-colors"
+          className="flex items-center group hover:bg-[#2d3748] rounded-md p-2 -ml-1 transition-colors duration-300"
         >
-          <Phone className="h-4 w-4 mr-2.5 text-[#999999] group-hover:text-white transition-colors" />
-          <span className="text-sm text-[#BBBBBB] group-hover:text-white transition-colors">
-            WhatsApp: {phone}
+          <WhatsApp className="h-4 w-4 mr-3 text-[#25D366] group-hover:text-[#25D366] transition-colors duration-300" />
+          <span className="text-sm text-[#BBBBBB] group-hover:text-white transition-colors duration-300">
+            {phone}
           </span>
         </a>
       ))}
       
       {location && (
-        <div className="flex items-start group hover:bg-[#2d3748] rounded-md p-1 -ml-1 transition-colors">
-          <MapPin className="h-4 w-4 mr-2.5 mt-0.5 text-[#999999] group-hover:text-white transition-colors" />
-          <span className="text-sm text-[#BBBBBB] group-hover:text-white transition-colors">
+        <div className="flex items-start group hover:bg-[#2d3748] rounded-md p-2 -ml-1 transition-colors duration-300">
+          <MapPin className="h-4 w-4 mr-3 mt-0.5 text-[#999999] group-hover:text-white transition-colors duration-300" />
+          <span className="text-sm text-[#BBBBBB] group-hover:text-white transition-colors duration-300">
             {location}
           </span>
         </div>
