@@ -5,13 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { useTranslations } from "@/hooks/useTranslations";
 import { Plus, Trash2, ArrowUp, ArrowDown, Loader2 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
-import { Tables } from '@/lib/supabase/database.types';
-
-type SocialMediaLink = Tables<'social_media_links'>;
+import { SocialMediaLink, socialMediaService } from '@/lib/supabaseUtils';
 
 const SocialMediaManagement = () => {
   const { t } = useTranslations();
@@ -28,16 +25,9 @@ const SocialMediaManagement = () => {
   const loadSocialLinks = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('social_media_links')
-        .select('*')
-        .order('display_order', { ascending: true }) as { data: SocialMediaLink[] | null, error: any };
-      
-      if (error) {
-        throw error;
-      }
-      
-      setSocialLinks(data || []);
+      // Using our new service
+      const links = await socialMediaService.getOrdered();
+      setSocialLinks(links || []);
     } catch (error) {
       console.error("Error loading social media links:", error);
       toast.error("加载社交媒体链接失败");
@@ -118,19 +108,18 @@ const SocialMediaManagement = () => {
     
     setIsSaving(true);
     try {
-      // First delete all existing links
-      await supabase.from('social_media_links').delete().not('id', 'is', null) as any;
+      // Using our new service
+      await socialMediaService.deleteAll();
       
-      // Then insert the new ones
-      const { error } = await supabase
-        .from('social_media_links')
-        .upsert(
-          socialLinks.map((link, index) => ({
-            ...link,
-            display_order: index,
-            id: link.id && !link.id.startsWith('temp-') ? link.id : undefined
-          }))
-        ) as { error: any };
+      // Prepare links with updated display order
+      const linksToSave = socialLinks.map((link, index) => ({
+        ...link,
+        display_order: index,
+        id: link.id && !link.id.startsWith('temp-') ? link.id : undefined
+      }));
+      
+      // Using our new service
+      const { error } = await socialMediaService.upsert(linksToSave);
       
       if (error) {
         throw error;

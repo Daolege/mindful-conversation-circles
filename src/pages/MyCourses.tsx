@@ -8,7 +8,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Navigate } from "react-router-dom";
 import { transformCourseData } from "@/lib/types/course";
-import { handleSupabaseQueryError } from "@/lib/supabaseUtils";
+import { handleQueryError } from "@/lib/supabaseUtils";
 import { useTranslations } from "@/hooks/useTranslations";
 
 const MyCourses = () => {
@@ -28,7 +28,7 @@ const MyCourses = () => {
         `)
         .eq('user_id', user.id);
 
-      const processedData = handleSupabaseQueryError(data, error, []);
+      const processedData = handleQueryError(data, error, []);
       
       // Transform the course data to normalize field names
       return processedData?.map(item => transformCourseData(item.courses)) || [];

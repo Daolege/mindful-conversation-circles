@@ -5,22 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { useTranslations } from "@/hooks/useTranslations";
 import { Loader2, CreditCard, History, Calendar, ArrowLeftRight } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatDistanceToNow } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
-
-// Define custom interface for exchange rate
-interface ExchangeRate {
-  id: string;
-  rate: number;
-  from_currency: string;
-  to_currency: string;
-  created_at: string;
-  updated_at: string;
-}
+import { ExchangeRate, exchangeRatesService } from '@/lib/supabaseUtils';
 
 const ExchangeRateSettings = () => {
   const { t } = useTranslations();
@@ -44,24 +34,14 @@ const ExchangeRateSettings = () => {
   const loadExchangeRate = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('exchange_rates')
-        .select('*')
-        .eq('from_currency', 'CNY')
-        .eq('to_currency', 'USD')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
+      // Using our new service
+      const rates = await exchangeRatesService.getLatest();
       
-      if (error && error.code !== 'PGRST116') { // No rows returned is OK for new sites
-        throw error;
-      }
-      
-      if (data) {
+      if (rates && rates.length > 0) {
         setExchangeRate({
-          rate: data.rate,
-          from_currency: data.from_currency,
-          to_currency: data.to_currency
+          rate: rates[0].rate,
+          from_currency: rates[0].from_currency,
+          to_currency: rates[0].to_currency
         });
       }
     } catch (error) {
@@ -76,19 +56,9 @@ const ExchangeRateSettings = () => {
   const loadExchangeHistory = async () => {
     setIsHistoryLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('exchange_rates')
-        .select('*')
-        .eq('from_currency', 'CNY')
-        .eq('to_currency', 'USD')
-        .order('created_at', { ascending: false })
-        .limit(10);
-      
-      if (error) {
-        throw error;
-      }
-      
-      setExchangeHistory(data as unknown as ExchangeRate[] || []);
+      // Using our new service
+      const rates = await exchangeRatesService.getLatest();
+      setExchangeHistory(rates || []);
     } catch (error) {
       console.error("Error loading exchange history:", error);
       toast.error("加载汇率历史失败");
@@ -109,16 +79,14 @@ const ExchangeRateSettings = () => {
   const saveExchangeRate = async () => {
     setIsSaving(true);
     try {
-      // Create a new record for the exchange rate
-      const { error } = await supabase
-        .from('exchange_rates')
-        .insert({
-          rate: exchangeRate.rate!,
-          from_currency: 'CNY',
-          to_currency: 'USD',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        } as any);
+      // Using our new service
+      const { error } = await exchangeRatesService.insert({
+        rate: exchangeRate.rate!,
+        from_currency: 'CNY',
+        to_currency: 'USD',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      });
       
       if (error) {
         throw error;

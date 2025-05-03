@@ -5,21 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { useTranslations } from "@/hooks/useTranslations";
 import { Plus, Trash2, ArrowUp, ArrowDown, Loader2 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
-
-// Define the PaymentIcon interface
-interface PaymentIcon {
-  id: string;
-  name: string;
-  icon_url: string;
-  is_active: boolean;
-  display_order: number;
-  created_at: string;
-  updated_at: string;
-}
+import { PaymentIcon, paymentIconsService } from "@/lib/supabaseUtils";
 
 const PaymentIconsManagement = () => {
   const { t } = useTranslations();
@@ -36,15 +25,9 @@ const PaymentIconsManagement = () => {
   const loadPaymentIcons = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('payment_icons')
-        .select('*') as { data: PaymentIcon[] | null, error: any };
-      
-      if (error) {
-        throw error;
-      }
-      
-      setPaymentIcons(data || []);
+      // Using our new service
+      const icons = await paymentIconsService.getOrdered();
+      setPaymentIcons(icons || []);
     } catch (error) {
       console.error("Error loading payment icons:", error);
       toast.error("加载支付图标失败");
@@ -124,19 +107,18 @@ const PaymentIconsManagement = () => {
     
     setIsSaving(true);
     try {
-      // First delete all existing icons
-      await supabase.from('payment_icons').delete().not('id', 'is', null) as any;
+      // Using our new service
+      await paymentIconsService.deleteAll();
       
-      // Then insert the new ones
-      const { error } = await supabase
-        .from('payment_icons')
-        .insert(
-          paymentIcons.map((icon, index) => ({
-            ...icon,
-            display_order: index,
-            id: icon.id && !icon.id.startsWith('temp-') ? icon.id : undefined
-          }))
-        ) as { error: any };
+      // Prepare icons with updated display order
+      const iconsToSave = paymentIcons.map((icon, index) => ({
+        ...icon,
+        display_order: index,
+        id: icon.id && !icon.id.startsWith('temp-') ? icon.id : undefined
+      }));
+      
+      // Using our new service
+      const { error } = await paymentIconsService.upsert(iconsToSave);
       
       if (error) {
         throw error;

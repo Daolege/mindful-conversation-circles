@@ -7,19 +7,12 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { useTranslations } from "@/hooks/useTranslations";
 import { Loader2 } from "lucide-react";
-
-// Define the LegalDocument interface
-interface LegalDocument {
-  id: string;
-  slug: string;
-  title: string;
-  content: string;
-  created_at: string;
-  updated_at: string;
-}
+import { 
+  LegalDocument, 
+  legalDocumentsService
+} from "@/lib/supabaseUtils";
 
 interface DocumentState {
   [key: string]: {
@@ -67,17 +60,12 @@ const LegalDocumentsManagement = () => {
   const loadDocuments = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('legal_documents')
-        .select('*') as { data: LegalDocument[] | null, error: any };
+      // Using our new service
+      const legalDocs = await legalDocumentsService.getAll();
       
-      if (error) {
-        throw error;
-      }
-      
-      if (data && data.length > 0) {
+      if (legalDocs && legalDocs.length > 0) {
         const newDocuments = { ...documents };
-        data.forEach((doc: LegalDocument) => {
+        legalDocs.forEach((doc: LegalDocument) => {
           if (newDocuments[doc.slug]) {
             newDocuments[doc.slug] = {
               title: doc.title,
@@ -101,14 +89,13 @@ const LegalDocumentsManagement = () => {
     try {
       const { title, content } = documents[activeDocument];
       
-      const { error } = await supabase
-        .from('legal_documents')
-        .upsert({
-          slug: activeDocument,
-          title: title,
-          content: content,
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'slug' }) as { error: any };
+      // Using our new service
+      const { error } = await legalDocumentsService.upsert({
+        slug: activeDocument,
+        title: title,
+        content: content,
+        updated_at: new Date().toISOString()
+      });
       
       if (error) {
         throw error;
