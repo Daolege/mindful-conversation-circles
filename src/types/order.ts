@@ -94,6 +94,19 @@ export interface Order {
   can_be_cancelled?: boolean;
   price?: number;
   original_price?: number;
+  invoice_url?: string;
+  items?: Array<{
+    id: string | number;
+    title?: string;
+    description?: string;
+    quantity: number;
+    unit_price: number;
+    total_price: number;
+    currency?: string;
+    discount?: number;
+    type?: string;
+    course_id?: string | number;
+  }>;
 }
 
 export interface OrderListResponse {

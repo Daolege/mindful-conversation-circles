@@ -6,6 +6,8 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Star, ArrowRight } from "lucide-react";
 import { CourseNew } from '@/lib/types/course-new';
+import { useTranslations } from "@/hooks/useTranslations";
+import LocalizedCurrency from "@/components/LocalizedCurrency";
 
 interface HomePageCourseCardProps {
   course: CourseNew;
@@ -13,6 +15,8 @@ interface HomePageCourseCardProps {
 }
 
 const HomePageCourseCard = ({ course, index }: HomePageCourseCardProps) => {
+  const { t } = useTranslations();
+  
   // Calculate discount if applicable
   const hasDiscount = course.original_price && course.original_price > course.price;
   const discount = hasDiscount 
@@ -84,7 +88,7 @@ const HomePageCourseCard = ({ course, index }: HomePageCourseCardProps) => {
                 {/* Enrollment count */}
                 {course.enrollment_count !== undefined && (
                   <span className="text-xs text-white/80 ml-auto">
-                    {course.enrollment_count}人已学习
+                    {course.enrollment_count} {t('courses:students')}
                   </span>
                 )}
               </div>
@@ -92,13 +96,17 @@ const HomePageCourseCard = ({ course, index }: HomePageCourseCardProps) => {
               {/* Price section */}
               <div className="flex items-end justify-between pt-3 border-t border-white/20">
                 <div className="flex items-baseline gap-2">
-                  <span className="text-xl font-bold text-white">¥{course.price}</span>
+                  <span className="text-xl font-bold text-white">
+                    <LocalizedCurrency amount={course.price} currency="CNY" />
+                  </span>
                   {hasDiscount && (
-                    <span className="text-sm text-white/70 line-through">¥{course.original_price}</span>
+                    <span className="text-sm text-white/70 line-through">
+                      <LocalizedCurrency amount={course.original_price || 0} currency="CNY" />
+                    </span>
                   )}
                   {hasDiscount && (
                     <Badge className="bg-red-500 text-white text-xs">
-                      {discount}% OFF
+                      {discount}% {t('common:off')}
                     </Badge>
                   )}
                 </div>

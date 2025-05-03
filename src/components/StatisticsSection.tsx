@@ -1,39 +1,42 @@
 
 import { Users, BookOpen, Award, Briefcase } from "lucide-react";
 import { motion } from "framer-motion";
-
-const stats = [
-  {
-    id: 1,
-    label: "活跃学员",
-    value: "10,000+",
-    icon: Users,
-    description: "来自全国各地的学习者"
-  },
-  {
-    id: 2,
-    label: "专业课程",
-    value: "200+",
-    icon: BookOpen,
-    description: "涵盖各个领域的精品课程"
-  },
-  {
-    id: 3,
-    label: "行业专家",
-    value: "50+",
-    icon: Award,
-    description: "一流的教师与行业导师"
-  },
-  {
-    id: 4,
-    label: "合作企业",
-    value: "30+",
-    icon: Briefcase,
-    description: "提供实习与就业机会"
-  }
-];
+import { useTranslations } from "@/hooks/useTranslations";
 
 const StatisticsSection = () => {
+  const { t } = useTranslations();
+  
+  const stats = [
+    {
+      id: 1,
+      label: t("home:activeStudents"),
+      value: "10,000+",
+      icon: Users,
+      description: t("home:activeStudentsDesc")
+    },
+    {
+      id: 2,
+      label: t("home:professionalCourses"),
+      value: "200+",
+      icon: BookOpen,
+      description: t("home:professionalCoursesDesc")
+    },
+    {
+      id: 3,
+      label: t("home:industryExperts"),
+      value: "50+",
+      icon: Award,
+      description: t("home:industryExpertsDesc")
+    },
+    {
+      id: 4,
+      label: t("home:partnerCompanies"),
+      value: "30+",
+      icon: Briefcase,
+      description: t("home:partnerCompaniesDesc")
+    }
+  ];
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -69,9 +72,9 @@ const StatisticsSection = () => {
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
         >
-          <h2 className="text-4xl font-bold mb-4 bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">平台数据</h2>
+          <h2 className="text-4xl font-bold mb-4 bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">{t("home:platformStats")}</h2>
           <p className="text-gray-300 max-w-2xl mx-auto">
-            智慧园致力于提供优质的在线教育，让知识改变更多人的生活
+            {t("home:platformDescription")}
           </p>
         </motion.div>
 

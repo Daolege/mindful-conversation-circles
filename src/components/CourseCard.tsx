@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Languages, Users, Clock } from "lucide-react";
 import { useTranslations } from "@/hooks/useTranslations";
+import LocalizedCurrency from "@/components/LocalizedCurrency";
 
 type CourseCardProps = {
   id: number;
@@ -24,7 +25,7 @@ const CourseCard = ({
   price,
   studentCount = 0,
   featured = false,
-  language = "中文",
+  language = "chineseLanguage",
 }: CourseCardProps) => {
   const { t } = useTranslations();
   const positionVariant = id % 4;
@@ -103,6 +104,9 @@ const CourseCard = ({
   // Use consistent URL format for course navigation - courses-new for all cards
   const courseUrl = `/courses-new/${id}`;
 
+  // Translate the language
+  const translatedLanguage = t(`courses:${language}`);
+
   return (
     <Link to={courseUrl} className="block transform transition-all duration-700 hover:translate-y-[-8px]">
       <Card className="relative h-[250px] overflow-hidden bg-gradient-to-br from-gray-200/90 to-gray-300/90 backdrop-blur-sm border-0 shadow-lg group cursor-pointer hover:shadow-2xl transition-all duration-1000">
@@ -142,7 +146,7 @@ const CourseCard = ({
             className="bg-white/90 text-gray-800 backdrop-blur-sm shadow-sm border border-white/20
               transform transition-all duration-300 group-hover:scale-105 flex items-center gap-1">
             <Languages className="h-4 w-4" />
-            {language}
+            {translatedLanguage}
           </Badge>
           
           <Badge 
@@ -179,7 +183,7 @@ const CourseCard = ({
 
             <div className="flex justify-between items-center">
               <div className="font-bold text-lg text-black">
-                ¥{price}
+                <LocalizedCurrency amount={price} currency="CNY" />
               </div>
               <Button 
                 variant="secondary" 
