@@ -82,17 +82,31 @@ i18n.use({
       // 转换为键值对
       if (!error && data && Array.isArray(data) && data.length > 0) {
         const translations = data.reduce((acc: Record<string, string>, item) => {
-          // Only proceed if item is an object with key and value properties
-          if (item !== null && 
-              typeof item === 'object' && 
-              'key' in item && 
-              'value' in item && 
-              typeof item.key === 'string' && 
-              typeof item.value === 'string' && 
-              item.key !== null &&
-              item.value !== null) {
-            acc[item.key] = item.value;
+          // Null check first
+          if (item === null) {
+            return acc;
           }
+          
+          // Type check before accessing properties
+          if (typeof item !== 'object') {
+            return acc;
+          }
+          
+          // Check if required properties exist
+          if (!('key' in item) || !('value' in item)) {
+            return acc;
+          }
+          
+          // Check if they are strings and not null
+          if (typeof item.key !== 'string' || 
+              typeof item.value !== 'string' ||
+              item.key === null ||
+              item.value === null) {
+            return acc;
+          }
+          
+          // Now it's safe to add to the accumulator
+          acc[item.key] = item.value;
           return acc;
         }, {} as Record<string, string>);
         

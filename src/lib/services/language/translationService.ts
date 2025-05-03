@@ -44,17 +44,22 @@ export async function getTranslationsByLanguage(languageCode: string): Promise<T
       const validTranslations = data.filter((item): item is NonNullable<typeof item> => {
         if (item === null) return false;
         
-        return (
-          typeof item === 'object' &&
-          'language_code' in item &&
-          'namespace' in item &&
-          'key' in item &&
-          'value' in item &&
-          item.language_code !== null &&
-          item.namespace !== null &&
-          item.key !== null &&
-          item.value !== null
-        );
+        // Check object type
+        if (typeof item !== 'object') return false;
+        
+        // Check all required properties exist
+        if (!('language_code' in item)) return false;
+        if (!('namespace' in item)) return false;
+        if (!('key' in item)) return false;
+        if (!('value' in item)) return false;
+        
+        // Check none of the properties are null
+        if (item.language_code === null) return false;
+        if (item.namespace === null) return false;
+        if (item.key === null) return false;
+        if (item.value === null) return false;
+        
+        return true;
       });
       
       return validTranslations as unknown as TranslationItem[];

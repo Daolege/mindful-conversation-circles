@@ -65,9 +65,27 @@ export const useTranslations = () => {
         
         const translationData = existingTranslation[0];
         
+        // Add null check before accessing translationData properties
+        if (translationData === null) {
+          // If translationData is null, treat as new translation
+          const { error: insertError } = await insertIntoTable(
+            'translations',
+            {
+              language_code: language,
+              namespace,
+              key,
+              value,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            }
+          );
+          
+          if (insertError) throw insertError;
+          return { success: true };
+        }
+        
         // Safe type check before accessing translationData properties
-        if (translationData !== null && 
-            typeof translationData === 'object' && 
+        if (typeof translationData === 'object' && 
             'id' in translationData && 
             translationData.id !== null && 
             translationData.id !== undefined) {
@@ -144,17 +162,20 @@ export const useTranslations = () => {
         data.filter((item): item is NonNullable<typeof item> => {
           if (item === null) return false;
           
-          return (
-            typeof item === 'object' &&
-            'language_code' in item &&
-            'namespace' in item &&
-            'key' in item &&
-            'value' in item &&
-            item.language_code !== null &&
-            item.namespace !== null &&
-            item.key !== null &&
-            item.value !== null
-          );
+          // Explicit check for each property
+          if (typeof item !== 'object') return false;
+          if (!('language_code' in item)) return false;
+          if (!('namespace' in item)) return false;
+          if (!('key' in item)) return false;
+          if (!('value' in item)) return false;
+          
+          // Null checks for each property
+          if (item.language_code === null) return false;
+          if (item.namespace === null) return false;
+          if (item.key === null) return false;
+          if (item.value === null) return false;
+          
+          return true;
         }) : [];
       
       // We've filtered out null items, safe to type assert now

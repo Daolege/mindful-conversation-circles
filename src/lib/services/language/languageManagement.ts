@@ -20,13 +20,14 @@ export async function getAllLanguages(): Promise<Language[]> {
       const validLanguages = data.filter((item): item is NonNullable<typeof item> => {
         if (item === null) return false;
         
-        return (
-          typeof item === 'object' && 
-          'id' in item && 
-          'code' in item &&
-          item.id !== null &&
-          item.code !== null
-        );
+        // Check each required property
+        if (typeof item !== 'object') return false;
+        if (!('id' in item)) return false;
+        if (!('code' in item)) return false;
+        if (item.id === null) return false;
+        if (item.code === null) return false;
+        
+        return true;
       });
       
       if (validLanguages.length > 0) {
@@ -60,13 +61,14 @@ export async function getEnabledLanguages(): Promise<Language[]> {
       const validLanguages = data.filter((item): item is NonNullable<typeof item> => {
         if (item === null) return false;
         
-        return (
-          typeof item === 'object' && 
-          'id' in item && 
-          'code' in item &&
-          item.id !== null &&
-          item.code !== null
-        );
+        // Check each required property
+        if (typeof item !== 'object') return false;
+        if (!('id' in item)) return false;
+        if (!('code' in item)) return false; 
+        if (item.id === null) return false;
+        if (item.code === null) return false;
+        
+        return true;
       });
       
       if (validLanguages.length > 0) {
@@ -174,11 +176,15 @@ export async function deleteLanguage(languageId: number): Promise<{ success: boo
         return { success: false, error: new Error('Invalid language data received') };
       }
       
-      if (typeof langData === 'object' && 
-          'code' in langData && 
-          typeof langData.code === 'string' && 
-          langData.code !== null) {
-        
+      if (typeof langData !== 'object') {
+        return { success: false, error: new Error('Invalid language data type') };
+      }
+      
+      if (!('code' in langData)) {
+        return { success: false, error: new Error('Language data has no code property') };
+      }
+      
+      if (typeof langData.code === 'string' && langData.code !== null) {
         const langCode = langData.code;
         
         if (langCode === 'en' || langCode === 'zh') {
