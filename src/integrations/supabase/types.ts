@@ -116,6 +116,53 @@ export type Database = {
           },
         ]
       }
+      course_enrollment_guides: {
+        Row: {
+          content: string | null
+          course_id: number
+          created_at: string
+          guide_type: string
+          id: string
+          image_url: string | null
+          link: string | null
+          position: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content?: string | null
+          course_id: number
+          created_at?: string
+          guide_type: string
+          id?: string
+          image_url?: string | null
+          link?: string | null
+          position?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string | null
+          course_id?: number
+          created_at?: string
+          guide_type?: string
+          id?: string
+          image_url?: string | null
+          link?: string | null
+          position?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_enrollment_guides_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses_new"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       course_enrollments: {
         Row: {
           course_id: number | null

@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -6,12 +5,14 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { EditableListComponent } from './EditableListComponent';
 import { EditableCourseHighlightsComponent, CourseHighlight } from './EditableCourseHighlightsComponent';
+import { EditableCourseEnrollmentGuideComponent, CourseEnrollmentGuide } from './EditableCourseEnrollmentGuideComponent';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { ListItem } from '@/lib/types/course-new';
 import { updateTable } from '@/lib/services/typeSafeSupabase';
+import { getEnrollmentGuides, saveEnrollmentGuides } from '@/lib/services/courseEnrollmentGuideService';
 
 // Define props for the CourseOtherSettings component
 interface CourseOtherSettingsProps {
@@ -71,6 +72,9 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({
   const [courseHighlights, setCourseHighlights] = useState<CourseHighlight[]>([]);
   const [lectureCount, setLectureCount] = useState<number>(0);
   const [courseLanguage, setCourseLanguage] = useState<string>("中文");
+  
+  // Course enrollment guides state
+  const [enrollmentGuides, setEnrollmentGuides] = useState<CourseEnrollmentGuide[]>([]);
   
   // Convert string arrays to object arrays with IDs for the editable lists
   const formatArrayToListItems = (arr: string[]): ListItem[] => {
@@ -146,6 +150,13 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({
             setCourseHighlights(courseSpecificHighlights);
           }
         }
+        
+        // Load course enrollment guides
+        const { data: guidesData, error: guidesError } = await getEnrollmentGuides(courseId);
+        
+        if (!guidesError && guidesData) {
+          setEnrollmentGuides(guidesData);
+        }
       } catch (error: any) {
         console.error("Error loading course settings:", error);
         toast.error("无法加载课程设置");
@@ -196,6 +207,24 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({
     } catch (error) {
       console.error("Error saving course highlights:", error);
       toast.error("保存课程亮点失败");
+    }
+  };
+
+  // Handle enrollment guides changes
+  const handleEnrollmentGuidesChange = async (newGuides: CourseEnrollmentGuide[]) => {
+    setEnrollmentGuides(newGuides);
+    
+    if (!courseId) return;
+    
+    try {
+      const { error } = await saveEnrollmentGuides(courseId, newGuides);
+      
+      if (error) throw error;
+      
+      toast.success("报名后引导已更新");
+    } catch (error) {
+      console.error("Error saving enrollment guides:", error);
+      toast.error("保存报名后引导失败");
     }
   };
 
@@ -373,13 +402,19 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({
       {/* Course settings layout - split into two columns */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Left column with Course Highlights */}
-        <div>
+        <div className="space-y-6">
           <EditableCourseHighlightsComponent 
             courseId={courseId}
             highlights={courseHighlights}
             onChange={handleCourseHighlightsChange}
             lectureCount={lectureCount}
             courseLanguage={courseLanguage}
+          />
+
+          <EditableCourseEnrollmentGuideComponent
+            courseId={courseId}
+            guides={enrollmentGuides}
+            onChange={handleEnrollmentGuidesChange}
           />
         </div>
         

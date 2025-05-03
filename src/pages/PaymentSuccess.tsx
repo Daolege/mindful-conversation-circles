@@ -1,19 +1,23 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { CheckCircle, Download } from "lucide-react";
+import { CheckCircle, Download, ExternalLink } from "lucide-react";
 import { toast } from 'sonner';
 import { useTranslations } from "@/hooks/useTranslations";
+import { getEnrollmentGuides } from '@/lib/services/courseEnrollmentGuideService';
+import { CourseEnrollmentGuide } from '@/components/admin/course/settings/EditableCourseEnrollmentGuideComponent';
 
 const PaymentSuccess = () => {
   const location = useLocation();
   const { state } = location;
   const { t } = useTranslations();
+  const [enrollmentGuides, setEnrollmentGuides] = useState<CourseEnrollmentGuide[]>([]);
+  const [loading, setLoading] = useState(false);
   
   const orderDetails = state?.orderDetails || {
     orderId: 'ORD-1703157',
@@ -27,11 +31,36 @@ const PaymentSuccess = () => {
     isNewCourse: true
   };
 
-  const courseId = orderDetails.courseId || '80';  // Default to course 80 if none provided
-  const isNewCourse = orderDetails.isNewCourse !== false;  // Default to true unless explicitly set to false
+  const courseId = orderDetails.courseId ? parseInt(orderDetails.courseId, 10) : 80;
+  const isNewCourse = orderDetails.isNewCourse !== false;
   
   // Determine the correct learning route
   const learningUrl = `/learn/${courseId}${isNewCourse ? '?source=new' : ''}`;
+
+  // Load enrollment guides for this course
+  useEffect(() => {
+    const loadEnrollmentGuides = async () => {
+      if (!courseId) return;
+      
+      setLoading(true);
+      try {
+        const { data, error } = await getEnrollmentGuides(courseId);
+        
+        if (error) throw error;
+        
+        if (data) {
+          setEnrollmentGuides(data);
+        }
+      } catch (error) {
+        console.error("Error loading enrollment guides:", error);
+        // Don't show error toast here as this is not critical for users
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadEnrollmentGuides();
+  }, [courseId]);
 
   // Log the course ID and learning URL for debugging
   useEffect(() => {
@@ -46,6 +75,61 @@ const PaymentSuccess = () => {
       });
     }
   }, [courseId, isNewCourse, learningUrl, t]);
+
+  // Helper to render enrollment guide items by type
+  const renderEnrollmentGuides = () => {
+    if (enrollmentGuides.length === 0) {
+      return null;
+    }
+    
+    return (
+      <Card className="mt-8">
+        <CardContent className="p-6">
+          <h2 className="text-xl font-semibold mb-4">课程交流群</h2>
+          <p className="text-gray-600 mb-6">恭喜您成功报名课程！请加入以下交流群，获取学习资料和与其他学员交流。</p>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {enrollmentGuides.map(guide => (
+              <div key={guide.id} className="bg-muted/30 p-4 rounded-lg">
+                <h3 className="font-medium mb-2">{guide.title}</h3>
+                {guide.content && <p className="text-sm text-gray-600 mb-3">{guide.content}</p>}
+                
+                {guide.guide_type === 'wechat' && guide.image_url && (
+                  <div className="flex justify-center">
+                    <img 
+                      src={guide.image_url} 
+                      alt={`${guide.title} QR Code`} 
+                      className="max-w-[150px] max-h-[150px] object-contain"
+                    />
+                  </div>
+                )}
+                
+                {guide.guide_type === 'whatsapp' && guide.link && (
+                  <div className="mt-2">
+                    <Button asChild variant="outline" className="w-full">
+                      <a href={guide.link} target="_blank" rel="noopener noreferrer">
+                        打开 WhatsApp <ExternalLink className="h-4 w-4 ml-1" />
+                      </a>
+                    </Button>
+                  </div>
+                )}
+                
+                {guide.guide_type !== 'wechat' && guide.guide_type !== 'whatsapp' && guide.link && (
+                  <div className="mt-2">
+                    <Button asChild variant="outline" className="w-full">
+                      <a href={guide.link} target="_blank" rel="noopener noreferrer">
+                        打开链接 <ExternalLink className="h-4 w-4 ml-1" />
+                      </a>
+                    </Button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -126,6 +210,8 @@ const PaymentSuccess = () => {
               </div>
             </div>
           </Card>
+          
+          {renderEnrollmentGuides()}
         </div>
       </main>
       <Footer />
