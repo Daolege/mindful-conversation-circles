@@ -7,6 +7,7 @@ import CompanyInfoSettings from "./CompanyInfoSettings";
 import PaymentIconsManagement from "./PaymentIconsManagement";
 import LegalDocumentsManagement from "./LegalDocumentsManagement";
 import ExchangeRateSettings from "./ExchangeRateSettings";
+import BannerManagement from "./BannerManagement";
 
 export function AdminSettings() {
   const [activeTab, setActiveTab] = useState("system");
@@ -21,6 +22,7 @@ export function AdminSettings() {
           <TabsTrigger value="legal">{t('admin:legalDocuments')}</TabsTrigger>
           <TabsTrigger value="payment">{t('admin:paymentIcons')}</TabsTrigger>
           <TabsTrigger value="exchange">{t('admin:exchangeRates')}</TabsTrigger>
+          <TabsTrigger value="banners">{t('home:bannerManagement')}</TabsTrigger>
         </TabsList>
         
         <TabsContent value="system">
@@ -50,6 +52,12 @@ export function AdminSettings() {
         <TabsContent value="exchange">
           <div className="space-y-6">
             <ExchangeRateSettings />
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="banners">
+          <div className="space-y-6">
+            <BannerManagement />
           </div>
         </TabsContent>
       </Tabs>
