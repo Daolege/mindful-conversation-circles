@@ -18,7 +18,7 @@ export async function getEnabledLanguages(): Promise<Language[]> {
       return defaultLanguages.filter(lang => lang.enabled);
     }
     
-    // Check if we got data from the database and fix the type issue
+    // Check if we got data from the database
     if (data && Array.isArray(data) && data.length > 0) {
       // Use type assertion to handle the conversion correctly
       const languagesData = data as unknown as Language[];
