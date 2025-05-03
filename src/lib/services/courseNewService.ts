@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { CourseNew, CourseSection, CourseLecture } from '@/lib/types/course-new';
 
@@ -168,6 +169,25 @@ export const getCourseNewById = async (courseId: number) => {
 };
 
 /**
+ * Get all courses
+ * @returns An array of courses and any error
+ */
+export const getAllCoursesNew = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('courses_new')
+      .select('*')
+      .order('display_order');
+      
+    if (error) throw error;
+    return { data: data || [], error: null };
+  } catch (error) {
+    console.error("Error fetching all courses:", error);
+    return { data: [], error };
+  }
+};
+
+/**
  * Create a new course
  * @param courseData The data for the new course
  * @returns The new course data and any error
@@ -216,6 +236,154 @@ export const updateCourseNew = async (courseId: number, courseData: Partial<Cour
   } catch (error: any) {
     console.error("Error updating course:", error);
     return { data: null, error };
+  }
+};
+
+/**
+ * Delete a course
+ * @param courseId The ID of the course to delete
+ * @returns Success status and any error
+ */
+export const deleteCourseNew = async (courseId: number) => {
+  try {
+    // Delete related data first
+    // Remove course sections (which will cascade delete lectures)
+    const { error: sectionsError } = await supabase
+      .from('course_sections')
+      .delete()
+      .eq('course_id', courseId);
+
+    if (sectionsError) {
+      console.error("Error deleting course sections:", sectionsError);
+      return { success: false, error: sectionsError };
+    }
+    
+    // Remove course objectives
+    const { error: objectivesError } = await supabase
+      .from('course_learning_objectives')
+      .delete()
+      .eq('course_id', courseId);
+      
+    if (objectivesError) {
+      console.error("Error deleting course objectives:", objectivesError);
+      return { success: false, error: objectivesError };  
+    }
+    
+    // Remove course requirements
+    const { error: requirementsError } = await supabase
+      .from('course_requirements')
+      .delete()
+      .eq('course_id', courseId);
+      
+    if (requirementsError) {
+      console.error("Error deleting course requirements:", requirementsError);
+      return { success: false, error: requirementsError };  
+    }
+    
+    // Remove course target audience
+    const { error: audiencesError } = await supabase
+      .from('course_audiences')
+      .delete()
+      .eq('course_id', courseId);
+      
+    if (audiencesError) {
+      console.error("Error deleting course audiences:", audiencesError);
+      return { success: false, error: audiencesError };  
+    }
+    
+    // Remove course materials
+    const { error: materialsError } = await supabase
+      .from('course_materials')
+      .delete()
+      .eq('course_id', courseId);
+      
+    if (materialsError) {
+      console.error("Error deleting course materials:", materialsError);
+      return { success: false, error: materialsError };  
+    }
+
+    // Finally, delete the course itself
+    const { error } = await supabase
+      .from('courses_new')
+      .delete()
+      .eq('id', courseId);
+
+    if (error) {
+      console.error("Error deleting course:", error);
+      return { success: false, error };
+    }
+
+    // Clear any localStorage data for this course
+    clearCourseLocalStorageData(courseId);
+
+    return { success: true, error: null };
+  } catch (error: any) {
+    console.error("Error deleting course:", error);
+    return { success: false, error };
+  }
+};
+
+/**
+ * Batch delete multiple courses
+ * @param courseIds Array of course IDs to delete
+ * @returns Success status and any error
+ */
+export const batchDeleteCourses = async (courseIds: number[]) => {
+  try {
+    // Delete each course one by one to ensure proper cleanup
+    const deletePromises = courseIds.map(id => deleteCourseNew(id));
+    const results = await Promise.all(deletePromises);
+    
+    // Check if all deletions were successful
+    const allSuccessful = results.every(result => result.success);
+    
+    if (!allSuccessful) {
+      // Find the first error to return
+      const firstError = results.find(result => !result.success)?.error;
+      return { success: false, error: firstError || new Error("Some courses failed to delete") };
+    }
+    
+    return { success: true, error: null };
+  } catch (error: any) {
+    console.error("Error batch deleting courses:", error);
+    return { success: false, error };
+  }
+};
+
+/**
+ * Batch update course status
+ * @param courseIds Array of course IDs to update
+ * @param status New status ('published', 'draft', or 'archived')
+ * @returns Success status and any error
+ */
+export const batchUpdateCourseStatus = async (
+  courseIds: number[], 
+  status: 'published' | 'draft' | 'archived'
+) => {
+  try {
+    // Update published_at if setting to published
+    const updateData: { status: string; published_at?: string } = { 
+      status
+    };
+    
+    if (status === 'published') {
+      updateData.published_at = new Date().toISOString();
+    }
+    
+    const { error } = await supabase
+      .from('courses_new')
+      .update(updateData)
+      .in('id', courseIds);
+      
+    if (error) {
+      console.error("Error batch updating course status:", error);
+      return { success: false, error };
+    }
+    
+    return { success: true, error: null };
+  } catch (error: any) {
+    console.error("Error batch updating course status:", error);
+    return { success: false, error };
   }
 };
 

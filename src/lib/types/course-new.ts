@@ -45,6 +45,10 @@ export interface CourseWithDetails extends Omit<Course, 'language'> {
   status?: 'published' | 'draft' | 'archived';
   thumbnail_url?: string;
   language?: string; // Make language optional in CourseWithDetails
+  showObjectives?: boolean; // Add visibility flag for objectives
+  showRequirements?: boolean; // Add visibility flag for requirements
+  showTargetAudience?: boolean; // Add visibility flag for target audience
+  showMaterials?: boolean; // Add visibility flag for materials
 }
 
 // Add the CourseNew interface for admin components
