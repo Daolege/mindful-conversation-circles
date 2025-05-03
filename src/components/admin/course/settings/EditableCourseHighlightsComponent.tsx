@@ -15,7 +15,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { 
   Award, Star, MessageSquare, Headphones, Pen, 
   Image, Calendar, ListOrdered, ListCheck, Check,
-  Video, Clock, BookOpen, Globe, Refresh, Users, File
+  Video, Clock, BookOpen, Globe, RefreshCw, Users, File
 } from 'lucide-react';
 
 // Define interfaces for our components
@@ -43,7 +43,7 @@ const IconComponents = {
   clock: Clock,
   'book-open': BookOpen,
   globe: Globe,
-  refresh: Refresh,
+  'refresh-cw': RefreshCw,
   users: Users,
   file: File,
   // New added icons
@@ -65,7 +65,7 @@ const availableIcons = [
   { name: 'clock', label: '时钟', icon: Clock },
   { name: 'book-open', label: '书本', icon: BookOpen },
   { name: 'globe', label: '地球', icon: Globe },
-  { name: 'refresh', label: '刷新', icon: Refresh },
+  { name: 'refresh-cw', label: '刷新', icon: RefreshCw },
   { name: 'users', label: '用户', icon: Users },
   { name: 'file', label: '文件', icon: File },
   // New icons
