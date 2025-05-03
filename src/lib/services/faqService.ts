@@ -123,6 +123,7 @@ export async function createFaq(faq: Omit<MultiFaq, 'id'>) {
       };
     }
     
+    // Handle the data safely, checking for proper array type first
     if (!data || !Array.isArray(data) || data.length === 0) {
       console.error('[faqService] No data returned from FAQ creation');
       return {

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   getAllFaqTranslations, 
@@ -6,7 +5,8 @@ import {
   FaqWithTranslation,
   upsertFaqTranslation,
   createFaq,
-  deleteFromTable
+  deleteFromTable,
+  updateFaq
 } from '@/lib/services/faqService';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTranslations } from '@/hooks/useTranslations';
@@ -178,12 +178,8 @@ export const MultilangFAQManagement = () => {
   
   const toggleFeatured = async (faq: FaqWithTranslation) => {
     try {
-      // Update the is_featured status
-      await deleteFromTable('multilingual_faqs', { 
-        is_featured: !faq.is_featured 
-      }, { 
-        id: faq.id 
-      });
+      // Update the is_featured status using the updateFaq function instead
+      await updateFaq(faq.id, { is_featured: !faq.is_featured });
       
       // Update in state
       setFaqs(prev => prev.map(f => {
