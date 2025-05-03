@@ -64,7 +64,8 @@ export const useTranslations = () => {
           existingTranslation.length > 0) {
         
         const translationData = existingTranslation[0];
-        // Add null check for translationData
+        
+        // Safe type check before accessing translationData properties
         if (translationData !== null && 
             typeof translationData === 'object' && 
             'id' in translationData && 
