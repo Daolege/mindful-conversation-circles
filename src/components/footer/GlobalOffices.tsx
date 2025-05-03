@@ -10,7 +10,7 @@ const GlobalOffices: React.FC = () => {
   const isMobile = useIsMobile();
   
   return (
-    <div>
+    <div className="h-full flex flex-col justify-start">
       <h3 className="text-lg font-medium mb-4 text-white flex items-center">
         <Globe className="h-4 w-4 mr-2 text-[#999999]" />
         {t('common:globalOffices')}

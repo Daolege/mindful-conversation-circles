@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useTranslations } from "@/hooks/useTranslations";
 import { useQuery } from "@tanstack/react-query";
@@ -7,6 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import Logo from "@/components/Logo";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { MapPin } from 'lucide-react';
 
 // Import refactored components
 import ContactInfo from './footer/ContactInfo';
@@ -119,17 +121,26 @@ const Footer = () => {
               <h4 className="text-[#999999] font-medium mb-3">{t('common:acceptedPayments')}</h4>
               <PaymentIcons />
             </div>
+            
+            {/* 位置信息移到这里 */}
+            {location && (
+              <div className="flex items-start mt-4 group hover:bg-[#2d3748] rounded-md p-2.5 -ml-2 transition-colors duration-300">
+                <MapPin className="h-5 w-5 mr-3 mt-0.5 text-[#999999] group-hover:text-white transition-colors duration-300" />
+                <span className="text-sm text-[#BBBBBB] group-hover:text-white transition-colors duration-300">
+                  {location}
+                </span>
+              </div>
+            )}
           </div>
           
           {/* 中间区域 - 联系信息 */}
-          <div className="lg:col-span-3 flex flex-col space-y-6">
+          <div className="lg:col-span-3 flex flex-col">
             {/* 联系信息 */}
-            <div>
+            <div className="h-full flex flex-col justify-start">
               <h3 className="text-lg font-medium mb-4 text-white">{t('common:contactAndSupport')}</h3>
               <ContactInfo 
                 emails={emails.length > 0 ? emails : ["secondrise@secondrise.com", "info@secondrise.com"]}
                 phones={phones.length > 0 ? phones : ["+85298211389", "+1(202)2099688"]}
-                location={location}
               />
             </div>
           </div>
