@@ -50,7 +50,7 @@ export const useTranslations = () => {
   ) => {
     try {
       // 检查翻译是否存在
-      const { data: existingTranslation, error: selectError } = await selectFromTable<{ id: number }>(
+      const { data: existingTranslation, error: selectError } = await selectFromTable(
         'translations',
         'id',
         { language_code: language, namespace, key }
@@ -58,7 +58,13 @@ export const useTranslations = () => {
       
       if (selectError) throw selectError;
       
-      if (existingTranslation && existingTranslation.length > 0 && existingTranslation[0].id) {
+      // Check if existingTranslation is array and has valid data
+      if (existingTranslation && 
+          Array.isArray(existingTranslation) && 
+          existingTranslation.length > 0 && 
+          typeof existingTranslation[0] === 'object' &&
+          'id' in existingTranslation[0]) {
+        
         // 更新已有翻译
         const { error: updateError } = await updateTable(
           'translations',
@@ -100,7 +106,7 @@ export const useTranslations = () => {
   // 获取指定语言和命名空间的所有翻译
   const getTranslations = async (language: string, namespace: string) => {
     try {
-      const { data, error } = await selectFromTable<TranslationItem>(
+      const { data, error } = await selectFromTable(
         'translations',
         'id, language_code, namespace, key, value',
         { language_code: language, namespace }
@@ -108,9 +114,20 @@ export const useTranslations = () => {
         
       if (error) throw error;
       
+      // Ensure we return a valid array of TranslationItem objects
+      const translations: TranslationItem[] = Array.isArray(data) ? 
+        data.filter(item => 
+          typeof item === 'object' &&
+          item !== null &&
+          'language_code' in item &&
+          'namespace' in item &&
+          'key' in item &&
+          'value' in item
+        ) as TranslationItem[] : [];
+      
       return { 
         success: true, 
-        data: data || []
+        data: translations
       };
     } catch (error) {
       console.error('Error fetching translations:', error);

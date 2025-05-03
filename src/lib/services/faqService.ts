@@ -1,5 +1,4 @@
 
-
 import { supabase } from "@/integrations/supabase/client";
 import { 
   selectFromTable, 
@@ -37,7 +36,7 @@ export interface FaqWithTranslation extends MultiFaq {
 // Get FAQs by language code
 export async function getFaqsByLanguage(languageCode: string) {
   try {
-    const { data, error } = await callRpcFunction<FaqWithTranslation[]>(
+    const { data, error } = await callRpcFunction(
       'get_faqs_by_language',
       { lang_code: languageCode }
     );
@@ -49,7 +48,7 @@ export async function getFaqsByLanguage(languageCode: string) {
     }
     
     // If no data from database, use defaults
-    if (!data || data.length === 0) {
+    if (!data || (Array.isArray(data) && data.length === 0)) {
       console.log('[faqService] No FAQs found in database, using default data');
       return { data: getDefaultFaqsByLanguage(languageCode), error: null };
     }
@@ -64,7 +63,7 @@ export async function getFaqsByLanguage(languageCode: string) {
 // Get featured FAQs by language code with limit
 export async function getFeaturedFaqsByLanguage(languageCode: string, limit: number = 8) {
   try {
-    const { data, error } = await callRpcFunction<FaqWithTranslation[]>(
+    const { data, error } = await callRpcFunction(
       'get_featured_faqs_by_language',
       { 
         lang_code: languageCode,
@@ -79,7 +78,7 @@ export async function getFeaturedFaqsByLanguage(languageCode: string, limit: num
     }
     
     // If no data from database, use defaults
-    if (!data || data.length === 0) {
+    if (!data || (Array.isArray(data) && data.length === 0)) {
       console.log('[faqService] No featured FAQs found in database, using default data');
       return { data: getDefaultFeaturedFaqs(languageCode, limit), error: null };
     }
@@ -94,7 +93,7 @@ export async function getFeaturedFaqsByLanguage(languageCode: string, limit: num
 // Create a new FAQ
 export async function createFaq(faq: Omit<MultiFaq, 'id'>) {
   try {
-    const { data, error } = await selectFromTable<MultiFaq>(
+    const { data, error } = await selectFromTable(
       'multilingual_faqs',
       '*',
       {}
@@ -114,7 +113,7 @@ export async function createFaq(faq: Omit<MultiFaq, 'id'>) {
       };
     }
     
-    return { data: data && data[0], error: null };
+    return { data: data && Array.isArray(data) && data.length > 0 ? data[0] : null, error: null };
   } catch (err) {
     console.error('[faqService] Unexpected error in createFaq:', err);
     return { 
@@ -164,7 +163,7 @@ export async function upsertFaqTranslation(
 // Get FAQ translation by FAQ ID and language code
 export async function getFaqTranslation(faqId: number, languageCode: string) {
   try {
-    const { data, error } = await selectFromTable<FaqTranslation>(
+    const { data, error } = await selectFromTable(
       'faq_translations',
       '*',
       { 
@@ -198,7 +197,7 @@ export async function getFaqTranslation(faqId: number, languageCode: string) {
       return { data: null, error: null };
     }
     
-    if (!data || data.length === 0) {
+    if (!Array.isArray(data) || data.length === 0) {
       // Try to find in default data
       const defaultFaq = defaultFaqs.find(
         faq => faq.id === faqId && faq.language_code === languageCode
@@ -220,7 +219,7 @@ export async function getFaqTranslation(faqId: number, languageCode: string) {
       }
     }
     
-    return { data: data && data[0], error: null };
+    return { data: Array.isArray(data) && data.length > 0 ? data[0] : null, error: null };
   } catch (err) {
     console.error('[faqService] Unexpected error in getFaqTranslation:', err);
     return { data: null, error: err as Error };
@@ -230,7 +229,7 @@ export async function getFaqTranslation(faqId: number, languageCode: string) {
 // Get all translations for a FAQ
 export async function getAllFaqTranslations(faqId: number) {
   try {
-    const { data, error } = await selectFromTable<FaqTranslation>(
+    const { data, error } = await selectFromTable(
       'faq_translations',
       '*',
       { faq_id: faqId }
@@ -254,7 +253,7 @@ export async function getAllFaqTranslations(faqId: number) {
       return { data: translations, error: null };
     }
     
-    if (!data || data.length === 0) {
+    if (!Array.isArray(data) || data.length === 0) {
       // Return simulated translations from default data
       const translations = defaultFaqs
         .filter(faq => faq.id === faqId)

@@ -63,7 +63,7 @@ export const TranslationEditor = () => {
     try {
       const result = await getTranslations(selectedLanguage, selectedNamespace);
       
-      if (result.success) {
+      if (result.success && Array.isArray(result.data)) {
         setTranslations(result.data);
         setFilteredTranslations(result.data);
       } else {

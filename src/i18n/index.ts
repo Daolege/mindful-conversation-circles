@@ -1,3 +1,4 @@
+
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
@@ -59,6 +60,12 @@ import zhHome from './locales/zh/home.json';
 // 动态加载翻译的 backend
 i18n.use(Backend);
 
+// Type for item with key and value
+interface TranslationEntry {
+  key: string; 
+  value: string;
+}
+
 // 自定义后端，支持从数据库加载翻译
 i18n.use({
   type: 'backend',
@@ -73,11 +80,13 @@ i18n.use({
       );
       
       // 转换为键值对
-      if (!error && data && data.length > 0) {
+      if (!error && data && Array.isArray(data) && data.length > 0) {
         const translations = data.reduce((acc, item) => {
-          // Fixed: Explicitly type the accumulator and properly cast the item
-          const translationItem = item as { key: string; value: string };
-          acc[translationItem.key] = translationItem.value;
+          // Only proceed if item is an object with key and value properties
+          if (typeof item === 'object' && item !== null && 'key' in item && 'value' in item) {
+            const entry = item as TranslationEntry;
+            acc[entry.key] = entry.value;
+          }
           return acc;
         }, {} as Record<string, string>);
         
@@ -146,10 +155,6 @@ i18n.use({
   react: {
     useSuspense: false, // Disable suspense to prevent loading flickers
   },
-  // Set language direction (RTL support)
-  language: i18n.language,
-  // This function will run when language changes to set the correct document dir
-  // for RTL languages
   load: 'languageOnly'
 });
 

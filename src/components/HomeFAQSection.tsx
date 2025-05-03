@@ -5,14 +5,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 import { Loader2, HelpCircle, ChevronDown, ChevronUp, Search } from "lucide-react";
 import { useTranslations } from "@/hooks/useTranslations";
-import { getFaqsByLanguage } from "@/lib/services/faqService";
+import { getFaqsByLanguage, FaqWithTranslation } from "@/lib/services/faqService";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const EXPAND_DURATION = 300;
 
 const HomeFAQSection = () => {
-  const [openFaqIds, setOpenFaqIds] = useState(new Set());
+  const [openFaqIds, setOpenFaqIds] = useState(new Set<number>());
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("all");
   const { currentLanguage, t } = useTranslations();
@@ -27,14 +27,14 @@ const HomeFAQSection = () => {
       
       if (error) {
         console.error("Error fetching FAQs:", error);
-        return [];
+        return [] as FaqWithTranslation[];
       }
 
-      return data || [];
+      return (data || []) as FaqWithTranslation[];
     },
   });
 
-  function handleCardToggle(id) {
+  function handleCardToggle(id: number) {
     setOpenFaqIds(prev => {
       const next = new Set(prev);
       if (next.has(id)) {
@@ -47,7 +47,7 @@ const HomeFAQSection = () => {
   }
 
   // Filter FAQs based on search term and active tab
-  const filteredFaqs = Array.isArray(faqs) ? faqs.filter((faq) => {
+  const filteredFaqs = Array.isArray(faqs) ? faqs.filter((faq: FaqWithTranslation) => {
     const matchesSearch =
       !searchTerm ||
       faq.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -59,7 +59,7 @@ const HomeFAQSection = () => {
   }) : [];
 
   // Group FAQs by category for display
-  const getCategoryTitle = (category) => {
+  const getCategoryTitle = (category: string): string => {
     switch (category) {
       case "account":
         return t('common:accountIssues');
@@ -73,7 +73,7 @@ const HomeFAQSection = () => {
   };
 
   // FAQ Card component to reduce repetition
-  const FAQCard = ({ faq }) => (
+  const FAQCard = ({ faq }: { faq: FaqWithTranslation }) => (
     <Collapsible key={faq.id} open={openFaqIds.has(faq.id)}>
       <Card
         className={`
@@ -172,14 +172,14 @@ const HomeFAQSection = () => {
             {activeTab === "all" ? (
               // Group by category
               ["account", "course", "payment", "other"].map((category) => {
-                const categoryFaqs = filteredFaqs.filter((faq) => faq.category === category);
+                const categoryFaqs = filteredFaqs.filter((faq: FaqWithTranslation) => faq.category === category);
                 if (categoryFaqs.length === 0) return null;
 
                 return (
                   <div key={category}>
                     <h3 className="text-xl font-semibold mb-4 text-[#404040]">{getCategoryTitle(category)}</h3>
                     <div className="space-y-4">
-                      {categoryFaqs.map((faq) => (
+                      {categoryFaqs.map((faq: FaqWithTranslation) => (
                         <FAQCard key={faq.id} faq={faq} />
                       ))}
                     </div>
@@ -189,7 +189,7 @@ const HomeFAQSection = () => {
             ) : (
               // Filter by current category
               <div className="space-y-4">
-                {filteredFaqs.map((faq) => (
+                {filteredFaqs.map((faq: FaqWithTranslation) => (
                   <FAQCard key={faq.id} faq={faq} />
                 ))}
               </div>

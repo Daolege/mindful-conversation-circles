@@ -1,476 +1,290 @@
 
-import React, { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import React, { useState, useEffect } from 'react';
 import { 
-  Plus, Pencil, Trash2, Globe, Check, X, AlertCircle, Loader2, Star
-} from "lucide-react";
-import { useTranslations } from "@/hooks/useTranslations";
+  getAllFaqTranslations, 
+  getFaqsByLanguage,
+  FaqWithTranslation 
+} from '@/lib/services/faqService';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useTranslations } from '@/hooks/useTranslations';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { 
-  getFaqsByLanguage, 
-  createFaq, 
-  upsertFaqTranslation, 
-  getAllFaqTranslations,
-  getFaqTranslation 
-} from "@/lib/services/faqService";
-import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from '@/components/ui/select';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { 
+  Search, 
+  MoreVertical, 
+  Edit, 
+  Trash2, 
+  Copy, 
+  CheckSquare, 
+  XSquare,
+  Plus 
+} from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { toast } from 'sonner';
+import { Badge } from '@/components/ui/badge';
 
-const MultilangFAQManagement = () => {
-  const { currentLanguage, t } = useTranslations();
-  const queryClient = useQueryClient();
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("all");
-  const [editingFaq, setEditingFaq] = useState<any>(null);
-  const [currentEditLang, setCurrentEditLang] = useState(currentLanguage);
-  const [formData, setFormData] = useState({
-    category: "general",
-    question: "",
-    answer: "",
-    is_featured: false
-  });
+// Define interfaces
+interface EditableFaq extends FaqWithTranslation {
+  isEditing?: boolean;
+}
 
-  // Get all FAQs with translations
-  const {
-    data: faqs = [],
-    isLoading,
-    error,
-  } = useQuery({
-    queryKey: ["admin-multilingual-faqs", currentLanguage],
-    queryFn: async () => {
-      const { data, error } = await getFaqsByLanguage(currentLanguage);
-
-      if (error) {
-        throw error;
-      }
-
-      return data || [];
-    },
-  });
-
-  // Get available languages
-  const { data: languages = [] } = useQuery({
-    queryKey: ["languages"],
-    queryFn: async () => {
-      try {
-        // Try to fetch from the database first
-        const { data, error } = await (supabase as any)
-          .from("languages")
-          .select("*")
-          .eq("enabled", true);
-        
-        if (error || !data || data.length === 0) {
-          console.log("[FAQManagement] Using default languages");
-          // Return at least English and Chinese if DB call fails
-          return [
-            { id: 1, code: 'en', name: 'English', nativeName: 'English', enabled: true },
-            { id: 2, code: 'zh', name: 'Chinese (Simplified)', nativeName: '简体中文', enabled: true },
-          ];
-        }
-        
-        return data;
-      } catch (error) {
-        console.error("Error fetching languages:", error);
-        // Return at least English and Chinese if DB call fails
-        return [
-          { id: 1, code: 'en', name: 'English', nativeName: 'English', enabled: true },
-          { id: 2, code: 'zh', name: 'Chinese (Simplified)', nativeName: '简体中文', enabled: true },
-        ];
-      }
-    },
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  });
-
-  // Get translations for a specific FAQ
-  const {
-    data: translations = [],
-    isLoading: isLoadingTranslations,
-  } = useQuery({
-    queryKey: ["faq-translations", editingFaq?.id],
-    queryFn: async () => {
-      if (!editingFaq?.id) return [];
-      
-      const { data, error } = await getAllFaqTranslations(editingFaq.id);
-      
-      if (error) {
-        throw error;
-      }
-      
-      return data || [];
-    },
-    enabled: !!editingFaq?.id,
-  });
-
-  // Create new FAQ mutation
-  const createFaqMutation = useMutation({
-    mutationFn: async () => {
-      // First create the base FAQ
-      const { data, error } = await createFaq({
-        category: formData.category,
-        display_order: 0,
-        is_featured: formData.is_featured,
-        is_active: true,
-      });
-      
-      if (error) throw error;
-      if (!data) throw new Error("Failed to create FAQ");
-      
-      // Then add the translation
-      const { error: translationError } = await upsertFaqTranslation(
-        data.id,
-        currentLanguage,
-        formData.question,
-        formData.answer
-      );
-      
-      if (translationError) throw translationError;
-      
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-multilingual-faqs"] });
-      queryClient.invalidateQueries({ queryKey: ["featured-faqs"] });
-      setIsDialogOpen(false);
-      resetForm();
-      toast.success(t('common:faqCreated') || "FAQ created successfully");
-    },
-    onError: (error) => {
-      console.error("Error creating FAQ:", error);
-      toast.error(t('common:errorCreatingFaq') || "Error creating FAQ");
-    },
-  });
-
-  // Update FAQ translation mutation
-  const updateTranslationMutation = useMutation({
-    mutationFn: async () => {
-      if (!editingFaq?.id) throw new Error("No FAQ selected");
-      
-      const { error } = await upsertFaqTranslation(
-        editingFaq.id,
-        currentEditLang,
-        formData.question,
-        formData.answer
-      );
-      
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-multilingual-faqs"] });
-      queryClient.invalidateQueries({ queryKey: ["featured-faqs"] });
-      queryClient.invalidateQueries({ queryKey: ["faq-translations"] });
-      toast.success(t('common:translationUpdated') || "Translation updated successfully");
-    },
-    onError: (error) => {
-      console.error("Error updating translation:", error);
-      toast.error(t('common:errorUpdatingTranslation') || "Error updating translation");
-    },
-  });
-
-  // Filter FAQs based on active tab
-  const filteredFaqs = faqs.filter((faq) => {
-    return activeTab === "all" || faq.category === activeTab;
-  });
-
-  const handleCreateNew = () => {
-    setEditingFaq(null);
-    resetForm();
-    setIsDialogOpen(true);
-  };
-
-  const handleEdit = async (faq: any) => {
-    setEditingFaq(faq);
-    setCurrentEditLang(currentLanguage);
-    setFormData({
-      category: faq.category || "general",
-      question: faq.question || "",
-      answer: faq.answer || "",
-      is_featured: faq.is_featured || false
-    });
-    setIsDialogOpen(true);
-  };
-
-  const handleChangeLanguage = async (langCode: string) => {
-    setCurrentEditLang(langCode);
-    
-    if (editingFaq?.id) {
-      // Get translation for this language if it exists
-      const { data } = await getFaqTranslation(editingFaq.id, langCode);
-      
-      if (data) {
-        setFormData(prev => ({
-          ...prev,
-          question: data.question,
-          answer: data.answer
-        }));
-      } else {
-        // No translation exists yet
-        setFormData(prev => ({
-          ...prev,
-          question: "",
-          answer: ""
-        }));
-      }
+export const MultilangFAQManagement = () => {
+  const { supportedLanguages } = useLanguage();
+  const { t } = useTranslations();
+  
+  const [selectedLanguage, setSelectedLanguage] = useState<string>('zh');
+  const [faqs, setFaqs] = useState<EditableFaq[]>([]);
+  const [filteredFaqs, setFilteredFaqs] = useState<EditableFaq[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [isLoading, setIsLoading] = useState(true);
+  
+  useEffect(() => {
+    if (selectedLanguage) {
+      loadFaqs();
     }
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!formData.question.trim() || !formData.answer.trim()) {
-      toast.error(t('common:pleaseCompleteAllFields') || "Please complete all fields");
-      return;
-    }
-    
-    if (editingFaq) {
-      updateTranslationMutation.mutate();
+  }, [selectedLanguage]);
+  
+  useEffect(() => {
+    if (searchQuery || selectedCategory !== 'all') {
+      filterFaqs();
     } else {
-      createFaqMutation.mutate();
+      setFilteredFaqs(faqs);
+    }
+  }, [searchQuery, selectedCategory, faqs]);
+  
+  const loadFaqs = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await getFaqsByLanguage(selectedLanguage);
+      
+      if (error) {
+        toast.error(t('errors:failedToLoadFaqs'));
+      } else if (Array.isArray(data)) {
+        // Make sure we have valid FAQ objects
+        const validFaqs = data.filter(faq => 
+          typeof faq === 'object' && 
+          faq !== null && 
+          'id' in faq && 
+          'question' in faq && 
+          'answer' in faq
+        ) as FaqWithTranslation[];
+        
+        setFaqs(validFaqs);
+        setFilteredFaqs(validFaqs);
+      }
+    } catch (error) {
+      toast.error(t('errors:unexpectedError'));
+      console.error('Error loading FAQs:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
-
-  const resetForm = () => {
-    setFormData({
-      category: "general",
-      question: "",
-      answer: "",
-      is_featured: false
-    });
+  
+  const filterFaqs = () => {
+    let filtered = faqs;
+    
+    // Filter by search query
+    if (searchQuery) {
+      filtered = filtered.filter(faq => 
+        faq.question.toLowerCase().includes(searchQuery.toLowerCase()) || 
+        faq.answer.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+    
+    // Filter by category
+    if (selectedCategory !== 'all') {
+      filtered = filtered.filter(faq => faq.category === selectedCategory);
+    }
+    
+    setFilteredFaqs(filtered);
   };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+  
+  const handleLanguageChange = (lang: string) => {
+    setSelectedLanguage(lang);
   };
-
-  const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, checked } = e.target;
-    setFormData(prev => ({ ...prev, [name]: checked }));
-  };
-
+  
+  const categories = [
+    { value: 'all', label: t('admin:allCategories') },
+    { value: 'account', label: t('admin:accountCategory') },
+    { value: 'course', label: t('admin:courseCategory') },
+    { value: 'payment', label: t('admin:paymentCategory') },
+    { value: 'other', label: t('admin:otherCategory') },
+  ];
+  
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">{t('common:manageFaqs') || "Manage FAQs"}</h2>
-        <Button onClick={handleCreateNew}>
-          <Plus className="mr-2 h-4 w-4" /> {t('common:createNewFaq') || "Create New FAQ"}
-        </Button>
-      </div>
-
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="mb-4 grid grid-cols-4 md:w-[400px]">
-          <TabsTrigger value="all">{t('common:allCategories') || "All Categories"}</TabsTrigger>
-          <TabsTrigger value="account">{t('common:account') || "Account"}</TabsTrigger>
-          <TabsTrigger value="course">{t('common:course') || "Course"}</TabsTrigger>
-          <TabsTrigger value="payment">{t('common:payment') || "Payment"}</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value={activeTab} className="mt-0">
-          {isLoading ? (
-            <div className="flex justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-            </div>
-          ) : filteredFaqs.length > 0 ? (
-            <div className="grid gap-4">
-              {filteredFaqs.map((faq) => (
-                <Card key={faq.id}>
-                  <CardHeader className="pb-2">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <CardTitle className="text-lg">{faq.question}</CardTitle>
-                        <CardDescription className="mt-1 flex items-center">
-                          <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-xs">
-                            {faq.category}
-                          </span>
-                          {faq.is_featured && (
-                            <span className="ml-2 bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded text-xs flex items-center">
-                              <Star className="h-3 w-3 mr-1" /> {t('common:featured') || "Featured"}
-                            </span>
-                          )}
-                        </CardDescription>
-                      </div>
-                      <div className="flex space-x-2">
-                        <Button variant="outline" size="sm" onClick={() => handleEdit(faq)}>
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                      </div>
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle>{t('admin:faqManagement')}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <Tabs defaultValue="faqs">
+          <TabsList className="mb-4">
+            <TabsTrigger value="faqs">{t('admin:manageFAQs')}</TabsTrigger>
+            <TabsTrigger value="translations">{t('admin:faqTranslations')}</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="faqs">
+            <div className="space-y-4">
+              {/* Controls */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="language-select">{t('admin:language')}</Label>
+                  <Select value={selectedLanguage} onValueChange={handleLanguageChange}>
+                    <SelectTrigger id="language-select">
+                      <SelectValue placeholder={t('admin:selectLanguage')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {supportedLanguages.map(lang => (
+                        <SelectItem key={lang.code} value={lang.code}>
+                          {lang.nativeName} ({lang.code})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div>
+                  <Label htmlFor="category-select">{t('admin:category')}</Label>
+                  <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                    <SelectTrigger id="category-select">
+                      <SelectValue placeholder={t('admin:selectCategory')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map(category => (
+                        <SelectItem key={category.value} value={category.value}>
+                          {category.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div>
+                  <Label htmlFor="faq-search">{t('admin:search')}</Label>
+                  <div className="relative">
+                    <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="faq-search"
+                      placeholder={t('admin:searchFAQs')}
+                      className="pl-8"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              {/* Actions */}
+              <div className="flex justify-between items-center">
+                <div>
+                  <Button>
+                    <Plus className="h-4 w-4 mr-2" />
+                    {t('admin:addFAQ')}
+                  </Button>
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  {filteredFaqs.length} {t('admin:questionsFound')}
+                </div>
+              </div>
+              
+              {/* FAQ List */}
+              {isLoading ? (
+                <div className="space-y-2">
+                  {[1, 2, 3].map(i => (
+                    <div key={i} className="border rounded-md p-4 animate-pulse">
+                      <div className="h-5 bg-gray-200 rounded w-2/3 mb-2"></div>
+                      <div className="h-4 bg-gray-100 rounded w-full mb-1"></div>
+                      <div className="h-4 bg-gray-100 rounded w-4/5"></div>
                     </div>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-gray-500 line-clamp-2">{faq.answer}</p>
-                  </CardContent>
-                  <CardFooter className="pt-0 text-xs text-gray-400 flex items-center">
-                    <Globe className="h-3 w-3 mr-1" />
-                    {t('common:languageVersion', { language: currentLanguage }) || `Language: ${currentLanguage}`}
-                  </CardFooter>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12 bg-gray-50 border rounded-md">
-              <AlertCircle className="mx-auto h-10 w-10 text-gray-400" />
-              <h3 className="mt-4 text-lg font-medium">{t('common:noFaqsFound') || "No FAQs found"}</h3>
-              <p className="mt-2 text-gray-500">
-                {t('common:createFirstFaq') || "Create your first FAQ to get started"}
-              </p>
-              <Button className="mt-4" onClick={handleCreateNew}>
-                <Plus className="mr-2 h-4 w-4" /> {t('common:createNewFaq') || "Create New FAQ"}
-              </Button>
-            </div>
-          )}
-        </TabsContent>
-      </Tabs>
-
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>
-              {editingFaq ? (t('common:editFaq') || "Edit FAQ") : (t('common:createNewFaq') || "Create New FAQ")}
-            </DialogTitle>
-            <DialogDescription>
-              {editingFaq 
-                ? (t('common:editFaqDescription') || "Edit the FAQ content and translations")
-                : (t('common:createFaqDescription') || "Create a new FAQ with translations")}
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleSubmit}>
-            {editingFaq && (
-              <div className="mb-4">
-                <label className="block text-sm font-medium mb-1">{t('common:selectLanguage') || "Select Language"}</label>
-                <Select 
-                  value={currentEditLang} 
-                  onValueChange={handleChangeLanguage}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder={t('common:selectLanguage') || "Select Language"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {languages.map((lang: any) => (
-                      <SelectItem key={lang.code} value={lang.code}>
-                        {lang.nativeName} ({lang.code})
-                      </SelectItem>
+                  ))}
+                </div>
+              ) : filteredFaqs.length > 0 ? (
+                <ScrollArea className="h-[500px]">
+                  <div className="space-y-4 pr-4">
+                    {Array.isArray(filteredFaqs) && filteredFaqs.map(faq => (
+                      <div key={faq.id} className="border rounded-md p-4">
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-medium">{faq.question}</h3>
+                            <Badge variant={faq.is_featured ? "default" : "outline"}>
+                              {faq.is_featured ? t('admin:featured') : t('admin:notFeatured')}
+                            </Badge>
+                          </div>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuLabel>{t('admin:actions')}</DropdownMenuLabel>
+                              <DropdownMenuItem>
+                                <Edit className="h-4 w-4 mr-2" />
+                                {t('admin:edit')}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem>
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                {t('admin:delete')}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem>
+                                <Copy className="h-4 w-4 mr-2" />
+                                {t('admin:clone')}
+                              </DropdownMenuItem>
+                              {faq.is_featured ? (
+                                <DropdownMenuItem>
+                                  <XSquare className="h-4 w-4 mr-2" />
+                                  {t('admin:unfeature')}
+                                </DropdownMenuItem>
+                              ) : (
+                                <DropdownMenuItem>
+                                  <CheckSquare className="h-4 w-4 mr-2" />
+                                  {t('admin:feature')}
+                                </DropdownMenuItem>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                        <p className="text-sm text-gray-500">{faq.answer}</p>
+                        <div className="mt-2 text-xs text-gray-400">{t('admin:category')}: {faq.category}</div>
+                      </div>
                     ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            <div className="mb-4">
-              <label className="block text-sm font-medium mb-1">{t('common:category') || "Category"}</label>
-              <Select 
-                value={formData.category} 
-                name="category"
-                onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
-                disabled={!!editingFaq} // Disable category change for existing FAQs
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder={t('common:selectCategory') || "Select Category"} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="general">{t('common:general') || "General"}</SelectItem>
-                  <SelectItem value="account">{t('common:account') || "Account"}</SelectItem>
-                  <SelectItem value="course">{t('common:course') || "Course"}</SelectItem>
-                  <SelectItem value="payment">{t('common:payment') || "Payment"}</SelectItem>
-                </SelectContent>
-              </Select>
+                  </div>
+                </ScrollArea>
+              ) : (
+                <div className="text-center py-12 border rounded-lg">
+                  <p className="text-muted-foreground">{t('admin:noFAQsFound')}</p>
+                </div>
+              )}
             </div>
-
-            <div className="mb-4">
-              <label className="block text-sm font-medium mb-1" htmlFor="question">
-                {t('common:question') || "Question"}
-              </label>
-              <Input
-                id="question"
-                name="question"
-                value={formData.question}
-                onChange={handleInputChange}
-                placeholder={t('common:enterQuestion') || "Enter question"}
-              />
+          </TabsContent>
+          
+          <TabsContent value="translations">
+            <div className="text-center py-12 border rounded-lg">
+              <p>{t('admin:faqTranslationsTool')}</p>
+              <Button className="mt-4">{t('admin:openTranslationTool')}</Button>
             </div>
-
-            <div className="mb-4">
-              <label className="block text-sm font-medium mb-1" htmlFor="answer">
-                {t('common:answer') || "Answer"}
-              </label>
-              <Textarea
-                id="answer"
-                name="answer"
-                value={formData.answer}
-                onChange={handleInputChange}
-                placeholder={t('common:enterAnswer') || "Enter answer"}
-                rows={5}
-                className="resize-y"
-              />
-            </div>
-
-            {!editingFaq && (
-              <div className="mb-4 flex items-center">
-                <input
-                  type="checkbox"
-                  id="is_featured"
-                  name="is_featured"
-                  checked={formData.is_featured}
-                  onChange={handleCheckboxChange}
-                  className="mr-2"
-                />
-                <label htmlFor="is_featured">{t('common:featureFaq') || "Feature this FAQ"}</label>
-              </div>
-            )}
-
-            <DialogFooter>
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => setIsDialogOpen(false)}
-              >
-                <X className="mr-1 h-4 w-4" /> {t('common:cancel') || "Cancel"}
-              </Button>
-              <Button 
-                type="submit"
-                disabled={createFaqMutation.isPending || updateTranslationMutation.isPending}
-              >
-                {createFaqMutation.isPending || updateTranslationMutation.isPending ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {t('common:saving') || "Saving..."}
-                  </>
-                ) : (
-                  <>
-                    <Check className="mr-1 h-4 w-4" />
-                    {editingFaq ? (t('common:saveChanges') || "Save Changes") : (t('common:createFaq') || "Create FAQ")}
-                  </>
-                )}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-    </div>
+          </TabsContent>
+        </Tabs>
+      </CardContent>
+    </Card>
   );
 };
 

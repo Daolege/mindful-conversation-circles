@@ -1,146 +1,158 @@
 
-import { Order } from "@/lib/types/order"
-import { Badge } from "@/components/ui/badge"
-import { Eye, Clock, Check, X } from "lucide-react"
-import { Link } from "react-router-dom"
-import { format } from "date-fns"
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
+import dayjs from "dayjs";
 import { 
-  formatAmount, 
-  formatPrePaymentAmount,
-  getExchangeRateDisplay,
-  getPaymentMethodDisplay,
-  getActualPaymentAmount 
-} from "@/lib/services/currencyService"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
-import { toast } from "@/components/ui/use-toast"
-import { useTranslations } from "@/hooks/useTranslations"
+  Card, 
+  CardContent, 
+  CardHeader, 
+  CardTitle, 
+  CardFooter 
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import LocalizedCurrency from "@/components/LocalizedCurrency";
+import OrderLineItems from "./OrderLineItems";
+import OrderPaymentDetails from "./OrderPaymentDetails";
+import { getOrderById } from "@/lib/services/orderService";
+import { useTranslations as useCustomTranslations } from "@/hooks/useTranslations";
+import { OrderStatus } from "@/types/order";
+import { useTranslation } from "react-i18next";
 
 interface OrderItemProps {
-  order: Order;
-  getOrderType: (order: Order) => string;
-  getStatusName: (status: string) => string;
-  getStatusBadgeVariant: (status: string) => string;
-  getOrderTypeBadgeVariant: (type: string) => string;
-  getOrderCourseTitle: (order: Order) => string;
+  orderId: string | number;
+  onRefund?: (orderId: string | number) => void;
+  showRefundButton?: boolean;
 }
 
-export const OrderItem = ({
-  order,
-  getOrderType,
-  getStatusName,
-  getStatusBadgeVariant,
-  getOrderTypeBadgeVariant,
-  getOrderCourseTitle,
-}: OrderItemProps) => {
-  const { t } = useTranslations();
-  
-  // 获取订单状态图标
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return <Check className="h-3 w-3" />;
-      case 'pending':
-      case 'processing':
-        return <Clock className="h-3 w-3" />;
-      case 'failed':
-      case 'cancelled':
-        return <X className="h-3 w-3" />;
-      default:
-        return null;
+export default function OrderItem({
+  orderId,
+  onRefund,
+  showRefundButton = false,
+}: OrderItemProps) {
+  const { t: tCustom } = useCustomTranslations();
+  // Using original i18n t function for components that need TFunction type
+  const { t } = useTranslation();
+  const [isRefunding, setIsRefunding] = useState(false);
+
+  const { data: orderData, isLoading } = useQuery({
+    queryKey: ['order', orderId],
+    queryFn: () => getOrderById(orderId),
+  });
+
+  const handleRefundClick = async () => {
+    if (!onRefund || !orderId) return;
+    
+    setIsRefunding(true);
+    try {
+      await onRefund(orderId);
+    } catch (error) {
+      console.error("Refund error:", error);
+    } finally {
+      setIsRefunding(false);
     }
   };
-  
-  // 确保order.id存在且为字符串格式
-  const orderId = order?.id?.toString() || '';
 
-  // 获取实际支付的金额和币种
-  const { amount: displayAmount, currency: displayCurrency } = getActualPaymentAmount(order);
-  
-  const orderType = getOrderType(order);
-  const hasExchangeRate = order.exchange_rate && order.exchange_rate !== 1 && 
-                          order.original_currency && order.original_currency !== order.currency;
-                          
-  // 增强日志记录，更容易调试
-  console.log(`OrderItem: 显示订单 ${order.id}, 金额: ${displayAmount}, 货币: ${displayCurrency}, 支付方式: ${order.payment_type}, 状态: ${order.status}, 用户: ${order.user_id}`);
-  
-  if (!order) {
-    console.error('OrderItem: 接收到空订单对象');
-    return null;
+  if (isLoading) {
+    return (
+      <Card className="mb-6 animate-pulse">
+        <CardHeader className="pb-3">
+          <div className="h-6 bg-gray-200 rounded-md w-36"></div>
+        </CardHeader>
+        <CardContent>
+          <div className="h-4 bg-gray-200 rounded-md w-full mb-3"></div>
+          <div className="h-4 bg-gray-200 rounded-md w-3/4"></div>
+        </CardContent>
+      </Card>
+    );
   }
+
+  if (!orderData || !orderData.order) {
+    return (
+      <Card className="mb-6 border-red-200 bg-red-50">
+        <CardHeader className="pb-3">
+          <CardTitle>{tCustom('errors:orderNotFound')}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p>{tCustom('errors:orderIdInvalid')}: {orderId}</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const { order } = orderData;
   
+  const statusColor = {
+    [OrderStatus.COMPLETED]: "bg-green-500",
+    [OrderStatus.PENDING]: "bg-yellow-500",
+    [OrderStatus.FAILED]: "bg-red-500",
+    [OrderStatus.REFUNDED]: "bg-gray-500",
+    [OrderStatus.CANCELLED]: "bg-gray-500",
+  };
+
   return (
-    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 border rounded-lg hover:bg-gray-50/50 transition-colors">
-      <div className="space-y-1 mb-3 sm:mb-0">
-        <h4 className="font-medium">
-          {getOrderCourseTitle(order)}
-        </h4>
-        <div className="flex items-center gap-2 flex-wrap">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Badge variant="outline" className={getStatusBadgeVariant(order.status)}>
-                <span className="flex items-center gap-1">
-                  {getStatusIcon(order.status)}
-                  {t(`orders:status${order.status.charAt(0).toUpperCase() + order.status.slice(1)}`)}
-                </span>
-              </Badge>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>{t('orders:orderStatus')}: {t(`orders:status${order.status.charAt(0).toUpperCase() + order.status.slice(1)}`)}</p>
-              <p className="text-xs text-muted-foreground">
-                {t('common:lastUpdated')}: {order.updated_at ? format(new Date(order.updated_at), 'yyyy-MM-dd HH:mm') : t('common:unknown')}
-              </p>
-            </TooltipContent>
-          </Tooltip>
-          
-          <Badge variant="outline" className={getOrderTypeBadgeVariant(orderType)}>
-            {orderType === 'Single Purchase' ? t('orders:typeSingle') : 
-             orderType === 'Subscription' ? t('orders:typeSubscription') : 
-             orderType}
-          </Badge>
-          
-          <Badge variant="outline">
-            {getPaymentMethodDisplay(order.payment_type, t)}
-          </Badge>
-          
-          <span className="text-sm text-muted-foreground">
-            {order.created_at && format(new Date(order.created_at), 'yyyy-MM-dd')}
+    <Card className="mb-6 overflow-hidden">
+      <CardHeader className="pb-3 bg-gray-50">
+        <div className="flex flex-wrap justify-between items-center">
+          <CardTitle className="text-base flex flex-wrap items-center gap-2">
+            <span>{tCustom('orders:order')}: #{order.order_number}</span>
+            <Badge className={statusColor[order.status as OrderStatus]}>
+              {tCustom(`orders:status.${order.status.toLowerCase()}`)}
+            </Badge>
+          </CardTitle>
+          <span className="text-sm text-gray-500">
+            {dayjs(order.created_at).format('YYYY-MM-DD HH:mm')}
           </span>
         </div>
-        <div className="flex items-center gap-2">
-          <p className="text-sm font-medium">
-            {formatAmount(displayAmount, displayCurrency)}
-          </p>
+      </CardHeader>
+      
+      <CardContent className="pt-4">
+        <OrderLineItems items={order.items} t={t} />
+        
+        <Separator className="my-4" />
+        
+        <OrderPaymentDetails order={order} t={t} />
+      </CardContent>
+      
+      <CardFooter className="flex justify-between bg-gray-50 py-3">
+        <div className="text-sm">
+          <span className="font-medium">{tCustom('orders:total')}:</span>{' '}
+          <LocalizedCurrency 
+            amount={order.total_amount} 
+            currency={order.currency || 'CNY'}
+            className="font-bold"
+          />
+        </div>
+        
+        <div className="space-x-2">
+          {order.invoice_url && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              asChild
+            >
+              <Link to={order.invoice_url} target="_blank">
+                {tCustom('orders:viewInvoice')}
+              </Link>
+            </Button>
+          )}
           
-          {hasExchangeRate && (
-            <Tooltip>
-              <TooltipTrigger>
-                <span className="text-xs text-muted-foreground">
-                  ({getExchangeRateDisplay(
-                    order.original_currency,
-                    order.currency,
-                    order.exchange_rate
-                  )})
-                </span>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{t('orders:originalAmount')}: {formatAmount(order.original_amount, order.original_currency)}</p>
-                <p>{t('orders:exchangeRate')}: {order.exchange_rate}</p>
-              </TooltipContent>
-            </Tooltip>
+          {showRefundButton && 
+           order.status === OrderStatus.COMPLETED && 
+           onRefund && (
+            <Button 
+              variant="destructive" 
+              size="sm"
+              onClick={handleRefundClick}
+              disabled={isRefunding}
+            >
+              {isRefunding ? tCustom('orders:processing') : tCustom('orders:refund')}
+            </Button>
           )}
         </div>
-      </div>
-      <Link 
-        to={`/orders/${order.id}`}
-        className="inline-flex items-center justify-center gap-1 px-4 py-2 text-sm font-medium transition-colors border rounded-md shadow-sm hover:bg-accent hover:text-accent-foreground border-input bg-background"
-      >
-        <Eye className="h-4 w-4" />
-        {t('orders:viewDetails')}
-      </Link>
-    </div>
+      </CardFooter>
+    </Card>
   );
 }

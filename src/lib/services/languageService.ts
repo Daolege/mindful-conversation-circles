@@ -17,27 +17,53 @@ export interface TranslationItem {
   updated_at?: string;
 };
 
+// Default languages as fallback
+const defaultLanguages: Language[] = [
+  { id: 1, code: 'en', name: 'English', nativeName: 'English', enabled: true, rtl: false },
+  { id: 2, code: 'zh', name: 'Chinese (Simplified)', nativeName: '简体中文', enabled: true, rtl: false },
+  { id: 3, code: 'fr', name: 'French', nativeName: 'Français', enabled: true, rtl: false },
+  { id: 4, code: 'de', name: 'German', nativeName: 'Deutsch', enabled: true, rtl: false },
+  { id: 5, code: 'ru', name: 'Russian', nativeName: 'Русский', enabled: true, rtl: false },
+  { id: 6, code: 'ar', name: 'Arabic', nativeName: 'العربية', enabled: true, rtl: true },
+  { id: 7, code: 'es', name: 'Spanish', nativeName: 'Español', enabled: true, rtl: false },
+  { id: 8, code: 'vi', name: 'Vietnamese', nativeName: 'Tiếng Việt', enabled: true, rtl: false },
+  { id: 9, code: 'th', name: 'Thai', nativeName: 'ไทย', enabled: true, rtl: false },
+  { id: 10, code: 'pt', name: 'Portuguese', nativeName: 'Português', enabled: true, rtl: false },
+  { id: 11, code: 'ja', name: 'Japanese', nativeName: '日本語', enabled: true, rtl: false },
+  { id: 12, code: 'ko', name: 'Korean', nativeName: '한국어', enabled: true, rtl: false }
+];
+
 // 获取所有支持的语言
 export async function getAllLanguages(): Promise<Language[]> {
   try {
-    const { data, error } = await selectFromTable<Language>('languages', '*');
+    const { data, error } = await selectFromTable(
+      'languages', 
+      '*'
+    );
     
     if (error) {
       console.error('Error fetching languages:', error);
-      return [];
+      return defaultLanguages;
     }
     
-    return data || [];
+    // Check if data is valid
+    if (Array.isArray(data) && data.length > 0 && 
+        typeof data[0] === 'object' && data[0] !== null && 
+        'id' in data[0] && 'code' in data[0]) {
+      return data as Language[];
+    }
+    
+    return defaultLanguages;
   } catch (error) {
     console.error('Unexpected error in getAllLanguages:', error);
-    return [];
+    return defaultLanguages;
   }
 }
 
 // 获取已启用的语言
 export async function getEnabledLanguages(): Promise<Language[]> {
   try {
-    const { data, error } = await selectFromTable<Language>(
+    const { data, error } = await selectFromTable(
       'languages', 
       '*',
       { enabled: true }
@@ -45,27 +71,41 @@ export async function getEnabledLanguages(): Promise<Language[]> {
     
     if (error) {
       console.error('Error fetching enabled languages:', error);
-      return [];
+      return defaultLanguages;
     }
     
-    return data || [];
+    // Check if data is valid
+    if (Array.isArray(data) && data.length > 0 && 
+        typeof data[0] === 'object' && data[0] !== null && 
+        'id' in data[0] && 'code' in data[0]) {
+      return data as Language[];
+    }
+    
+    return defaultLanguages;
   } catch (error) {
     console.error('Unexpected error in getEnabledLanguages:', error);
-    return [];
+    return defaultLanguages;
   }
 }
 
 // 添加新语言
 export async function addLanguage(language: Omit<Language, 'id'>): Promise<{ success: boolean; data?: Language; error?: Error }> {
   try {
-    const { data, error } = await selectFromTable<Language>('languages', '*');
+    const { data, error } = await selectFromTable(
+      'languages', 
+      '*'
+    );
     
     if (error) {
       console.error('Error adding language:', error);
       return { success: false, error: error as unknown as Error };
     }
     
-    return { success: true, data: data && data.length > 0 ? data[0] : undefined };
+    if (Array.isArray(data) && data.length > 0 && typeof data[0] === 'object') {
+      return { success: true, data: data[0] as Language };
+    }
+    
+    return { success: true };
   } catch (error) {
     console.error('Unexpected error in addLanguage:', error);
     return { success: false, error: error as Error };
@@ -122,7 +162,7 @@ export async function toggleLanguageStatus(languageId: number, enabled: boolean)
 export async function deleteLanguage(languageId: number): Promise<{ success: boolean; error?: Error }> {
   try {
     // First check if this is a default language that shouldn't be deleted
-    const { data: language, error: fetchError } = await selectFromTable<Language>(
+    const { data: language, error: fetchError } = await selectFromTable(
       'languages',
       'code',
       { id: languageId }
@@ -132,11 +172,14 @@ export async function deleteLanguage(languageId: number): Promise<{ success: boo
       return { success: false, error: fetchError as unknown as Error };
     }
     
-    if (language && language[0] && (language[0].code === 'en' || language[0].code === 'zh')) {
-      return { 
-        success: false, 
-        error: new Error('Cannot delete default languages (English or Chinese)')
-      };
+    if (Array.isArray(language) && language.length > 0 && typeof language[0] === 'object' && language[0] !== null && 'code' in language[0]) {
+      const langCode = language[0].code;
+      if (langCode === 'en' || langCode === 'zh') {
+        return { 
+          success: false, 
+          error: new Error('Cannot delete default languages (English or Chinese)')
+        };
+      }
     }
     
     // Delete the language
@@ -184,7 +227,7 @@ export async function importTranslations(translations: TranslationItem[]): Promi
 // 导出翻译
 export async function getTranslationsByLanguage(languageCode: string): Promise<TranslationItem[]> {
   try {
-    const { data, error } = await selectFromTable<TranslationItem>(
+    const { data, error } = await selectFromTable(
       'translations',
       '*',
       { language_code: languageCode }
@@ -195,7 +238,18 @@ export async function getTranslationsByLanguage(languageCode: string): Promise<T
       return [];
     }
     
-    return data || [];
+    if (Array.isArray(data)) {
+      return data.filter(item => 
+        typeof item === 'object' && 
+        item !== null &&
+        'language_code' in item &&
+        'namespace' in item &&
+        'key' in item &&
+        'value' in item
+      ) as TranslationItem[];
+    }
+    
+    return [];
   } catch (error) {
     console.error('Unexpected error in getTranslationsByLanguage:', error);
     return [];
