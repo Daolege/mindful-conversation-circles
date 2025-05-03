@@ -108,12 +108,37 @@ export async function getSectionsByCourseId(courseId: number): Promise<SectionSe
             }
             
             try {
-              const lectureId = (lecture as any).id;
-              const { data: videoData } = await supabase
+              // Add null check before accessing lecture properties
+              const lectureId = lecture ? (lecture as any).id : null;
+              
+              // If lectureId is null, return a default lecture object
+              if (lectureId === null) {
+                console.warn('Cannot fetch video data for lecture with null id');
+                return null;
+              }
+              
+              const { data: videoData, error: videoError } = await supabase
                 .from('course_lectures')
                 .select('video_url, description')
                 .eq('id', lectureId)
                 .single();
+                
+              if (videoError) {
+                console.log(`Error fetching video data: ${videoError.message}`);
+                // Return a safe object with defaults
+                return {
+                  id: (lecture as any).id,
+                  title: (lecture as any).title || '',
+                  position: (lecture as any).position || 0,
+                  duration: (lecture as any).duration || null,
+                  section_id: (lecture as any).section_id || null,
+                  is_free: (lecture as any).is_free || false,
+                  has_homework: (lecture as any).has_homework || false,
+                  requires_homework_completion: (lecture as any).requires_homework_completion || false,
+                  video_url: null,
+                  description: null
+                } as CourseLecture;
+              }
                 
               // Create a new object with safe properties
               const combinedLecture: CourseLecture = {
@@ -125,8 +150,8 @@ export async function getSectionsByCourseId(courseId: number): Promise<SectionSe
                 is_free: (lecture as any).is_free || false,
                 has_homework: (lecture as any).has_homework || false,
                 requires_homework_completion: (lecture as any).requires_homework_completion || false,
-                video_url: videoData?.video_url || null,
-                description: videoData?.description || null
+                video_url: videoData ? videoData.video_url : null,
+                description: videoData ? videoData.description : null
               };
               
               return combinedLecture;
