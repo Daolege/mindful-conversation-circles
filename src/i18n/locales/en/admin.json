@@ -1,3 +1,4 @@
+
 {
   "adminPanel": "Admin Panel",
   "overview": "Overview",
@@ -73,6 +74,8 @@
   "editTranslations": "Edit Translations",
   "importExport": "Import/Export",
   "language": "Language",
+  "courseLanguage": "Course Language",
+  "courseLanguageDescription": "Select the language in which this course will be taught",
   "namespace": "Namespace",
   "search": "Search",
   "selectLanguage": "Select Language",

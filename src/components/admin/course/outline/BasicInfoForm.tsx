@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { CourseFormValues } from "@/lib/types/course-new";
+import { useTranslation } from "react-i18next";
 
 // 定义表单验证模式
 const formSchema = z.object({
@@ -20,7 +21,7 @@ const formSchema = z.object({
   description: z.string().min(10, { message: "描述必须至少10个字符" }).optional(),
   price: z.coerce.number().min(0, { message: "价格必须大于或等于0" }),
   original_price: z.coerce.number().min(0, { message: "原价必须大于或等于0" }).optional().nullable(),
-  category: z.string().optional(),
+  language: z.string().default("zh"),
   currency: z.string().default("cny"),
   status: z.enum(["draft", "published", "archived"]),
   display_order: z.coerce.number().int().min(0).default(0),
@@ -36,6 +37,7 @@ export const BasicInfoForm = ({ onTabChange, onCourseCreated, courseId }: BasicI
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(!!courseId);
   const navigate = useNavigate();
+  const { t } = useTranslation(['admin']);
   
   // 初始化表单
   const form = useForm<CourseFormValues>({
@@ -45,12 +47,24 @@ export const BasicInfoForm = ({ onTabChange, onCourseCreated, courseId }: BasicI
       description: "",
       price: 0,
       original_price: null,
-      category: "",
+      language: "zh",
       currency: "cny",
       status: "draft" as const,
       display_order: 0,
     }
   });
+
+  // 语言选项
+  const languageOptions = [
+    { value: "zh", label: "中文" },
+    { value: "en", label: "English" },
+    { value: "fr", label: "Français" },
+    { value: "de", label: "Deutsch" },
+    { value: "es", label: "Español" },
+    { value: "ja", label: "日本語" },
+    { value: "ko", label: "한국어" },
+    { value: "ru", label: "Русский" }
+  ];
 
   // 如果有courseId，加载现有课程数据
   useEffect(() => {
@@ -78,7 +92,7 @@ export const BasicInfoForm = ({ onTabChange, onCourseCreated, courseId }: BasicI
             description: data.description || "",
             price: data.price || 0,
             original_price: data.original_price,
-            category: data.category || "",
+            language: data.language || "zh",
             currency: data.currency || "cny",
             status: (data.status as "draft" | "published" | "archived") || "draft",
             display_order: data.display_order || 0,
@@ -109,7 +123,7 @@ export const BasicInfoForm = ({ onTabChange, onCourseCreated, courseId }: BasicI
             description: values.description,
             price: values.price,
             original_price: values.original_price,
-            category: values.category,
+            language: values.language,
             currency: values.currency,
             status: values.status,
             display_order: values.display_order,
@@ -145,7 +159,7 @@ export const BasicInfoForm = ({ onTabChange, onCourseCreated, courseId }: BasicI
             description: values.description,
             price: values.price,
             original_price: values.original_price,
-            category: values.category,
+            language: values.language,
             currency: values.currency,
             status: values.status,
             display_order: nextDisplayOrder,
@@ -268,15 +282,29 @@ export const BasicInfoForm = ({ onTabChange, onCourseCreated, courseId }: BasicI
           
           <FormField
             control={form.control}
-            name="category"
+            name="language"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>分类</FormLabel>
-                <FormControl>
-                  <Input placeholder="课程分类" {...field} value={field.value || ''} />
-                </FormControl>
+                <FormLabel>{t('courseLanguage')}</FormLabel>
+                <Select 
+                  onValueChange={field.onChange} 
+                  value={field.value || "zh"}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder={t('selectLanguage')} />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {languageOptions.map(option => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <FormDescription>
-                  例如：编程、设计、营销等
+                  {t('courseLanguageDescription')}
                 </FormDescription>
                 <FormMessage />
               </FormItem>

@@ -1,3 +1,4 @@
+import { Course } from "./course";
 
 export interface Course {
   id: number;
@@ -15,10 +16,9 @@ export interface Course {
   whatyouwilllearn?: string[];
   requirements?: string[];
   target_audience?: string[];
-  category?: string;
+  language?: string;
   level?: string;
   duration?: string;
-  language?: string;
   highlights?: string[];
   materialsVisible?: boolean;
   materials?: CourseMaterial[];

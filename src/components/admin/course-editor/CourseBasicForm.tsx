@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Card } from "@/components/ui/card";
+import { useTranslation } from "react-i18next";
 
 // Schema is moved to a separate file for reuse
 export const courseFormSchema = z.object({
@@ -31,7 +32,7 @@ export const courseFormSchema = z.object({
   price: z.coerce.number().int().min(0, "价格不能为负数"),
   original_price: z.coerce.number().int().min(0, "原价不能为负数").optional().nullable(),
   currency: z.string().default("cny"),
-  category: z.string().optional().nullable(),
+  language: z.string().default("zh"),
   display_order: z.coerce.number().int().default(0),
   status: z.enum(["draft", "published", "archived"]).default("draft"),
   is_featured: z.boolean().default(false),
@@ -50,7 +51,20 @@ const CourseBasicForm: React.FC<CourseBasicFormProps> = ({
   onSubmit,
   isSubmitting
 }) => {
+  const { t } = useTranslation(['admin']);
   console.log("[CourseBasicForm] Rendering with form values:", form.getValues());
+
+  // Available languages that courses can be taught in
+  const languageOptions = [
+    { value: "zh", label: "中文" },
+    { value: "en", label: "English" },
+    { value: "fr", label: "Français" },
+    { value: "de", label: "Deutsch" },
+    { value: "es", label: "Español" },
+    { value: "ja", label: "日本語" },
+    { value: "ko", label: "한국어" },
+    { value: "ru", label: "Русский" }
+  ];
 
   return (
     <Card className="p-6">
@@ -90,29 +104,29 @@ const CourseBasicForm: React.FC<CourseBasicFormProps> = ({
             
             <FormField
               control={form.control}
-              name="category"
+              name="language"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>课程分类</FormLabel>
+                  <FormLabel>{t('courseLanguage')}</FormLabel>
                   <Select 
                     onValueChange={field.onChange} 
-                    value={field.value || ''}
+                    value={field.value || 'zh'}
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="选择分类" />
+                        <SelectValue placeholder={t('selectLanguage')} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="programming">编程开发</SelectItem>
-                      <SelectItem value="design">设计创意</SelectItem>
-                      <SelectItem value="business">商业管理</SelectItem>
-                      <SelectItem value="language">语言学习</SelectItem>
-                      <SelectItem value="other">其他</SelectItem>
+                      {languageOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   <FormDescription>
-                    选择适合的分类，以便学员更容易找到
+                    {t('courseLanguageDescription')}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { 
@@ -32,7 +31,7 @@ const courseFormSchema = z.object({
   price: z.coerce.number().int().min(0, "价格不能为负数"),
   original_price: z.coerce.number().int().min(0, "原价不能为负数").optional().nullable(),
   currency: z.string().default("cny"),
-  category: z.string().optional().nullable(),
+  language: z.string().default("zh"),
   display_order: z.coerce.number().int().default(0),
   status: z.enum(["draft", "published", "archived"]).default("draft"),
   is_featured: z.boolean().default(false),
@@ -63,7 +62,7 @@ const CourseNewEditor = () => {
       price: 0,
       original_price: null,
       currency: "cny",
-      category: null,
+      language: "zh",
       display_order: 0,
       status: "draft",
       is_featured: false,
@@ -93,7 +92,7 @@ const CourseNewEditor = () => {
             price: data.price,
             original_price: data.original_price,
             currency: data.currency,
-            category: data.category || null,
+            language: data.language || "zh",
             display_order: data.display_order,
             status: data.status as "draft" | "published" | "archived",
             is_featured: data.is_featured,
@@ -210,12 +209,15 @@ const CourseNewEditor = () => {
     { value: "archived", label: "已归档" },
   ];
 
-  const categoryOptions = [
-    { value: "programming", label: "编程" },
-    { value: "design", label: "设计" },
-    { value: "business", label: "商业" },
-    { value: "language", label: "语言" },
-    { value: "other", label: "其他" },
+  const languageOptions = [
+    { value: "zh", label: "中文" },
+    { value: "en", label: "English" },
+    { value: "fr", label: "Français" },
+    { value: "de", label: "Deutsch" },
+    { value: "es", label: "Español" },
+    { value: "ja", label: "日本語" },
+    { value: "ko", label: "한국어" },
+    { value: "ru", label: "Русский" }
   ];
 
   if (loading) {
@@ -414,21 +416,21 @@ const CourseNewEditor = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
-                      name="category"
+                      name="language"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>分类</FormLabel>
+                          <FormLabel>课程语言</FormLabel>
                           <Select
                             onValueChange={field.onChange}
-                            value={field.value || ""}
+                            value={field.value || "zh"}
                           >
                             <FormControl>
                               <SelectTrigger>
-                                <SelectValue placeholder="选择课程分类" />
+                                <SelectValue placeholder="选择课程语言" />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {categoryOptions.map((option) => (
+                              {languageOptions.map((option) => (
                                 <SelectItem
                                   key={option.value}
                                   value={option.value}
@@ -438,7 +440,7 @@ const CourseNewEditor = () => {
                               ))}
                             </SelectContent>
                           </Select>
-                          <FormDescription>课程所属分类</FormDescription>
+                          <FormDescription>课程的授课语言</FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}

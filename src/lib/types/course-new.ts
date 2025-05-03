@@ -1,4 +1,3 @@
-
 import { Course } from "./course";
 
 export interface CourseSection {
@@ -52,7 +51,7 @@ export interface CourseNew {
   price: number;
   original_price?: number | null;
   currency: string;
-  category?: string | null;
+  language: string;
   display_order: number;
   status: 'published' | 'draft' | 'archived';
   is_featured: boolean;
@@ -62,7 +61,6 @@ export interface CourseNew {
   student_count?: number;
   enrollment_count?: number;
   thumbnail_url?: string;
-  language?: string;
   published_at?: string;
   lecture_count?: number;
 }
@@ -74,7 +72,7 @@ export interface CourseFormValues {
   price: number;
   original_price?: number | null;
   currency: string;
-  category?: string | null;
+  language: string;
   display_order: number;
   status: 'published' | 'draft' | 'archived';
   is_featured: boolean;
@@ -118,7 +116,7 @@ export interface CourseData {
   display_order?: number;
   status?: 'published' | 'draft' | 'archived';
   is_featured?: boolean;
-  category?: string | null;
+  language?: string;
   created_at?: string;
   updated_at?: string;
   enrollment_count?: number;
