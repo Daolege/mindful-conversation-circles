@@ -128,11 +128,16 @@ const ExchangeRateSettings = () => {
   const saveExchangeRate = async () => {
     setIsSaving(true);
     try {
+      // Ensure we have the required fields before saving
+      if (!exchangeRate.rate) {
+        throw new Error("汇率值不能为空");
+      }
+      
       // Try to save to database
       try {
         // Using our updated service with improved persistence
         const { data, error } = await exchangeRatesService.insert({
-          rate: exchangeRate.rate!,
+          rate: exchangeRate.rate,
           from_currency: exchangeRate.from_currency || 'CNY',
           to_currency: exchangeRate.to_currency || 'USD',
           created_at: new Date().toISOString(),
@@ -156,7 +161,7 @@ const ExchangeRateSettings = () => {
         // Update the history in memory
         const newRate: ExchangeRate = {
           id: `temp-${Date.now()}`,
-          rate: exchangeRate.rate!,
+          rate: exchangeRate.rate,
           from_currency: exchangeRate.from_currency || 'CNY',
           to_currency: exchangeRate.to_currency || 'USD',
           created_at: new Date().toISOString(),

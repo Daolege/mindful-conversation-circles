@@ -51,6 +51,7 @@ export interface ExchangeRate {
   to_currency: string;
   created_at: string;
   updated_at: string;
+  cny_to_usd?: number;
 }
 
 export interface SiteSettings {
@@ -401,10 +402,18 @@ export const exchangeRatesService = {
   
   insert: async (rate: Partial<ExchangeRate>) => {
     try {
-      // We'll store the data using both old and new structure fields for compatibility
+      // Make sure required fields are provided
+      if (!rate.rate || !rate.from_currency || !rate.to_currency) {
+        throw new Error("Missing required fields: rate, from_currency, and to_currency are required");
+      }
+      
+      // Create insert data with required fields
       const insertData = {
-        ...rate,
-        cny_to_usd: rate.rate // Store in old field for backward compatibility
+        rate: rate.rate,
+        from_currency: rate.from_currency,
+        to_currency: rate.to_currency,
+        created_at: rate.created_at || new Date().toISOString(),
+        updated_at: rate.updated_at || new Date().toISOString()
       };
       
       const { data, error } = await supabase
