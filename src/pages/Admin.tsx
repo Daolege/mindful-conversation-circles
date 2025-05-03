@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Navbar from "@/components/Navbar";
@@ -6,7 +7,7 @@ import { useAuth } from "@/contexts/authHooks";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
-import { Loader2 } from "lucide-react";
+import { Loader2, LayoutDashboard, Users, BookOpen, ShoppingCart, Repeat, Settings } from "lucide-react";
 import { UserManagement } from "@/components/admin/UserManagement";
 import { OrderManagement } from "@/components/admin/OrderManagement";
 import { DashboardStatistics } from "@/components/admin/DashboardStatistics";
@@ -174,6 +175,17 @@ const Admin = () => {
     );
   }
 
+  // Define the admin tabs with their Lucide icons
+  const adminTabs = [
+    { value: "overview", label: t('admin:overview'), icon: LayoutDashboard },
+    { value: "users", label: t('admin:usersManagement'), icon: Users },
+    { value: "courses", label: t('admin:coursesManagement'), icon: BookOpen },
+    { value: "courses-new", label: t('admin:coursesManagement2'), icon: BookOpen },
+    { value: "orders", label: t('admin:ordersManagement'), icon: ShoppingCart },
+    { value: "subscriptions", label: t('admin:subscriptionsManagement'), icon: Repeat },
+    { value: "settings", label: t('admin:systemSettings'), icon: Settings }
+  ];
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -194,21 +206,13 @@ const Admin = () => {
           defaultValue={activeTab}
         >
           <TabsList className="mb-8 w-full flex flex-wrap justify-start gap-2 bg-gray-50/90 p-4 border-2 border-gray-200 rounded-2xl shadow-md">
-            {[
-              { value: "overview", label: t('admin:overview'), icon: "📊" },
-              { value: "users", label: t('admin:usersManagement'), icon: "👥" },
-              { value: "courses", label: t('admin:coursesManagement'), icon: "📚" },
-              { value: "courses-new", label: t('admin:coursesManagement2'), icon: "🆕" },
-              { value: "orders", label: t('admin:ordersManagement'), icon: "🛒" },
-              { value: "subscriptions", label: t('admin:subscriptionsManagement'), icon: "🔄" },
-              { value: "settings", label: t('admin:systemSettings'), icon: "⚙️" },
-            ].map(tab => (
+            {adminTabs.map(tab => (
               <TabsTrigger 
                 key={tab.value}
                 value={tab.value} 
                 className="flex-1 px-8 py-4 text-base font-medium min-w-[140px] relative overflow-hidden"
               >
-                <span className="mr-2">{tab.icon}</span>
+                <tab.icon className="mr-2 h-5 w-5 text-gray-500" />
                 {tab.label}
               </TabsTrigger>
             ))}

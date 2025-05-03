@@ -1,7 +1,6 @@
 
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { SystemSettings } from "./SystemSettings";
 import { useTranslations } from "@/hooks/useTranslations";
 import CompanyInfoSettings from "./CompanyInfoSettings";
 import PaymentIconsManagement from "./PaymentIconsManagement";
@@ -9,9 +8,14 @@ import LegalDocumentsManagement from "./LegalDocumentsManagement";
 import ExchangeRateSettings from "./ExchangeRateSettings";
 import BannerManagement from "./BannerManagement";
 import AdminBreadcrumb from "./AdminBreadcrumb";
+import ContactMethodsManagement from "./ContactMethodsManagement";
+import SocialMediaManagement from "./SocialMediaManagement";
+import MultilangFAQManagement from "./MultilangFAQManagement";
+import { LanguageManagement } from './LanguageManagement';
+import { TranslationEditor } from './TranslationEditor';
 
 export function AdminSettings() {
-  const [activeTab, setActiveTab] = useState("system");
+  const [activeTab, setActiveTab] = useState("general");
   const { t } = useTranslations();
 
   return (
@@ -24,29 +28,46 @@ export function AdminSettings() {
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="mb-6 bg-gray-100/80 p-1.5 border border-gray-200 rounded-xl shadow-sm">
-          <TabsTrigger className="px-4 py-2 text-sm" value="system">{t('admin:systemSettings')}</TabsTrigger>
+          <TabsTrigger className="px-4 py-2 text-sm" value="general">基本设置</TabsTrigger>
           <TabsTrigger className="px-4 py-2 text-sm" value="company">{t('admin:companyInfo')}</TabsTrigger>
-          <TabsTrigger className="px-4 py-2 text-sm" value="legal">{t('admin:legalDocuments')}</TabsTrigger>
+          <TabsTrigger className="px-4 py-2 text-sm" value="contact">联系方式</TabsTrigger>
+          <TabsTrigger className="px-4 py-2 text-sm" value="social">社交媒体</TabsTrigger>
           <TabsTrigger className="px-4 py-2 text-sm" value="payment">{t('admin:paymentIcons')}</TabsTrigger>
+          <TabsTrigger className="px-4 py-2 text-sm" value="legal">{t('admin:legalDocuments')}</TabsTrigger>
+          <TabsTrigger className="px-4 py-2 text-sm" value="faq">常见问题</TabsTrigger>
           <TabsTrigger className="px-4 py-2 text-sm" value="exchange">{t('admin:exchangeRates')}</TabsTrigger>
           <TabsTrigger className="px-4 py-2 text-sm" value="banners">{t('home:bannerManagement')}</TabsTrigger>
+          <TabsTrigger className="px-4 py-2 text-sm" value="languages">语言设置</TabsTrigger>
+          <TabsTrigger className="px-4 py-2 text-sm" value="translations">翻译管理</TabsTrigger>
         </TabsList>
         
         <div className="p-6 border rounded-lg bg-white shadow-sm">
-          <TabsContent value="system">
-            <SystemSettings />
+          <TabsContent value="general">
+            <ExchangeRateSettings />
           </TabsContent>
 
           <TabsContent value="company">
             <CompanyInfoSettings />
           </TabsContent>
           
+          <TabsContent value="contact">
+            <ContactMethodsManagement />
+          </TabsContent>
+
+          <TabsContent value="social">
+            <SocialMediaManagement />
+          </TabsContent>
+
+          <TabsContent value="payment">
+            <PaymentIconsManagement />
+          </TabsContent>
+          
           <TabsContent value="legal">
             <LegalDocumentsManagement />
           </TabsContent>
           
-          <TabsContent value="payment">
-            <PaymentIconsManagement />
+          <TabsContent value="faq">
+            <MultilangFAQManagement />
           </TabsContent>
           
           <TabsContent value="exchange">
@@ -55,6 +76,14 @@ export function AdminSettings() {
           
           <TabsContent value="banners">
             <BannerManagement />
+          </TabsContent>
+          
+          <TabsContent value="languages">
+            <LanguageManagement />
+          </TabsContent>
+          
+          <TabsContent value="translations">
+            <TranslationEditor />
           </TabsContent>
         </div>
       </Tabs>

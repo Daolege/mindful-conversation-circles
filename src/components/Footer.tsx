@@ -99,7 +99,7 @@ const Footer = () => {
     `© ${new Date().getFullYear()} ${siteSettings?.company_name || 'SecondRise'}. ${siteSettings?.company_full_name || 'Mandarin (Hong Kong) International Limited'}. 版权所有`;
   
   return (
-    <footer className="bg-[#1a202c] text-white pt-12 pb-8">
+    <footer className="bg-[#1C1C1C] text-white pt-12 pb-8">
       <div className="container mx-auto px-4">
         {/* 顶部区域 - 添加语言切换器到右上角 */}
         <div className="flex justify-between items-center mb-8">
