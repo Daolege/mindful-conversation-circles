@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useTranslations } from "@/hooks/useTranslations";
 import { useQuery } from "@tanstack/react-query";
@@ -100,7 +99,7 @@ const Footer = () => {
   return (
     <footer className="bg-[#1a202c] text-white pt-12 pb-8">
       <div className="container mx-auto px-4">
-        {/* 顶部区域 - 添加语言切换器到右侧 */}
+        {/* 顶部区域 - 添加语言切换器到右上角 */}
         <div className="flex justify-between items-center mb-8">
           <Logo variant="default" />
           <LanguageSwitcher variant="footer" className="bg-[#333333] text-white border-[#404040]" />
@@ -144,7 +143,7 @@ const Footer = () => {
         {/* 使用更明显的分隔线 */}
         <Separator className="my-8 bg-[#3A3A3A] opacity-60" />
         
-        {/* 改进的底部版权区域 */}
+        {/* 改进的底部版权区域 - 移除重复的法律链接 */}
         <div className="flex flex-col sm:flex-row justify-between items-center text-[#999999] text-sm">
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 mb-4 sm:mb-0">
             <p className="text-center sm:text-left">{copyrightText}</p>

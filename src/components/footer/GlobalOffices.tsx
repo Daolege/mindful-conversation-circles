@@ -16,11 +16,11 @@ const GlobalOffices: React.FC = () => {
         {t('common:globalOffices')}
       </h3>
       
-      <div className="space-y-4">
-        {/* 北美地区 - 紧凑布局 */}
+      <div className="space-y-3">
+        {/* 北美地区 - 更紧凑布局 */}
         <div>
-          <h4 className="text-[#BBBBBB] font-medium mb-2 text-sm">北美地区</h4>
-          <div className="grid grid-cols-2 gap-x-3 gap-y-2">
+          <h4 className="text-[#BBBBBB] font-medium mb-1.5 text-sm">北美地区</h4>
+          <div className="grid grid-cols-2 gap-x-2 gap-y-1.5">
             <CountryFlag countryCode="us" countryName="美国" />
             <CountryFlag countryCode="ca" countryName="加拿大" />
           </div>
@@ -28,8 +28,8 @@ const GlobalOffices: React.FC = () => {
         
         {/* 欧洲地区 - 增加列数且更紧凑 */}
         <div>
-          <h4 className="text-[#BBBBBB] font-medium mb-2 text-sm">欧洲地区</h4>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-x-3 gap-y-2">
+          <h4 className="text-[#BBBBBB] font-medium mb-1.5 text-sm">欧洲地区</h4>
+          <div className="grid grid-cols-3 gap-x-2 gap-y-1.5">
             <CountryFlag countryCode="gb" countryName="英国" />
             <CountryFlag countryCode="es" countryName="西班牙" />
             <CountryFlag countryCode="fr" countryName="法国" />
@@ -39,10 +39,10 @@ const GlobalOffices: React.FC = () => {
           </div>
         </div>
         
-        {/* 东南亚地区 - 紧凑布局 */}
+        {/* 东南亚地区 - 更紧凑布局 */}
         <div>
-          <h4 className="text-[#BBBBBB] font-medium mb-2 text-sm">东南亚地区</h4>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-x-3 gap-y-2">
+          <h4 className="text-[#BBBBBB] font-medium mb-1.5 text-sm">东南亚地区</h4>
+          <div className="grid grid-cols-3 gap-x-2 gap-y-1.5">
             <CountryFlag countryCode="vn" countryName="越南" />
             <CountryFlag countryCode="ph" countryName="菲律宾" />
             <CountryFlag countryCode="my" countryName="马来西亚" />
