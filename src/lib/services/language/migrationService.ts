@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { addLanguage, getAllLanguages } from './languageManagement';
@@ -245,26 +246,26 @@ export const createLanguagesTableIfNeeded = async (): Promise<boolean> => {
       return true;
     }
     
-    // We'll use raw SQL queries with the direct Supabase API approach
-    // Instead of using .from('_sql').rpc() which doesn't exist in the type definition
-    
-    // Execute the SQL to create the table
-    const createTableSQL = `
-      CREATE TABLE IF NOT EXISTS languages (
-        id SERIAL PRIMARY KEY,
-        code TEXT NOT NULL UNIQUE,
-        name TEXT NOT NULL,
-        nativeName TEXT NOT NULL,
-        enabled BOOLEAN DEFAULT TRUE,
-        rtl BOOLEAN DEFAULT FALSE,
-        created_at TIMESTAMPTZ DEFAULT NOW(),
-        updated_at TIMESTAMPTZ
-      )
-    `;
-    
-    // Use supabase.rpc directly instead of chaining from .from()
-    const { error: createError } = await supabase
-      .rpc('exec_sql', { sql: createTableSQL });
+    // Instead of using RPC for SQL execution, try using admin_add_course_item function
+    const { error: createError } = await supabase.rpc('admin_add_course_item', {
+      p_table_name: '_languages_table',
+      p_course_id: 0,
+      p_content: `
+        CREATE TABLE IF NOT EXISTS languages (
+          id SERIAL PRIMARY KEY,
+          code TEXT NOT NULL UNIQUE,
+          name TEXT NOT NULL,
+          nativeName TEXT NOT NULL,
+          enabled BOOLEAN DEFAULT TRUE,
+          rtl BOOLEAN DEFAULT FALSE,
+          created_at TIMESTAMPTZ DEFAULT NOW(),
+          updated_at TIMESTAMPTZ
+        )
+      `,
+      p_position: 0,
+      p_id: 'create_languages_table',
+      p_is_visible: true
+    });
     
     if (createError) {
       console.error('Error creating languages table:', createError);
@@ -276,26 +277,9 @@ export const createLanguagesTableIfNeeded = async (): Promise<boolean> => {
     console.log('Successfully created languages table');
     
     // Insert default languages
-    const insertDefaultsSQL = `
-      INSERT INTO languages (code, name, nativeName, enabled)
-      VALUES 
-        ('en', 'English', 'English', TRUE),
-        ('zh', 'Chinese (Simplified)', '简体中文', TRUE)
-      ON CONFLICT (code) DO NOTHING
-    `;
+    const defaultLanguagesInserted = await createDefaultLanguages();
     
-    // Use supabase.rpc directly instead of chaining from .from()
-    const { error: insertError } = await supabase
-      .rpc('exec_sql', { sql: insertDefaultsSQL });
-    
-    if (insertError) {
-      console.error('Error inserting default languages:', insertError);
-      return false;
-    }
-    
-    console.log('Successfully inserted default languages');
-    
-    return true;
+    return defaultLanguagesInserted;
   } catch (error) {
     console.error('Error creating languages table:', error);
     return false;
