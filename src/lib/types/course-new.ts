@@ -49,6 +49,7 @@ export interface CourseWithDetails extends Omit<Course, 'language'> {
   showTargetAudience?: boolean; // Add visibility flag for target audience
   showMaterials?: boolean; // Add visibility flag for materials
   category: string; // Make sure category is required
+  description?: string; // Make description optional to match CourseNew
 }
 
 // Add the CourseNew interface for admin components

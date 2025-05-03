@@ -57,7 +57,8 @@ const CourseDetailNew = () => {
   // Convert CourseNew to CourseWithDetails to ensure proper typing
   const courseData: CourseWithDetails = {
     ...courseResponse.data,
-    category: courseResponse.data.category || 'default',
+    category: courseResponse.data.category || 'default', // Ensure category is provided
+    description: courseResponse.data.description || '', // Set a default empty string for description
     // Ensure all required properties for CourseWithDetails
     showObjectives: true,
     showRequirements: true,
