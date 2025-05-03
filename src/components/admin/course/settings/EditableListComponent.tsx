@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Trash2, Plus, GripVertical } from "lucide-react";
 import { ListItem } from '@/lib/types/course-new';
+import { InlineEdit } from '@/components/ui/inline-edit';
 
 interface EditableListComponentProps {
   title: string;
@@ -12,6 +13,8 @@ interface EditableListComponentProps {
   items: ListItem[];
   onChange: (items: ListItem[]) => void;
   placeholder?: string;
+  titleEditable?: boolean;
+  onTitleChange?: (title: string) => void;
 }
 
 export const EditableListComponent: React.FC<EditableListComponentProps> = ({
@@ -19,7 +22,9 @@ export const EditableListComponent: React.FC<EditableListComponentProps> = ({
   description,
   items,
   onChange,
-  placeholder = "添加新项目..."
+  placeholder = "添加新项目...",
+  titleEditable = false,
+  onTitleChange
 }) => {
   const [newItemText, setNewItemText] = useState("");
 
@@ -59,10 +64,24 @@ export const EditableListComponent: React.FC<EditableListComponentProps> = ({
     }
   };
 
+  const handleTitleChange = (newTitle: string) => {
+    if (onTitleChange) {
+      onTitleChange(newTitle);
+    }
+  };
+
   return (
-    <Card>
+    <Card className="h-full">
       <CardHeader className="pb-3">
-        <CardTitle>{title}</CardTitle>
+        {titleEditable ? (
+          <InlineEdit 
+            value={title} 
+            onChange={handleTitleChange}
+            className="text-xl font-semibold"
+          />
+        ) : (
+          <CardTitle>{title}</CardTitle>
+        )}
         <CardDescription>{description}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
