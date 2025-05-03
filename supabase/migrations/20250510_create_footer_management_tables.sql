@@ -117,3 +117,4 @@ WHERE NOT EXISTS (SELECT 1 FROM legal_documents WHERE slug = 'data-transfer-term
 INSERT INTO exchange_rates (cny_to_usd)
 SELECT 7.23
 WHERE NOT EXISTS (SELECT 1 FROM exchange_rates);
+

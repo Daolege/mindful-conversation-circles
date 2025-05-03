@@ -115,7 +115,7 @@ const PaymentIconsManagement = () => {
       // Then insert the new ones
       const { error } = await supabase
         .from('payment_icons')
-        .upsert(
+        .insert(
           paymentIcons.map((icon, index) => ({
             ...icon,
             display_order: index,
