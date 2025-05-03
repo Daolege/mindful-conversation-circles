@@ -9,7 +9,7 @@ import CourseBasicForm from "./course-editor/CourseBasicForm";
 import CourseCurriculumForm from "./course-editor/CourseCurriculumForm";
 import { CourseOtherSettings } from './course/settings/CourseOtherSettings';
 import { useCourseActions } from '@/hooks/useCourseActions';
-import { useCourseEditorContext } from "./course-editor/CourseEditorContext";
+import { useCourseEditor } from '@/hooks/useCourseEditor';
 
 interface CourseNewEditorRefactoredProps {
   initialCourseId: number | null;
@@ -38,7 +38,7 @@ const CourseNewEditorRefactored: React.FC<CourseNewEditorRefactoredProps> = ({
   const [activeTab, setActiveTab] = useState(initialActiveTab);
   const navigate = useNavigate();
   const { isEditMode, saveCourse, saving, handleBack } = useCourseActions(initialCourseId?.toString() || 'new');
-  const courseEditorContext = useCourseEditorContext();
+  const courseEditorContext = useCourseEditor();
   
   const handleTabChange = (value: string) => {
     setActiveTab(value);
@@ -70,9 +70,9 @@ const CourseNewEditorRefactored: React.FC<CourseNewEditorRefactoredProps> = ({
 
         <TabsContent value="basic">
           <CourseBasicForm 
-            courseId={initialCourseId} 
             onSave={handleSave}
             saving={saving}
+            initialData={courseEditorContext?.data}
           />
         </TabsContent>
 
