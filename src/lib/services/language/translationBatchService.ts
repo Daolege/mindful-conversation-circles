@@ -150,23 +150,26 @@ export async function rollbackToVersion(
       key: string;
     }
     
-    // Get the first item, which could be null or undefined
+    // Safely get the first item
     const currentTranslationData = currentData[0];
     
-    // Null check before accessing properties
-    if (!currentTranslationData) {
+    // Proper null check
+    if (currentTranslationData === null || currentTranslationData === undefined) {
       return { success: false, error: new Error('Invalid translation data: item is null') };
     }
     
+    // Create a non-null reference to the data after we've checked it
+    const nonNullData = currentTranslationData;
+    
     // Type guard to ensure it's an object before accessing properties
-    if (typeof currentTranslationData !== 'object') {
+    if (typeof nonNullData !== 'object') {
       return { success: false, error: new Error('Invalid translation data: item is not an object') };
     }
     
-    // Now check properties - use local variables to satisfy TypeScript
-    const hasLanguageCode = 'language_code' in currentTranslationData;
-    const hasNamespace = 'namespace' in currentTranslationData;
-    const hasKey = 'key' in currentTranslationData;
+    // Now check properties with the non-null reference
+    const hasLanguageCode = 'language_code' in nonNullData;
+    const hasNamespace = 'namespace' in nonNullData;
+    const hasKey = 'key' in nonNullData;
     
     // Check if all required properties exist
     if (!hasLanguageCode || !hasNamespace || !hasKey) {
@@ -174,7 +177,7 @@ export async function rollbackToVersion(
     }
     
     // After validation, we can safely assert the type
-    const currentItem = currentTranslationData as TranslationFields;
+    const currentItem = nonNullData as TranslationFields;
     
     // Extract properties to local variables for clarity and type safety
     const language_code: string = currentItem.language_code;
