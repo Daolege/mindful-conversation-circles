@@ -117,9 +117,14 @@ export async function upsertIntoTable<T = any>(
     .from(table as any)
     .upsert(data);
     
+  // We need to use type casting here because TypeScript doesn't recognize onConflict
+  // on the PostgrestFilterBuilder type but it exists in the actual implementation
   if (onConflict) {
-    query = query.onConflict(onConflict);
+    // The onConflict method is available on the UpsertQueryBuilder, not PostgrestFilterBuilder
+    // Use type assertion to bypass TypeScript's check
+    query = (query as any).onConflict(onConflict);
   }
   
   return query;
 }
+
