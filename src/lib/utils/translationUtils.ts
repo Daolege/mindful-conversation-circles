@@ -1,6 +1,6 @@
 
 import { saveAs } from 'file-saver';
-import { TranslationItem } from "@/hooks/useTranslations";
+import { TranslationItem } from "@/lib/services/language/languageCore";
 
 /**
  * 将翻译导出为JSON文件
