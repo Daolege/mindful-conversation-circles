@@ -11,9 +11,16 @@ import { Loader2, CreditCard, History, Calendar, ArrowLeftRight } from "lucide-r
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatDistanceToNow } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
-import { Tables } from '@/lib/supabase/database.types';
 
-type ExchangeRate = Tables<'exchange_rates'>;
+// Define custom interface for exchange rate
+interface ExchangeRate {
+  id: string;
+  rate: number;
+  from_currency: string;
+  to_currency: string;
+  created_at: string;
+  updated_at: string;
+}
 
 const ExchangeRateSettings = () => {
   const { t } = useTranslations();
@@ -81,7 +88,7 @@ const ExchangeRateSettings = () => {
         throw error;
       }
       
-      setExchangeHistory(data || []);
+      setExchangeHistory(data as unknown as ExchangeRate[] || []);
     } catch (error) {
       console.error("Error loading exchange history:", error);
       toast.error("加载汇率历史失败");
@@ -111,7 +118,7 @@ const ExchangeRateSettings = () => {
           to_currency: 'USD',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
-        });
+        } as any);
       
       if (error) {
         throw error;

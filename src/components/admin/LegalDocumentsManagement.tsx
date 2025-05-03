@@ -10,9 +10,16 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslations } from "@/hooks/useTranslations";
 import { Loader2 } from "lucide-react";
-import { Tables } from '@/lib/supabase/database.types';
 
-type LegalDocument = Tables<'legal_documents'>;
+// Define the LegalDocument interface
+interface LegalDocument {
+  id: string;
+  slug: string;
+  title: string;
+  content: string;
+  created_at: string;
+  updated_at: string;
+}
 
 interface DocumentState {
   [key: string]: {
@@ -60,7 +67,6 @@ const LegalDocumentsManagement = () => {
   const loadDocuments = async () => {
     setIsLoading(true);
     try {
-      // Use type casting to properly handle the table access
       const { data, error } = await supabase
         .from('legal_documents')
         .select('*') as { data: LegalDocument[] | null, error: any };
@@ -95,7 +101,6 @@ const LegalDocumentsManagement = () => {
     try {
       const { title, content } = documents[activeDocument];
       
-      // Type casting for proper table access
       const { error } = await supabase
         .from('legal_documents')
         .upsert({

@@ -9,9 +9,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { useTranslations } from "@/hooks/useTranslations";
 import { Plus, Trash2, ArrowUp, ArrowDown, Loader2 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
-import { Tables } from '@/lib/supabase/database.types';
 
-type PaymentIcon = Tables<'payment_icons'>;
+// Define the PaymentIcon interface
+interface PaymentIcon {
+  id: string;
+  name: string;
+  icon_url: string;
+  is_active: boolean;
+  display_order: number;
+  created_at: string;
+  updated_at: string;
+}
 
 const PaymentIconsManagement = () => {
   const { t } = useTranslations();
@@ -116,7 +124,7 @@ const PaymentIconsManagement = () => {
     
     setIsSaving(true);
     try {
-      // First delete all existing icons using the "payment_icons" typed as a string
+      // First delete all existing icons
       await supabase.from('payment_icons').delete().not('id', 'is', null) as any;
       
       // Then insert the new ones
