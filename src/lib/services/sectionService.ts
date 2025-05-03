@@ -109,16 +109,18 @@ export async function getSectionsByCourseId(courseId: number): Promise<SectionSe
                 .eq('id', lectureId)
                 .single();
                 
-              // Combine both objects
-              return {
-                ...lecture,
+              // Combine both objects - use type assertion to satisfy TypeScript
+              const combinedLecture: CourseLecture = {
+                ...lecture as unknown as CourseLecture, // Force type to match CourseLecture
                 video_url: videoData?.video_url || null,
                 description: videoData?.description || null
-              } as CourseLecture;
+              };
+              
+              return combinedLecture;
             } catch (err) {
               console.log(`Could not fetch video_url for lecture:`, err);
-              // Return the original lecture object
-              return lecture as CourseLecture;
+              // Return the original lecture with type assertion
+              return lecture as unknown as CourseLecture;
             }
           }) : [];
           
