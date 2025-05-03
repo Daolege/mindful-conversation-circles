@@ -102,7 +102,7 @@ export async function getSectionsByCourseId(courseId: number): Promise<SectionSe
             }
             
             // Check if id property exists
-            if (!('id' in lecture)) {
+            if (!lecture || typeof lecture !== 'object' || !('id' in lecture)) {
               console.warn('Lecture object missing id property:', lecture);
               return null;
             }
@@ -151,10 +151,17 @@ export async function getSectionsByCourseId(courseId: number): Promise<SectionSe
               let videoUrl: string | null = null;
               let description: string | null = null;
               
+              // Add null checks for videoData before accessing properties
               if (videoData && typeof videoData === 'object') {
                 // Use optional chaining and nullish coalescing for safe property access
-                videoUrl = videoData?.video_url as string ?? null;
-                description = videoData?.description as string ?? null;
+                // We need to explicitly check if properties exist on videoData to avoid TS errors
+                if (videoData && 'video_url' in videoData) {
+                  videoUrl = videoData.video_url as string ?? null;
+                }
+                
+                if (videoData && 'description' in videoData) {
+                  description = videoData.description as string ?? null;
+                }
               }
               
               const combinedLecture: CourseLecture = {
