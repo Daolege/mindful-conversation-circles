@@ -54,18 +54,23 @@ export async function getTranslationHistory(
       return { success: false, data: [], error: error as unknown as Error };
     }
     
-    // Ensure we're properly casting the data to TranslationHistoryItem[]
+    // Ensure we're properly handling the data
     if (Array.isArray(data)) {
-      // Type guard to check if items match the expected structure
-      const historyItems = data.filter((item): item is TranslationHistoryItem => 
-        item !== null && 
-        typeof item === 'object' &&
-        'translation_id' in item &&
-        'language_code' in item &&
-        'namespace' in item &&
-        'key' in item &&
-        'new_value' in item
-      ) as TranslationHistoryItem[];
+      // Safely cast data to any[] first, then filter
+      const safeData = data as any[];
+      
+      // Filter items that match our expected structure
+      const historyItems = safeData.filter((item): item is TranslationHistoryItem => {
+        return item !== null && 
+          typeof item === 'object' &&
+          'id' in item &&
+          'translation_id' in item &&
+          'language_code' in item &&
+          'namespace' in item &&
+          'key' in item &&
+          'new_value' in item &&
+          'version' in item;
+      });
       
       return { success: true, data: historyItems };
     }
@@ -102,13 +107,15 @@ export async function rollbackToVersion(
       return { success: false, error: error as unknown as Error };
     }
     
+    const firstItem = data[0];
+    
     // Type guard to ensure data has the expected structure
-    if (!('new_value' in data[0])) {
+    if (!firstItem || typeof firstItem !== 'object' || !('new_value' in firstItem)) {
       return { success: false, error: new Error('Invalid data format') };
     }
     
     // Get the value from the fetched version
-    const valueToRestore = data[0].new_value;
+    const valueToRestore = firstItem.new_value;
     
     // Get the current translation to update
     const { data: currentData, error: currentError } = await selectFromTable(
@@ -124,21 +131,23 @@ export async function rollbackToVersion(
       return { success: false, error: error as unknown as Error };
     }
     
+    const currentItem = currentData[0];
+    
     // Type guard to ensure currentData has the expected structure
-    if (!('language_code' in currentData[0]) || 
-        !('namespace' in currentData[0]) || 
-        !('key' in currentData[0])) {
+    if (!currentItem || 
+        typeof currentItem !== 'object' || 
+        !('language_code' in currentItem) || 
+        !('namespace' in currentItem) || 
+        !('key' in currentItem)) {
       return { success: false, error: new Error('Invalid translation data format') };
     }
-    
-    const currentTranslation = currentData[0];
     
     // Update the translation with the historical value
     const updateResult = await batchUpdateTranslations([{
       id: translationId,
-      language_code: currentTranslation.language_code,
-      namespace: currentTranslation.namespace,
-      key: currentTranslation.key,
+      language_code: currentItem.language_code,
+      namespace: currentItem.namespace,
+      key: currentItem.key,
       value: valueToRestore
     } as TranslationItem]);
     
