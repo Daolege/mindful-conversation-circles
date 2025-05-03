@@ -9,16 +9,32 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslations } from "@/hooks/useTranslations";
 import { Loader2, Building, Globe, FileText } from "lucide-react";
-import { Tables } from '@/lib/supabase/database.types';
 
-type SiteSettings = Tables<'site_settings'>;
+// Define our own type that matches what's used in the component
+type CompanySiteSettings = {
+  id: string;
+  site_name: string;
+  site_description: string;
+  logo_url: string;
+  contact_email: string;
+  support_phone: string;
+  company_name: string;
+  company_full_name: string;
+  company_registration_number: string;
+  company_address: string;
+  copyright_text: string;
+  enable_registration: boolean;
+  maintenance_mode: boolean;
+  created_at: string;
+  updated_at: string;
+};
 
 const CompanyInfoSettings = () => {
   const { t } = useTranslations();
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   
-  const [companyInfo, setCompanyInfo] = useState<Partial<SiteSettings>>({
+  const [companyInfo, setCompanyInfo] = useState<Partial<CompanySiteSettings>>({
     company_name: '',
     company_full_name: '',
     company_registration_number: '',
@@ -51,6 +67,7 @@ const CompanyInfoSettings = () => {
       
       if (data) {
         setCompanyInfo({
+          id: data.id,
           company_name: data.company_name || '',
           company_full_name: data.company_full_name || '',
           company_registration_number: data.company_registration_number || '',
@@ -60,7 +77,9 @@ const CompanyInfoSettings = () => {
           site_description: data.site_description || '',
           contact_email: data.contact_email || '',
           support_phone: data.support_phone || '',
-          logo_url: data.logo_url || ''
+          logo_url: data.logo_url || '',
+          enable_registration: data.enable_registration,
+          maintenance_mode: data.maintenance_mode
         });
       }
     } catch (error) {
@@ -72,7 +91,7 @@ const CompanyInfoSettings = () => {
   };
 
   // Handle input change
-  const handleChange = (field: keyof SiteSettings, value: string) => {
+  const handleChange = (field: keyof CompanySiteSettings, value: string) => {
     setCompanyInfo(prev => ({
       ...prev,
       [field]: value
@@ -86,8 +105,19 @@ const CompanyInfoSettings = () => {
       const { error } = await supabase
         .from('site_settings')
         .upsert({
-          id: 'default',
-          ...companyInfo,
+          id: companyInfo.id || 'default',
+          company_name: companyInfo.company_name,
+          company_full_name: companyInfo.company_full_name,
+          company_registration_number: companyInfo.company_registration_number,
+          company_address: companyInfo.company_address,
+          copyright_text: companyInfo.copyright_text,
+          site_name: companyInfo.site_name,
+          site_description: companyInfo.site_description,
+          contact_email: companyInfo.contact_email,
+          support_phone: companyInfo.support_phone,
+          logo_url: companyInfo.logo_url,
+          enable_registration: companyInfo.enable_registration !== undefined ? companyInfo.enable_registration : true,
+          maintenance_mode: companyInfo.maintenance_mode !== undefined ? companyInfo.maintenance_mode : false,
           updated_at: new Date().toISOString()
         });
       

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,7 +13,14 @@ import { formatDistanceToNow } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 import { Tables } from '@/lib/supabase/database.types';
 
-type ExchangeRate = Tables<'exchange_rates'>;
+type ExchangeRate = {
+  id: string;
+  rate: number;
+  from_currency: string;
+  to_currency: string;
+  created_at: string;
+  updated_at: string;
+};
 
 const ExchangeRateSettings = () => {
   const { t } = useTranslations();
@@ -20,7 +28,9 @@ const ExchangeRateSettings = () => {
   const [isHistoryLoading, setIsHistoryLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [exchangeRate, setExchangeRate] = useState<Partial<ExchangeRate>>({
-    cny_to_usd: 7.23,
+    rate: 7.23,
+    from_currency: 'CNY',
+    to_currency: 'USD'
   });
   const [exchangeHistory, setExchangeHistory] = useState<ExchangeRate[]>([]);
 
@@ -37,6 +47,8 @@ const ExchangeRateSettings = () => {
       const { data, error } = await supabase
         .from('exchange_rates')
         .select('*')
+        .eq('from_currency', 'CNY')
+        .eq('to_currency', 'USD')
         .order('created_at', { ascending: false })
         .limit(1)
         .single();
@@ -47,7 +59,9 @@ const ExchangeRateSettings = () => {
       
       if (data) {
         setExchangeRate({
-          cny_to_usd: data.cny_to_usd,
+          rate: data.rate,
+          from_currency: data.from_currency,
+          to_currency: data.to_currency
         });
       }
     } catch (error) {
@@ -65,6 +79,8 @@ const ExchangeRateSettings = () => {
       const { data, error } = await supabase
         .from('exchange_rates')
         .select('*')
+        .eq('from_currency', 'CNY')
+        .eq('to_currency', 'USD')
         .order('created_at', { ascending: false })
         .limit(10);
       
@@ -82,10 +98,10 @@ const ExchangeRateSettings = () => {
   };
 
   // Handle input change
-  const handleChange = (field: keyof ExchangeRate, value: string) => {
+  const handleChange = (value: string) => {
     setExchangeRate(prev => ({
       ...prev,
-      [field]: parseFloat(value),
+      rate: parseFloat(value),
     }));
   };
 
@@ -97,7 +113,9 @@ const ExchangeRateSettings = () => {
       const { error } = await supabase
         .from('exchange_rates')
         .insert({
-          cny_to_usd: exchangeRate.cny_to_usd!,
+          rate: exchangeRate.rate!,
+          from_currency: 'CNY',
+          to_currency: 'USD',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         });
@@ -173,8 +191,8 @@ const ExchangeRateSettings = () => {
                 type="number"
                 step="0.01"
                 min="0.01"
-                value={exchangeRate.cny_to_usd}
-                onChange={(e) => handleChange('cny_to_usd', e.target.value)}
+                value={exchangeRate.rate}
+                onChange={(e) => handleChange(e.target.value)}
                 placeholder="例如: 7.23"
               />
               <Button 
@@ -185,7 +203,7 @@ const ExchangeRateSettings = () => {
                 {isSaving ? '保存中...' : '保存汇率'}
               </Button>
             </div>
-            <p className="text-sm text-gray-500">当前值: 1美元 = {exchangeRate.cny_to_usd}人民币</p>
+            <p className="text-sm text-gray-500">当前值: 1美元 = {exchangeRate.rate}人民币</p>
           </div>
         </CardContent>
       </Card>
@@ -225,9 +243,9 @@ const ExchangeRateSettings = () => {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="font-medium">{item.cny_to_usd}</div>
+                      <div className="font-medium">{item.rate}</div>
                       <div className="text-sm text-gray-500">
-                        1美元 = {item.cny_to_usd}人民币
+                        1{item.to_currency} = {item.rate}{item.from_currency}
                       </div>
                     </TableCell>
                     <TableCell className="text-right text-gray-500">
