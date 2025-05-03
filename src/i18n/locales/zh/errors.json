@@ -38,5 +38,14 @@
   "errorGeneratingSampleData": "生成示例数据时发生错误",
   "unknownError": "未知错误",
   "pleaseLoginFirst": "请先登录",
-  "updateCourseProgressFailed": "更新课程进度失败，请重试"
+  "updateCourseProgressFailed": "更新课程进度失败，请重试",
+  "errorCode": "错误代码",
+  "invalidCourseId": "无效的课程ID",
+  "usingDefaultCourse": "使用默认课程代替",
+  "paymentProcessingError": "支付处理错误",
+  "paymentGatewayError": "支付网关错误",
+  "insufficientFunds": "余额不足",
+  "cardDeclined": "卡片被拒绝",
+  "invalidCardDetails": "卡片信息无效",
+  "paymentTimeoutError": "支付请求超时"
 }

@@ -3,29 +3,32 @@ import React from 'react';
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useTranslations } from "@/hooks/useTranslations";
 
 export function CreditCardForm() {
+  const { t } = useTranslations();
+  
   return (
     <Card className="p-4">
-      <h3 className="text-md font-medium mb-4">信用卡信息</h3>
+      <h3 className="text-md font-medium mb-4">{t('checkout:creditCardInfo')}</h3>
       <div className="space-y-4">
         <div className="grid gap-2">
-          <Label htmlFor="cardHolder">持卡人姓名</Label>
+          <Label htmlFor="cardHolder">{t('checkout:cardholderName')}</Label>
           <Input id="cardHolder" placeholder="John Doe" />
         </div>
         
         <div className="grid gap-2">
-          <Label htmlFor="cardNumber">卡号</Label>
+          <Label htmlFor="cardNumber">{t('checkout:cardNumber')}</Label>
           <Input id="cardNumber" placeholder="1234 5678 9012 3456" />
         </div>
         
         <div className="grid grid-cols-2 gap-4">
           <div className="grid gap-2">
-            <Label htmlFor="expiryDate">有效期</Label>
+            <Label htmlFor="expiryDate">{t('checkout:expiryDate')}</Label>
             <Input id="expiryDate" placeholder="MM/YY" />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="cvv">安全码</Label>
+            <Label htmlFor="cvv">{t('checkout:securityCode')}</Label>
             <Input id="cvv" placeholder="123" type="password" />
           </div>
         </div>

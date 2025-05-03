@@ -5,10 +5,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { useTranslations } from "@/hooks/useTranslations";
 
 export function PayPalForm() {
   const [email, setEmail] = useState('');
   const navigate = useNavigate();
+  const { t } = useTranslations();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,7 +22,7 @@ export function PayPalForm() {
         errorDetails: {
           errorCode: 'PAYPAL_PROCESSING_ERROR',
           paymentMethod: 'paypal',
-          errorMessage: 'PayPal支付处理过程中出现错误，请重新尝试或选择其他支付方式。',
+          errorMessage: t('checkout:paymentProcessingFailed'),
           courseId: new URLSearchParams(window.location.search).get('courseId')
         }
       }
@@ -30,10 +32,10 @@ export function PayPalForm() {
   return (
     <Card className="p-4">
       <form onSubmit={handleSubmit}>
-        <h3 className="text-md font-medium mb-4">PayPal 账户</h3>
+        <h3 className="text-md font-medium mb-4">{t('checkout:paypalAccount')}</h3>
         <div className="space-y-4">
           <div className="grid gap-2">
-            <Label htmlFor="paypalEmail">PayPal 邮箱</Label>
+            <Label htmlFor="paypalEmail">{t('checkout:paypalEmail')}</Label>
             <Input 
               id="paypalEmail" 
               type="email" 
@@ -47,7 +49,7 @@ export function PayPalForm() {
             type="submit" 
             className="w-full mt-2"
           >
-            通过 PayPal 支付
+            {t('checkout:payWithPaypal')}
           </Button>
         </div>
       </form>

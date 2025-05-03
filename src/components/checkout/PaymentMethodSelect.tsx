@@ -8,6 +8,7 @@ import { PayPalForm } from './payment-forms/PayPalForm';
 import { StripeForm } from './payment-forms/StripeForm';
 import { WeChatPayForm } from './payment-forms/WeChatPayForm';
 import { CreditCard, Wallet, CreditCardIcon } from "lucide-react";
+import { useTranslations } from "@/hooks/useTranslations";
 
 export type PaymentMethod = "wechat" | "paypal" | "stripe" | "credit-card" | "apple_pay" | "google_pay" | "alipay";
 
@@ -17,10 +18,12 @@ interface PaymentMethodSelectProps {
 }
 
 export function PaymentMethodSelect({ selectedMethod, onMethodChange }: PaymentMethodSelectProps) {
+  const { t } = useTranslations();
+  
   const paymentMethods = [
     {
       id: 'credit-card',
-      name: '信用卡支付',
+      name: t('checkout:creditCard'),
       currency: 'USD',
       icon: '/lovable-uploads/37420a04-9adf-4a1d-b4d7-b70977391c53.png',
       alt: 'Credit Card'
@@ -41,14 +44,14 @@ export function PaymentMethodSelect({ selectedMethod, onMethodChange }: PaymentM
     },
     {
       id: 'wechat',
-      name: '微信支付', 
+      name: t('checkout:wechatPay'), 
       currency: 'CNY',
       icon: '/lovable-uploads/8793137a-dcfb-409f-a3de-f330a902b9d2.png',
       alt: 'WeChat Pay'
     },
     {
       id: 'alipay',
-      name: '支付宝',
+      name: t('checkout:alipay'),
       currency: 'CNY',
       icon: '/lovable-uploads/a185f0d9-1675-40b6-8d74-c0901ba42ca4.png',
       alt: 'Alipay'
@@ -71,7 +74,7 @@ export function PaymentMethodSelect({ selectedMethod, onMethodChange }: PaymentM
 
   return (
     <Card className="p-4">
-      <h2 className="text-xl font-semibold mb-4">选择支付方式</h2>
+      <h2 className="text-xl font-semibold mb-4">{t('checkout:selectPaymentMethod')}</h2>
       <RadioGroup 
         value={selectedMethod} 
         onValueChange={(value) => onMethodChange(value as PaymentMethod)} 

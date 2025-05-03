@@ -38,5 +38,14 @@
   "errorGeneratingSampleData": "Error generating sample data",
   "unknownError": "Unknown error",
   "pleaseLoginFirst": "Please login first",
-  "updateCourseProgressFailed": "Failed to update course progress, please try again"
+  "updateCourseProgressFailed": "Failed to update course progress, please try again",
+  "errorCode": "Error Code",
+  "invalidCourseId": "Invalid course ID",
+  "usingDefaultCourse": "Using default course instead",
+  "paymentProcessingError": "Error processing payment",
+  "paymentGatewayError": "Payment gateway error",
+  "insufficientFunds": "Insufficient funds",
+  "cardDeclined": "Card declined",
+  "invalidCardDetails": "Invalid card details",
+  "paymentTimeoutError": "Payment request timed out"
 }

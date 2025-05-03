@@ -1,5 +1,4 @@
 
-// Update this file to use the SubscriptionPeriod from course-new
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -8,6 +7,7 @@ import { useAuth } from '@/contexts/authHooks';
 import { createSubscription } from '@/lib/services/subscriptionService';
 import { toast } from 'sonner';
 import { SubscriptionPeriod } from '@/lib/types/course-new';
+import { useTranslations } from "@/hooks/useTranslations";
 
 interface SubscriptionCheckoutProps {
   onSuccess: (subscriptionId: string) => void;
@@ -23,6 +23,7 @@ export function SubscriptionCheckout({
   paymentMethod,
 }: SubscriptionCheckoutProps) {
   const { user } = useAuth();
+  const { t } = useTranslations();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [processed, setProcessed] = useState(false);
@@ -34,7 +35,7 @@ export function SubscriptionCheckout({
 
   const handlePayment = async () => {
     if (!user) {
-      setError('请先登录再进行订阅');
+      setError(t('errors:pleaseLoginFirst'));
       return;
     }
     
@@ -47,21 +48,41 @@ export function SubscriptionCheckout({
       
       if (result.success) {
         setProcessed(true);
-        toast.success('订阅成功！', {
-          description: '您的订阅已经生效'
+        toast.success(t('checkout:subscriptionSuccess'), {
+          description: t('checkout:subscriptionActivated')
         });
         
         setTimeout(() => {
           onSuccess('sub-123'); // Replace with actual subscription ID if available
         }, 1500);
       } else {
-        setError(result.error || '订阅处理失败，请稍后再试');
+        setError(result.error || t('checkout:subscriptionProcessingFailed'));
       }
     } catch (err) {
       console.error('Subscription payment error:', err);
-      setError('订阅过程中发生错误');
+      setError(t('errors:paymentProcessingError'));
     } finally {
       setLoading(false);
+    }
+  };
+
+  const getPeriodLabel = (period: SubscriptionPeriod): string => {
+    switch (period) {
+      case 'monthly': return t('checkout:monthly');
+      case 'quarterly': return t('checkout:quarterly'); 
+      case '2years': return t('checkout:twoYears');
+      case '3years': return t('checkout:threeYears');
+      default: return t('checkout:yearly');
+    }
+  };
+  
+  const getPaymentMethodLabel = (method: string): string => {
+    switch (method) {
+      case 'wechat': return t('checkout:wechatPay');
+      case 'alipay': return t('checkout:alipay');
+      case 'credit-card': return t('checkout:creditCard');
+      case 'stripe': return 'Stripe';
+      default: return 'PayPal';
     }
   };
 
@@ -72,32 +93,24 @@ export function SubscriptionCheckout({
           <div className="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
             <Check className="h-6 w-6" />
           </div>
-          <h3 className="text-lg font-medium mb-2">订阅成功</h3>
-          <p className="text-muted-foreground mb-6">您的订阅已经成功处理</p>
+          <h3 className="text-lg font-medium mb-2">{t('checkout:subscriptionSuccess')}</h3>
+          <p className="text-muted-foreground mb-6">{t('checkout:subscriptionActivated')}</p>
           <Button onClick={() => onSuccess('sub-123')} className="w-full">
-            继续
+            {t('common:continue')}
           </Button>
         </div>
       ) : (
         <>
-          <h2 className="text-xl font-semibold mb-4">确认订阅</h2>
+          <h2 className="text-xl font-semibold mb-4">{t('checkout:confirmSubscription')}</h2>
           
           <div className="space-y-4 mb-6">
             <div className="flex justify-between">
-              <span>订阅周期</span>
-              <span className="font-medium">{selectedPeriod === 'monthly' ? '月付' : 
-                selectedPeriod === 'quarterly' ? '季付' : 
-                selectedPeriod === '2years' ? '两年' : 
-                selectedPeriod === '3years' ? '三年' : '年付'}</span>
+              <span>{t('checkout:subscriptionPeriod')}</span>
+              <span className="font-medium">{getPeriodLabel(selectedPeriod)}</span>
             </div>
             <div className="flex justify-between">
-              <span>支付方式</span>
-              <span className="font-medium">{
-                paymentMethod === 'wechat' ? '微信支付' :
-                paymentMethod === 'alipay' ? '支付宝' :
-                paymentMethod === 'credit-card' ? '信用卡' :
-                paymentMethod === 'stripe' ? 'Stripe' : 'PayPal'
-              }</span>
+              <span>{t('checkout:paymentMethod')}</span>
+              <span className="font-medium">{getPaymentMethodLabel(paymentMethod)}</span>
             </div>
           </div>
           
@@ -115,7 +128,7 @@ export function SubscriptionCheckout({
               onClick={onCancel}
               disabled={loading}
             >
-              取消
+              {t('common:cancel')}
             </Button>
             <Button 
               className="flex-1"
@@ -125,10 +138,10 @@ export function SubscriptionCheckout({
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  处理中
+                  {t('checkout:processing')}
                 </>
               ) : (
-                '确认支付'
+                t('checkout:confirmPayment')
               )}
             </Button>
           </div>
