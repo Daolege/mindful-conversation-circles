@@ -1,3 +1,4 @@
+
 import { useTranslation } from 'react-i18next';
 import { 
   selectFromTable, 
@@ -80,7 +81,7 @@ export const useTranslations = () => {
           return { success: true };
         }
         
-        // We've verified translationData has an id property and is not null
+        // Ensure translationData is not null and has a valid ID before updating
         if (translationData !== null && isValidTranslationRecord(translationData)) {
           // 更新已有翻译
           const translationId = translationData.id;
