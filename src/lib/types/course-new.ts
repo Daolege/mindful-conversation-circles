@@ -1,4 +1,3 @@
-
 import { Course } from "./course";
 
 export interface CourseSection {
@@ -88,9 +87,9 @@ export interface CourseFormValues {
 export interface ListItem {
   id: string;
   text: string;
-  content?: string;
-  position?: number;
-  is_visible?: boolean;
+  position: number;
+  is_visible: boolean;
+  icon?: string;  // Icon for the list item
 }
 
 // Properly export SubscriptionPeriod type
@@ -210,4 +209,10 @@ export interface CourseWithSections {
     }[];
   }[];
   [key: string]: any; // Allow other properties
+}
+
+export interface ListSectionConfig {
+  title: string;
+  description: string;
+  icon?: string;  // Icon for the section title
 }
