@@ -201,7 +201,7 @@ export const EditableListComponent: React.FC<EditableListComponentProps> = ({
                             className="flex flex-1 py-2 px-1 cursor-pointer items-center"
                             onDoubleClick={() => handleDoubleClickItem(item)}
                           >
-                            {item.icon && renderIcon(item.icon, "h-4 w-4 mr-2 text-gray-500 flex-shrink-0")}
+                            {/* Removed duplicate icon here - we only need the one in the IconSelector */}
                             <div className="flex-1">{item.text}</div>
                             <Button
                               variant="ghost"

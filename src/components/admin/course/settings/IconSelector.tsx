@@ -3,9 +3,12 @@ import React, { useState } from 'react';
 import { 
   Book, BookOpen, Target, Users, Award, Star, Flag, Briefcase, 
   GraduationCap, Image, Video, List, Check, Pencil, 
-  Plus, Minus, X, Trash, Edit, Move, ArrowDown, ArrowUp, 
-  ArrowLeft, ArrowRight, ChevronDown, ChevronUp, ChevronLeft, 
-  ChevronRight, CircleCheck, CircleMinus, CirclePlus, CircleX
+  Trash, Edit, BookText, FileText, Brain, 
+  Lightbulb, BarChart, PieChart, LineChart, Presentation,
+  School, Calculator, BookA, BookCopy, BookDashed, BookHeart,
+  BookKey, BookLock, BookMarked, BookOpenCheck, BookType, BookUp,
+  Notebook, Folders, Database, FileSpreadsheet, Code, Library,
+  Microscope, Atom, Beaker, Coffee, Globe
 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
@@ -27,24 +30,40 @@ const availableIcons = [
   { name: "list", component: List },
   { name: "check", component: Check },
   { name: "pencil", component: Pencil },
-  { name: "plus", component: Plus },
-  { name: "minus", component: Minus },
-  { name: "x", component: X },
   { name: "trash", component: Trash },
   { name: "edit", component: Edit },
-  { name: "move", component: Move },
-  { name: "arrow-down", component: ArrowDown },
-  { name: "arrow-up", component: ArrowUp },
-  { name: "arrow-left", component: ArrowLeft },
-  { name: "arrow-right", component: ArrowRight },
-  { name: "chevron-down", component: ChevronDown },
-  { name: "chevron-up", component: ChevronUp },
-  { name: "chevron-left", component: ChevronLeft },
-  { name: "chevron-right", component: ChevronRight },
-  { name: "circle-check", component: CircleCheck },
-  { name: "circle-minus", component: CircleMinus },
-  { name: "circle-plus", component: CirclePlus },
-  { name: "circle-x", component: CircleX }
+  // New added icons
+  { name: "book-text", component: BookText },
+  { name: "file-text", component: FileText },
+  { name: "brain", component: Brain },
+  { name: "lightbulb", component: Lightbulb },
+  { name: "bar-chart", component: BarChart },
+  { name: "pie-chart", component: PieChart },
+  { name: "line-chart", component: LineChart },
+  { name: "presentation", component: Presentation },
+  { name: "school", component: School },
+  { name: "calculator", component: Calculator },
+  { name: "book-a", component: BookA },
+  { name: "book-copy", component: BookCopy },
+  { name: "book-dashed", component: BookDashed },
+  { name: "book-heart", component: BookHeart },
+  { name: "book-key", component: BookKey },
+  { name: "book-lock", component: BookLock },
+  { name: "book-marked", component: BookMarked },
+  { name: "book-open-check", component: BookOpenCheck },
+  { name: "book-type", component: BookType },
+  { name: "book-up", component: BookUp },
+  { name: "notebook", component: Notebook },
+  { name: "folders", component: Folders },
+  { name: "database", component: Database },
+  { name: "file-spreadsheet", component: FileSpreadsheet },
+  { name: "code", component: Code },
+  { name: "library", component: Library },
+  { name: "microscope", component: Microscope },
+  { name: "atom", component: Atom },
+  { name: "beaker", component: Beaker },
+  { name: "coffee", component: Coffee },
+  { name: "globe", component: Globe }
 ];
 
 // Helper function to render icon by name
