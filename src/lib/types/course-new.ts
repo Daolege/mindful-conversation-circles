@@ -1,4 +1,3 @@
-
 export interface ListItem {
   id: string;
   text: string;
@@ -189,7 +188,7 @@ export interface CourseData {
   allows_one_time_purchase?: boolean;
 }
 
-// Modified version for insert/update operations with required fields that match how it's used
+// Modified version for insert/update operations with appropriate optional fields
 export interface CourseDataForInsert {
   title: string;
   description?: string;

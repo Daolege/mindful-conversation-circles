@@ -35,7 +35,7 @@ export interface CourseWithSections {
   }>;
 }
 
-// Get course by ID - Fix type conversion issue
+// Get course by ID - Handle type safety properly
 export const getCourseById = async (courseId: number): Promise<{ data: CourseWithDetails } | { error: any }> => {
   try {
     const { data, error } = await supabase
@@ -51,7 +51,7 @@ export const getCourseById = async (courseId: number): Promise<{ data: CourseWit
       throw new Error(error.message);
     }
     
-    // Cast to unknown first, then to CourseWithDetails to avoid type error
+    // Cast data to CourseWithDetails after validating it exists
     return { data: data as unknown as CourseWithDetails };
   } catch (error) {
     console.error("Error fetching course:", error);

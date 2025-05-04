@@ -61,7 +61,7 @@ const CourseLearn = () => {
   });
 
   // Get the course data safely
-  const courseData = courseResponse?.data;
+  const courseData = courseResponse && 'data' in courseResponse ? courseResponse.data : null;
   // Ensure we're handling a single course, not an array
   const course = Array.isArray(courseData) ? null : courseData;
   

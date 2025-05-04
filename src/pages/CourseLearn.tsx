@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery } from "@tanstack/react-query";
@@ -82,7 +83,7 @@ const CourseLearn = () => {
   useEffect(() => {
     if (isNewCourse) {
       console.log('New course query result:', {
-        data: newCourseResponse?.data ? 
+        data: newCourseResponse && 'data' in newCourseResponse ? 
           { id: (newCourseResponse.data as CourseWithDetails).id, title: (newCourseResponse.data as CourseWithDetails).title } : 
           null,
         error: newCourseError,
@@ -90,7 +91,7 @@ const CourseLearn = () => {
       });
     } else {
       console.log('Standard course query result:', {
-        data: courseResponse?.data && !Array.isArray(courseResponse.data) ? 
+        data: courseResponse && 'data' in courseResponse ? 
           { id: courseResponse.data.id, title: courseResponse.data.title } : 
           null,
         error: standardCourseError,
@@ -128,8 +129,8 @@ const CourseLearn = () => {
 
   // Determine course data based on source
   const isLoading = isLoadingStandardCourse || isLoadingNewCourse;
-  const standardCourse = courseResponse?.data && !Array.isArray(courseResponse.data) ? courseResponse.data : null;
-  const newCourse = newCourseResponse?.data;
+  const standardCourse = courseResponse && 'data' in courseResponse ? courseResponse.data : null;
+  const newCourse = newCourseResponse && 'data' in newCourseResponse ? newCourseResponse.data : null;
   
   // Process course data based on source
   let course = isNewCourse ? newCourse : standardCourse;

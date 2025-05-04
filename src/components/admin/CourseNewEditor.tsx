@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { 
@@ -20,7 +21,7 @@ import { toast } from "sonner";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { CourseNew, CourseSection, CourseLecture, CourseWithDetails } from "@/lib/types/course-new";
+import { CourseNew, CourseSection, CourseLecture, CourseWithDetails, CourseDataForInsert } from "@/lib/types/course-new";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { CourseOutlineEditor } from './course/outline/CourseOutlineEditor';
 import { CourseOtherSettings } from './course/settings/CourseOtherSettings';
