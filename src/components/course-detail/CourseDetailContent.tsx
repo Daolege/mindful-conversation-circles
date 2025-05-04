@@ -52,8 +52,9 @@ export function CourseDetailContent({ course }: CourseDetailContentProps) {
         // Fetch module items using typeSafeSupabase helper to avoid type issues
         const fetchModuleItems = async (tableName: string): Promise<ModuleItem[]> => {
           try {
+            // Use explicit type casting to avoid TypeScript limitations with dynamic table names
             const { data, error } = await supabase
-              .from(tableName)
+              .from(tableName as any)
               .select('*')
               .eq('course_id', course.id)
               .eq('is_visible', true)
@@ -65,7 +66,7 @@ export function CourseDetailContent({ course }: CourseDetailContentProps) {
             return (Array.isArray(data) ? data : []).map(item => ({
               ...item,
               icon: item.icon || 'check'
-            }));
+            })) as ModuleItem[];
           } catch (error) {
             console.error(`Error fetching ${tableName}:`, error);
             return [];
