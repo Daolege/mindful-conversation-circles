@@ -23,16 +23,8 @@ export const CourseCard: React.FC<CourseCardProps> = ({
   const location = useLocation();
   const { t } = useTranslations();
   
-  // Determine if this is a new course from location state if not explicitly provided
-  const isNewCourseFromState = location.state?.isNewCourse;
-  const isFromNewSystem = isNewCourse !== undefined ? isNewCourse : isNewCourseFromState;
-  
-  // Determine the return URL based on course system
-  const returnUrl = courseId 
-    ? (isFromNewSystem 
-        ? `/courses-new/${courseId}` 
-        : `/course/${courseId}`)
-    : "/courses";
+  // Always use the new course system URLs
+  const returnUrl = courseId ? `/courses-new/${courseId}` : "/courses";
 
   return (
     <Card className="p-6 animate-in fade-in duration-500">

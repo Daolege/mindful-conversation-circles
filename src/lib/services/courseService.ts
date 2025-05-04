@@ -154,21 +154,21 @@ export const updateCourseOrder = async (courseIds: number[]) => {
 };
 
 // Save course (needed by CourseEditorContext.tsx)
-export const saveCourse = async (courseData: any) => {
+export const saveCourse = async (courseData: Record<string, any>) => {
   try {
     const { id, ...courseFields } = courseData;
     let result;
     
     if (id) {
       result = await supabase
-        .from('courses')
+        .from('courses_new')
         .update(courseFields)
         .eq('id', id)
         .select()
         .single();
     } else {
       result = await supabase
-        .from('courses')
+        .from('courses_new')
         .insert(courseFields)
         .select()
         .single();

@@ -7,6 +7,7 @@ import { Clock, Calendar, Globe, CheckCircle, Download, Users, MessageSquare, Vi
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useNavigate } from 'react-router-dom';
 import { useTranslations } from '@/hooks/useTranslations';
+import { toast } from 'sonner';
 
 interface CourseEnrollCardNewProps {
   course: CourseWithDetails;
@@ -43,20 +44,25 @@ export const CourseEnrollCardNew: React.FC<CourseEnrollCardNewProps> = ({ course
   }, []);
 
   const handleEnrollClick = () => {
-    if (course.price === 0) {
-      // For free courses, navigate directly to the learning page
-      navigate(`/learn/${course.id}?source=new`);
-    } else {
-      // For paid courses, navigate to checkout
-      navigate(`/checkout?courseId=${course.id}`, { 
-        state: { 
-          isNewCourse: true,
-          courseId: course.id,
-          courseTitle: course.title,
-          courseDescription: course.description,
-          coursePrice: course.price
-        }
-      });
+    try {
+      if (course.price === 0) {
+        // For free courses, navigate directly to the learning page
+        navigate(`/learn/${course.id}?source=new`);
+      } else {
+        // For paid courses, navigate to checkout
+        navigate(`/checkout?courseId=${course.id}`, { 
+          state: { 
+            isNewCourse: true,
+            courseId: course.id,
+            courseTitle: course.title,
+            courseDescription: course.description,
+            coursePrice: course.price
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Navigation error:', error);
+      toast.error('导航到结账页面时出错');
     }
   };
 

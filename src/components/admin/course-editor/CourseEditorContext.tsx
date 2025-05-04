@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { getCourseNewById } from '@/lib/services/courseNewService';
+import { saveCourse } from '@/lib/services/courseService';
 
 // Define CourseMaterial type to fix TypeScript errors
 interface CourseMaterial {

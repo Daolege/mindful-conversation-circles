@@ -1,4 +1,3 @@
-
 import React, { Suspense, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -13,6 +12,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useIsMobile } from '@/hooks/use-mobile';
 
+// Rename component for clarity but keep file name for now to prevent build errors
 const CourseDetailNew = () => {
   const { courseId } = useParams<{ courseId: string }>();
   const courseIdNum = parseInt(courseId || '0', 10);
