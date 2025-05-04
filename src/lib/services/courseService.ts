@@ -33,6 +33,7 @@ export const getCourses = async (
   search?: string
 ): Promise<CourseResponse> => {
   try {
+    // Explicitly type the query to avoid excessive type instantiation
     let query = supabase
       .from('courses')
       .select('*', { count: 'exact' });
@@ -131,11 +132,17 @@ export const deleteCourse = async (courseId: number) => {
 // Update course order (needed by CourseManagement.tsx)
 export const updateCourseOrder = async (courseIds: number[]) => {
   try {
-    // Process updates one by one to avoid type issues
+    // Process updates one by one with explicit typing to avoid deep type instantiation
     for (let i = 0; i < courseIds.length; i++) {
+      // Create a simple update object with just the fields we need
+      const updateData = { 
+        display_order: i 
+      };
+      
+      // Explicitly use the update method with a simple object
       const { error } = await supabase
         .from('courses')
-        .update({ display_order: i })
+        .update(updateData)
         .eq('id', courseIds[i]);
         
       if (error) throw error;
