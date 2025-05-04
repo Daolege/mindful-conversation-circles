@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { getCourseNewById } from '@/lib/services/courseNewService';
 import { supabase } from '@/integrations/supabase/client';
 import { selectFromTable, deleteFromTable, insertIntoTable } from '@/lib/services/typeSafeSupabase';
+import { getDefaultLearningObjectives, getDefaultLearningModes, getDefaultTargetAudience } from '@/lib/services/courseDefaultContentService';
 
 // Define CourseMaterial type to fix TypeScript errors
 interface CourseMaterial {
@@ -200,6 +201,13 @@ export const CourseEditorProvider: React.FC<{
   useEffect(() => {
     const loadCourse = async () => {
       if (!numericCourseId) {
+        // If creating new course, load default content
+        setFormData(prev => ({
+          ...prev,
+          whatyouwilllearn: getDefaultLearningObjectives().map(item => item.text),
+          requirements: getDefaultLearningModes().map(item => item.text),
+          target_audience: getDefaultTargetAudience().map(item => item.text)
+        }));
         setIsLoading(false);
         return;
       }
@@ -250,6 +258,11 @@ export const CourseEditorProvider: React.FC<{
             return field;
           };
           
+          // Prepare defaults for missing data
+          let learningObjectives = getDefaultLearningObjectives().map(item => item.text);
+          let requirements = getDefaultLearningModes().map(item => item.text);
+          let targetAudience = getDefaultTargetAudience().map(item => item.text);
+          
           // Map for properties with different names in courses_new
           const formattedData = {
             ...formData,
@@ -261,9 +274,9 @@ export const CourseEditorProvider: React.FC<{
             syllabus: Array.isArray(syllabus) ? syllabus : [],
             materials: data.materials || [],
             // Handle collections that might be stored in JSON fields in courses_new
-            requirements: safeParseJson(data.requirements || data.requirements_data || data.requirements_json, []),
-            whatyouwilllearn: safeParseJson(data.learning_objectives || data.learning_objectives_json, []),
-            target_audience: safeParseJson(data.target_audience || data.target_audience_data || data.audience_json || data.audience, []),
+            requirements: safeParseJson(data.requirements || data.requirements_data || data.requirements_json, requirements),
+            whatyouwilllearn: safeParseJson(data.learning_objectives || data.learning_objectives_json, learningObjectives),
+            target_audience: safeParseJson(data.target_audience || data.target_audience_data || data.audience_json || data.audience, targetAudience),
             highlights: safeParseJson(data.highlights || data.highlights_data || data.highlights_json, []),
             lectures: Number(data.lectures || data.lecture_count || 0),
             enrollment_count: Number(data.enrollment_count || 0),
@@ -278,6 +291,13 @@ export const CourseEditorProvider: React.FC<{
           setFormData(formattedData);
         } else {
           console.warn('[CourseEditorContext] No course data or unexpected format received:', courseData);
+          // Still set default content for new course
+          setFormData(prev => ({
+            ...prev,
+            whatyouwilllearn: getDefaultLearningObjectives().map(item => item.text),
+            requirements: getDefaultLearningModes().map(item => item.text),
+            target_audience: getDefaultTargetAudience().map(item => item.text)
+          }));
         }
       } catch (error) {
         console.error('[CourseEditorContext] Error loading course:', error);
@@ -376,7 +396,7 @@ export const CourseEditorProvider: React.FC<{
   };
 
   // Helper function to save collection items (learning objectives, requirements, or target audience)
-  const saveCourseCollectionItems = async (tableName: string, courseId: number, items: string[]) => {
+  const saveCourseCollectionItems = async (tableName: 'course_learning_objectives' | 'course_requirements' | 'course_audiences', courseId: number, items: string[]) => {
     try {
       console.log(`[CourseEditorContext] Saving ${tableName} for course ${courseId}, ${items.length} items`);
       

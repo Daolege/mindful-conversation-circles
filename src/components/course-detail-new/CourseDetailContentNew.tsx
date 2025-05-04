@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CourseWithDetails } from '@/lib/types/course-new';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AnimatedCollapsible } from '@/components/ui/animated-collapsible';
@@ -9,6 +9,7 @@ import {
   Download, File, Target, Award, Users, Bookmark, GraduationCap, Book, CheckCircle
 } from 'lucide-react';
 import { useTranslations } from '@/hooks/useTranslations';
+import { getDefaultLearningObjectives, getDefaultLearningModes, getDefaultTargetAudience } from '@/lib/services/courseDefaultContentService';
 
 interface CourseDetailContentNewProps {
   course: CourseWithDetails;
@@ -30,8 +31,26 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
   });
   
   const [isOutlineLoading, setIsOutlineLoading] = useState(true);
+  const [defaultObjectives, setDefaultObjectives] = useState<string[]>([]);
+  const [defaultRequirements, setDefaultRequirements] = useState<string[]>([]);
+  const [defaultTargetAudience, setDefaultTargetAudience] = useState<string[]>([]);
   
-  React.useEffect(() => {
+  useEffect(() => {
+    // Load default content
+    const loadDefaults = () => {
+      const objectives = getDefaultLearningObjectives().map(item => item.text);
+      const requirements = getDefaultLearningModes().map(item => item.text);
+      const audience = getDefaultTargetAudience().map(item => item.text);
+      
+      setDefaultObjectives(objectives);
+      setDefaultRequirements(requirements);
+      setDefaultTargetAudience(audience);
+    };
+    
+    loadDefaults();
+  }, []);
+  
+  useEffect(() => {
     // Simulate outline loading with a short delay to show loading animation
     const timer = setTimeout(() => {
       setIsOutlineLoading(false);
@@ -71,33 +90,41 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
     { id: "mat2", course_id: course.id, name: "练习题.PDF", url: "#", position: 2, is_visible: true, created_at: new Date().toISOString() }
   ];
 
-  // Use learning objectives from database if they exist, otherwise use defaults
+  // Use learning objectives from database if they exist, otherwise use our loaded defaults
   const learningObjectives = (course.learning_objectives && course.learning_objectives.length > 0) 
     ? course.learning_objectives 
-    : [
-      "人工智能基础知识的掌握",
-      "机器学习算法的理解",
-      "神经网络基础",
-      "AI应用场景理解"
+    : defaultObjectives.length > 0 ? defaultObjectives : [
+      "品牌出海全案策划",
+      "国货出海全流程掌握",
+      "行业圈子完整开放",
+      "本土化运营实战训练",
+      "各类跨境纠纷与应对",
+      "本土市场运营套路传授"
     ];
 
-  // Use requirements from database if they exist, otherwise use defaults
+  // Use requirements from database if they exist, otherwise use our loaded defaults
   const requirements = (course.requirements && course.requirements.length > 0)
     ? course.requirements 
-    : [
-      "基本编程技能(推荐Python)",
-      "具备初步的数学知识(统计学基础)",
-      "有兴趣了解AI发展前沿"
+    : defaultRequirements.length > 0 ? defaultRequirements : [
+      "在线精录视频+直播",
+      "周周诊断+1v1指导",
+      "一线店铺运营官亲授",
+      "私域疑问秒解,问题不过夜",
+      "私域小组开放式交流",
+      "困难户帮协解决模式"
     ];
 
-  // Use target audience from database if they exist, otherwise use defaults
+  // Use target audience from database if they exist, otherwise use our loaded defaults
   const targetAudience = (course.target_audience && course.target_audience.length > 0)
     ? course.target_audience
-    : [
-      "对人工智能感兴趣的初学者",
-      "希望提升个人技能的专业人士",
-      "想在AI领域发展的学习者",
-      "对技术有兴趣的爱好者"
+    : defaultTargetAudience.length > 0 ? defaultTargetAudience : [
+      "个人或供应链企业",
+      "具备货源优势着更佳",
+      "转型或搞副业的人群",
+      "有决心搞钱搞流量的",
+      "搞钱恨人或职业收割者",
+      "数字游民爱好者",
+      "对抗型规则爱好者"
     ];
 
   return (
@@ -278,7 +305,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
           </CardContent>
         </Card>
 
-        {/* 课程要求 */}
+        {/* 学习模式 (Previously called 课程要求) */}
         <Card 
           className="hover:shadow-xl transition-all duration-500 ease-in-out shadow-lg shadow-gray-200/60 border-2 
             transform hover:-translate-y-1 hover:scale-[1.01] focus:scale-[1.01]
@@ -287,7 +314,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
           <CardHeader className="pb-0">
             <CardTitle className="text-lg flex items-center gap-2">
               <Book className="h-5 w-5" />
-              {t('courses:requirements')}
+              {t('courses:learningModes')}
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-4">
