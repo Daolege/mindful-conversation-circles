@@ -34,7 +34,7 @@ import {
   LucideIcon,
   
   // Icons for course highlights
-  Video, Clock, Language, FileText, Book
+  Video, Clock, Languages, FileText, Book
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -90,7 +90,7 @@ const iconMap: Record<string, React.ForwardRefExoticComponent<any>> = {
   // Icons for course highlights
   'video': Video,
   'clock': Clock,
-  'language': Language,
+  'language': Languages,
   'file-text': FileText,
   'book': Book,
 };

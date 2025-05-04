@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { CourseWithDetails } from '@/lib/types/course-new';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,7 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { 
   Lock, BookOpen, 
   Download, File, Target, Award, Users, Bookmark, GraduationCap, Book, CheckCircle,
-  Video, Clock, Star, Language, FileText
+  Video, Clock, Star, Languages, FileText
 } from 'lucide-react';
 import { useTranslations } from '@/hooks/useTranslations';
 import IconDisplay from '../course-detail/IconDisplay';

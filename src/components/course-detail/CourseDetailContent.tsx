@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { CourseMaterials } from '@/components/course/CourseMaterials';
 import { Course } from '@/lib/types/course';
@@ -51,9 +52,8 @@ export function CourseDetailContent({ course }: CourseDetailContentProps) {
         // Fetch module items using typeSafeSupabase helper to avoid type issues
         const fetchModuleItems = async (tableName: string): Promise<ModuleItem[]> => {
           try {
-            // Use explicit type cast to avoid type issues
             const { data, error } = await supabase
-              .from(tableName as any)
+              .from(tableName)
               .select('*')
               .eq('course_id', course.id)
               .eq('is_visible', true)
@@ -65,7 +65,7 @@ export function CourseDetailContent({ course }: CourseDetailContentProps) {
             return (Array.isArray(data) ? data : []).map(item => ({
               ...item,
               icon: item.icon || 'check'
-            })) as ModuleItem[];
+            }));
           } catch (error) {
             console.error(`Error fetching ${tableName}:`, error);
             return [];
