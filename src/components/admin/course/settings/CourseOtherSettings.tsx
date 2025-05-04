@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import React, { useEffect, useState } from 'react';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -36,28 +35,61 @@ import { getModuleSettings, ModuleSettings, updateModuleSettings } from '@/lib/s
 import { Loader2 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import CourseHighlightsList from './CourseHighlightsList';
-=======
->>>>>>> 5aeccfc5979759859051b1d11914bcfedb975ae1
 
-import React, { useState, useEffect } from 'react';
-import { FormSwitch } from '../../shared/FormSwitch';
-import { ModuleVisibilitySettings } from './ModuleVisibilitySettings';
-import { EnrollmentGuidesEditor } from './EnrollmentGuidesEditor';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { getCourseSettings, updateCourseSettings } from '@/lib/services/courseSettingsService';
-import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
-
+// Define props for the CourseOtherSettings component
 interface CourseOtherSettingsProps {
-  courseId: number;
+  courseId?: number;
+  learningObjectives?: string[];
+  requirements?: string[];
+  targetAudience?: string[];
+  onUpdate?: (field: string, value: any) => void;
+  savedSections?: {
+    objectives: boolean;
+    requirements: boolean;
+    audiences: boolean;
+  };
+  sectionVisibility?: {
+    objectives: boolean;
+    requirements: boolean;
+    audiences: boolean;
+    materials: boolean;
+  };
 }
 
-export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({ courseId }) => {
-  const [loading, setLoading] = useState(true);
-  const [materialsVisible, setMaterialsVisible] = useState(true);
-  const [saving, setSaving] = useState(false);
+export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({
+  courseId,
+  learningObjectives = [],
+  requirements = [],
+  targetAudience = [],
+  onUpdate,
+  savedSections = {
+    objectives: false,
+    requirements: false,
+    audiences: false
+  },
+  sectionVisibility = {
+    objectives: true,
+    requirements: true,
+    audiences: true,
+    materials: false
+  },
+}) => {
+  const [isFeatured, setIsFeatured] = useState<boolean>(false);
+  const [isPaidContent, setIsPaidContent] = useState<boolean>(true);
+  const [courseVisibility, setCourseVisibility] = useState<string>("draft");
+  
+  // 新增单次购买和订阅计划选项状态
+  const [allowsOneTimePurchase, setAllowsOneTimePurchase] = useState<boolean>(true);
+  const [allowsSubscription, setAllowsSubscription] = useState<boolean>(true);
+  const [purchaseOptionsError, setPurchaseOptionsError] = useState<string | null>(null);
+  
+  // State for module settings
+  const [objectivesSettings, setObjectivesSettings] = useState<ModuleSettings>({
+    title: '学习目标',
+    icon: 'target',
+    module_type: 'objectives'
+  });
 
-<<<<<<< HEAD
   const [requirementsSettings, setRequirementsSettings] = useState<ModuleSettings>({
     title: '学习模式',
     icon: 'book-open',
@@ -108,50 +140,295 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({ course
   );
 
   // Validate purchase options whenever they change
-=======
->>>>>>> 5aeccfc5979759859051b1d11914bcfedb975ae1
   useEffect(() => {
-    const fetchSettings = async () => {
+    if (!allowsOneTimePurchase && !allowsSubscription) {
+      setPurchaseOptionsError("请至少选择一种购买方式");
+    } else {
+      setPurchaseOptionsError(null);
+    }
+  }, [allowsOneTimePurchase, allowsSubscription]);
+
+  // Load course information and module settings
+  useEffect(() => {
+    async function loadCourseSettings() {
       if (!courseId) return;
-      setLoading(true);
+
       try {
-        const { data, error } = await getCourseSettings(courseId);
-        
+        const { data, error } = await supabase
+          .from('courses_new')
+          .select('is_featured, price, status, allows_one_time_purchase, allows_subscription')
+          .eq('id', courseId)
+          .single();
+
         if (error) throw error;
-        
-        setMaterialsVisible(data?.materialsvisible !== false); // Default to true if undefined
+
+        if (data) {
+          setIsFeatured(data.is_featured || false);
+          setIsPaidContent((data.price || 0) > 0);
+          setCourseVisibility(data.status || "draft");
+          
+          // 设置购买选项
+          setAllowsOneTimePurchase(data.allows_one_time_purchase !== false); // 默认为true
+          setAllowsSubscription(data.allows_subscription !== false); // 默认为true
+        }
       } catch (error) {
-        console.error("Error fetching course settings:", error);
-      } finally {
-        setLoading(false);
+        console.error("Error loading course settings:", error);
+        toast.error("无法加载课程设置");
       }
-    };
-    
-    fetchSettings();
+    }
+
+    async function loadModuleSettings() {
+      if (!courseId) return;
+
+      try {
+        // Load module settings
+        const [objSettings, reqSettings, audSettings] = await Promise.all([
+          getModuleSettings(courseId, 'objectives'),
+          getModuleSettings(courseId, 'requirements'),
+          getModuleSettings(courseId, 'audiences')
+        ]);
+
+        setObjectivesSettings(objSettings);
+        setRequirementsSettings(reqSettings);
+        setAudiencesSettings(audSettings);
+      } catch (error) {
+        console.error("Error loading module settings:", error);
+      }
+    }
+
+    loadCourseSettings();
+    loadModuleSettings();
   }, [courseId]);
 
-  const handleMaterialsVisibilityChange = async (visible: boolean) => {
+  // Load existing module items from database
+  useEffect(() => {
+    async function loadModuleItems() {
+      if (!courseId) return;
+
+      // Load learning objectives
+      setLoadingObjectives(true);
+      try {
+        const { data: objectivesData } = await getObjectives(courseId);
+        
+        if (!objectivesData || objectivesData.length === 0) {
+          // If no objectives found, try to add default ones
+          const { data: defaultObjectivesData } = await addDefaultObjectives(courseId);
+          if (defaultObjectivesData && defaultObjectivesData.length > 0) {
+            const formattedObjectives = defaultObjectivesData.map(item => ({
+              id: item.id,
+              text: item.content,
+              position: item.position,
+              icon: item.icon || 'smile',
+              is_visible: item.is_visible
+            }));
+            setLearningObjectivesList(formattedObjectives);
+          }
+        } else {
+          const formattedObjectives = objectivesData.map(item => ({
+            id: item.id,
+            text: item.content,
+            position: item.position,
+            icon: item.icon || 'smile',
+            is_visible: item.is_visible
+          }));
+          setLearningObjectivesList(formattedObjectives);
+        }
+      } catch (error) {
+        console.error("Error loading learning objectives:", error);
+      } finally {
+        setLoadingObjectives(false);
+      }
+
+      // Load requirements
+      setLoadingRequirements(true);
+      try {
+        const { data: requirementsData } = await getRequirements(courseId);
+        
+        if (!requirementsData || requirementsData.length === 0) {
+          // If no requirements found, try to add default ones
+          const { data: defaultRequirementsData } = await addDefaultRequirements(courseId);
+          if (defaultRequirementsData && defaultRequirementsData.length > 0) {
+            const formattedRequirements = defaultRequirementsData.map(item => ({
+              id: item.id,
+              text: item.content,
+              position: item.position,
+              icon: item.icon || 'smile',
+              is_visible: item.is_visible
+            }));
+            setRequirementsList(formattedRequirements);
+          }
+        } else {
+          const formattedRequirements = requirementsData.map(item => ({
+            id: item.id,
+            text: item.content,
+            position: item.position,
+            icon: item.icon || 'smile',
+            is_visible: item.is_visible
+          }));
+          setRequirementsList(formattedRequirements);
+        }
+      } catch (error) {
+        console.error("Error loading requirements:", error);
+      } finally {
+        setLoadingRequirements(false);
+      }
+
+      // Load target audiences
+      setLoadingAudiences(true);
+      try {
+        const { data: audiencesData } = await getAudiences(courseId);
+        
+        if (!audiencesData || audiencesData.length === 0) {
+          // If no audiences found, try to add default ones
+          const { data: defaultAudiencesData } = await addDefaultAudiences(courseId);
+          if (defaultAudiencesData && defaultAudiencesData.length > 0) {
+            const formattedAudiences = defaultAudiencesData.map(item => ({
+              id: item.id,
+              text: item.content,
+              position: item.position,
+              icon: item.icon || 'smile',
+              is_visible: item.is_visible
+            }));
+            setTargetAudienceList(formattedAudiences);
+          }
+        } else {
+          const formattedAudiences = audiencesData.map(item => ({
+            id: item.id,
+            text: item.content,
+            position: item.position,
+            icon: item.icon || 'smile',
+            is_visible: item.is_visible
+          }));
+          setTargetAudienceList(formattedAudiences);
+        }
+      } catch (error) {
+        console.error("Error loading target audiences:", error);
+      } finally {
+        setLoadingAudiences(false);
+      }
+    }
+
+    loadModuleItems();
+  }, [courseId]);
+
+  // Handle module settings update
+  const handleUpdateObjectivesSettings = async (settings: Partial<ModuleSettings>) => {
     if (!courseId) return;
     
-    setSaving(true);
+    // Create a complete ModuleSettings object by merging with existing settings
+    const updatedSettings: ModuleSettings = {
+      ...objectivesSettings,
+      ...settings,
+      module_type: 'objectives' // Ensure module_type is set correctly
+    };
+    
+    await updateModuleSettings(courseId, 'objectives', updatedSettings);
+    setObjectivesSettings(updatedSettings);
+  };
+
+  const handleUpdateRequirementsSettings = async (settings: Partial<ModuleSettings>) => {
+    if (!courseId) return;
+    
+    // Create a complete ModuleSettings object by merging with existing settings
+    const updatedSettings: ModuleSettings = {
+      ...requirementsSettings,
+      ...settings,
+      module_type: 'requirements' // Ensure module_type is set correctly
+    };
+    
+    await updateModuleSettings(courseId, 'requirements', updatedSettings);
+    setRequirementsSettings(updatedSettings);
+  };
+
+  const handleUpdateAudiencesSettings = async (settings: Partial<ModuleSettings>) => {
+    if (!courseId) return;
+    
+    // Create a complete ModuleSettings object by merging with existing settings
+    const updatedSettings: ModuleSettings = {
+      ...audiencesSettings,
+      ...settings,
+      module_type: 'audiences' // Ensure module_type is set correctly
+    };
+    
+    await updateModuleSettings(courseId, 'audiences', updatedSettings);
+    setAudiencesSettings(updatedSettings);
+  };
+
+  // Handle learning objectives changes
+  const handleLearningObjectivesChange = async (newItems: ListItem[]) => {
+    if (!courseId) return;
+    setLearningObjectivesList(newItems);
+    
     try {
-      const { error } = await updateCourseSettings(courseId, {
-        materialsvisible: visible
-      });
+      // Get existing items to compare what's changed
+      const { data: existingItems } = await getObjectives(courseId);
+      const existingIds = new Set(existingItems?.map(item => item.id) || []);
       
-      if (error) throw error;
+      // Determine which items are new, updated, or deleted
+      const itemsToAdd: ListItem[] = [];
+      const itemsToUpdate: { id: string, text: string, icon: string }[] = [];
+      const itemsToUpdatePosition: { id: string, position: number }[] = [];
+      const itemsToDelete: string[] = [];
       
-      setMaterialsVisible(visible);
-      toast.success("课程资料可见性已更新");
+      // Find items to add or update
+      for (const item of newItems) {
+        if (!existingIds.has(item.id)) {
+          // New item
+          itemsToAdd.push(item);
+        } else {
+          // Check if text content changed for existing items
+          const existingItem = existingItems?.find(existing => existing.id === item.id);
+          if (existingItem && (existingItem.content !== item.text || existingItem.icon !== item.icon)) {
+            itemsToUpdate.push({ id: item.id, text: item.text, icon: item.icon || 'smile' });
+          }
+          
+          // Check if position changed
+          if (existingItem && existingItem.position !== item.position) {
+            itemsToUpdatePosition.push({ id: item.id, position: item.position });
+          }
+        }
+      }
+      
+      // Find items to delete
+      if (existingItems) {
+        for (const existingItem of existingItems) {
+          if (!newItems.find(item => item.id === existingItem.id)) {
+            itemsToDelete.push(existingItem.id);
+          }
+        }
+      }
+      
+      // Execute the changes
+      // Add new items
+      for (const item of itemsToAdd) {
+        await addObjective(courseId, item.text, item.position, true);
+      }
+      
+      // Update modified items
+      for (const item of itemsToUpdate) {
+        await updateObjective(item.id, item.text);
+        // Note: we would need to update the icon here if updateObjective supported icons
+      }
+      
+      // Delete removed items
+      for (const id of itemsToDelete) {
+        await deleteObjective(id);
+      }
+      
+      // Update positions if needed
+      if (itemsToUpdatePosition.length > 0) {
+        await updateObjectiveOrder(itemsToUpdatePosition);
+      }
+      
+      if (onUpdate) {
+        onUpdate('learning_objectives', newItems.map(item => item.text));
+      }
     } catch (error) {
-      console.error("Error updating materials visibility:", error);
-      toast.error("更新课程资料可见性失败");
-    } finally {
-      setSaving(false);
+      console.error("Error updating learning objectives:", error);
+      toast.error("更新学习目标失败");
     }
   };
 
-<<<<<<< HEAD
   // Handle requirements changes
   const handleRequirementsChange = async (newItems: ListItem[]) => {
     if (!courseId) return;
@@ -453,38 +730,86 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({ course
         <div className="hidden md:block"></div>
       </div>
 
-=======
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center p-12">
-        <Loader2 className="h-8 w-8 animate-spin mr-2" />
-        <p className="text-lg">加载课程设置...</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-6">
->>>>>>> 5aeccfc5979759859051b1d11914bcfedb975ae1
       <Card>
-        <CardHeader>
-          <CardTitle>模块可见性设置</CardTitle>
+        <CardHeader className="pb-2">
+          <CardTitle>课程特性</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <FormSwitch
-            id="materials-visibility"
-            label="显示课程资料"
-            description="控制学生是否可以查看课程资料"
-            checked={materialsVisible}
-            onCheckedChange={handleMaterialsVisibilityChange}
-            disabled={saving}
-          />
-          
-          <ModuleVisibilitySettings courseId={courseId} />
+          <div className="flex items-center justify-between">
+            <Label htmlFor="featured-course">精选课程</Label>
+            <Switch
+              id="featured-course"
+              checked={isFeatured}
+              onCheckedChange={handleFeaturedChange}
+            />
+          </div>
+          <div className="flex items-center justify-between">
+            <Label htmlFor="paid-content">付费内容</Label>
+            <Switch
+              id="paid-content"
+              checked={isPaidContent}
+              onCheckedChange={handlePaidContentChange}
+            />
+          </div>
         </CardContent>
       </Card>
 
-      <EnrollmentGuidesEditor courseId={courseId} />
+      {/* Horizontal layout for the three modules */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {loadingObjectives ? (
+          <Card className="flex items-center justify-center p-8">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </Card>
+        ) : (
+          <EditableListComponent
+            title={objectivesSettings.title}
+            description="列出学习者完成课程后将获得的技能"
+            items={learningObjectivesList}
+            onChange={handleLearningObjectivesChange}
+            placeholder="例如: 掌握基础Python语法"
+            moduleType="objectives"
+            moduleSettings={objectivesSettings}
+            onUpdateModuleSettings={handleUpdateObjectivesSettings}
+            courseId={courseId}
+          />
+        )}
+
+        {loadingRequirements ? (
+          <Card className="flex items-center justify-center p-8">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </Card>
+        ) : (
+          <EditableListComponent
+            title={requirementsSettings.title}
+            description="列出参加课程所需的先决条件"
+            items={requirementsList}
+            onChange={handleRequirementsChange}
+            placeholder="例如: 基本计算机操作技能"
+            moduleType="requirements"
+            moduleSettings={requirementsSettings}
+            onUpdateModuleSettings={handleUpdateRequirementsSettings}
+            courseId={courseId}
+          />
+        )}
+
+        {loadingAudiences ? (
+          <Card className="flex items-center justify-center p-8">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </Card>
+        ) : (
+          <EditableListComponent
+            title={audiencesSettings.title}
+            description="说明这门课程适合哪类学习者"
+            items={targetAudienceList}
+            onChange={handleTargetAudienceChange}
+            placeholder="例如: 初学者, 想转行的专业人士"
+            moduleType="audiences"
+            moduleSettings={audiencesSettings}
+            onUpdateModuleSettings={handleUpdateAudiencesSettings}
+            courseId={courseId}
+          />
+        )}
+      </div>
     </div>
   );
 };

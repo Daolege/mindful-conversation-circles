@@ -651,7 +651,6 @@ export type Database = {
           is_featured: boolean | null
           language: string | null
           lecture_count: number | null
-          materialsvisible: boolean | null
           original_price: number | null
           price: number
           published_at: string | null
@@ -672,7 +671,6 @@ export type Database = {
           is_featured?: boolean | null
           language?: string | null
           lecture_count?: number | null
-          materialsvisible?: boolean | null
           original_price?: number | null
           price?: number
           published_at?: string | null
@@ -693,7 +691,6 @@ export type Database = {
           is_featured?: boolean | null
           language?: string | null
           lecture_count?: number | null
-          materialsvisible?: boolean | null
           original_price?: number | null
           price?: number
           published_at?: string | null
@@ -1597,10 +1594,6 @@ export type Database = {
       }
       get_module_settings: {
         Args: { p_course_id: number; p_module_type: string }
-        Returns: Json
-      }
-      get_module_visibilities: {
-        Args: { p_course_id: number }
         Returns: Json
       }
       get_payment_method_stats: {
