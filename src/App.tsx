@@ -65,9 +65,9 @@ function App() {
                 <Route path="/" element={<Home />} />
                 <Route path="/courses" element={<Courses />} />
                 
-                {/* Redirect old course detail path to new path - FIXED TYPE ERROR */}
+                {/* Fix type error - use string literals for redirect paths */}
                 <Route path="/courses/:courseId" element={
-                  <Navigate to={({ params }) => `/courses-new/${params.courseId}`} replace />
+                  <Navigate to="/courses-new/:courseId" replace />
                 } />
                 
                 {/* Use the new course detail page */}
@@ -82,9 +82,9 @@ function App() {
                 <Route path="/admin" element={<Admin />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 
-                {/* Redirect old course editor path to new path - FIXED TYPE ERROR */}
+                {/* Fix type error - use string literals for redirect paths */}
                 <Route path="/admin/courses/:courseId" element={
-                  <Navigate to={({ params }) => `/admin/courses-new/${params.courseId}`} replace />
+                  <Navigate to="/admin/courses-new/:courseId" replace />
                 } />
                 <Route path="/admin/courses/new" element={<Navigate to="/admin/courses-new/new" replace />} />
                 
