@@ -6,7 +6,7 @@ import { selectFromTable } from "@/lib/services/typeSafeSupabase";
 // Get course by ID 
 export const getCourseById = async (courseId: number): Promise<CourseResponse> => {
   try {
-    // Use a more direct approach to reduce type complexity
+    // Execute the query in a single chain to maintain proper types
     const { data, error } = await supabase
       .from('courses')
       .select(`
@@ -35,48 +35,23 @@ export const getCourses = async (
   search?: string
 ): Promise<CourseResponse> => {
   try {
-    // Avoid complex chaining that causes TypeScript issues
-    let data = null;
-    let count = null;
-    let error = null;
-
-    // Apply filters with simple conditional blocks
+    let query = supabase
+      .from('courses')
+      .select('*', { count: 'exact' });
+    
+    // Apply filters conditionally
     if (category) {
-      const result = await supabase
-        .from('courses')
-        .select('*', { count: 'exact' })
-        .eq('category', category)
-        .order('created_at', { ascending: false })
-        .range((page - 1) * limit, page * limit - 1);
-      
-      data = result.data;
-      count = result.count;
-      error = result.error;
-    } 
-    else if (search) {
-      const result = await supabase
-        .from('courses')
-        .select('*', { count: 'exact' })
-        .ilike('title', `%${search}%`)
-        .order('created_at', { ascending: false })
-        .range((page - 1) * limit, page * limit - 1);
-      
-      data = result.data;
-      count = result.count;
-      error = result.error;
+      query = query.eq('category', category);
     }
-    else {
-      // No filters, execute a simple query
-      const result = await supabase
-        .from('courses')
-        .select('*', { count: 'exact' })
-        .order('created_at', { ascending: false })
-        .range((page - 1) * limit, page * limit - 1);
-      
-      data = result.data;
-      count = result.count;
-      error = result.error;
+    
+    if (search) {
+      query = query.ilike('title', `%${search}%`);
     }
+    
+    // Apply ordering and pagination in a single chain
+    const { data, count, error } = await query
+      .order('created_at', { ascending: false })
+      .range((page - 1) * limit, page * limit - 1);
     
     if (error) {
       throw new Error(error.message);
@@ -99,7 +74,7 @@ export const getCourses = async (
 // Get featured courses
 export const getFeaturedCourses = async (limit = 6): Promise<CourseResponse> => {
   try {
-    // Execute the query in a single call rather than building it step by step
+    // Execute query in a single chain to maintain type information
     const { data, error } = await supabase
       .from('courses')
       .select('*')
