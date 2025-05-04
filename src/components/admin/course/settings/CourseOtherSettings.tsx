@@ -26,7 +26,7 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({ course
         
         if (error) throw error;
         
-        setMaterialsVisible(data?.materialsVisible !== false); // Default to true if undefined
+        setMaterialsVisible(data?.materialsvisible !== false); // Default to true if undefined
       } catch (error) {
         console.error("Error fetching course settings:", error);
       } finally {
@@ -43,7 +43,7 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({ course
     setSaving(true);
     try {
       const { error } = await updateCourseSettings(courseId, {
-        materialsVisible: visible
+        materialsvisible: visible
       });
       
       if (error) throw error;

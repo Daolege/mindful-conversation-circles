@@ -2,7 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 
 interface CourseSettings {
-  materialsVisible?: boolean;
+  materialsvisible?: boolean;
   // Add other settings as needed
 }
 
@@ -19,7 +19,7 @@ export const updateCourseSettings = async (
     const { error } = await supabase
       .from('courses_new')
       .update({
-        materialsVisible: settings.materialsVisible
+        materialsvisible: settings.materialsvisible
       })
       .eq('id', courseId);
     
@@ -42,7 +42,7 @@ export const getCourseSettings = async (
   try {
     const { data, error } = await supabase
       .from('courses_new')
-      .select('materialsVisible')
+      .select('materialsvisible')
       .eq('id', courseId)
       .single();
     
@@ -50,7 +50,7 @@ export const getCourseSettings = async (
     
     return { 
       data: {
-        materialsVisible: data.materialsVisible
+        materialsvisible: data.materialsvisible
       },
       error: undefined 
     };
