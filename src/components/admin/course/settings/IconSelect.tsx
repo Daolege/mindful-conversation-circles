@@ -34,7 +34,7 @@ import {
   Activity, Anchor, Archive, ArrowRight,
   AtSign, Bell, Bookmark, Calendar, Camera, 
   Clipboard, Clock, Cloud, Code, Coffee,
-  Command, Compass, Copy, Database, Download,
+  Compass, Copy, Database, Download,
   Edit, File, FileText, Flag, Gift, Heart, 
   Home, Image, Inbox, Info, Key, Layers,
   Layout, Link, List, Lock, Mail, Map, 
@@ -43,10 +43,11 @@ import {
   Play, Plus, Power, Printer, Radio, 
   Save, Settings, Share, ShoppingBag, Slash,
   Smartphone, Speaker, Star, Sun, Tablet, 
-  Tag, Terminal, ThumbsUp, Tool, Trash2, 
+  Tag, Terminal, ThumbsUp, Trash2, 
   Truck, Tv, Upload, User, Video, Zap,
   LucideIcon
 } from 'lucide-react';
+
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
@@ -99,7 +100,6 @@ const iconMap: Record<string, React.ForwardRefExoticComponent<any>> = {
   'cloud': Cloud,
   'code': Code,
   'coffee': Coffee,
-  'command': Command,
   'compass': Compass,
   'copy': Copy,
   'database': Database,
@@ -150,7 +150,6 @@ const iconMap: Record<string, React.ForwardRefExoticComponent<any>> = {
   'tag': Tag,
   'terminal': Terminal,
   'thumbs-up': ThumbsUp,
-  'tool': Tool,
   'trash-2': Trash2,
   'truck': Truck,
   'tv': Tv,
@@ -199,7 +198,7 @@ const iconGroups: IconGroup[] = [
     label: "其他图标",
     icons: ['activity', 'anchor', 'archive', 'arrow-right', 'at-sign',
             'bookmark', 'calendar', 'camera', 'clipboard', 'clock', 
-            'cloud', 'code', 'coffee', 'command', 'compass', 'copy', 
+            'cloud', 'code', 'coffee', 'compass', 'copy', 
             'database', 'download', 'edit', 'file', 'file-text', 'flag',
             'home', 'image', 'inbox', 'info', 'key', 'layers', 'layout',
             'link', 'list', 'lock', 'mail', 'map', 'menu', 'message-square',
@@ -207,7 +206,7 @@ const iconGroups: IconGroup[] = [
             'phone', 'pie-chart', 'play', 'plus', 'power', 'printer',
             'radio', 'save', 'settings', 'share', 'shopping-bag', 'slash',
             'smartphone', 'speaker', 'sun', 'tablet', 'tag', 'terminal',
-            'tool', 'trash-2', 'truck', 'tv', 'upload', 'user', 'video', 'zap',
+            'thumbs-up', 'trash-2', 'truck', 'tv', 'upload', 'user', 'video', 'zap',
             'alert-circle', 'bar-chart']
   }
 ];
