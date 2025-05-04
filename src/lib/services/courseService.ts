@@ -154,10 +154,16 @@ export const updateCourseOrder = async (courseIds: number[]) => {
 };
 
 // Save course (needed by CourseEditorContext.tsx)
-export const saveCourse = async (courseData: Record<string, any>) => {
+// Fixed the issue with the type instantiation and function parameter
+export const saveCourse = async (courseData: { id?: number; title: string; [key: string]: any }) => {
   try {
     const { id, ...courseFields } = courseData;
     let result;
+    
+    // Ensure required fields are present
+    if (!courseFields.title) {
+      throw new Error("Course title is required");
+    }
     
     if (id) {
       result = await supabase

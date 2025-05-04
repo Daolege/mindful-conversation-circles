@@ -65,11 +65,10 @@ function App() {
                 <Route path="/" element={<Home />} />
                 <Route path="/courses" element={<Courses />} />
                 
-                {/* Redirect old course detail path to new path */}
-                <Route path="/courses/:courseId" element={<Navigate to={(location) => {
-                  const courseId = location.pathname.split('/').pop();
-                  return `/courses-new/${courseId}`;
-                }} />} />
+                {/* Redirect old course detail path to new path - FIXED TYPE ERROR */}
+                <Route path="/courses/:courseId" element={
+                  <Navigate to={({ params }) => `/courses-new/${params.courseId}`} replace />
+                } />
                 
                 {/* Use the new course detail page */}
                 <Route path="/courses-new/:courseId" element={<CourseDetailNew />} />
@@ -83,12 +82,11 @@ function App() {
                 <Route path="/admin" element={<Admin />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 
-                {/* Redirect old course editor path to new path */}
-                <Route path="/admin/courses/:courseId" element={<Navigate to={(location) => {
-                  const courseId = location.pathname.split('/').pop();
-                  return `/admin/courses-new/${courseId}`;
-                }} />} />
-                <Route path="/admin/courses/new" element={<Navigate to="/admin/courses-new/new" />} />
+                {/* Redirect old course editor path to new path - FIXED TYPE ERROR */}
+                <Route path="/admin/courses/:courseId" element={
+                  <Navigate to={({ params }) => `/admin/courses-new/${params.courseId}`} replace />
+                } />
+                <Route path="/admin/courses/new" element={<Navigate to="/admin/courses-new/new" replace />} />
                 
                 {/* Use the new course editor */}
                 <Route path="/admin/courses-new/new" element={<CourseNewEditor />} />
