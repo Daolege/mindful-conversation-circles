@@ -19,7 +19,7 @@ import { CourseLoadingState } from "@/components/course/CourseLoadingState";
 import { CourseNotFound } from "@/components/course/CourseNotFound";
 import { CourseLearnHeader } from "@/components/course/CourseLearnHeader";
 import { CourseSyllabus } from "@/components/course/CourseSyllabus";
-import { CourseWithDetails } from "@/lib/types/course-new";
+import { CourseWithDetails, CourseData } from "@/lib/types/course-new";
 import { DatabaseFixInitializer } from "@/components/course/DatabaseFixInitializer";
 import { useTranslations } from "@/hooks/useTranslations";
 
@@ -83,14 +83,14 @@ const CourseLearn = () => {
     if (isNewCourse) {
       console.log('New course query result:', {
         data: newCourseResponse?.data ? 
-          { id: newCourseResponse.data.id, title: newCourseResponse.data.title } : 
+          { id: (newCourseResponse.data as CourseWithDetails).id, title: (newCourseResponse.data as CourseWithDetails).title } : 
           null,
         error: newCourseError,
         isLoading: isLoadingNewCourse
       });
     } else {
       console.log('Standard course query result:', {
-        data: courseResponse?.data ? 
+        data: courseResponse?.data && !Array.isArray(courseResponse.data) ? 
           { id: courseResponse.data.id, title: courseResponse.data.title } : 
           null,
         error: standardCourseError,
@@ -128,13 +128,13 @@ const CourseLearn = () => {
 
   // Determine course data based on source
   const isLoading = isLoadingStandardCourse || isLoadingNewCourse;
-  const standardCourse = courseResponse?.data;
+  const standardCourse = courseResponse?.data && !Array.isArray(courseResponse.data) ? courseResponse.data : null;
   const newCourse = newCourseResponse?.data;
   
   // Process course data based on source
   let course = isNewCourse ? newCourse : standardCourse;
-  let title = isNewCourse && newCourse ? newCourse.title : standardCourse?.title || '';
-  let videoUrl = isNewCourse && newCourse ? undefined : (standardCourse && !Array.isArray(standardCourse) ? standardCourse.video_url : '');
+  let title = isNewCourse && newCourse ? (newCourse as CourseWithDetails).title : (standardCourse?.title || '');
+  let videoUrl = isNewCourse && newCourse ? undefined : (standardCourse ? standardCourse.video_url : '');
   
   // Transform syllabus data based on the course type
   let syllabusData: CourseSyllabusSection[] = [];
