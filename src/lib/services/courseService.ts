@@ -74,12 +74,19 @@ export const getCourses = async (
 // Get featured courses
 export const getFeaturedCourses = async (limit = 6): Promise<CourseResponse> => {
   try {
-    // Use a single chain approach for the Supabase query to maintain proper typing
-    const { data, error } = await supabase
-      .from('courses')
-      .select('*')
+    // Create the base query first without chaining
+    const query = supabase.from('courses');
+    
+    // Then perform selection
+    const selectQuery = query.select('*');
+    
+    // Add filters individually
+    const filteredQuery = selectQuery
       .eq('is_featured', true)
-      .eq('status', 'published')
+      .eq('status', 'published');
+    
+    // Finally add ordering and limiting and await the result
+    const { data, error } = await filteredQuery
       .order('created_at', { ascending: false })
       .limit(limit);
     
