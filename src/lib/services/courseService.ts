@@ -6,7 +6,6 @@ import { selectFromTable } from "@/lib/services/typeSafeSupabase";
 // Get course by ID 
 export const getCourseById = async (courseId: number): Promise<CourseResponse> => {
   try {
-    // Execute the query in a single chain to maintain proper types
     const { data, error } = await supabase
       .from('courses')
       .select(`
@@ -48,7 +47,7 @@ export const getCourses = async (
       query = query.ilike('title', `%${search}%`);
     }
     
-    // Apply ordering and pagination in a single chain
+    // Apply ordering and pagination
     const { data, count, error } = await query
       .order('created_at', { ascending: false })
       .range((page - 1) * limit, page * limit - 1);
@@ -74,19 +73,11 @@ export const getCourses = async (
 // Get featured courses
 export const getFeaturedCourses = async (limit = 6): Promise<CourseResponse> => {
   try {
-    // Create the base query first without chaining
-    const query = supabase.from('courses');
-    
-    // Then perform selection
-    const selectQuery = query.select('*');
-    
-    // Add filters individually
-    const filteredQuery = selectQuery
+    const { data, error } = await supabase
+      .from('courses')
+      .select('*')
       .eq('is_featured', true)
-      .eq('status', 'published');
-    
-    // Finally add ordering and limiting and await the result
-    const { data, error } = await filteredQuery
+      .eq('status', 'published')
       .order('created_at', { ascending: false })
       .limit(limit);
     
@@ -104,7 +95,6 @@ export const getFeaturedCourses = async (limit = 6): Promise<CourseResponse> => 
 // Get courses by instructor ID (needed by CourseManagement.tsx)
 export const getCoursesByInstructorId = async (instructorId: string) => {
   try {
-    // Execute query in a single operation
     const { data, error } = await supabase
       .from('courses')
       .select('*')
@@ -125,7 +115,6 @@ export const getCoursesByInstructorId = async (instructorId: string) => {
 // Delete course (needed by CourseManagement.tsx)
 export const deleteCourse = async (courseId: number) => {
   try {
-    // Execute the delete operation in a single call
     const { error } = await supabase
       .from('courses')
       .delete()
@@ -145,7 +134,6 @@ export const deleteCourse = async (courseId: number) => {
 // Update course order (needed by CourseManagement.tsx)
 export const updateCourseOrder = async (courseIds: number[]) => {
   try {
-    // Use simple loop with awaited promises to avoid complex typing
     for (let i = 0; i < courseIds.length; i++) {
       const { error: updateError } = await supabase
         .from('courses')
@@ -171,7 +159,6 @@ export const saveCourse = async (courseData: any) => {
     let result;
     
     if (id) {
-      // Update existing course in a single operation
       result = await supabase
         .from('courses')
         .update(courseFields)
@@ -179,7 +166,6 @@ export const saveCourse = async (courseData: any) => {
         .select()
         .single();
     } else {
-      // Insert new course in a single operation
       result = await supabase
         .from('courses')
         .insert(courseFields)
