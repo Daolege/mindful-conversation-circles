@@ -1,9 +1,9 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { CourseData, CourseResponse, CourseWithDetails, CourseSection, CourseLecture } from '@/lib/types/course-new';
+import { CourseData, CourseResponseSingle, CourseResponseMultiple, CourseWithDetails, CourseSection, CourseLecture } from '@/lib/types/course-new';
 
 // 获取所有课程
-export const getAllCoursesNew = async (): Promise<CourseResponse> => {
+export const getAllCoursesNew = async (): Promise<CourseResponseMultiple> => {
   try {
     console.log('[courseNewService] 获取所有课程');
     
@@ -25,7 +25,7 @@ export const getAllCoursesNew = async (): Promise<CourseResponse> => {
 };
 
 // 获取课程内容（包括学习目标、课程要求和适合人群）
-export const getCourseNewById = async (courseId: number): Promise<CourseResponse> => {
+export const getCourseNewById = async (courseId: number): Promise<CourseResponseSingle> => {
   try {
     console.log(`[courseNewService] 获取课程ID: ${courseId}`);
     

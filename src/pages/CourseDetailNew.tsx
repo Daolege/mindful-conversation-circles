@@ -44,7 +44,7 @@ const CourseDetailNew = () => {
   }, [courseId, courseIdNum, refetch]);
 
   // 直接访问 courseResponse.data 作为 CourseWithDetails
-  const course = courseResponse?.data as CourseWithDetails | undefined;
+  const course = courseResponse?.data;
 
   // Add enhanced debug logging
   useEffect(() => {

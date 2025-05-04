@@ -1,57 +1,50 @@
 
+import { CourseData, CourseWithDetails } from "@/lib/types/course-new";
 import { Course } from "@/lib/types/course";
-import { CourseNew } from "@/lib/types/course-new";
 
 /**
- * Transforms a CourseNew object to Course format for compatibility with existing components
+ * Transform a CourseData or CourseWithDetails object into the legacy Course type
  */
-export const transformCourseNewToOld = (courseNew: CourseNew): Course => {
-  // Get current date in ISO format for lastUpdated if not available
-  const currentDateISO = new Date().toISOString();
-  
-  // Log the transformation input
-  console.log("[transformCourseNewToOld] Input data:", courseNew);
-  console.log("[transformCourseNewToOld] Input language:", courseNew.language);
-  console.log("[transformCourseNewToOld] Input category:", courseNew.category);
-  
-  // Determine the language to use
-  const languageToUse = courseNew.language || courseNew.category || 'zh';
-  console.log("[transformCourseNewToOld] Using language:", languageToUse);
-  
-  const result = {
+export const transformCourseNewToOld = (courseNew: CourseData | CourseWithDetails): Course => {
+  return {
     id: courseNew.id,
     title: courseNew.title,
     description: courseNew.description || '',
-    price: courseNew.price,
+    instructor: courseNew.instructor_name || courseNew.instructor || '',
+    instructorId: 0, // Default value as we don't have this in the new model
+    category: courseNew.category || courseNew.language || '',
+    price: courseNew.price || 0,
     originalprice: courseNew.original_price || null,
-    category: courseNew.language || 'zh', // Map language to category for backward compatibility
-    featured: courseNew.is_featured || false,
-    display_order: courseNew.display_order || 0,
-    enrollment_count: courseNew.enrollment_count || 0,
+    imageUrl: courseNew.thumbnail_url || courseNew.imageurl || '',
+    rating: courseNew.rating || 0,
+    ratingCount: courseNew.rating_count || 0,
     studentCount: courseNew.enrollment_count || 0,
-    language: languageToUse, // Ensure language is explicitly set
-    published_at: courseNew.published_at || '',
+    duration: '', // Not directly mapped
     lectures: courseNew.lecture_count || 0,
-    lastUpdated: courseNew.updated_at || currentDateISO,
-    lastupdated: courseNew.updated_at || currentDateISO,
-    // Set defaults for required fields that might not be present in CourseNew
-    ratingCount: 0,
-    rating: 4.5, // Default rating
-    imageUrl: courseNew.thumbnail_url || null, // Will use default image in CourseCard if not available
+    level: 'all', // Default value
+    lastUpdated: courseNew.updated_at || '',
+    featured: courseNew.is_featured || courseNew.featured || false,
+    whatYouWillLearn: Array.isArray(courseNew.learning_objectives) ? courseNew.learning_objectives : [],
+    requirements: Array.isArray(courseNew.requirements) ? courseNew.requirements : [],
+    language: courseNew.language || 'zh',
+    enrollment_count: courseNew.enrollment_count || 0,
+    published_at: courseNew.published_at || '',
+    display_order: courseNew.display_order || 0,
     currency: courseNew.currency || 'cny',
-    // Additional fields for better card display
-    level: 'all', // Default level
-    duration: '自定进度', // Self-paced by default
-    whatYouWillLearn: [], // Default empty array
-    whatyouwilllearn: [],
-    requirements: [],
-    instructor: '', // Add empty instructor for compatibility
-    instructorId: 0,
+    syllabus: courseNew.syllabus || []
   };
-  
-  // Log the transformation output
-  console.log("[transformCourseNewToOld] Output data language:", result.language);
-  console.log("[transformCourseNewToOld] Output data category:", result.category);
-  
-  return result;
+};
+
+/**
+ * Check if the API response is a single course (CourseWithDetails) or an array of courses
+ */
+export const isSingleCourse = (data: CourseWithDetails | CourseData[]): data is CourseWithDetails => {
+  return !Array.isArray(data) && typeof data === 'object' && 'id' in data;
+};
+
+/**
+ * Check if the API response is an array of courses
+ */
+export const isCoursesArray = (data: CourseWithDetails | CourseData[]): data is CourseData[] => {
+  return Array.isArray(data);
 };

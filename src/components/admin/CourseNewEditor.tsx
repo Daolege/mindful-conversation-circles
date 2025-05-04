@@ -20,7 +20,7 @@ import { toast } from "sonner";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { CourseNew, CourseSection, CourseLecture } from "@/lib/types/course-new";
+import { CourseNew, CourseSection, CourseLecture, CourseWithDetails } from "@/lib/types/course-new";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { CourseOutlineEditor } from './course/outline/CourseOutlineEditor';
 import { CourseOtherSettings } from './course/settings/CourseOtherSettings';
@@ -86,21 +86,22 @@ const CourseNewEditor = () => {
         }
         
         if (data) {
+          const courseDetails = data as CourseWithDetails;
           form.reset({
-            title: data.title,
-            description: data.description || "",
-            price: data.price,
-            original_price: data.original_price,
-            currency: data.currency,
-            language: data.language || "zh",
-            display_order: data.display_order,
-            status: data.status as "draft" | "published" | "archived",
-            is_featured: data.is_featured,
+            title: courseDetails.title,
+            description: courseDetails.description || "",
+            price: courseDetails.price,
+            original_price: courseDetails.original_price,
+            currency: courseDetails.currency,
+            language: courseDetails.language || "zh",
+            display_order: courseDetails.display_order,
+            status: courseDetails.status as "draft" | "published" | "archived",
+            is_featured: courseDetails.is_featured,
           });
           
-          if (data.sections) {
-            console.log("Loading sections:", data.sections);
-            setSections(data.sections);
+          if (courseDetails.sections) {
+            console.log("Loading sections:", courseDetails.sections);
+            setSections(courseDetails.sections);
           } else {
             setSections([]);
           }

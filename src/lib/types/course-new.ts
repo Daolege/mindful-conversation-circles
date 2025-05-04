@@ -78,6 +78,23 @@ export interface CourseWithDetails extends CourseNew {
   rating?: number;
   rating_count?: number;
   featured?: boolean; // For backward compatibility
+  
+  // These fields are added for backward compatibility with the error messages
+  highlights?: string[];
+  imageurl?: string;
+  lectures?: number;
+  
+  // Added for backward compatibility with CourseEditorContext
+  syllabus_data?: any;
+  syllabus_json?: any;
+  requirements_data?: any;
+  requirements_json?: any;
+  learning_objectives_json?: any;
+  target_audience_data?: any;
+  audience_json?: any;
+  audience?: any;
+  highlights_data?: any;
+  highlights_json?: any;
 }
 
 // CourseMaterial interface
@@ -165,8 +182,14 @@ export interface CourseData {
   sections?: CourseSection[];
 }
 
-export interface CourseResponse {
-  data?: CourseWithDetails | CourseData[];
+// Update CourseResponse to use more specific return types
+export interface CourseResponseSingle {
+  data?: CourseWithDetails;
+  error?: any;
+}
+
+export interface CourseResponseMultiple {
+  data?: CourseData[];
   error?: any;
   meta?: {
     total: number;
@@ -174,6 +197,8 @@ export interface CourseResponse {
     limit: number;
   };
 }
+
+export type CourseResponse = CourseResponseSingle | CourseResponseMultiple;
 
 // SiteSetting interface with optional id and site_name
 export interface SiteSetting {
