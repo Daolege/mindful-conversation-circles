@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import IconSelect from './IconSelect';
 import { Edit2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from "@/integrations/supabase/client";
 
 export interface ModuleSettings {
   title: string;
@@ -15,27 +16,84 @@ export interface ModuleSettings {
 }
 
 interface ModuleTitleEditProps {
-  settings: ModuleSettings;
-  onUpdate: (settings: ModuleSettings) => Promise<void>;
+  settings?: ModuleSettings;
+  onUpdate?: (settings: ModuleSettings) => Promise<void>;
   className?: string;
+  courseId?: number;
+  moduleType?: string;
 }
 
 export const ModuleTitleEdit: React.FC<ModuleTitleEditProps> = ({
   settings,
   onUpdate,
-  className
+  className,
+  courseId,
+  moduleType
 }) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [title, setTitle] = useState(settings.title);
-  const [icon, setIcon] = useState(settings.icon);
+  const [title, setTitle] = useState(settings?.title || '');
+  const [icon, setIcon] = useState(settings?.icon || 'check');
   const [isSaving, setIsSaving] = useState(false);
+  const [localSettings, setLocalSettings] = useState<ModuleSettings | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
 
+  // 如果直接传入courseId和moduleType，则从数据库获取设置
   useEffect(() => {
-    setTitle(settings.title);
-    setIcon(settings.icon);
-  }, [settings]);
+    if (courseId && moduleType && !settings) {
+      fetchModuleSettings();
+    } else if (settings) {
+      setTitle(settings.title);
+      setIcon(settings.icon);
+      setLocalSettings(settings);
+    }
+  }, [courseId, moduleType, settings]);
+
+  // 获取模块设置
+  const fetchModuleSettings = async () => {
+    if (!courseId || !moduleType) return;
+    
+    try {
+      const { data: moduleData, error } = await supabase
+        .rpc('get_module_settings', {
+          p_course_id: courseId,
+          p_module_type: moduleType
+        });
+        
+      if (error) throw error;
+      
+      if (moduleData) {
+        const settings = moduleData as ModuleSettings;
+        setTitle(settings.title);
+        setIcon(settings.icon);
+        setLocalSettings(settings);
+      }
+    } catch (error) {
+      console.error("获取模块设置失败:", error);
+    }
+  };
+  
+  // 保存模块设置
+  const updateModuleSettings = async (updatedSettings: ModuleSettings) => {
+    if (!courseId || !moduleType) return;
+    
+    try {
+      const { error } = await supabase
+        .from('module_settings')
+        .upsert({
+          course_id: courseId,
+          module_type: moduleType,
+          title: updatedSettings.title,
+          icon: updatedSettings.icon
+        });
+        
+      if (error) throw error;
+      return true;
+    } catch (error) {
+      console.error("更新模块设置失败:", error);
+      return false;
+    }
+  };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -60,30 +118,41 @@ export const ModuleTitleEdit: React.FC<ModuleTitleEditProps> = ({
 
   const saveChanges = async () => {
     if (!title.trim()) {
-      setTitle(settings.title);
-      setIcon(settings.icon);
+      setTitle(settings?.title || localSettings?.title || '');
+      setIcon(settings?.icon || localSettings?.icon || 'check');
       setIsEditing(false);
       return;
     }
 
-    if (title === settings.title && icon === settings.icon) {
+    if (title === (settings?.title || localSettings?.title) && icon === (settings?.icon || localSettings?.icon)) {
       setIsEditing(false);
       return;
     }
 
     setIsSaving(true);
     try {
-      await onUpdate({
-        ...settings,
+      const updatedSettings = {
         title: title.trim(),
-        icon: icon
-      });
+        icon: icon,
+        module_type: settings?.module_type || moduleType || ''
+      };
+      
+      if (onUpdate) {
+        await onUpdate(updatedSettings);
+      } else if (courseId && moduleType) {
+        const success = await updateModuleSettings(updatedSettings);
+        if (!success) throw new Error("Failed to update module settings");
+      } else {
+        throw new Error("No update method provided");
+      }
+      
+      setLocalSettings(updatedSettings);
       toast.success("模块标题已更新");
     } catch (error) {
       console.error("Error updating module title:", error);
       toast.error("更新模块标题失败");
-      setTitle(settings.title);
-      setIcon(settings.icon);
+      setTitle(settings?.title || localSettings?.title || '');
+      setIcon(settings?.icon || localSettings?.icon || 'check');
     } finally {
       setIsSaving(false);
       setIsEditing(false);
@@ -94,8 +163,8 @@ export const ModuleTitleEdit: React.FC<ModuleTitleEditProps> = ({
     if (e.key === 'Enter') {
       saveChanges();
     } else if (e.key === 'Escape') {
-      setTitle(settings.title);
-      setIcon(settings.icon);
+      setTitle(settings?.title || localSettings?.title || '');
+      setIcon(settings?.icon || localSettings?.icon || 'check');
       setIsEditing(false);
     }
   };
