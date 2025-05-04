@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { CourseData, CourseResponse, CourseWithSections } from "@/lib/types/course-new";
+import { selectFromTable } from "@/lib/services/typeSafeSupabase";
 
 // Get course by ID 
 export const getCourseById = async (courseId: number): Promise<CourseResponse> => {
@@ -33,24 +34,34 @@ export const getCourses = async (
   search?: string
 ): Promise<CourseResponse> => {
   try {
-    // Create basic query without chaining to avoid excessive type instantiation
+    // Build the filters object
+    const filters: Record<string, any> = {};
+    if (category) {
+      filters.category = category;
+    }
+
+    // Start with a simple query
     const query = supabase.from('courses');
     
-    // Apply selection with exact count
+    // Add select with count
     const countQuery = query.select('*', { count: 'exact' });
     
-    // Apply filters separately after type has been established
+    // Apply filters manually without chaining complex types
     let filteredQuery = countQuery;
     
+    // Apply category filter if provided
     if (category) {
-      filteredQuery = filteredQuery.eq('category', category);
+      // Use type assertion to avoid TypeScript complexity
+      filteredQuery = filteredQuery.eq('category', category) as typeof filteredQuery;
     }
     
+    // Apply search filter if provided
     if (search) {
-      filteredQuery = filteredQuery.ilike('title', `%${search}%`);
+      // Use type assertion to avoid TypeScript complexity
+      filteredQuery = filteredQuery.ilike('title', `%${search}%`) as typeof filteredQuery;
     }
     
-    // Execute query with pagination
+    // Finalize with ordering and pagination
     const { data, error, count } = await filteredQuery
       .order('created_at', { ascending: false })
       .range((page - 1) * limit, page * limit - 1);
@@ -76,11 +87,13 @@ export const getCourses = async (
 // Get featured courses
 export const getFeaturedCourses = async (limit = 6): Promise<CourseResponse> => {
   try {
-    const { data, error } = await supabase
-      .from('courses')
-      .select('*')
-      .eq('is_featured', true)
-      .eq('status', 'published')
+    // Use simpler query construction to avoid type complexity
+    const query = supabase.from('courses');
+    const featuredQuery = query.select('*')
+                             .eq('is_featured', true)
+                             .eq('status', 'published');
+    
+    const { data, error } = await featuredQuery
       .order('created_at', { ascending: false })
       .limit(limit);
     
@@ -98,10 +111,11 @@ export const getFeaturedCourses = async (limit = 6): Promise<CourseResponse> => 
 // Get courses by instructor ID (needed by CourseManagement.tsx)
 export const getCoursesByInstructorId = async (instructorId: string) => {
   try {
-    const { data, error } = await supabase
-      .from('courses')
-      .select('*')
-      .eq('instructor', instructorId)
+    const query = supabase.from('courses');
+    const instructorQuery = query.select('*')
+                              .eq('instructor', instructorId);
+    
+    const { data, error } = await instructorQuery
       .order('display_order', { ascending: true });
     
     if (error) {
@@ -137,12 +151,12 @@ export const deleteCourse = async (courseId: number) => {
 // Update course order (needed by CourseManagement.tsx)
 export const updateCourseOrder = async (courseIds: number[]) => {
   try {
-    // Process updates one by one with explicitly defined updates
+    // Process updates one by one to avoid complex type instantiation
     for (let i = 0; i < courseIds.length; i++) {
-      // Perform update with minimal type complexity
+      // Instead of chaining, use a simple approach
       await supabase
         .from('courses')
-        .update({ display_order: i }) // Direct object literal to minimize type complexity
+        .update({ display_order: i })
         .eq('id', courseIds[i]);
     }
     
