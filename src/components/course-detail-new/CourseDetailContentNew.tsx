@@ -67,9 +67,9 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
   console.log('[CourseDetailContentNew] 课程要求 (直接):', course.requirements);
   console.log('[CourseDetailContentNew] 适合人群 (直接):', course.target_audience);
 
-  // 检查数组数据是否有效
+  // 改进的数组有效性检查函数 - 即使是空数组也视为有效数组
   const isValidArray = (arr: any): boolean => {
-    return Array.isArray(arr) && arr.length > 0;
+    return Array.isArray(arr);
   };
   
   // 记录数组有效性
@@ -85,34 +85,33 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
     { id: "mat2", course_id: course.id, name: "练习题.PDF", url: "#", position: 2, is_visible: true, created_at: new Date().toISOString() }
   ];
 
-  // 首先检查learning_objectives是否是有效数据，否则使用默认值
+  // 改进后的数据获取逻辑：只有在数组完全不存在或无效时才使用默认值
+  // 即使数据库返回了空数组，也优先使用数据库的结果
   const learningObjectives = isValidArray(course.learning_objectives) 
     ? course.learning_objectives 
     : getDefaultLearningObjectives().map(item => item.text);
 
-  // 首先检查requirements是否是有效数据，否则使用默认值
-  const requirements = isValidArray(course.requirements) 
-    ? course.requirements 
+  const requirements = isValidArray(course.requirements)
+    ? course.requirements
     : getDefaultLearningModes().map(item => item.text);
 
-  // 首先检查target_audience是否是有效数据，否则使用默认值
   const targetAudience = isValidArray(course.target_audience)
     ? course.target_audience
     : getDefaultTargetAudience().map(item => item.text);
     
   // 添加日志以显示我们最终使用的数据
   console.log('[CourseDetailContentNew] 最终使用的数据:', {
-    learningObjectives: learningObjectives.length,
-    requirements: requirements.length,
-    targetAudience: targetAudience.length,
+    learningObjectives: learningObjectives ? learningObjectives.length : 0,
+    requirements: requirements ? requirements.length : 0,
+    targetAudience: targetAudience ? targetAudience.length : 0,
     isFromDatabase: {
       learningObjectives: isValidArray(course.learning_objectives),
       requirements: isValidArray(course.requirements),
       targetAudience: isValidArray(course.target_audience)
     },
-    firstLearningObjective: learningObjectives[0],
-    firstRequirement: requirements[0],
-    firstTargetAudience: targetAudience[0]
+    firstLearningObjective: learningObjectives && learningObjectives.length > 0 ? learningObjectives[0] : 'none',
+    firstRequirement: requirements && requirements.length > 0 ? requirements[0] : 'none',
+    firstTargetAudience: targetAudience && targetAudience.length > 0 ? targetAudience[0] : 'none'
   });
 
   return (

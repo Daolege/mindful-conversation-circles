@@ -20,6 +20,7 @@ const CourseDetailNew = () => {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
 
+  // 强制每次访问页面时重新获取数据
   const { data: course, isLoading, error, refetch } = useQuery({
     queryKey: ['course-new', courseIdNum],
     queryFn: () => getCourseNewById(courseIdNum),
@@ -35,6 +36,7 @@ const CourseDetailNew = () => {
     
     // Force data refetch when courseId changes
     if (courseIdNum && !isNaN(courseIdNum)) {
+      console.log(`[CourseDetailNew] 强制重新获取课程 ${courseIdNum} 数据`);
       refetch();
     }
   }, [courseId, courseIdNum, refetch]);

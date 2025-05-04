@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { CourseNew, CourseSection, CourseMaterial } from '@/lib/types/course-new';
 
@@ -140,7 +139,8 @@ export const getCourseNewById = async (courseId: number) => {
       console.error('[courseNewService] 获取课程附件出错:', materialsError);
     }
     
-    // 获取学习目标 - 确保我们正确从 course_learning_objectives 表获取数据
+    // 获取学习目标 - 改进日志，显示详细查询
+    console.log(`[courseNewService] 正在查询学习目标，课程ID=${courseId}`);
     const { data: learningObjectives, error: objectivesError } = await supabase
       .from('course_learning_objectives')
       .select('*')
@@ -148,16 +148,19 @@ export const getCourseNewById = async (courseId: number) => {
       .eq('is_visible', true)
       .order('position', { ascending: true });
       
-    console.log('[courseNewService] 学习目标数据:', 
-      learningObjectives ? `找到${learningObjectives.length}条记录` : '无数据', 
+    console.log('[courseNewService] 学习目标数据查询结果:', 
+      learningObjectives ? {
+        count: learningObjectives.length,
+        items: learningObjectives.map(o => o.content).slice(0, 3)
+      } : '无数据', 
       objectivesError ? `错误:${objectivesError.message}` : '无错误');
     
-    // 查询是否有权限问题
     if (objectivesError) {
       console.error('[courseNewService] 获取学习目标时出错:', objectivesError);
     }
     
-    // 获取课程要求 - 从 course_requirements 表获取
+    // 获取课程要求 - 改进日志
+    console.log(`[courseNewService] 正在查询课程要求，课程ID=${courseId}`);
     const { data: requirements, error: requirementsError } = await supabase
       .from('course_requirements')
       .select('*')
@@ -165,15 +168,19 @@ export const getCourseNewById = async (courseId: number) => {
       .eq('is_visible', true)
       .order('position', { ascending: true });
       
-    console.log('[courseNewService] 课程要求数据:', 
-      requirements ? `找到${requirements.length}条记录` : '无数据', 
+    console.log('[courseNewService] 课程要求数据查询结果:', 
+      requirements ? {
+        count: requirements.length,
+        items: requirements.map(r => r.content).slice(0, 3)
+      } : '无数据', 
       requirementsError ? `错误:${requirementsError.message}` : '无错误');
     
     if (requirementsError) {
       console.error('[courseNewService] 获取课程要求时出错:', requirementsError);
     }
     
-    // 获取适合人群 - 从 course_audiences 表获取
+    // 获取适合人群 - 改进日志
+    console.log(`[courseNewService] 正在查询适合人群，课程ID=${courseId}`);
     const { data: targetAudience, error: audienceError } = await supabase
       .from('course_audiences')
       .select('*')
@@ -181,22 +188,25 @@ export const getCourseNewById = async (courseId: number) => {
       .eq('is_visible', true)
       .order('position', { ascending: true });
       
-    console.log('[courseNewService] 适合人群数据:', 
-      targetAudience ? `找到${targetAudience.length}条记录` : '无数据', 
+    console.log('[courseNewService] 适合人群数据查询结果:', 
+      targetAudience ? {
+        count: targetAudience.length,
+        items: targetAudience.map(a => a.content).slice(0, 3)
+      } : '无数据', 
       audienceError ? `错误:${audienceError.message}` : '无错误');
     
     if (audienceError) {
       console.error('[courseNewService] 获取适合人群时出错:', audienceError);
     }
     
-    // 转换数据为所需的格式 - 修改逻辑，优先使用数据库内容
+    // 改进的数据处理函数，确保空数组也被正确返回
     const processData = (items: any[] | null): string[] => {
-      if (!items || items.length === 0) return [];
-      // 确保获取content字段的值
+      if (!items) return [];
+      // 确保获取content字段的值，并过滤掉无效值
       return items.map(item => item.content).filter(Boolean);
     };
     
-    // 处理数据
+    // 处理数据，确保结果是数组（可能是空数组）
     const learningObjectivesArray = processData(learningObjectives);
     const requirementsArray = processData(requirements);
     const targetAudienceArray = processData(targetAudience);
@@ -235,18 +245,28 @@ export const getCourseNewById = async (courseId: number) => {
       console.log(`[courseNewService] 找到 ${sections.length} 个章节，共 ${lectures?.length || 0} 个课时`);
     }
     
-    // 返回完整的课程数据，确保优先使用数据库中的数据
-    return { 
-      data: { 
-        ...course, 
-        sections: sectionsWithLectures,
-        materials: materials || [],
-        learning_objectives: learningObjectivesArray,
-        requirements: requirementsArray,
-        target_audience: targetAudienceArray
-      }, 
-      error: null 
+    // 返回完整的课程数据，确保优先使用数据库中的数据，即使是空数组
+    const finalData = { 
+      ...course, 
+      sections: sectionsWithLectures,
+      materials: materials || [],
+      learning_objectives: learningObjectivesArray, // 即使是空数组也返回
+      requirements: requirementsArray, // 即使是空数组也返回
+      target_audience: targetAudienceArray // 即使是空数组也返回
     };
+    
+    // 最终日志，打印完整的返回数据结构
+    console.log('[courseNewService] 最终返回的课程数据结构:', {
+      id: finalData.id,
+      title: finalData.title,
+      sectionsCount: finalData.sections?.length || 0,
+      materialsCount: finalData.materials?.length || 0,
+      learningObjectivesCount: finalData.learning_objectives?.length || 0,
+      requirementsCount: finalData.requirements?.length || 0,
+      targetAudienceCount: finalData.target_audience?.length || 0
+    });
+    
+    return { data: finalData, error: null };
   } catch (err: any) {
     console.error('[courseNewService] getCourseNewById异常:', err);
     return { data: null, error: err };
@@ -332,7 +352,7 @@ export const batchDeleteCourses = async (courseIds: number[]) => {
       const { error: sectionError } = await supabase
         .from('course_sections')
         .delete()
-        .in('course_id', courseIds);
+        .in('id', sectionIds);
         
       if (sectionError) {
         console.error('[courseNewService] 批量删除章节出错:', sectionError);
@@ -687,6 +707,39 @@ export const updateCourseEnrollmentCount = async (courseId: number, count?: numb
     return { success: true, error: null };
   } catch (err: any) {
     console.error('[courseNewService] updateCourseEnrollmentCount异常:', err);
+    return { success: false, error: err };
+  }
+};
+
+// 改进保存功能，确保Collections项目能正确保存
+export const saveCourseCollectionItem = async (tableName: string, courseId: number, content: string, position: number = 0) => {
+  try {
+    console.log(`[courseNewService] 保存单个集合项目到 ${tableName}:`, {
+      courseId,
+      content: content.substring(0, 30) + (content.length > 30 ? '...' : ''),
+      position
+    });
+    
+    const item = {
+      course_id: courseId,
+      content,
+      position,
+      is_visible: true
+    };
+    
+    const { data, error } = await supabase
+      .from(tableName)
+      .insert(item)
+      .select();
+      
+    if (error) {
+      console.error(`[courseNewService] 保存集合项目到 ${tableName} 出错:`, error);
+      return { success: false, error };
+    }
+    
+    return { success: true, data, error: null };
+  } catch (err) {
+    console.error(`[courseNewService] saveCourseCollectionItem异常 (${tableName}):`, err);
     return { success: false, error: err };
   }
 };
