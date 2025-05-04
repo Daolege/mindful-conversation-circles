@@ -35,74 +35,58 @@ export const getCourses = async (
   search?: string
 ): Promise<CourseResponse> => {
   try {
-    // Use more direct approach without complex chaining
-    // Initialize the query builder
-    const baseQuery = supabase.from('courses');
-    
-    // Build the query in steps with explicit type casting
-    let query = baseQuery.select('*', { count: 'exact' });
+    // Avoid complex chaining that causes TypeScript issues
+    let query = null;
+    let data = null;
+    let count = null;
+    let error = null;
 
     // Apply filters with simple conditional blocks
-    // Apply category filter if provided
     if (category) {
-      // Create a new query with the filter applied
-      const filtered = await baseQuery
+      const result = await supabase
+        .from('courses')
         .select('*', { count: 'exact' })
         .eq('category', category)
         .order('created_at', { ascending: false })
         .range((page - 1) * limit, page * limit - 1);
       
-      if (filtered.error) {
-        throw new Error(filtered.error.message);
-      }
-      
-      return { 
-        data: filtered.data as CourseData[],
-        meta: {
-          total: filtered.count || 0,
-          page,
-          limit
-        }
-      };
-    }
-    
-    // Apply search filter if provided
-    if (search) {
-      // Create a new query with the filter applied
-      const filtered = await baseQuery
+      data = result.data;
+      count = result.count;
+      error = result.error;
+    } 
+    else if (search) {
+      const result = await supabase
+        .from('courses')
         .select('*', { count: 'exact' })
         .ilike('title', `%${search}%`)
         .order('created_at', { ascending: false })
         .range((page - 1) * limit, page * limit - 1);
       
-      if (filtered.error) {
-        throw new Error(filtered.error.message);
-      }
+      data = result.data;
+      count = result.count;
+      error = result.error;
+    }
+    else {
+      // No filters, execute a simple query
+      const result = await supabase
+        .from('courses')
+        .select('*', { count: 'exact' })
+        .order('created_at', { ascending: false })
+        .range((page - 1) * limit, page * limit - 1);
       
-      return { 
-        data: filtered.data as CourseData[],
-        meta: {
-          total: filtered.count || 0,
-          page,
-          limit
-        }
-      };
+      data = result.data;
+      count = result.count;
+      error = result.error;
     }
     
-    // If no filters, execute the base query with pagination
-    const result = await baseQuery
-      .select('*', { count: 'exact' })
-      .order('created_at', { ascending: false })
-      .range((page - 1) * limit, page * limit - 1);
-    
-    if (result.error) {
-      throw new Error(result.error.message);
+    if (error) {
+      throw new Error(error.message);
     }
     
     return { 
-      data: result.data as CourseData[],
+      data: data as CourseData[],
       meta: {
-        total: result.count || 0,
+        total: count || 0,
         page,
         limit
       }
@@ -116,8 +100,9 @@ export const getCourses = async (
 // Get featured courses
 export const getFeaturedCourses = async (limit = 6): Promise<CourseResponse> => {
   try {
-    // Use direct approach without complex chaining
-    const result = await supabase.from('courses')
+    // Avoid chaining that causes TypeScript issues
+    const result = await supabase
+      .from('courses')
       .select('*')
       .eq('is_featured', true)
       .eq('status', 'published')
@@ -138,8 +123,9 @@ export const getFeaturedCourses = async (limit = 6): Promise<CourseResponse> => 
 // Get courses by instructor ID (needed by CourseManagement.tsx)
 export const getCoursesByInstructorId = async (instructorId: string) => {
   try {
-    // Use direct approach to reduce type complexity
-    const result = await supabase.from('courses')
+    // Avoid chaining that causes TypeScript issues
+    const result = await supabase
+      .from('courses')
       .select('*')
       .eq('instructor', instructorId)
       .order('display_order', { ascending: true });
