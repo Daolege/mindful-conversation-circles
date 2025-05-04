@@ -27,6 +27,7 @@ export const getEnrollmentGuides = async (courseId: number) => {
       
     if (error) {
       console.error("Error fetching enrollment guides:", error);
+      toast.error("获取课程指南失败");
       throw error;
     }
     
@@ -48,6 +49,7 @@ export const addEnrollmentGuide = async (guide: Omit<EnrollmentGuide, 'id' | 'cr
       
     if (error) {
       console.error("Error adding enrollment guide:", error);
+      toast.error("添加课程指南失败");
       throw error;
     }
     
@@ -70,6 +72,7 @@ export const updateEnrollmentGuide = async (id: string, updates: Partial<Enrollm
       
     if (error) {
       console.error("Error updating enrollment guide:", error);
+      toast.error("更新课程指南失败");
       throw error;
     }
     
@@ -90,6 +93,7 @@ export const deleteEnrollmentGuide = async (id: string) => {
       
     if (error) {
       console.error("Error deleting enrollment guide:", error);
+      toast.error("删除课程指南失败");
       throw error;
     }
     
@@ -119,6 +123,7 @@ export const updateEnrollmentGuideOrder = async (items: { id: string, position: 
     
     if (errors.length > 0) {
       console.error("Errors updating guide positions:", errors);
+      toast.error("更新指南顺序失败");
       return { error: errors[0] };
     }
     
@@ -134,12 +139,12 @@ export const uploadGuideImage = async (courseId: number, file: File) => {
   try {
     const fileExt = file.name.split('.').pop();
     const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
-    const filePath = `course_guides/${courseId}/${fileName}`;
+    const filePath = `${courseId}/${fileName}`;
     
-    // Using the 'public' bucket, which should be created in Supabase
+    // Using the 'course_guides' bucket which was created in Supabase
     const { data, error } = await supabase
       .storage
-      .from('course_guides')  // Changed from 'public' to 'course_guides'
+      .from('course_guides')
       .upload(filePath, file, {
         cacheControl: '3600',
         upsert: false
@@ -147,18 +152,20 @@ export const uploadGuideImage = async (courseId: number, file: File) => {
       
     if (error) {
       console.error("Error uploading guide image:", error);
+      toast.error("上传指南图片失败: " + error.message);
       throw error;
     }
     
     // Get the public URL for the uploaded image
     const { data: { publicUrl } } = supabase
       .storage
-      .from('course_guides')  // Changed from 'public' to 'course_guides'
+      .from('course_guides')
       .getPublicUrl(filePath);
       
     return { data: publicUrl, error: null };
   } catch (error) {
     console.error("Exception uploading guide image:", error);
+    toast.error("上传图片过程出错");
     return { data: null, error };
   }
 };

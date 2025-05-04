@@ -4,15 +4,7 @@ import CourseHighlightsList from './CourseHighlightsList';
 import EditableListComponent from './EditableListComponent';
 import ModuleTitleEdit from './ModuleTitleEdit';
 import EnrollmentGuidesEditor from './EnrollmentGuidesEditor';
-import { 
-  getCourseSettings, 
-  upsertCourseSettings,
-  getModuleVisibilities 
-} from '@/lib/services/courseSettingsService';
-import { 
-  getSectionConfig, 
-  upsertSectionConfig 
-} from '@/lib/services/moduleSettingsService';
+import { getModuleVisibilities } from '@/lib/services/courseSettingsService';
 
 type SectionType = 'objectives' | 'requirements' | 'audience';
 
@@ -76,20 +68,6 @@ export const CourseOtherSettings = ({ courseId }: CourseOtherSettingsProps) => {
       
       return updatedVisibilities;
     });
-    
-    // 将更改保存到数据库 - 转换设置项名称以匹配API
-    const settingKey = 
-      sectionType === 'objectives' ? 'objectives_visible' :
-      sectionType === 'requirements' ? 'requirements_visible' : 
-      'audiences_visible';
-    
-    try {
-      await upsertCourseSettings(courseId, {
-        [settingKey]: isVisible
-      });
-    } catch (err) {
-      console.error(`Error updating visibility for ${sectionType}:`, err);
-    }
   };
   
   return (
