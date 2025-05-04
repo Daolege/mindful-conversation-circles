@@ -1,4 +1,3 @@
-
 export interface ListItem {
   id: string;
   text: string;
@@ -139,13 +138,14 @@ export interface SubscriptionPlan {
   updated_at?: string;
 }
 
-// CourseData interface with all possible properties
+// CourseData interface refined to include all fields from CourseNew and CourseWithDetails
 export interface CourseData {
   id: number;
-  title: string;
+  title: string; // Make title required to match Supabase schema expectations
   description?: string;
-  price?: number;
-  status?: string;
+  price: number; // Make price required to match CourseWithDetails
+  original_price?: number | null;
+  status?: 'published' | 'draft' | 'archived';
   currency?: string;
   thumbnail_url?: string;
   syllabus?: any;
@@ -167,15 +167,14 @@ export interface CourseData {
   lectures?: number;
   lecture_count?: number;
   enrollment_count?: number;
-  display_order?: number;
+  display_order: number; // Make this required
   is_featured?: boolean;
-  featured?: boolean; // For backward compatibility
-  original_price?: number;
+  featured?: boolean;
   language?: string;
   category?: string;
   video_url?: string;
   imageurl?: string;
-  instructor?: string;
+  instructor?: any;
   instructor_name?: string;
   instructor_bio?: string;
   instructor_avatar?: string;
@@ -185,6 +184,25 @@ export interface CourseData {
   updated_at?: string;
   created_at?: string;
   published_at?: string;
+  allows_subscription?: boolean;
+  allows_one_time_purchase?: boolean;
+}
+
+// Create a simplified version for insert/update operations
+export interface CourseDataForInsert {
+  title: string;
+  description?: string;
+  price?: number;
+  original_price?: number | null;
+  status?: string;
+  currency?: string;
+  language?: string;
+  category?: string;
+  display_order?: number;
+  is_featured?: boolean;
+  allows_subscription?: boolean;
+  allows_one_time_purchase?: boolean;
+  thumbnail_url?: string;
 }
 
 // Update CourseResponse to use more specific return types

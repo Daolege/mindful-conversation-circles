@@ -22,13 +22,13 @@ export const transformCourseNewToOld = (courseNew: CourseData | CourseWithDetail
     duration: '', // Not directly mapped
     lectures: courseNew.lecture_count || courseNew.lectures || 0,
     level: 'all', // Default value
-    lastUpdated: (courseNew.updated_at ? courseNew.updated_at : '') || '',
+    lastUpdated: courseNew.updated_at ? courseNew.updated_at : '',
     featured: courseNew.is_featured || courseNew.featured || false,
     whatYouWillLearn: Array.isArray(courseNew.learning_objectives) ? courseNew.learning_objectives : [],
     requirements: Array.isArray(courseNew.requirements) ? courseNew.requirements : [],
     language: courseNew.language || 'zh',
     enrollment_count: courseNew.enrollment_count || 0,
-    published_at: (courseNew.published_at ? courseNew.published_at : '') || '',
+    published_at: courseNew.published_at ? courseNew.published_at : '',
     display_order: courseNew.display_order || 0,
     currency: courseNew.currency || 'cny',
     syllabus: courseNew.syllabus || []

@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { CourseData, CourseResponse } from "@/lib/types/course-new";
 import { selectFromTable } from "@/lib/services/typeSafeSupabase";
@@ -50,7 +51,7 @@ export const getCourseById = async (courseId: number): Promise<CourseResponse> =
       throw new Error(error.message);
     }
     
-    // Use 'as unknown as CourseData' to avoid type errors when the shape doesn't exactly match
+    // Cast to unknown first then to CourseData to avoid type errors
     return { data: data as unknown as CourseData };
   } catch (error) {
     console.error("Error fetching course:", error);
@@ -185,7 +186,7 @@ export const updateCourseOrder = async (courseIds: number[]) => {
   }
 };
 
-// Save course - simplify type to avoid excessive type instantiation
+// Simplified SaveCourseData interface to prevent excessive type instantiation
 interface SaveCourseData {
   id?: number; 
   title: string;

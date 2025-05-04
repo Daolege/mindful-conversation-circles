@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { CourseData, CourseResponseSingle, CourseResponseMultiple, CourseWithDetails, CourseSection, CourseLecture } from '@/lib/types/course-new';
+import { CourseData, CourseResponseSingle, CourseResponseMultiple, CourseWithDetails, CourseSection, CourseLecture, CourseDataForInsert } from '@/lib/types/course-new';
 
 // 获取所有课程
 export const getAllCoursesNew = async (): Promise<CourseResponseMultiple> => {
@@ -175,16 +175,21 @@ export const getCourseNewById = async (courseId: number): Promise<CourseResponse
 };
 
 // 创建新课程
-export const createCourseNew = async (courseData: Partial<CourseData>) => {
+export const createCourseNew = async (courseData: Partial<CourseDataForInsert>) => {
   try {
-    // Make sure courseData is not an array
+    // Ensure we're not trying to pass an array
     if (Array.isArray(courseData)) {
       throw new Error('CourseData cannot be an array');
     }
     
+    // Ensure title field exists as it's required by the database
+    if (!courseData.title) {
+      throw new Error('Course title is required');
+    }
+    
     const { data, error } = await supabase
       .from('courses_new')
-      .insert([courseData]) // We need to pass an array with a single object here
+      .insert(courseData) // Pass the object directly, not in an array
       .select()
       .single();
     
@@ -199,7 +204,7 @@ export const createCourseNew = async (courseData: Partial<CourseData>) => {
 };
 
 // 更新现有课程
-export const updateCourseNew = async (courseId: number, courseData: Partial<CourseData>) => {
+export const updateCourseNew = async (courseId: number, courseData: Partial<CourseDataForInsert>) => {
   try {
     const { data, error } = await supabase
       .from('courses_new')
