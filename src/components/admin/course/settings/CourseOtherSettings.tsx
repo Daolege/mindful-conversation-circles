@@ -54,10 +54,22 @@ export const CourseOtherSettings = ({ courseId }: CourseOtherSettingsProps) => {
     
     try {
       // 更新数据库中的可见性
-      const tableName = `course_${sectionType === 'audiences' ? 'audiences' : 
-                        sectionType === 'objectives' ? 'learning_objectives' : 
-                        'requirements'}`;
-                        
+      let tableName: string;
+      
+      switch(sectionType) {
+        case 'objectives':
+          tableName = 'course_learning_objectives';
+          break;
+        case 'requirements':
+          tableName = 'course_requirements';
+          break;
+        case 'audiences':
+          tableName = 'course_audiences';
+          break;
+        default:
+          throw new Error(`Unknown section type: ${sectionType}`);
+      }
+      
       const { error } = await supabase
         .from(tableName)
         .update({ is_visible: isVisible })

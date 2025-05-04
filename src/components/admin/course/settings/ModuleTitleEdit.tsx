@@ -15,7 +15,7 @@ export interface ModuleSettings {
   module_type: string;
 }
 
-interface ModuleTitleEditProps {
+export interface ModuleTitleEditProps {
   courseId: number;
   moduleType: string;
   defaultTitle: string;

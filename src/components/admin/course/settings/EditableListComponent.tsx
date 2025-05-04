@@ -184,7 +184,7 @@ export const EditableListComponent: React.FC<EditableListComponentProps> = ({
         
         // Fetch items
         const { data, error } = await supabase
-          .from(tableName as any)
+          .from(tableName)
           .select('*')
           .eq('course_id', courseId)
           .order('position');
@@ -220,7 +220,7 @@ export const EditableListComponent: React.FC<EditableListComponentProps> = ({
   const saveItem = async (item: ListItem) => {
     try {
       const { error } = await supabase
-        .from(tableName as any)
+        .from(tableName)
         .upsert({
           id: item.id,
           course_id: courseId,
@@ -247,7 +247,7 @@ export const EditableListComponent: React.FC<EditableListComponentProps> = ({
   const deleteItemFromDB = async (id: string) => {
     try {
       const { error } = await supabase
-        .from(tableName as any)
+        .from(tableName)
         .delete()
         .eq('id', id);
         
