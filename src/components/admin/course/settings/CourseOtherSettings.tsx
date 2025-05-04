@@ -4,10 +4,9 @@ import { FormSwitch } from '../../shared/FormSwitch';
 import { ModuleVisibilitySettings } from './ModuleVisibilitySettings';
 import { EnrollmentGuidesEditor } from './EnrollmentGuidesEditor';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { updateCourseSettings } from '@/lib/services/courseSettingsService';
+import { getCourseSettings, updateCourseSettings } from '@/lib/services/courseSettingsService';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 
 interface CourseOtherSettingsProps {
   courseId: number;
@@ -23,11 +22,7 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({ course
       if (!courseId) return;
       setLoading(true);
       try {
-        const { data, error } = await supabase
-          .from('courses_new')
-          .select('materialsVisible')
-          .eq('id', courseId)
-          .single();
+        const { data, error } = await getCourseSettings(courseId);
         
         if (error) throw error;
         

@@ -18,7 +18,9 @@ export const updateCourseSettings = async (
   try {
     const { error } = await supabase
       .from('courses_new')
-      .update(settings)
+      .update({
+        materialsVisible: settings.materialsVisible
+      })
       .eq('id', courseId);
     
     if (error) throw error;
@@ -55,5 +57,51 @@ export const getCourseSettings = async (
   } catch (error: any) {
     console.error('Error getting course settings:', error);
     return { error };
+  }
+};
+
+// Add the missing functions needed by CourseNewEditor.tsx
+export const getObjectives = async (courseId: number) => {
+  try {
+    const { data, error } = await supabase
+      .from('course_learning_objectives')
+      .select('*')
+      .eq('course_id', courseId)
+      .order('position');
+    
+    return { data, error };
+  } catch (error) {
+    console.error('Error getting objectives:', error);
+    return { data: null, error };
+  }
+};
+
+export const getRequirements = async (courseId: number) => {
+  try {
+    const { data, error } = await supabase
+      .from('course_requirements')
+      .select('*')
+      .eq('course_id', courseId)
+      .order('position');
+    
+    return { data, error };
+  } catch (error) {
+    console.error('Error getting requirements:', error);
+    return { data: null, error };
+  }
+};
+
+export const getAudiences = async (courseId: number) => {
+  try {
+    const { data, error } = await supabase
+      .from('course_audiences')
+      .select('*')
+      .eq('course_id', courseId)
+      .order('position');
+    
+    return { data, error };
+  } catch (error) {
+    console.error('Error getting audiences:', error);
+    return { data: null, error };
   }
 };

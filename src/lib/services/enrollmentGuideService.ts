@@ -11,6 +11,8 @@ export interface EnrollmentGuide {
   image_url?: string;
   link?: string;
   position: number;
+  created_at?: string;
+  updated_at?: string;
 }
 
 /**
@@ -28,7 +30,7 @@ export const getEnrollmentGuides = async (courseId: number): Promise<EnrollmentG
       throw error;
     }
 
-    return data || [];
+    return data as EnrollmentGuide[];
   } catch (error) {
     console.error("Error fetching enrollment guides:", error);
     return [];
@@ -50,7 +52,7 @@ export const createEnrollmentGuide = async (guide: EnrollmentGuide): Promise<{ s
       throw error;
     }
 
-    return { success: true, data };
+    return { success: true, data: data as EnrollmentGuide };
   } catch (error: any) {
     console.error("Error creating enrollment guide:", error);
     return { success: false, error };

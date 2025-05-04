@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { EnrollmentGuide, getEnrollmentGuides, createEnrollmentGuide, updateEnrollmentGuide, deleteEnrollmentGuide, uploadQRCodeImage } from '@/lib/services/enrollmentGuideService';
 import { Button } from "@/components/ui/button";
@@ -7,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowDown, ArrowUp, Loader2, Plus, QrCode, Trash2, Upload, Wechat, Whatsapp } from "lucide-react";
+import { ArrowDown, ArrowUp, Loader2, Plus, QrCode, Trash2, Upload, MessageCircleIcon, PhoneIcon } from "lucide-react";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
@@ -210,18 +209,18 @@ export const EnrollmentGuidesEditor: React.FC<EnrollmentGuidesEditorProps> = ({ 
       <CardContent>
         <Alert className="mb-4 bg-amber-50 text-amber-800 border-amber-200">
           <AlertDescription>
-            这里设置的信息将在学员支付成功后的页面展示，可以帮助学员加入课程相关的社群。
+            这里设置的信息将在学员支付成功后的页面展示，可���帮助学员加入课程相关的社群。
           </AlertDescription>
         </Alert>
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="mb-6">
             <TabsTrigger value="wechat" className="flex items-center gap-2">
-              <Wechat className="h-4 w-4" />
+              <MessageCircleIcon className="h-4 w-4" />
               微信群二维码
             </TabsTrigger>
             <TabsTrigger value="whatsapp" className="flex items-center gap-2">
-              <Whatsapp className="h-4 w-4" />
+              <PhoneIcon className="h-4 w-4" />
               WhatsApp联系方式
             </TabsTrigger>
           </TabsList>
@@ -371,7 +370,7 @@ export const EnrollmentGuidesEditor: React.FC<EnrollmentGuidesEditorProps> = ({ 
           <TabsContent value="whatsapp" className="space-y-6">
             {filteredWhatsAppGuides.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
-                <Whatsapp className="mx-auto h-12 w-12 text-gray-300 mb-2" />
+                <PhoneIcon className="mx-auto h-12 w-12 text-gray-300 mb-2" />
                 <p>您还没有添加任何WhatsApp联系方式</p>
               </div>
             ) : (

@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { EnrollmentGuide } from '@/lib/services/enrollmentGuideService';
-import { Wechat, QrCode, Whatsapp, ExternalLink } from 'lucide-react';
+import { MessageCircleIcon, QrCode, PhoneIcon, ExternalLink } from 'lucide-react';
 
 interface EnrollmentGuideDisplayProps {
   guides: EnrollmentGuide[];
@@ -31,7 +31,7 @@ export const EnrollmentGuideDisplay: React.FC<EnrollmentGuideDisplayProps> = ({ 
           {wechatGuides.length > 0 && (
             <div className="space-y-4">
               <h3 className="text-lg font-semibold flex items-center gap-2">
-                <Wechat className="h-5 w-5 text-green-600" />
+                <MessageCircleIcon className="h-5 w-5 text-green-600" />
                 微信群二维码
               </h3>
               
@@ -66,7 +66,7 @@ export const EnrollmentGuideDisplay: React.FC<EnrollmentGuideDisplayProps> = ({ 
           {whatsappGuides.length > 0 && (
             <div className="space-y-4">
               <h3 className="text-lg font-semibold flex items-center gap-2">
-                <Whatsapp className="h-5 w-5 text-green-600" />
+                <PhoneIcon className="h-5 w-5 text-green-600" />
                 WhatsApp联系方式
               </h3>
               
@@ -83,7 +83,7 @@ export const EnrollmentGuideDisplay: React.FC<EnrollmentGuideDisplayProps> = ({ 
                     {guide.link && (
                       <Button variant="outline" size="sm" asChild>
                         <a href={guide.link} target="_blank" rel="noopener noreferrer">
-                          <Whatsapp className="mr-2 h-4 w-4" />
+                          <PhoneIcon className="mr-2 h-4 w-4" />
                           <span>联系</span>
                           <ExternalLink className="ml-1 h-3 w-3" />
                         </a>

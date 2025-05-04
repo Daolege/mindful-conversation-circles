@@ -29,7 +29,7 @@ export const ModuleVisibilitySettings: React.FC<ModuleVisibilitySettingsProps> =
     const fetchSettings = async () => {
       setLoading(true);
       try {
-        // Fetch settings from course_section_configs
+        // Fetch settings via the new RPC function
         const { data, error } = await supabase.rpc('get_module_visibilities', {
           p_course_id: courseId
         });
@@ -37,10 +37,11 @@ export const ModuleVisibilitySettings: React.FC<ModuleVisibilitySettingsProps> =
         if (error) throw error;
         
         if (data) {
+          const result = data as any;
           setVisibility({
-            objectives: data.objectives_visible !== false,
-            requirements: data.requirements_visible !== false,
-            audiences: data.audiences_visible !== false,
+            objectives: result.objectives_visible !== false,
+            requirements: result.requirements_visible !== false,
+            audiences: result.audiences_visible !== false,
           });
         }
       } catch (error) {
@@ -73,7 +74,7 @@ export const ModuleVisibilitySettings: React.FC<ModuleVisibilitySettingsProps> =
       
       // Update all items in the module
       const { error } = await supabase
-        .from(tableName)
+        .from(tableName as any) // Type assertion to help TypeScript understand this is valid
         .update({ is_visible: isVisible })
         .eq('course_id', courseId);
       
