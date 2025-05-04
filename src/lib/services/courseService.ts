@@ -99,14 +99,22 @@ export const getCourses = async (
 // Get featured courses
 export const getFeaturedCourses = async (limit = 6): Promise<CourseResponse> => {
   try {
-    // Further simplify to avoid TypeScript issues - execute in steps
-    const { data, error } = await supabase
-      .from('courses')
-      .select('*')
+    // Break down the query into separate steps to avoid deep type instantiation
+    const query = supabase.from('courses');
+    
+    // Step 1: Basic select
+    const selectQuery = query.select('*');
+    
+    // Step 2: Add filters one by one
+    const filteredQuery = selectQuery
       .eq('is_featured', true)
-      .eq('status', 'published')
-      .order('created_at', { ascending: false })
-      .limit(limit);
+      .eq('status', 'published');
+    
+    // Step 3: Add ordering
+    const orderedQuery = filteredQuery.order('created_at', { ascending: false });
+    
+    // Step 4: Add limit and execute
+    const { data, error } = await orderedQuery.limit(limit);
     
     if (error) {
       throw new Error(error.message);
