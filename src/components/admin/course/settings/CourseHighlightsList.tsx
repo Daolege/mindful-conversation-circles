@@ -58,7 +58,6 @@ export const CourseHighlightsList: React.FC<CourseHighlightsListProps> = ({
       
       if (error) throw error;
       
-      // Map the database fields to our interface
       const mappedHighlights = data?.map(item => ({
         id: item.id,
         course_id: item.course_id,
@@ -191,7 +190,7 @@ export const CourseHighlightsList: React.FC<CourseHighlightsListProps> = ({
         supabase
           .from('course_highlights')
           .update({ position: highlight.position })
-          .eq('id', highlight.id as string)  // Convert to string explicitly
+          .eq('id', highlight.id as string)
       );
       
       await Promise.all(promises);

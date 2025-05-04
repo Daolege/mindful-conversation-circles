@@ -52,7 +52,7 @@ export const BlockSettingsEditor: React.FC<BlockSettingsEditorProps> = ({
       }
       
       if (data) {
-        // Cast the data to the correct shape
+        // Parse the data from the function result
         const configData = data as unknown as SectionConfig;
         setSettings({
           title: configData.title || '',
