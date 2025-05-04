@@ -52,9 +52,9 @@ export function CourseDetailContent({ course }: CourseDetailContentProps) {
         // Fetch module items using typeSafeSupabase helper to avoid type issues
         const fetchModuleItems = async (tableName: string): Promise<ModuleItem[]> => {
           try {
-            // Using direct method for type-safety
+            // Use explicit type cast to avoid type issues
             const { data, error } = await supabase
-              .from(tableName)
+              .from(tableName as any)
               .select('*')
               .eq('course_id', course.id)
               .eq('is_visible', true)
