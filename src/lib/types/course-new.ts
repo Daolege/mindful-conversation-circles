@@ -45,6 +45,7 @@ export interface CourseNew {
   original_price?: number | null;
   display_order: number;
   is_featured?: boolean;
+  featured?: boolean; // For backward compatibility
   status: 'published' | 'draft' | 'archived';
   enrollment_count?: number;
   lecture_count?: number;
@@ -74,6 +75,7 @@ export interface CourseWithDetails extends CourseNew {
   instructor_avatar?: string; // Added explicitly
   rating?: number;
   rating_count?: number;
+  featured?: boolean; // For backward compatibility
 }
 
 // CourseMaterial interface

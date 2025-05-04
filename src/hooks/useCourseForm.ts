@@ -71,6 +71,7 @@ export function useCourseForm(initialData?: Partial<CourseWithDetails>) {
     language: initialLanguage, // Use detected language value
     category: initialData?.category ?? initialLanguage, // Keep category synced with language for backward compatibility
     is_featured: isFeatured,
+    featured: isFeatured, // Add featured for backward compatibility
     display_order: initialData?.display_order ?? 0,
     status: initialData?.status ?? 'draft',
     learning_objectives: initialData?.learning_objectives ?? [],
