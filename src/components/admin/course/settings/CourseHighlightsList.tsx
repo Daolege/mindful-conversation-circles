@@ -1,9 +1,9 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Trash2, Plus, GripVertical, Settings } from "lucide-react";
+import { Trash2, Plus, GripVertical } from "lucide-react";
 import { DndContext, DragEndEvent, PointerSensor, useSensor, useSensors, closestCenter } from '@dnd-kit/core';
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -11,10 +11,11 @@ import { restrictToParentElement, restrictToVerticalAxis } from '@dnd-kit/modifi
 import IconDisplay from '@/components/course-detail/IconDisplay';
 import { ListItem } from '@/lib/types/course-new';
 import IconSelect from './IconSelect';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface CourseHighlightsListProps {
-  highlights: ListItem[];
-  onChange: (items: ListItem[]) => void;
+  courseId: number;
   title?: string;
 }
 
@@ -126,11 +127,12 @@ const SortableHighlightItem: React.FC<{
 };
 
 export const CourseHighlightsList: React.FC<CourseHighlightsListProps> = ({
-  highlights,
-  onChange,
+  courseId,
   title = "课程亮点"
 }) => {
+  const [highlights, setHighlights] = useState<ListItem[]>([]);
   const [newItemText, setNewItemText] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
   
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -139,8 +141,96 @@ export const CourseHighlightsList: React.FC<CourseHighlightsListProps> = ({
       },
     })
   );
+  
+  // Load highlights from database
+  useEffect(() => {
+    const fetchHighlights = async () => {
+      if (!courseId) return;
+      
+      try {
+        setIsLoading(true);
+        const { data, error } = await supabase
+          .from('course_highlights')
+          .select('*')
+          .eq('course_id', courseId)
+          .order('position');
+          
+        if (error) {
+          console.error('Error fetching course highlights:', error);
+          toast.error('无法加载课程亮点');
+          return;
+        }
+        
+        if (data) {
+          const formattedHighlights: ListItem[] = data.map(item => ({
+            id: item.id,
+            text: item.content,
+            position: item.position,
+            is_visible: item.is_visible,
+            icon: item.icon || 'star'
+          }));
+          
+          setHighlights(formattedHighlights);
+        }
+      } catch (err) {
+        console.error('Exception fetching course highlights:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchHighlights();
+  }, [courseId]);
 
-  const handleAddItem = () => {
+  // Save highlight to database
+  const saveHighlight = async (item: ListItem) => {
+    try {
+      const { error } = await supabase
+        .from('course_highlights')
+        .upsert({
+          id: item.id,
+          course_id: courseId,
+          content: item.text,
+          position: item.position,
+          is_visible: item.is_visible,
+          icon: item.icon || 'star'
+        });
+        
+      if (error) {
+        console.error('Error saving highlight:', error);
+        toast.error('保存亮点失败');
+        return false;
+      }
+      
+      return true;
+    } catch (err) {
+      console.error('Exception saving highlight:', err);
+      return false;
+    }
+  };
+  
+  // Delete highlight from database
+  const deleteHighlightFromDB = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('course_highlights')
+        .delete()
+        .eq('id', id);
+        
+      if (error) {
+        console.error('Error deleting highlight:', error);
+        toast.error('删除亮点失败');
+        return false;
+      }
+      
+      return true;
+    } catch (err) {
+      console.error('Exception deleting highlight:', err);
+      return false;
+    }
+  };
+
+  const handleAddItem = async () => {
     if (newItemText.trim() === "") return;
     
     const newItem: ListItem = {
@@ -151,11 +241,14 @@ export const CourseHighlightsList: React.FC<CourseHighlightsListProps> = ({
       is_visible: true
     };
     
-    onChange([...highlights, newItem]);
-    setNewItemText("");
+    const success = await saveHighlight(newItem);
+    if (success) {
+      setHighlights([...highlights, newItem]);
+      setNewItemText("");
+    }
   };
 
-  const handleUpdateItem = (id: string, text: string, icon: string) => {
+  const handleUpdateItem = async (id: string, text: string, icon: string) => {
     const updatedItems = highlights.map(item => {
       if (item.id === id) {
         return { ...item, text, icon };
@@ -163,14 +256,26 @@ export const CourseHighlightsList: React.FC<CourseHighlightsListProps> = ({
       return item;
     });
     
-    onChange(updatedItems);
+    const itemToUpdate = updatedItems.find(item => item.id === id);
+    if (itemToUpdate) {
+      const success = await saveHighlight(itemToUpdate);
+      if (success) {
+        setHighlights(updatedItems);
+      }
+    }
   };
 
-  const handleDeleteItem = (id: string) => {
-    const updatedItems = highlights.filter(item => item.id !== id)
-      .map((item, index) => ({ ...item, position: index }));
-    
-    onChange(updatedItems);
+  const handleDeleteItem = async (id: string) => {
+    const success = await deleteHighlightFromDB(id);
+    if (success) {
+      const updatedItems = highlights.filter(item => item.id !== id)
+        .map((item, index) => ({ ...item, position: index }));
+        
+      // Update positions in database
+      await Promise.all(updatedItems.map(saveHighlight));
+      
+      setHighlights(updatedItems);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -179,7 +284,7 @@ export const CourseHighlightsList: React.FC<CourseHighlightsListProps> = ({
     }
   };
 
-  const handleDragEnd = (event: DragEndEvent) => {
+  const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     
     if (over && active.id !== over.id) {
@@ -197,7 +302,10 @@ export const CourseHighlightsList: React.FC<CourseHighlightsListProps> = ({
           position: index
         }));
         
-        onChange(reorderedItems);
+        // Save updated positions to database
+        await Promise.all(reorderedItems.map(saveHighlight));
+        
+        setHighlights(reorderedItems);
       }
     }
   };
@@ -209,29 +317,33 @@ export const CourseHighlightsList: React.FC<CourseHighlightsListProps> = ({
       </CardHeader>
       
       <CardContent className="space-y-4">
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleDragEnd}
-          modifiers={[restrictToVerticalAxis, restrictToParentElement]}
-        >
-          <SortableContext 
-            items={highlights.map(item => item.id)} 
-            strategy={verticalListSortingStrategy}
+        {isLoading ? (
+          <div className="py-4 text-center text-gray-500">加载中...</div>
+        ) : (
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+            modifiers={[restrictToVerticalAxis, restrictToParentElement]}
           >
-            <div className="space-y-1">
-              {highlights.map((item) => (
-                <SortableHighlightItem
-                  key={item.id}
-                  id={item.id}
-                  item={item}
-                  onDelete={handleDeleteItem}
-                  onUpdate={handleUpdateItem}
-                />
-              ))}
-            </div>
-          </SortableContext>
-        </DndContext>
+            <SortableContext 
+              items={highlights.map(item => item.id)} 
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="space-y-1">
+                {highlights.map((item) => (
+                  <SortableHighlightItem
+                    key={item.id}
+                    id={item.id}
+                    item={item}
+                    onDelete={handleDeleteItem}
+                    onUpdate={handleUpdateItem}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
+        )}
 
         <div className="flex items-center gap-2 pt-2">
           <IconSelect
