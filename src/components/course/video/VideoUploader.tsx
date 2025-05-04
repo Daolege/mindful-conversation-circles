@@ -126,3 +126,4 @@ export const VideoUploader: React.FC<VideoUploaderProps> = ({
     </div>
   );
 };
+

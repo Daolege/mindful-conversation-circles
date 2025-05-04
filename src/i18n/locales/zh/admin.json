@@ -104,13 +104,5 @@
   "generateTestData": "生成测试数据",
   "generatingData": "正在生成...",
   "testDataGenerated": "已成功创建 {{count}} 条测试记录",
-  "errorGeneratingTestData": "生成测试数据时出错",
-  
-  "adminPanel": "后台管理",
-  "overview": "概览",
-  "usersManagement": "用户",
-  "coursesManagement": "课程",
-  "coursesManagement2": "课程2",
-  "ordersManagement": "订单",
-  "subscriptionsManagement": "订阅"
+  "errorGeneratingTestData": "生成测试数据时出错"
 }

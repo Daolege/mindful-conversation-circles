@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+
+import React from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -22,10 +23,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Save } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { CourseNew } from "@/lib/types/course-new";
 
 // Schema is moved to a separate file for reuse
 export const courseFormSchema = z.object({
@@ -43,51 +41,18 @@ export const courseFormSchema = z.object({
 export type CourseFormValues = z.infer<typeof courseFormSchema>;
 
 interface CourseBasicFormProps {
-  onSave: (values: CourseFormValues) => void;
-  saving: boolean;
-  initialData?: Partial<CourseNew>;
+  form: any;
+  onSubmit: (values: CourseFormValues) => void;
+  isSubmitting: boolean;
 }
 
 const CourseBasicForm: React.FC<CourseBasicFormProps> = ({ 
-  onSave,
-  saving,
-  initialData
+  form, 
+  onSubmit,
+  isSubmitting
 }) => {
   const { t } = useTranslation(['admin']);
-  
-  const form = useForm<CourseFormValues>({
-    resolver: zodResolver(courseFormSchema),
-    defaultValues: {
-      title: initialData?.title || '',
-      description: initialData?.description || '',
-      price: initialData?.price || 0,
-      original_price: initialData?.original_price || null,
-      currency: initialData?.currency || 'cny',
-      language: initialData?.language || 'zh',
-      display_order: initialData?.display_order || 0,
-      status: (initialData?.status as any) || 'draft',
-      is_featured: initialData?.is_featured || false,
-    }
-  });
-  
-  // Update form when initialData changes
-  useEffect(() => {
-    if (initialData) {
-      form.reset({
-        title: initialData.title || '',
-        description: initialData.description || '',
-        price: initialData.price || 0,
-        original_price: initialData.original_price || null,
-        currency: initialData.currency || 'cny',
-        language: initialData.language || 'zh',
-        display_order: initialData.display_order || 0,
-        status: (initialData.status as any) || 'draft',
-        is_featured: initialData.is_featured || false,
-      });
-    }
-  }, [initialData, form]);
-
-  console.log("[CourseBasicForm] Rendering with initialData:", initialData);
+  console.log("[CourseBasicForm] Rendering with form values:", form.getValues());
 
   // Available languages that courses can be taught in
   const languageOptions = [
@@ -101,16 +66,17 @@ const CourseBasicForm: React.FC<CourseBasicFormProps> = ({
     { value: "ru", label: "Русский" }
   ];
 
-  const handleSubmit = (values: CourseFormValues) => {
-    console.log("[CourseBasicForm] Form submitted with values:", values);
-    onSave(values);
-  };
-
   return (
     <Card className="p-6">
       <Form {...form}>
         <form 
-          onSubmit={form.handleSubmit(handleSubmit)} 
+          onSubmit={(e) => {
+            e.preventDefault();
+            console.log("[CourseBasicForm] Form submitted via onSubmit event");
+            const values = form.getValues();
+            console.log("[CourseBasicForm] Form values on submit:", values);
+            onSubmit(values);
+          }} 
           className="space-y-8"
         >
           <div className="space-y-4">
@@ -334,26 +300,6 @@ const CourseBasicForm: React.FC<CourseBasicFormProps> = ({
                 </FormItem>
               )}
             />
-          </div>
-          
-          <div className="flex justify-end">
-            <Button 
-              type="submit" 
-              disabled={saving}
-              className="flex items-center gap-2"
-            >
-              {saving ? (
-                <>
-                  <span className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full"></span>
-                  保存中...
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4" />
-                  保存课程
-                </>
-              )}
-            </Button>
           </div>
         </form>
       </Form>

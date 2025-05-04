@@ -313,7 +313,7 @@ const Courses = () => {
   const [visibleCount, setVisibleCount] = useState(12);
   const { t } = useTranslations();
 
-  // Update the queryFn to properly pass the search parameter
+  // Changed to use getAllCoursesNew instead of getAllCourses
   const { data: coursesResponse, isLoading } = useQuery({
     queryKey: ['courses-new', search, category, sort],
     queryFn: () => getAllCoursesNew(search),

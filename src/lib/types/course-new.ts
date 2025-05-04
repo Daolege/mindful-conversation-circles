@@ -1,3 +1,4 @@
+
 import { Course } from "./course";
 
 export interface CourseSection {
@@ -44,12 +45,6 @@ export interface CourseWithDetails extends Omit<Course, 'language'> {
   status?: 'published' | 'draft' | 'archived';
   thumbnail_url?: string;
   language?: string; // Make language optional in CourseWithDetails
-  showObjectives?: boolean; // Add visibility flag for objectives
-  showRequirements?: boolean; // Add visibility flag for requirements
-  showTargetAudience?: boolean; // Add visibility flag for target audience
-  showMaterials?: boolean; // Add visibility flag for materials
-  category: string; // Make sure category is required
-  description?: string; // Make description optional to match CourseNew
 }
 
 // Add the CourseNew interface for admin components
@@ -137,11 +132,9 @@ export interface CourseData {
   [key: string]: any;
 }
 
-// Update the CourseResponse type to optionally include success property
 export interface CourseResponse<T> {
   data: T | null;
   error: Error | null;
-  success?: boolean;
 }
 
 // Updated SiteSetting interface to include both database structure and compatibility with migration functions

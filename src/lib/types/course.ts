@@ -1,10 +1,11 @@
+
 // Remove conflicting import
 // import { Course } from "./course";
 
 export interface Course {
   id: number;
   title: string;
-  description?: string; // Make description optional to match CourseNew
+  description: string;
   price: number;
   originalprice?: number | null;
   category: string; // Keep for backward compatibility, now represents language
