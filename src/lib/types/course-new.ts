@@ -1,4 +1,3 @@
-
 export interface ListItem {
   id: string;
   text: string;
@@ -41,7 +40,7 @@ export interface CourseNew {
   id: number;
   title: string;
   description?: string;
-  price: number;
+  price: number; // Required in CourseNew and CourseWithDetails
   original_price?: number | null;
   display_order: number;
   is_featured?: boolean;
@@ -112,7 +111,7 @@ export interface CourseMaterial {
 export interface CourseFormValues {
   title: string;
   description?: string;
-  price: number;
+  price: number; // Make it required to match CourseData
   original_price?: number | null;
   currency: string;
   language: string;
@@ -144,9 +143,9 @@ export interface CourseData {
   id: number;
   title: string;
   description?: string;
-  price?: number;
+  price: number; // Made required to match CourseWithDetails
   original_price?: number | null;
-  status?: string;
+  status: string; // Made required to match CourseWithDetails
   currency?: string;
   thumbnail_url?: string;
   syllabus?: any;
@@ -193,9 +192,9 @@ export interface CourseData {
 export interface CourseDataForInsert {
   title: string;
   description?: string;
-  price?: number;
+  price: number; // Make it required to match CourseData
   original_price?: number | null;
-  status?: string;
+  status: string; // Make it required to match CourseData
   currency?: string;
   language?: string;
   category?: string;

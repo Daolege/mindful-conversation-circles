@@ -51,7 +51,7 @@ export const getCourseById = async (courseId: number): Promise<CourseResponse> =
       throw new Error(error.message);
     }
     
-    // Use proper type assertion with as unknown as CourseData
+    // Cast to unknown first, then to CourseData to avoid type error
     return { data: data as unknown as CourseData };
   } catch (error) {
     console.error("Error fetching course:", error);
@@ -59,7 +59,7 @@ export const getCourseById = async (courseId: number): Promise<CourseResponse> =
   }
 };
 
-// Get all courses with pagination
+// Get all courses with pagination - Use SimpleCourseData to avoid deep type instantiation
 export const getCourses = async (
   page = 1, 
   limit = 10,
