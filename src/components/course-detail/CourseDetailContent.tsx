@@ -6,7 +6,7 @@ import { useTranslations } from "@/hooks/useTranslations";
 import { supabase } from '@/integrations/supabase/client';
 import { Target, BookOpen, Users } from 'lucide-react';
 import IconDisplay from './IconDisplay';
-import { ModuleSettings, ModuleItem } from '@/lib/services/moduleSettingsService';
+import { ModuleSettings, ModuleItem, getDefaultSettings } from '@/lib/services/moduleSettingsService';
 import { typeSafeSupabase } from '@/lib/services/typeSafeSupabase';
 
 interface CourseDetailContentProps {
@@ -123,9 +123,9 @@ export function CourseDetailContent({ course }: CourseDetailContentProps) {
         setAudiences(audiencesData);
         
         // Update settings
-        setObjectivesSettings(objSettings);
-        setRequirementsSettings(reqSettings);
-        setAudiencesSettings(audSettings);
+        if (objSettings) setObjectivesSettings(objSettings);
+        if (reqSettings) setRequirementsSettings(reqSettings);
+        if (audSettings) setAudiencesSettings(audSettings);
       } catch (error) {
         console.error("Error fetching course module data:", error);
       }

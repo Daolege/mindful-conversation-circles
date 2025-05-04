@@ -212,13 +212,14 @@ export const addDefaultObjectives = async (courseId: number, isVisible: boolean 
       console.error('[courseSettingsService] Error reading visibility from localStorage:', err);
     }
     
-    // UPDATED: Default objectives to match what's in the database
+    // UPDATED: Default objectives with new content
     const defaultObjectives = [
-      "掌握TikTok Shop跨境电商店铺的搭建和优化技巧",
-      "学习跨境电商产品选品、定价与上架策略",
-      "熟悉TikTok直播带货和短视频营销的核心方法",
-      "掌握店铺运营与全球客户服务的最佳实践",
-      "了解跨境物流、支付与跨境电商合规管理知识"
+      "品牌出海全案策划",
+      "国货出海全流程掌握",
+      "行业圈子完整开放",
+      "本土化运营实战训练",
+      "各类跨境纠纷与应对",
+      "本土市场运营套路传授"
     ];
     
     // Using admin RPC instead of direct insert to bypass RLS
@@ -451,12 +452,14 @@ export const addDefaultRequirements = async (courseId: number, isVisible: boolea
       console.error('[courseSettingsService] Error reading visibility from localStorage:', err);
     }
     
-    // UPDATED: Default requirements to match what's in the database
+    // UPDATED: Default requirements with new content
     const defaultRequirements = [
-      "基本的电脑操作技能和网络连接",
-      "初步了解电商或网络营销概念",
-      "具备简单的英文阅读能力",
-      "对跨境电商和国际贸易有兴趣"
+      "在线精录视频+直播",
+      "周周诊断+1v1指导",
+      "一线店铺运营官亲授",
+      "私域疑问秒解,问题不过夜",
+      "私域小组开放式交流",
+      "困难户帮协解决模式"
     ];
     
     // Using admin RPC instead of direct insert to bypass RLS
@@ -665,7 +668,7 @@ export const updateAudiencesVisibility = async (courseId: number, isVisible: boo
   }
 };
 
-// Default TikTok Shop cross-border e-commerce target audiences
+// Default audiences updated to the new content
 export const addDefaultAudiences = async (courseId: number, isVisible: boolean = true) => {
   try {
     console.log("[courseSettingsService] Adding default audiences for courseId:", courseId, "with visibility:", isVisible);
@@ -689,15 +692,15 @@ export const addDefaultAudiences = async (courseId: number, isVisible: boolean =
       console.error('[courseSettingsService] Error reading visibility from localStorage:', err);
     }
     
-    // UPDATED: Default audiences to match what's in the database
+    // UPDATED: Default audiences with new content
     const defaultAudiences = [
-      "想要开始跨境电商创业的新手卖家",
-      "寻求通过TikTok Shop拓展国际市场的店铺经营者",
-      "希望从传统贸易转型到跨境电商的企业",
-      "对短视频电商和直播带货感兴趣的创作者",
-      "想要学习数字化营销与国际贸易的学生",
-      "希望提升跨境店铺业绩的现有卖家",
-      "想要了解跨境电商最新趋势的营销人员"
+      "个人或供应链企业",
+      "具备货源优势着更佳",
+      "转型或搞副业的人群",
+      "有决心搞钱搞流量的",
+      "搞钱恨人或职业收割者",
+      "数字游民爱好者",
+      "对抗型规则爱好者"
     ];
     
     // Using admin RPC instead of direct insert to bypass RLS

@@ -35,7 +35,13 @@ export const getModuleSettings = async (courseId: number, moduleType: string) =>
       return null;
     }
     
-    return data as ModuleSettings;
+    // Type safety: Convert data to ModuleSettings or use defaults
+    if (data && typeof data === 'object') {
+      return data as ModuleSettings;
+    }
+    
+    // Return default settings if no data found or invalid format
+    return getDefaultSettings(moduleType);
   } catch (error) {
     console.error("Exception getting module settings:", error);
     return null;
@@ -51,10 +57,13 @@ export const updateModuleSettings = async (
   settings: Partial<ModuleSettings>
 ) => {
   try {
-    const { error } = await supabase.rpc('update_module_settings', {
+    // Rename the function parameter to match the RPC function parameter name
+    const { error } = await supabase.rpc('upsert_course_section_config', {
       p_course_id: courseId,
-      p_module_type: moduleType,
-      p_settings: settings
+      p_section_type: moduleType,
+      p_title: settings.title,
+      p_description: '',  // Not used but required by function
+      p_icon: settings.icon
     });
     
     if (error) {
@@ -67,4 +76,15 @@ export const updateModuleSettings = async (
     console.error("Exception updating module settings:", error);
     return { success: false, error };
   }
+};
+
+// Helper function to get default settings
+const getDefaultSettings = (moduleType: string): ModuleSettings => {
+  const defaultSettings: Record<string, ModuleSettings> = {
+    'objectives': { title: '学习目标', icon: 'target', module_type: 'objectives' },
+    'requirements': { title: '学习模式', icon: 'book-open', module_type: 'requirements' },
+    'audiences': { title: '适合人群', icon: 'users', module_type: 'audiences' }
+  };
+  
+  return defaultSettings[moduleType] || defaultSettings['objectives'];
 };

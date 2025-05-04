@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -282,22 +281,46 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({
   }, [courseId]);
 
   // Handle module settings update
-  const handleUpdateObjectivesSettings = async (settings: ModuleSettings) => {
+  const handleUpdateObjectivesSettings = async (settings: Partial<ModuleSettings>) => {
     if (!courseId) return;
-    await updateModuleSettings(courseId, settings);
-    setObjectivesSettings(settings);
+    
+    // Create a complete ModuleSettings object by merging with existing settings
+    const updatedSettings: ModuleSettings = {
+      ...objectivesSettings,
+      ...settings,
+      module_type: 'objectives' // Ensure module_type is set correctly
+    };
+    
+    await updateModuleSettings(courseId, 'objectives', updatedSettings);
+    setObjectivesSettings(updatedSettings);
   };
 
-  const handleUpdateRequirementsSettings = async (settings: ModuleSettings) => {
+  const handleUpdateRequirementsSettings = async (settings: Partial<ModuleSettings>) => {
     if (!courseId) return;
-    await updateModuleSettings(courseId, settings);
-    setRequirementsSettings(settings);
+    
+    // Create a complete ModuleSettings object by merging with existing settings
+    const updatedSettings: ModuleSettings = {
+      ...requirementsSettings,
+      ...settings,
+      module_type: 'requirements' // Ensure module_type is set correctly
+    };
+    
+    await updateModuleSettings(courseId, 'requirements', updatedSettings);
+    setRequirementsSettings(updatedSettings);
   };
 
-  const handleUpdateAudiencesSettings = async (settings: ModuleSettings) => {
+  const handleUpdateAudiencesSettings = async (settings: Partial<ModuleSettings>) => {
     if (!courseId) return;
-    await updateModuleSettings(courseId, settings);
-    setAudiencesSettings(settings);
+    
+    // Create a complete ModuleSettings object by merging with existing settings
+    const updatedSettings: ModuleSettings = {
+      ...audiencesSettings,
+      ...settings,
+      module_type: 'audiences' // Ensure module_type is set correctly
+    };
+    
+    await updateModuleSettings(courseId, 'audiences', updatedSettings);
+    setAudiencesSettings(updatedSettings);
   };
 
   // Handle learning objectives changes
