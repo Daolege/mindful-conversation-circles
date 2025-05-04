@@ -197,29 +197,32 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({
         </CardContent>
       </Card>
 
-      <EditableListComponent
-        title="学习目标"
-        description="列出学习者完成课程后将获得的技能"
-        items={learningObjectivesList}
-        onChange={handleLearningObjectivesChange}
-        placeholder="例如: 掌握基础Python语法"
-      />
+      {/* Grid layout for the three editable list components */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <EditableListComponent
+          title="学习目标"
+          description="列出学习者完成课程后将获得的技能"
+          items={learningObjectivesList}
+          onChange={handleLearningObjectivesChange}
+          placeholder="例如: 掌握基础Python语法"
+        />
 
-      <EditableListComponent
-        title="课程要求"
-        description="列出参加课程所需的先决条件"
-        items={requirementsList}
-        onChange={handleRequirementsChange}
-        placeholder="例如: 基本计算机操作技能"
-      />
+        <EditableListComponent
+          title="课程要求"
+          description="列出参加课程所需的先决条件"
+          items={requirementsList}
+          onChange={handleRequirementsChange}
+          placeholder="例如: 基本计算机操作技能"
+        />
 
-      <EditableListComponent
-        title="适合人群"
-        description="说明这门课程适合哪类学习者"
-        items={targetAudienceList}
-        onChange={handleTargetAudienceChange}
-        placeholder="例如: 初学者, 想转行的专业人士"
-      />
+        <EditableListComponent
+          title="适合人群"
+          description="说明这门课程适合哪类学习者"
+          items={targetAudienceList}
+          onChange={handleTargetAudienceChange}
+          placeholder="例如: 初学者, 想转行的专业人士"
+        />
+      </div>
     </div>
   );
 };
