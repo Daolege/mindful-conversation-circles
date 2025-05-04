@@ -34,7 +34,6 @@ import {
 import { getModuleSettings, ModuleSettings, updateModuleSettings } from '@/lib/services/moduleSettingsService';
 import { Loader2 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
-import CourseHighlightsList from './CourseHighlightsList';
 
 // Define props for the CourseOtherSettings component
 interface CourseOtherSettingsProps {
@@ -101,17 +100,6 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({
     icon: 'users',
     module_type: 'audiences'
   });
-
-  // Course highlights state
-  const [courseHighlights, setCourseHighlights] = useState<ListItem[]>([
-    { id: 'highlight-1', text: '高清视频课程', position: 0, icon: 'video', is_visible: true },
-    { id: 'highlight-2', text: '随时随地学习', position: 1, icon: 'clock', is_visible: true },
-    { id: 'highlight-3', text: '精选章节', position: 2, icon: 'star', is_visible: true },
-    { id: 'highlight-4', text: '课程语言: 中文', position: 3, icon: 'language', is_visible: true },
-    { id: 'highlight-5', text: '内容持续更新', position: 4, icon: 'file-text', is_visible: true },
-    { id: 'highlight-6', text: '学员专属社群', position: 5, icon: 'users', is_visible: true },
-    { id: 'highlight-7', text: '附赠学习资料', position: 6, icon: 'book', is_visible: true },
-  ]);
 
   // Loading states
   const [loadingObjectives, setLoadingObjectives] = useState(true);
@@ -579,11 +567,6 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({
     }
   };
 
-  // Handle course highlights changes
-  const handleCourseHighlightsChange = (newItems: ListItem[]) => {
-    setCourseHighlights(newItems);
-  };
-
   // 处理购买选项变更
   const handleOneTimePurchaseChange = (checked: boolean) => {
     // 不允许两个选项同时为false
@@ -716,18 +699,6 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({
             )}
           </CardContent>
         </Card>
-      </div>
-
-      {/* 课程亮点 (NEW) - 左半屏 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <CourseHighlightsList
-          highlights={courseHighlights}
-          onChange={handleCourseHighlightsChange}
-          title="课程亮点"
-        />
-        
-        {/* 右半屏 预留空间 */}
-        <div className="hidden md:block"></div>
       </div>
 
       <Card>
