@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { CourseData, CourseResponse } from "@/lib/types/course-new";
 import { selectFromTable } from "@/lib/services/typeSafeSupabase";
@@ -51,7 +50,8 @@ export const getCourseById = async (courseId: number): Promise<CourseResponse> =
       throw new Error(error.message);
     }
     
-    return { data: data as CourseData };
+    // Use 'as unknown as CourseData' to avoid type errors when the shape doesn't exactly match
+    return { data: data as unknown as CourseData };
   } catch (error) {
     console.error("Error fetching course:", error);
     return { error };

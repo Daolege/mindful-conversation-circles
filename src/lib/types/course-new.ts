@@ -180,6 +180,11 @@ export interface CourseData {
   instructor_bio?: string;
   instructor_avatar?: string;
   sections?: CourseSection[];
+  rating?: number;
+  rating_count?: number;
+  updated_at?: string;
+  created_at?: string;
+  published_at?: string;
 }
 
 // Update CourseResponse to use more specific return types

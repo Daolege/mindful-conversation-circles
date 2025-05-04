@@ -177,9 +177,14 @@ export const getCourseNewById = async (courseId: number): Promise<CourseResponse
 // 创建新课程
 export const createCourseNew = async (courseData: Partial<CourseData>) => {
   try {
+    // Make sure courseData is not an array
+    if (Array.isArray(courseData)) {
+      throw new Error('CourseData cannot be an array');
+    }
+    
     const { data, error } = await supabase
       .from('courses_new')
-      .insert([courseData])
+      .insert([courseData]) // We need to pass an array with a single object here
       .select()
       .single();
     
