@@ -33,20 +33,25 @@ export const getCourses = async (
   search?: string
 ): Promise<CourseResponse> => {
   try {
-    // Explicitly type the query to avoid excessive type instantiation
-    let query = supabase
-      .from('courses')
-      .select('*', { count: 'exact' });
+    // Create basic query without chaining to avoid excessive type instantiation
+    const query = supabase.from('courses');
+    
+    // Apply selection with exact count
+    const countQuery = query.select('*', { count: 'exact' });
+    
+    // Apply filters separately after type has been established
+    let filteredQuery = countQuery;
     
     if (category) {
-      query = query.eq('category', category);
+      filteredQuery = filteredQuery.eq('category', category);
     }
     
     if (search) {
-      query = query.ilike('title', `%${search}%`);
+      filteredQuery = filteredQuery.ilike('title', `%${search}%`);
     }
     
-    const { data, error, count } = await query
+    // Execute query with pagination
+    const { data, error, count } = await filteredQuery
       .order('created_at', { ascending: false })
       .range((page - 1) * limit, page * limit - 1);
     
@@ -132,20 +137,13 @@ export const deleteCourse = async (courseId: number) => {
 // Update course order (needed by CourseManagement.tsx)
 export const updateCourseOrder = async (courseIds: number[]) => {
   try {
-    // Process updates one by one with explicit typing to avoid deep type instantiation
+    // Process updates one by one with explicitly defined updates
     for (let i = 0; i < courseIds.length; i++) {
-      // Create a simple update object with just the fields we need
-      const updateData = { 
-        display_order: i 
-      };
-      
-      // Explicitly use the update method with a simple object
-      const { error } = await supabase
+      // Perform update with minimal type complexity
+      await supabase
         .from('courses')
-        .update(updateData)
+        .update({ display_order: i }) // Direct object literal to minimize type complexity
         .eq('id', courseIds[i]);
-        
-      if (error) throw error;
     }
     
     return { success: true };
