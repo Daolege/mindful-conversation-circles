@@ -393,11 +393,17 @@ export const CourseEditorProvider: React.FC<{
         
         let saveErrors = [];
         
-        // If we have learning objectives to save
+        // 保存学习目标到数据库
         try {
+          // 增强日志记录
+          console.log(`[CourseEditorContext] 开始保存学习目标数据: ${formData.whatyouwilllearn.length}项`);
+          
           if (await saveCourseCollectionItems('course_learning_objectives', courseId, formData.whatyouwilllearn)) {
             console.log('[CourseEditorContext] 学习目标保存成功');
             setSavedSection('objectives', true);
+          } else {
+            console.error('[CourseEditorContext] 学习目标保存失败，无明确错误');
+            saveErrors.push('学习目标');
           }
         } catch (err) {
           console.error('[CourseEditorContext] 保存学习目标失败:', err);
@@ -410,11 +416,17 @@ export const CourseEditorProvider: React.FC<{
           items: formData.requirements.slice(0, 3)
         });
         
-        // Save requirements
+        // 保存课程要求到数据库
         try {
+          // 增强日志记录
+          console.log(`[CourseEditorContext] 开始保存课程要求数据: ${formData.requirements.length}项`);
+          
           if (await saveCourseCollectionItems('course_requirements', courseId, formData.requirements)) {
             console.log('[CourseEditorContext] 课程要求保存成功');
             setSavedSection('requirements', true);
+          } else {
+            console.error('[CourseEditorContext] 课程要求保存失败，无明确错误');
+            saveErrors.push('课程要求');
           }
         } catch (err) {
           console.error('[CourseEditorContext] 保存课程要求失败:', err);
@@ -427,11 +439,17 @@ export const CourseEditorProvider: React.FC<{
           items: formData.target_audience.slice(0, 3)
         });
         
-        // Save target audience
+        // 保存目标受众到数据库
         try {
+          // 增强日志记录
+          console.log(`[CourseEditorContext] 开始保存适合人群数据: ${formData.target_audience.length}项`);
+          
           if (await saveCourseCollectionItems('course_audiences', courseId, formData.target_audience)) {
             console.log('[CourseEditorContext] 适合人群保存成功');
             setSavedSection('audiences', true);
+          } else {
+            console.error('[CourseEditorContext] 适合人群保存失败，无明确错误');
+            saveErrors.push('适合人群');
           }
         } catch (err) {
           console.error('[CourseEditorContext] 保存适合人群失败:', err);
@@ -446,12 +464,23 @@ export const CourseEditorProvider: React.FC<{
         
         // 刷新React Query缓存，确保页面刷新后显示最新数据
         try {
-          const { QueryClient } = await import('@tanstack/react-query');
-          const queryClient = new QueryClient();
-          queryClient.invalidateQueries({queryKey: ['course-new', courseId]});
-          console.log('[CourseEditorContext] 成功使React Query缓存失效，queryKey:', ['course-new', courseId]);
+          // 使用import动态导入避免循环依赖
+          const { useQueryClient } = await import('@tanstack/react-query');
+          // 直接调用useQueryClient会导致错误，因为它是一个React Hook
+          // 所以我们使用window对象传递一个全局事件来触发缓存失效
+          const event = new CustomEvent('invalidate-course-cache', { 
+            detail: { courseId } 
+          });
+          window.dispatchEvent(event);
+          console.log('[CourseEditorContext] 发送缓存失效事件，queryKey:', ['course-new', courseId]);
+          
+          // 强制刷新页面以确保获取最新数据
+          // 这是一个不太优雅但非常有效的方法
+          setTimeout(() => {
+            window.location.href = `/courses-new/${courseId}?t=${Date.now()}`;
+          }, 1500);
         } catch (err) {
-          console.error('Error invalidating React Query cache:', err);
+          console.error('[CourseEditorContext] Error invalidating React Query cache:', err);
         }
         
       } else {
@@ -467,13 +496,30 @@ export const CourseEditorProvider: React.FC<{
   };
 
   // Helper function to save collection items (learning objectives, requirements, or target audience)
-  const saveCourseCollectionItems = async (tableName: 'course_learning_objectives' | 'course_requirements' | 'course_audiences', courseId: number, items: string[]) => {
+  const saveCourseCollectionItems = async (
+    tableName: 'course_learning_objectives' | 'course_requirements' | 'course_audiences', 
+    courseId: number, 
+    items: string[]
+  ) => {
     try {
       console.log(`[CourseEditorContext] 开始保存 ${tableName} 数据:`, {
         courseId,
         itemCount: items.length,
         firstItem: items.length > 0 ? items[0] : 'none'
       });
+      
+      // 首先检查表是否存在
+      const { data: tableCheck, error: tableError } = await supabase
+        .from(tableName)
+        .select('id')
+        .limit(1);
+        
+      if (tableError) {
+        console.error(`[CourseEditorContext] 表 ${tableName} 访问错误:`, tableError);
+        throw new Error(`表 ${tableName} 访问错误: ${tableError.message}`);
+      }
+      
+      console.log(`[CourseEditorContext] 表 ${tableName} 访问成功`);
       
       // First, delete existing items for this course to prevent duplicates
       const { error: deleteError } = await supabase
@@ -485,6 +531,8 @@ export const CourseEditorProvider: React.FC<{
         console.error(`[CourseEditorContext] 删除现有 ${tableName} 时出错:`, deleteError);
         throw deleteError;
       }
+      
+      console.log(`[CourseEditorContext] 成功删除课程 ${courseId} 的现有 ${tableName} 项`);
       
       // Then insert all items with positions
       if (items.length > 0) {
