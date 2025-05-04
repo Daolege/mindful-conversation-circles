@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { CourseData, CourseResponse } from "@/lib/types/course-new";
 import { selectFromTable } from "@/lib/services/typeSafeSupabase";
@@ -35,7 +34,7 @@ export interface CourseWithSections {
   }>;
 }
 
-// Get course by ID 
+// Get course by ID - Fix type conversion issue
 export const getCourseById = async (courseId: number): Promise<CourseResponse> => {
   try {
     const { data, error } = await supabase
@@ -51,7 +50,7 @@ export const getCourseById = async (courseId: number): Promise<CourseResponse> =
       throw new Error(error.message);
     }
     
-    // Cast to unknown first then to CourseData to avoid type errors
+    // Use proper type assertion with as CourseData (not CourseWithDetails | CourseData[])
     return { data: data as unknown as CourseData };
   } catch (error) {
     console.error("Error fetching course:", error);
@@ -186,7 +185,7 @@ export const updateCourseOrder = async (courseIds: number[]) => {
   }
 };
 
-// Simplified SaveCourseData interface to prevent excessive type instantiation
+// Simplify SaveCourseData interface to prevent excessive type instantiation
 interface SaveCourseData {
   id?: number; 
   title: string;
@@ -203,6 +202,7 @@ interface SaveCourseData {
   instructor_id?: string;
 }
 
+// Fix the saveCourse function to handle types properly
 export const saveCourse = async (courseData: SaveCourseData) => {
   try {
     const { id, ...courseFields } = courseData;
@@ -223,7 +223,7 @@ export const saveCourse = async (courseData: SaveCourseData) => {
     } else {
       result = await supabase
         .from('courses_new')
-        .insert(courseFields)
+        .insert([courseFields]) // Pass as array with single object to satisfy Supabase's typing
         .select()
         .single();
     }

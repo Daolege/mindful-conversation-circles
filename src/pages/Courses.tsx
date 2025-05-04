@@ -4,11 +4,8 @@ import React from 'react';
 const Courses = () => {
   // Your Courses component implementation
 
-  // Replace this line:
-  // const someFunction = (someArg) => { /* ... */ }; // Line 319
-  
-  // With this:
-  const someFunction = () => { /* ... */ }; // Line 319 fix
+  // Replace with:
+  const someFunction = () => { /* ... */ }; // Fixed function without parameters
   
   return (
     <div>

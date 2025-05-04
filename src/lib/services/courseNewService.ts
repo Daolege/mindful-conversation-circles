@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { CourseData, CourseResponseSingle, CourseResponseMultiple, CourseWithDetails, CourseSection, CourseLecture, CourseDataForInsert } from '@/lib/types/course-new';
 
@@ -175,7 +174,7 @@ export const getCourseNewById = async (courseId: number): Promise<CourseResponse
 };
 
 // 创建新课程
-export const createCourseNew = async (courseData: Partial<CourseDataForInsert>) => {
+export const createCourseNew = async (courseData: CourseDataForInsert) => {
   try {
     // Ensure we're not trying to pass an array
     if (Array.isArray(courseData)) {
@@ -189,7 +188,7 @@ export const createCourseNew = async (courseData: Partial<CourseDataForInsert>) 
     
     const { data, error } = await supabase
       .from('courses_new')
-      .insert(courseData) // Pass the object directly, not in an array
+      .insert([courseData]) // Pass as array with single object to satisfy Supabase's typing
       .select()
       .single();
     
@@ -208,7 +207,7 @@ export const updateCourseNew = async (courseId: number, courseData: Partial<Cour
   try {
     const { data, error } = await supabase
       .from('courses_new')
-      .update(courseData)
+      .update(courseData) // This is fine as we're updating an existing record
       .eq('id', courseId)
       .select()
       .single();

@@ -143,9 +143,9 @@ export interface CourseData {
   id: number;
   title: string; // Make title required to match Supabase schema expectations
   description?: string;
-  price: number; // Make price required to match CourseWithDetails
+  price?: number; // Make this optional in the base type
   original_price?: number | null;
-  status?: 'published' | 'draft' | 'archived';
+  status?: string; // Optional in CourseData but required in CourseWithDetails
   currency?: string;
   thumbnail_url?: string;
   syllabus?: any;
@@ -167,7 +167,7 @@ export interface CourseData {
   lectures?: number;
   lecture_count?: number;
   enrollment_count?: number;
-  display_order: number; // Make this required
+  display_order?: number; // Make this optional
   is_featured?: boolean;
   featured?: boolean;
   language?: string;
@@ -188,9 +188,9 @@ export interface CourseData {
   allows_one_time_purchase?: boolean;
 }
 
-// Create a simplified version for insert/update operations
+// Create a simplified version for insert/update operations with required fields
 export interface CourseDataForInsert {
-  title: string;
+  title: string; // Must be required since database requires it
   description?: string;
   price?: number;
   original_price?: number | null;
@@ -203,6 +203,7 @@ export interface CourseDataForInsert {
   allows_subscription?: boolean;
   allows_one_time_purchase?: boolean;
   thumbnail_url?: string;
+  instructor_id?: string;
 }
 
 // Update CourseResponse to use more specific return types
