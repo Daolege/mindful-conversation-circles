@@ -1,3 +1,4 @@
+
 import React, { Suspense, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -12,7 +13,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useIsMobile } from '@/hooks/use-mobile';
 
-// Rename component for clarity but keep file name for now to prevent build errors
+// Use the new course service to load course data
 const CourseDetailNew = () => {
   const { courseId } = useParams<{ courseId: string }>();
   const courseIdNum = parseInt(courseId || '0', 10);
@@ -30,6 +31,16 @@ const CourseDetailNew = () => {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [courseId]);
+
+  // Add some debug logging to help troubleshoot
+  useEffect(() => {
+    if (course?.data) {
+      console.log('CourseDetailNew: Course data loaded:', course.data);
+    }
+    if (error) {
+      console.error('CourseDetailNew: Error loading course:', error);
+    }
+  }, [course, error]);
 
   if (isLoading) {
     return (

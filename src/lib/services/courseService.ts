@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { CourseData, CourseResponse, CourseWithSections } from "@/lib/types/course-new";
 import { selectFromTable } from "@/lib/services/typeSafeSupabase";
@@ -154,7 +153,7 @@ export const updateCourseOrder = async (courseIds: number[]) => {
 };
 
 // Save course (needed by CourseEditorContext.tsx)
-// Fixed the issue with the type instantiation and function parameter
+// Fix the type instantiation issue by simplifying the parameter type
 export const saveCourse = async (courseData: { id?: number; title: string; [key: string]: any }) => {
   try {
     const { id, ...courseFields } = courseData;

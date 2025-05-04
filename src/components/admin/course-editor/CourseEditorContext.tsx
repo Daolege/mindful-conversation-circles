@@ -307,23 +307,63 @@ export const CourseEditorProvider: React.FC<{
     }
   };
   
-  // Form submission handler
+  // Form submission handler - Update to use courseNewService instead
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     setIsSaving(true);
     try {
-      // Prepare data for saving
+      // Import directly to avoid circular dependencies
+      const { updateCourseNew, createCourseNew } = await import('@/lib/services/courseNewService');
+      
+      // Prepare data for saving to courses_new table
       const courseData = {
-        ...formData,
         id: numericCourseId,
-        // Ensure required fields
-        display_order: formData.display_order || 0
+        title: formData.title,
+        description: formData.description,
+        price: formData.price,
+        original_price: formData.originalprice,
+        category: formData.category,
+        language: formData.language || 'zh',
+        display_order: formData.display_order || 0,
+        is_featured: formData.featured,
+        // Map other fields needed
       };
       
-      const result = await saveCourse(courseData);
+      console.log('[CourseEditorContext] Saving course data:', courseData);
+      
+      let result;
+      if (numericCourseId) {
+        // Update existing course
+        result = await updateCourseNew(numericCourseId, courseData);
+      } else {
+        // Create new course
+        result = await createCourseNew(courseData);
+      }
+      
       if (result && result.data) {
+        // Save was successful
         toast.success('课程保存成功');
+        
+        // If we have other collections to save (requirements, objectives, etc.), we would save them here
+        // For example, save learning objectives
+        if (formData.whatyouwilllearn && formData.whatyouwilllearn.length > 0) {
+          const courseId = numericCourseId || result.data.id;
+          await saveCourseCollectionItems('course_learning_objectives', courseId, formData.whatyouwilllearn);
+        }
+        
+        // Save requirements
+        if (formData.requirements && formData.requirements.length > 0) {
+          const courseId = numericCourseId || result.data.id;
+          await saveCourseCollectionItems('course_requirements', courseId, formData.requirements);
+        }
+        
+        // Save target audience
+        if (formData.target_audience && formData.target_audience.length > 0) {
+          const courseId = numericCourseId || result.data.id;
+          await saveCourseCollectionItems('course_audiences', courseId, formData.target_audience);
+        }
+        
       } else {
         toast.error('保存课程时出错');
       }
@@ -332,6 +372,37 @@ export const CourseEditorProvider: React.FC<{
       toast.error('保存课程失败');
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  // Helper function to save collection items (learning objectives, requirements, or target audience)
+  const saveCourseCollectionItems = async (tableName: string, courseId: number, items: string[]) => {
+    try {
+      // First, delete existing items for this course
+      await supabase
+        .from(tableName)
+        .delete()
+        .eq('course_id', courseId);
+        
+      // Then insert all items with positions
+      if (items.length > 0) {
+        const itemsToInsert = items.map((content, index) => ({
+          course_id: courseId,
+          content,
+          position: index,
+          is_visible: true
+        }));
+        
+        const { error } = await supabase
+          .from(tableName)
+          .insert(itemsToInsert);
+          
+        if (error) {
+          console.error(`Error saving ${tableName}:`, error);
+        }
+      }
+    } catch (err) {
+      console.error(`Error in saveCourseCollectionItems for ${tableName}:`, err);
     }
   };
   
