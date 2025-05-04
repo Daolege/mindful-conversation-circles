@@ -97,3 +97,56 @@ export const upsertSectionConfig = async (
     return { data: null, error: err };
   }
 };
+
+// Get module settings
+export const getModuleSettings = async (courseId: number, moduleType: string): Promise<ModuleSettings> => {
+  try {
+    const { data, error } = await supabase.rpc('get_module_settings', {
+      p_course_id: courseId,
+      p_module_type: moduleType
+    });
+    
+    if (error) {
+      console.error(`Error fetching ${moduleType} settings:`, error);
+      return getDefaultModuleSettings(moduleType);
+    }
+    
+    // Convert JSON data to ModuleSettings type with proper type safety
+    if (data && typeof data === 'object' && !Array.isArray(data)) {
+      const jsonData = data as Record<string, any>;
+      return {
+        title: jsonData.title || getDefaultModuleSettings(moduleType).title,
+        icon: jsonData.icon || getDefaultModuleSettings(moduleType).icon,
+        module_type: moduleType
+      };
+    }
+    
+    return getDefaultModuleSettings(moduleType);
+  } catch (error) {
+    console.error(`Error fetching ${moduleType} settings:`, error);
+    return getDefaultModuleSettings(moduleType);
+  }
+};
+
+// Get module items
+export const getModuleItems = async (tableName: string, courseId: number): Promise<ModuleItem[]> => {
+  try {
+    // Use explicit type casting to avoid TypeScript limitations with dynamic table names
+    const { data, error } = await supabase
+      .from(tableName as any)
+      .select('*')
+      .eq('course_id', courseId)
+      .order('position');
+      
+    if (error) throw error;
+    
+    // Add default icon if missing and convert to ModuleItem type
+    return (Array.isArray(data) ? data : []).map((item: any) => ({
+      ...item,
+      icon: item.icon || 'check'
+    })) as ModuleItem[];
+  } catch (error) {
+    console.error(`Error fetching ${tableName}:`, error);
+    return [];
+  }
+};
