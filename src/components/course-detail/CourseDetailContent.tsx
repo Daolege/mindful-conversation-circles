@@ -6,7 +6,7 @@ import { useTranslations } from "@/hooks/useTranslations";
 import { supabase } from '@/integrations/supabase/client';
 import { Target, BookOpen, Users } from 'lucide-react';
 import IconDisplay from './IconDisplay';
-import { ModuleSettings, ModuleItem, getDefaultModuleSettings } from '@/lib/services/moduleSettingsService';
+import { ModuleSettings, ModuleItem } from '@/lib/services/moduleSettingsService';
 import { typeSafeSupabase } from '@/lib/services/typeSafeSupabase';
 
 interface CourseDetailContentProps {
@@ -42,6 +42,25 @@ export function CourseDetailContent({ course }: CourseDetailContentProps) {
   
   // Get materials visibility from course data
   const materialsVisible = course.materialsVisible !== false; // Default to true if undefined
+  
+  // Helper functions for getting specific default values
+  const getDefaultTitle = (moduleType: string): string => {
+    const titles: Record<string, string> = {
+      'objectives': '学习目标',
+      'requirements': '学习模式',
+      'audiences': '适合人群'
+    };
+    return titles[moduleType] || '课程部分';
+  };
+  
+  const getDefaultIcon = (moduleType: string): string => {
+    const icons: Record<string, string> = {
+      'objectives': 'target',
+      'requirements': 'book-open',
+      'audiences': 'users'
+    };
+    return icons[moduleType] || 'check';
+  };
   
   // Fetch module data from database
   useEffect(() => {
@@ -93,10 +112,18 @@ export function CourseDetailContent({ course }: CourseDetailContentProps) {
               };
             }
             
-            return getDefaultModuleSettings(moduleType);
+            return {
+              title: getDefaultTitle(moduleType),
+              icon: getDefaultIcon(moduleType),
+              module_type: moduleType
+            };
           } catch (error) {
             console.error(`Error fetching ${moduleType} settings:`, error);
-            return getDefaultModuleSettings(moduleType);
+            return {
+              title: getDefaultTitle(moduleType),
+              icon: getDefaultIcon(moduleType),
+              module_type: moduleType
+            };
           }
         };
         
@@ -133,25 +160,6 @@ export function CourseDetailContent({ course }: CourseDetailContentProps) {
     
     fetchModuleData();
   }, [course.id]);
-  
-  // Helper functions for getting specific default values
-  const getDefaultTitle = (moduleType: string): string => {
-    const titles: Record<string, string> = {
-      'objectives': '学习目标',
-      'requirements': '学习模式',
-      'audiences': '适合人群'
-    };
-    return titles[moduleType] || '课程部分';
-  };
-  
-  const getDefaultIcon = (moduleType: string): string => {
-    const icons: Record<string, string> = {
-      'objectives': 'target',
-      'requirements': 'book-open',
-      'audiences': 'users'
-    };
-    return icons[moduleType] || 'check';
-  };
   
   // Fallback to whatyouwilllearn if no objectives in database
   const displayObjectives = objectives.length > 0 
