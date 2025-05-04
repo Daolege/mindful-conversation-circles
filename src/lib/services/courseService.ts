@@ -131,7 +131,7 @@ export const deleteCourse = async (courseId: number) => {
 // Update course order (needed by CourseManagement.tsx)
 export const updateCourseOrder = async (courseIds: number[]) => {
   try {
-    // Process updates one by one instead of batch to avoid type issues
+    // Process updates one by one to avoid type issues
     for (let i = 0; i < courseIds.length; i++) {
       const { error } = await supabase
         .from('courses')
