@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { getCourseById, saveCourse } from '@/lib/services/courseService';
+import { getCourseNewById } from '@/lib/services/courseNewService';
 
 // Define CourseMaterial type to fix TypeScript errors
 interface CourseMaterial {
@@ -203,10 +203,11 @@ export const CourseEditorProvider: React.FC<{
       }
       
       try {
-        const response = await getCourseById(numericCourseId);
+        console.log('[CourseEditorContext] Loading course data for ID:', numericCourseId);
+        const response = await getCourseNewById(numericCourseId);
         
         if (response && response.error) {
-          console.error('Error loading course with ID', numericCourseId, ':', response.error);
+          console.error('[CourseEditorContext] Error loading course with ID', numericCourseId, ':', response.error);
           toast.error('加载课程数据失败');
           setIsLoading(false);
           return;
@@ -217,6 +218,7 @@ export const CourseEditorProvider: React.FC<{
         if (courseData && !Array.isArray(courseData)) {
           // Now TypeScript knows courseData is a single CourseData object
           const data = courseData;
+          console.log('[CourseEditorContext] Loaded course data:', data);
           
           // For syllabus which may not exist in courses_new
           let syllabus = [];
@@ -229,7 +231,7 @@ export const CourseEditorProvider: React.FC<{
               syllabus = syllabusData;
             }
           } catch (e) {
-            console.error('Error parsing syllabus JSON:', e);
+            console.error('[CourseEditorContext] Error parsing syllabus JSON:', e);
             syllabus = [];
           }
           
@@ -257,20 +259,26 @@ export const CourseEditorProvider: React.FC<{
             syllabus: Array.isArray(syllabus) ? syllabus : [],
             materials: data.materials || [],
             // Handle collections that might be stored in JSON fields in courses_new
-            requirements: safeParseJson(data.requirements_data || data.requirements_json, []),
+            requirements: safeParseJson(data.requirements || data.requirements_data || data.requirements_json, []),
             whatyouwilllearn: safeParseJson(data.learning_objectives || data.learning_objectives_json, []),
-            target_audience: safeParseJson(data.target_audience_data || data.audience_json || data.audience, []),
-            highlights: safeParseJson(data.highlights_data || data.highlights_json, []),
+            target_audience: safeParseJson(data.target_audience || data.target_audience_data || data.audience_json || data.audience, []),
+            highlights: safeParseJson(data.highlights || data.highlights_data || data.highlights_json, []),
             lectures: Number(data.lectures || data.lecture_count || 0),
             enrollment_count: Number(data.enrollment_count || 0),
             display_order: Number(data.display_order || 0),
-            featured: Boolean(data.is_featured || false) // Map from is_featured
+            featured: Boolean(data.is_featured || false), // Map from is_featured
+            language: data.language || 'zh',
+            // Make sure imageurl is properly mapped
+            imageurl: data.thumbnail_url || data.imageurl || ''
           };
           
+          console.log('[CourseEditorContext] Formatted course data:', formattedData);
           setFormData(formattedData);
+        } else {
+          console.warn('[CourseEditorContext] No course data or unexpected format received:', courseData);
         }
       } catch (error) {
-        console.error('Error loading course:', error);
+        console.error('[CourseEditorContext] Error loading course:', error);
         toast.error('加载课程数据失败');
       } finally {
         setIsLoading(false);

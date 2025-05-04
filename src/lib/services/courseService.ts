@@ -73,7 +73,7 @@ export const getCourses = async (
 // Get featured courses
 export const getFeaturedCourses = async (limit = 6): Promise<CourseResponse> => {
   try {
-    // Simplify the type approach to avoid syntax issues
+    // Fixed version without complex type definition
     const { data, error } = await supabase
       .from('courses')
       .select('*')
