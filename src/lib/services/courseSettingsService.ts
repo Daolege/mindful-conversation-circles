@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from "uuid";
 
@@ -213,6 +212,7 @@ export const addDefaultObjectives = async (courseId: number, isVisible: boolean 
       console.error('[courseSettingsService] Error reading visibility from localStorage:', err);
     }
     
+    // UPDATED: Default objectives to match what's in the database
     const defaultObjectives = [
       "掌握TikTok Shop跨境电商店铺的搭建和优化技巧",
       "学习跨境电商产品选品、定价与上架策略",
@@ -451,6 +451,7 @@ export const addDefaultRequirements = async (courseId: number, isVisible: boolea
       console.error('[courseSettingsService] Error reading visibility from localStorage:', err);
     }
     
+    // UPDATED: Default requirements to match what's in the database
     const defaultRequirements = [
       "基本的电脑操作技能和网络连接",
       "初步了解电商或网络营销概念",
@@ -688,6 +689,7 @@ export const addDefaultAudiences = async (courseId: number, isVisible: boolean =
       console.error('[courseSettingsService] Error reading visibility from localStorage:', err);
     }
     
+    // UPDATED: Default audiences to match what's in the database
     const defaultAudiences = [
       "想要开始跨境电商创业的新手卖家",
       "寻求通过TikTok Shop拓展国际市场的店铺经营者",

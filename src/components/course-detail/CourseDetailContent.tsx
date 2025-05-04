@@ -62,8 +62,8 @@ export function CourseDetailContent({ course }: CourseDetailContentProps) {
               
             if (error) throw error;
             
-            // Add default icon if missing
-            return (data || []).map(item => ({
+            // Add default icon if missing and convert to ModuleItem type
+            return (Array.isArray(data) ? data : []).map(item => ({
               ...item,
               icon: item.icon || 'check'
             })) as ModuleItem[];
