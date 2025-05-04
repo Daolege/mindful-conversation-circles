@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { CourseMaterials } from '@/components/course/CourseMaterials';
 import { Course } from '@/lib/types/course';
@@ -6,7 +7,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { Target, BookOpen, Users } from 'lucide-react';
 import IconDisplay from './IconDisplay';
 import { ModuleSettings, ModuleItem, getDefaultModuleSettings } from '@/lib/services/moduleSettingsService';
-import { typeSafeSupabase } from '@/lib/services/typeSafeSupabase';
 
 interface CourseDetailContentProps {
   course: Course;
@@ -19,6 +19,7 @@ export function CourseDetailContent({ course }: CourseDetailContentProps) {
   const [objectives, setObjectives] = useState<ModuleItem[]>([]);
   const [requirements, setRequirements] = useState<ModuleItem[]>([]);
   const [audiences, setAudiences] = useState<ModuleItem[]>([]);
+  const [highlights, setHighlights] = useState<any[]>([]);
   
   // State for module settings
   const [objectivesSettings, setObjectivesSettings] = useState<ModuleSettings>({
@@ -72,6 +73,26 @@ export function CourseDetailContent({ course }: CourseDetailContentProps) {
           }
         };
         
+        // Fetch course highlights
+        const fetchHighlights = async (): Promise<any[]> => {
+          try {
+            const { data, error } = await supabase
+              .from('course_highlights')
+              .select('*')
+              .eq('course_id', course.id)
+              .eq('is_visible', true)
+              .order('position');
+              
+            if (error) throw error;
+            
+            // Process highlights data
+            return Array.isArray(data) ? data : [];
+          } catch (error) {
+            console.error("Error fetching course highlights:", error);
+            return [];
+          }
+        };
+        
         // Fetch module settings using RPC function
         const fetchSettings = async (moduleType: string): Promise<ModuleSettings> => {
           try {
@@ -106,20 +127,23 @@ export function CourseDetailContent({ course }: CourseDetailContentProps) {
           audiencesData,
           objSettings,
           reqSettings,
-          audSettings
+          audSettings,
+          highlightsData
         ] = await Promise.all([
           fetchModuleItems('course_learning_objectives'),
           fetchModuleItems('course_requirements'),
           fetchModuleItems('course_audiences'),
           fetchSettings('objectives'),
           fetchSettings('requirements'),
-          fetchSettings('audiences')
+          fetchSettings('audiences'),
+          fetchHighlights()
         ]);
         
         // Update state with fetched data
         setObjectives(objectivesData);
         setRequirements(requirementsData);
         setAudiences(audiencesData);
+        setHighlights(highlightsData);
         
         // Update settings
         if (objSettings) setObjectivesSettings(objSettings);
@@ -193,6 +217,25 @@ export function CourseDetailContent({ course }: CourseDetailContentProps) {
           <div className="prose max-w-none">
             <p>{course.description}</p>
           </div>
+        </section>
+      )}
+
+      {/* Course Highlights Section */}
+      {highlights.length > 0 && (
+        <section>
+          <h2 className="text-xl font-bold mb-3">课程亮点</h2>
+          <ul className="space-y-2 grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">
+            {highlights.map((item) => (
+              <li key={item.id} className="flex items-start gap-2">
+                <IconDisplay 
+                  iconName={item.icon || 'check'} 
+                  className="text-primary flex-shrink-0 mt-1" 
+                  size={18}
+                />
+                <span className="text-gray-700">{item.content}</span>
+              </li>
+            ))}
+          </ul>
         </section>
       )}
 
