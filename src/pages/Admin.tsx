@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Navbar from "@/components/Navbar";
@@ -213,8 +214,10 @@ const Admin = () => {
                 value={tab.value} 
                 className="flex-1 px-8 py-4 text-base font-medium min-w-[140px] relative overflow-hidden"
               >
-                <tab.icon className="mr-2 h-5 w-5 text-gray-500" />
-                {tab.label}
+                <div className="flex flex-col items-center justify-center">
+                  <tab.icon className="mb-2 h-5 w-5 text-gray-500" />
+                  <span>{tab.label}</span>
+                </div>
               </TabsTrigger>
             ))}
           </TabsList>
