@@ -65,13 +65,13 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
   console.log('[CourseDetailContentNew] Requirements:', course.requirements);
   console.log('[CourseDetailContentNew] Target audience:', course.target_audience);
 
-  // Generate sample materials if none exist
+  // Use course materials from database or provide defaults if none exist
   const courseMaterials = course.materials?.length ? course.materials : [
     { id: "mat1", course_id: course.id, name: "课程讲义.PDF", url: "#", position: 1, is_visible: true, created_at: new Date().toISOString() },
     { id: "mat2", course_id: course.id, name: "练习题.PDF", url: "#", position: 2, is_visible: true, created_at: new Date().toISOString() }
   ];
 
-  // Use database learning objectives if they exist, otherwise use defaults
+  // Use learning objectives from database if they exist, otherwise use defaults
   const learningObjectives = (course.learning_objectives && course.learning_objectives.length > 0) 
     ? course.learning_objectives 
     : [
@@ -81,7 +81,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
       "AI应用场景理解"
     ];
 
-  // Use database requirements if they exist, otherwise use defaults
+  // Use requirements from database if they exist, otherwise use defaults
   const requirements = (course.requirements && course.requirements.length > 0)
     ? course.requirements 
     : [
@@ -90,7 +90,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
       "有兴趣了解AI发展前沿"
     ];
 
-  // Use database target audience if they exist, otherwise use defaults
+  // Use target audience from database if they exist, otherwise use defaults
   const targetAudience = (course.target_audience && course.target_audience.length > 0)
     ? course.target_audience
     : [

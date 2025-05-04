@@ -2,8 +2,8 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { getCourseNewById } from '@/lib/services/courseNewService';
-import { saveCourse } from '@/lib/services/courseService';
 import { supabase } from '@/integrations/supabase/client';
+import { selectFromTable, deleteFromTable, insertIntoTable } from '@/lib/services/typeSafeSupabase';
 
 // Define CourseMaterial type to fix TypeScript errors
 interface CourseMaterial {
@@ -381,15 +381,7 @@ export const CourseEditorProvider: React.FC<{
       console.log(`[CourseEditorContext] Saving ${tableName} for course ${courseId}, ${items.length} items`);
       
       // First, delete existing items for this course to prevent duplicates
-      const { error: deleteError } = await supabase
-        .from(tableName)
-        .delete()
-        .eq('course_id', courseId);
-        
-      if (deleteError) {
-        console.error(`[CourseEditorContext] Error deleting existing ${tableName}:`, deleteError);
-        throw deleteError;
-      }
+      await deleteFromTable(tableName, { course_id: courseId });
       
       // Then insert all items with positions
       if (items.length > 0) {
@@ -400,16 +392,8 @@ export const CourseEditorProvider: React.FC<{
           is_visible: true
         }));
         
-        const { error: insertError } = await supabase
-          .from(tableName)
-          .insert(itemsToInsert);
-          
-        if (insertError) {
-          console.error(`[CourseEditorContext] Error saving ${tableName}:`, insertError);
-          throw insertError;
-        } else {
-          console.log(`[CourseEditorContext] Successfully saved ${items.length} items to ${tableName}`);
-        }
+        await insertIntoTable(tableName, itemsToInsert);
+        console.log(`[CourseEditorContext] Successfully saved ${items.length} items to ${tableName}`);
       }
     } catch (err) {
       console.error(`[CourseEditorContext] Error in saveCourseCollectionItems for ${tableName}:`, err);

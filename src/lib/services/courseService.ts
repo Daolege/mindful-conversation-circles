@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { CourseData, CourseResponse, CourseWithSections } from "@/lib/types/course-new";
 import { selectFromTable } from "@/lib/services/typeSafeSupabase";
@@ -153,8 +154,8 @@ export const updateCourseOrder = async (courseIds: number[]) => {
 };
 
 // Save course 
-// Fix the type instantiation issue by explicitly defining the parameter type
-export const saveCourse = async (courseData: { 
+// Fix type instantiation issue by using a more specific type
+export const saveCourse = async (courseData: {
   id?: number; 
   title: string;
   price?: number;
@@ -163,7 +164,11 @@ export const saveCourse = async (courseData: {
   language?: string;
   display_order?: number;
   is_featured?: boolean;
-  [key: string]: any;
+  category?: string;
+  status?: string;
+  currency?: string;
+  thumbnail_url?: string;
+  instructor_id?: string;
 }) => {
   try {
     const { id, ...courseFields } = courseData;
