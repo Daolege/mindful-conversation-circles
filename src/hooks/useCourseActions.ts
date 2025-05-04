@@ -3,7 +3,7 @@ import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { getCourseNewById, saveFullCourse, clearCourseLocalStorageData } from "@/lib/services/courseNewService";
 import { toast } from "sonner";
-import { CourseSection } from "@/lib/types/course-new";
+import { CourseSection, CourseDataForInsert } from "@/lib/types/course-new";
 import { CourseFormValues } from "@/components/admin/course-editor/CourseBasicForm";
 
 export const useCourseActions = (courseId?: string) => {
@@ -31,9 +31,16 @@ export const useCourseActions = (courseId?: string) => {
       setSaveSuccess(false);
       setSaveError(null);
       
-      const courseData = {
-        ...values,
+      const courseData: CourseDataForInsert = {
         title: values.title,
+        description: values.description,
+        price: values.price,
+        original_price: values.original_price,
+        currency: values.currency,
+        language: values.language,
+        display_order: values.display_order,
+        status: values.status,
+        is_featured: values.is_featured,
       };
       
       console.log("[useCourseActions 调试] 课程数据:", courseData);

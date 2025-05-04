@@ -364,7 +364,7 @@ export const CourseEditorProvider: React.FC<{
         language: formData.language || 'zh',
         display_order: formData.display_order || 0,
         is_featured: formData.featured,
-        // Map other fields needed
+        status: 'draft', // Add default status to fix the type error
       };
       
       console.log('[CourseEditorContext] 保存课程基本数据:', courseData);

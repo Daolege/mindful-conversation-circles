@@ -135,9 +135,16 @@ const CourseNewEditor = () => {
       setSaveSuccess(false);
       setSaveError(null);
       
-      const courseData: Partial<CourseNew> & { title: string } = {
-        ...values,
+      const courseData: CourseDataForInsert = {
         title: values.title,
+        description: values.description,
+        price: values.price,
+        original_price: values.original_price,
+        currency: values.currency,
+        language: values.language,
+        display_order: values.display_order,
+        status: values.status,
+        is_featured: values.is_featured,
       };
       
       let result;

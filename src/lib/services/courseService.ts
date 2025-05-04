@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { CourseData, CourseResponse } from "@/lib/types/course-new";
+import { CourseData, CourseResponse, CourseWithDetails } from "@/lib/types/course-new";
 import { selectFromTable } from "@/lib/services/typeSafeSupabase";
 
 // Simplified interface to avoid deep type instantiations
@@ -36,7 +36,7 @@ export interface CourseWithSections {
 }
 
 // Get course by ID - Fix type conversion issue
-export const getCourseById = async (courseId: number): Promise<CourseResponse> => {
+export const getCourseById = async (courseId: number): Promise<{ data: CourseWithDetails } | { error: any }> => {
   try {
     const { data, error } = await supabase
       .from('courses')
@@ -51,8 +51,8 @@ export const getCourseById = async (courseId: number): Promise<CourseResponse> =
       throw new Error(error.message);
     }
     
-    // Cast to unknown first, then to CourseData to avoid type error
-    return { data: data as unknown as CourseData };
+    // Cast to unknown first, then to CourseWithDetails to avoid type error
+    return { data: data as unknown as CourseWithDetails };
   } catch (error) {
     console.error("Error fetching course:", error);
     return { error };
@@ -186,7 +186,7 @@ export const updateCourseOrder = async (courseIds: number[]) => {
   }
 };
 
-// Simplify SaveCourseData interface to prevent excessive type instantiation
+// Simplify interface to match how it's actually used
 interface SaveCourseData {
   id?: number; 
   title: string;

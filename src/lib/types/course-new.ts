@@ -1,3 +1,4 @@
+
 export interface ListItem {
   id: string;
   text: string;
@@ -111,7 +112,7 @@ export interface CourseMaterial {
 export interface CourseFormValues {
   title: string;
   description?: string;
-  price: number; // Make it required to match CourseData
+  price: number;
   original_price?: number | null;
   currency: string;
   language: string;
@@ -167,7 +168,7 @@ export interface CourseData {
   lectures?: number;
   lecture_count?: number;
   enrollment_count?: number;
-  display_order?: number;
+  display_order: number; // Made required to match CourseWithDetails
   is_featured?: boolean;
   featured?: boolean;
   language?: string;
@@ -188,13 +189,13 @@ export interface CourseData {
   allows_one_time_purchase?: boolean;
 }
 
-// Create a simplified version for insert/update operations with required fields
+// Modified version for insert/update operations with required fields that match how it's used
 export interface CourseDataForInsert {
   title: string;
   description?: string;
-  price: number; // Make it required to match CourseData
+  price?: number; // Make it optional to match how it's used in components
   original_price?: number | null;
-  status: string; // Make it required to match CourseData
+  status?: string; // Make it optional to match how it's used in components
   currency?: string;
   language?: string;
   category?: string;
