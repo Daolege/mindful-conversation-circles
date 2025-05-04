@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { CourseData, CourseResponseSingle, CourseResponseMultiple, CourseWithDetails, CourseSection, CourseLecture, CourseDataForInsert } from '@/lib/types/course-new';
 
@@ -281,7 +282,7 @@ export const batchUpdateCourseStatus = async (courseIds: number[], status: 'publ
 };
 
 // 保存完整课程（包括基本信息、章节、课时等）
-export const saveFullCourse = async (courseId: number, courseData: Partial<CourseData>, sections: CourseSection[] = []) => {
+export const saveFullCourse = async (courseId: number, courseData: CourseDataForInsert, sections: CourseSection[] = []) => {
   try {
     console.log("[courseNewService] 开始保存完整课程，ID:", courseId);
     // 如果 courseId 为 0，表示创建新课程

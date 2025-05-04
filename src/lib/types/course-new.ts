@@ -1,3 +1,4 @@
+
 export interface ListItem {
   id: string;
   text: string;
@@ -141,11 +142,11 @@ export interface SubscriptionPlan {
 // CourseData interface refined to include all fields from CourseNew and CourseWithDetails
 export interface CourseData {
   id: number;
-  title: string; // Make title required to match Supabase schema expectations
+  title: string;
   description?: string;
-  price?: number; // Make this optional in the base type
+  price?: number;
   original_price?: number | null;
-  status?: string; // Optional in CourseData but required in CourseWithDetails
+  status?: string;
   currency?: string;
   thumbnail_url?: string;
   syllabus?: any;
@@ -167,7 +168,7 @@ export interface CourseData {
   lectures?: number;
   lecture_count?: number;
   enrollment_count?: number;
-  display_order?: number; // Make this optional
+  display_order?: number;
   is_featured?: boolean;
   featured?: boolean;
   language?: string;
@@ -190,7 +191,7 @@ export interface CourseData {
 
 // Create a simplified version for insert/update operations with required fields
 export interface CourseDataForInsert {
-  title: string; // Must be required since database requires it
+  title: string;
   description?: string;
   price?: number;
   original_price?: number | null;

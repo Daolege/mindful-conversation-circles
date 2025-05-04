@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { CourseData, CourseResponse } from "@/lib/types/course-new";
 import { selectFromTable } from "@/lib/services/typeSafeSupabase";
@@ -50,7 +51,7 @@ export const getCourseById = async (courseId: number): Promise<CourseResponse> =
       throw new Error(error.message);
     }
     
-    // Use proper type assertion with as CourseData (not CourseWithDetails | CourseData[])
+    // Use proper type assertion with as unknown as CourseData
     return { data: data as unknown as CourseData };
   } catch (error) {
     console.error("Error fetching course:", error);
