@@ -99,22 +99,25 @@ export const getCourses = async (
 // Get featured courses
 export const getFeaturedCourses = async (limit = 6): Promise<CourseResponse> => {
   try {
-    // Break down the query into separate steps to avoid deep type instantiation
-    const query = supabase.from('courses');
+    // Break down the query into separate steps to fix TypeScript issues
+    // Step 1: Start with the base query
+    let query = supabase.from('courses');
     
-    // Step 1: Basic select
-    const selectQuery = query.select('*');
+    // Step 2: Select fields
+    query = query.select('*');
     
-    // Step 2: Add filters one by one
-    const filteredQuery = selectQuery
-      .eq('is_featured', true)
-      .eq('status', 'published');
+    // Step 3: Add filters separately
+    query = query.eq('is_featured', true);
+    query = query.eq('status', 'published');
     
-    // Step 3: Add ordering
-    const orderedQuery = filteredQuery.order('created_at', { ascending: false });
+    // Step 4: Add ordering
+    query = query.order('created_at', { ascending: false });
     
-    // Step 4: Add limit and execute
-    const { data, error } = await orderedQuery.limit(limit);
+    // Step 5: Add limit
+    query = query.limit(limit);
+    
+    // Execute the query
+    const { data, error } = await query;
     
     if (error) {
       throw new Error(error.message);
@@ -131,12 +134,20 @@ export const getFeaturedCourses = async (limit = 6): Promise<CourseResponse> => 
 // Get courses by instructor ID (needed by CourseManagement.tsx)
 export const getCoursesByInstructorId = async (instructorId: string) => {
   try {
-    // Simplify by destructuring the result directly
-    const { data, error } = await supabase
-      .from('courses')
-      .select('*')
-      .eq('instructor', instructorId)
-      .order('display_order', { ascending: true });
+    // Break down the query into separate steps for type safety
+    let query = supabase.from('courses');
+    
+    // Select fields
+    query = query.select('*');
+    
+    // Add filters
+    query = query.eq('instructor', instructorId);
+    
+    // Add ordering
+    query = query.order('display_order', { ascending: true });
+    
+    // Execute the query
+    const { data, error } = await query;
     
     if (error) {
       throw new Error(error.message);
@@ -152,11 +163,17 @@ export const getCoursesByInstructorId = async (instructorId: string) => {
 // Delete course (needed by CourseManagement.tsx)
 export const deleteCourse = async (courseId: number) => {
   try {
-    // Use direct approach without complex chaining
-    const { error } = await supabase
-      .from('courses')
-      .delete()
-      .eq('id', courseId);
+    // Break down the query into steps
+    let query = supabase.from('courses');
+    
+    // Delete operation
+    query = query.delete();
+    
+    // Add filter
+    query = query.eq('id', courseId);
+    
+    // Execute the query
+    const { error } = await query;
     
     if (error) {
       throw error;
@@ -174,10 +191,17 @@ export const updateCourseOrder = async (courseIds: number[]) => {
   try {
     // Use simple loop with awaited promises to avoid complex typing
     for (let i = 0; i < courseIds.length; i++) {
-      const { error: updateError } = await supabase
-        .from('courses')
-        .update({ display_order: i })
-        .eq('id', courseIds[i]);
+      // Break down the query into steps
+      let query = supabase.from('courses');
+      
+      // Update operation
+      query = query.update({ display_order: i });
+      
+      // Add filter
+      query = query.eq('id', courseIds[i]);
+      
+      // Execute the query
+      const { error: updateError } = await query;
       
       if (updateError) {
         throw updateError;
@@ -197,22 +221,40 @@ export const saveCourse = async (courseData: any) => {
     const { id, ...courseFields } = courseData;
     let result;
     
-    // Use more direct approach with explicit handling for update vs insert
+    // Break down queries into steps to avoid type issues
     if (id) {
-      // Update existing course
-      result = await supabase
-        .from('courses')
-        .update(courseFields)
-        .eq('id', id)
-        .select()
-        .single();
+      // Update existing course - build the query step by step
+      let updateQuery = supabase.from('courses');
+      
+      // Update operation
+      updateQuery = updateQuery.update(courseFields);
+      
+      // Add filter
+      updateQuery = updateQuery.eq('id', id);
+      
+      // Select fields
+      updateQuery = updateQuery.select();
+      
+      // Expect single result
+      updateQuery = updateQuery.single();
+      
+      // Execute the query
+      result = await updateQuery;
     } else {
-      // Insert new course
-      result = await supabase
-        .from('courses')
-        .insert(courseFields)
-        .select()
-        .single();
+      // Insert new course - build the query step by step
+      let insertQuery = supabase.from('courses');
+      
+      // Insert operation
+      insertQuery = insertQuery.insert(courseFields);
+      
+      // Select fields
+      insertQuery = insertQuery.select();
+      
+      // Expect single result
+      insertQuery = insertQuery.single();
+      
+      // Execute the query
+      result = await insertQuery;
     }
     
     if (result.error) throw result.error;
