@@ -4,6 +4,7 @@ import { TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ChevronUp, ChevronDown } from "lucide-react";
 import { SortConfig, SortField } from "@/lib/types/user-types";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useTranslations } from '@/hooks/useTranslations';
 
 interface UserListHeaderProps {
   sortConfig: SortConfig;
@@ -20,6 +21,8 @@ export const UserListHeader: React.FC<UserListHeaderProps> = ({
   onSelectAll,
   hasUsers
 }) => {
+  const { t } = useTranslations();
+  
   const renderSortIcon = (field: SortField) => {
     if (sortConfig.field !== field) return null;
     return sortConfig.direction === 'asc' ? 
@@ -40,7 +43,7 @@ export const UserListHeader: React.FC<UserListHeaderProps> = ({
               checked={allSelected}
               onCheckedChange={onSelectAll}
               disabled={!hasUsers}
-              aria-label="选择所有用户"
+              aria-label={t('admin:selectAllUsers')}
             />
           </div>
         </TableHead>
@@ -49,16 +52,16 @@ export const UserListHeader: React.FC<UserListHeaderProps> = ({
           onClick={() => handleSortClick('registration_date')}
         >
           <div className="flex items-center cursor-pointer select-none">
-            用户名{renderSortIcon('registration_date')}
+            {t('common:username')}{renderSortIcon('registration_date')}
           </div>
         </TableHead>
-        <TableHead className="w-[200px]">邮箱</TableHead>
+        <TableHead className="w-[200px]">{t('common:email')}</TableHead>
         <TableHead 
           className="w-[140px]"
           onClick={() => handleSortClick('roles')}
         >
           <div className="flex items-center cursor-pointer select-none">
-            角色{renderSortIcon('roles')}
+            {t('common:role')}{renderSortIcon('roles')}
           </div>
         </TableHead>
         <TableHead 
@@ -66,7 +69,7 @@ export const UserListHeader: React.FC<UserListHeaderProps> = ({
           onClick={() => handleSortClick('is_active')}
         >
           <div className="flex items-center cursor-pointer select-none">
-            状态{renderSortIcon('is_active')}
+            {t('admin:status')}{renderSortIcon('is_active')}
           </div>
         </TableHead>
         <TableHead 
@@ -74,7 +77,7 @@ export const UserListHeader: React.FC<UserListHeaderProps> = ({
           onClick={() => handleSortClick('registration_date')}
         >
           <div className="flex items-center cursor-pointer select-none">
-            注册时间{renderSortIcon('registration_date')}
+            {t('common:registrationTime')}{renderSortIcon('registration_date')}
           </div>
         </TableHead>
         <TableHead 
@@ -82,7 +85,7 @@ export const UserListHeader: React.FC<UserListHeaderProps> = ({
           onClick={() => handleSortClick('last_login_at')}
         >
           <div className="flex items-center cursor-pointer select-none">
-            最后登录{renderSortIcon('last_login_at')}
+            {t('common:lastLogin')}{renderSortIcon('last_login_at')}
           </div>
         </TableHead>
         <TableHead 
@@ -90,10 +93,10 @@ export const UserListHeader: React.FC<UserListHeaderProps> = ({
           onClick={() => handleSortClick('login_method')}
         >
           <div className="flex items-center cursor-pointer select-none">
-            登录方式{renderSortIcon('login_method')}
+            {t('common:loginMethod')}{renderSortIcon('login_method')}
           </div>
         </TableHead>
-        <TableHead className="w-[80px] text-right">操作</TableHead>
+        <TableHead className="w-[80px] text-right">{t('admin:actions')}</TableHead>
       </TableRow>
     </TableHeader>
   );
