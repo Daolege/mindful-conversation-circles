@@ -30,7 +30,7 @@ export interface CourseLecture {
   section_id: string;
   duration?: string;
   is_free?: boolean;
-  video_url?: string;  // Added missing field
+  video_url?: string;
   requires_homework_completion?: boolean;
   created_at?: string;
   updated_at?: string;
@@ -59,6 +59,8 @@ export interface CourseNew {
   allows_one_time_purchase?: boolean;
   thumbnail_url?: string;
   materials?: CourseMaterial[];
+  video_url?: string; // Added for backward compatibility
+  syllabus?: any; // Added for backward compatibility
 }
 
 // CourseWithDetails interface with additional instructor fields
@@ -129,11 +131,36 @@ export interface CourseData {
   status?: string;
   currency?: string;
   thumbnail_url?: string;
+  syllabus?: any;
+  syllabus_data?: any;
+  syllabus_json?: any;
+  materials?: any[];
+  requirements_data?: any;
+  requirements_json?: any;
+  learning_objectives?: any;
+  learning_objectives_json?: any;
+  target_audience_data?: any;
+  audience_json?: any;
+  audience?: any;
+  highlights_data?: any;
+  highlights_json?: any;
+  lectures?: number;
+  lecture_count?: number;
+  enrollment_count?: number;
+  display_order?: number;
+  is_featured?: boolean;
+  original_price?: number;
+  video_url?: string;
 }
 
 export interface CourseResponse {
-  data?: CourseData;
+  data?: CourseData | CourseData[];
   error?: any;
+  meta?: {
+    total: number;
+    page: number;
+    limit: number;
+  };
 }
 
 // SiteSetting interface with optional id and site_name

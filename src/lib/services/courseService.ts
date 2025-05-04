@@ -1,6 +1,5 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { Database } from "@/types/supabase";
 import { CourseData, CourseResponse, CourseWithSections } from "@/lib/types/course-new";
 
 // Get course by ID 
@@ -87,5 +86,105 @@ export const getFeaturedCourses = async (limit = 6): Promise<CourseResponse> => 
   } catch (error) {
     console.error("Error fetching featured courses:", error);
     return { error };
+  }
+};
+
+// Get courses by instructor ID (needed by CourseManagement.tsx)
+export const getCoursesByInstructorId = async (instructorId: string) => {
+  try {
+    const { data, error } = await supabase
+      .from('courses')
+      .select('*')
+      .eq('instructor', instructorId)
+      .order('display_order', { ascending: true });
+    
+    if (error) {
+      throw new Error(error.message);
+    }
+    
+    return { data, error: null };
+  } catch (error) {
+    console.error("Error fetching instructor courses:", error);
+    return { data: null, error };
+  }
+};
+
+// Delete course (needed by CourseManagement.tsx)
+export const deleteCourse = async (courseId: number) => {
+  try {
+    const { error } = await supabase
+      .from('courses')
+      .delete()
+      .eq('id', courseId);
+    
+    if (error) {
+      throw error;
+    }
+    
+    return { success: true };
+  } catch (error) {
+    console.error("Error deleting course:", error);
+    return { success: false, error };
+  }
+};
+
+// Update course order (needed by CourseManagement.tsx)
+export const updateCourseOrder = async (courseIds: number[]) => {
+  try {
+    // Update each course with its new display order
+    const updates = courseIds.map((courseId, index) => ({
+      id: courseId,
+      display_order: index
+    }));
+    
+    // Batch update
+    const { error } = await supabase
+      .from('courses')
+      .upsert(updates);
+    
+    if (error) {
+      throw error;
+    }
+    
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating course order:", error);
+    return { success: false, error };
+  }
+};
+
+// Save course (needed by CourseEditorContext.tsx)
+export const saveCourse = async (courseData: any) => {
+  try {
+    const { id, ...courseFields } = courseData;
+    
+    let result;
+    if (id) {
+      // Update existing course
+      const { data, error } = await supabase
+        .from('courses')
+        .update(courseFields)
+        .eq('id', id)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      result = data;
+    } else {
+      // Insert new course
+      const { data, error } = await supabase
+        .from('courses')
+        .insert(courseFields)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      result = data;
+    }
+    
+    return { data: result, error: null };
+  } catch (error) {
+    console.error("Error saving course:", error);
+    return { data: null, error };
   }
 };
