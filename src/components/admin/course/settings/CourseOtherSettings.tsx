@@ -50,7 +50,7 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({
 }) => {
   const [isFeatured, setIsFeatured] = useState<boolean>(false);
   const [isPaidContent, setIsPaidContent] = useState<boolean>(true);
-  const [courseVisibility, setCourseVisibility] = useState<string>("published");
+  const [courseVisibility, setCourseVisibility] = useState<string>("draft");
   
   // Convert string arrays to object arrays with IDs for the editable lists
   const formatArrayToListItems = (arr: string[]): ListItem[] => {
@@ -89,7 +89,7 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({
         if (data) {
           setIsFeatured(data.is_featured || false);
           setIsPaidContent((data.price || 0) > 0);
-          setCourseVisibility(data.status || "published");
+          setCourseVisibility(data.status || "draft");
         }
       } catch (error) {
         console.error("Error loading course settings:", error);
@@ -197,29 +197,32 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({
         </CardContent>
       </Card>
 
-      <EditableListComponent
-        title="学习目标"
-        description="列出学习者完成课程后将获得的技能"
-        items={learningObjectivesList}
-        onChange={handleLearningObjectivesChange}
-        placeholder="例如: 掌握基础Python语法"
-      />
+      {/* Horizontal layout for the three modules */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <EditableListComponent
+          title="学习目标"
+          description="列出学习者完成课程后将获得的技能"
+          items={learningObjectivesList}
+          onChange={handleLearningObjectivesChange}
+          placeholder="例如: 掌握基础Python语法"
+        />
 
-      <EditableListComponent
-        title="课程要求"
-        description="列出参加课程所需的先决条件"
-        items={requirementsList}
-        onChange={handleRequirementsChange}
-        placeholder="例如: 基本计算机操作技能"
-      />
+        <EditableListComponent
+          title="学习模式"
+          description="列出参加课程所需的先决条件"
+          items={requirementsList}
+          onChange={handleRequirementsChange}
+          placeholder="例如: 基本计算机操作技能"
+        />
 
-      <EditableListComponent
-        title="适合人群"
-        description="说明这门课程适合哪类学习者"
-        items={targetAudienceList}
-        onChange={handleTargetAudienceChange}
-        placeholder="例如: 初学者, 想转行的专业人士"
-      />
+        <EditableListComponent
+          title="适合人群"
+          description="说明这门课程适合哪类学习者"
+          items={targetAudienceList}
+          onChange={handleTargetAudienceChange}
+          placeholder="例如: 初学者, 想转行的专业人士"
+        />
+      </div>
     </div>
   );
 };
