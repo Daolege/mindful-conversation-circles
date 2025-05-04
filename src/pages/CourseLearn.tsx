@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery } from "@tanstack/react-query";
@@ -78,7 +77,7 @@ const CourseLearn = () => {
     queryFn: () => getCourseNewById(courseId || '0'),
     enabled: !!courseId && isNewCourse,
   });
-
+  
   // Log query results for debugging
   useEffect(() => {
     if (isNewCourse) {
@@ -127,15 +126,23 @@ const CourseLearn = () => {
     enabled: !!courseId && !!user?.id,
   });
 
-  // Determine course data based on source
+  // Determine course data based on source - with type safety
   const isLoading = isLoadingStandardCourse || isLoadingNewCourse;
   const standardCourse = courseResponse && 'data' in courseResponse ? courseResponse.data : null;
   const newCourse = newCourseResponse && 'data' in newCourseResponse ? newCourseResponse.data : null;
   
   // Process course data based on source
   let course = isNewCourse ? newCourse : standardCourse;
-  let title = isNewCourse && newCourse ? (newCourse as CourseWithDetails).title : (standardCourse?.title || '');
-  let videoUrl = isNewCourse && newCourse ? undefined : (standardCourse ? standardCourse.video_url : '');
+  let title = '';
+  let videoUrl = '';
+  
+  // Safely access properties
+  if (isNewCourse && newCourse) {
+    title = (newCourse as CourseWithDetails).title || '';
+  } else if (standardCourse) {
+    title = standardCourse.title || '';
+    videoUrl = standardCourse.video_url || '';
+  }
   
   // Transform syllabus data based on the course type
   let syllabusData: CourseSyllabusSection[] = [];
@@ -296,9 +303,9 @@ const CourseLearn = () => {
     return <CourseNotFound />;
   }
 
-  // Get materials based on course type
+  // Get materials based on course type - with type safety
   const materials = isNewCourse && newCourse ? 
-    newCourse.materials : 
+    (newCourse as CourseWithDetails).materials : 
     (standardCourse && !Array.isArray(standardCourse) ? standardCourse.materials as CourseMaterial[] | null : null);
 
   return (

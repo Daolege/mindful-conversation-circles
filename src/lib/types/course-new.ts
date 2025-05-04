@@ -192,9 +192,9 @@ export interface CourseData {
 export interface CourseDataForInsert {
   title: string;
   description?: string;
-  price?: number; // Make it optional to match how it's used in components
+  price?: number;
   original_price?: number | null;
-  status?: string; // Make it optional to match how it's used in components
+  status?: string;
   currency?: string;
   language?: string;
   category?: string;
