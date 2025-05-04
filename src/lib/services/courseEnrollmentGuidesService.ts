@@ -27,10 +27,6 @@ export const getEnrollmentGuides = async (courseId: number) => {
       
     if (error) {
       console.error("Error fetching enrollment guides:", error);
-<<<<<<< HEAD
-=======
-      toast.error("获取课程指南失败");
->>>>>>> 313105d5aa6c97290f03cadb3a15d4262397e308
       throw error;
     }
     
@@ -52,10 +48,6 @@ export const addEnrollmentGuide = async (guide: Omit<EnrollmentGuide, 'id' | 'cr
       
     if (error) {
       console.error("Error adding enrollment guide:", error);
-<<<<<<< HEAD
-=======
-      toast.error("添加课程指南失败");
->>>>>>> 313105d5aa6c97290f03cadb3a15d4262397e308
       throw error;
     }
     
@@ -78,10 +70,6 @@ export const updateEnrollmentGuide = async (id: string, updates: Partial<Enrollm
       
     if (error) {
       console.error("Error updating enrollment guide:", error);
-<<<<<<< HEAD
-=======
-      toast.error("更新课程指南失败");
->>>>>>> 313105d5aa6c97290f03cadb3a15d4262397e308
       throw error;
     }
     
@@ -102,10 +90,6 @@ export const deleteEnrollmentGuide = async (id: string) => {
       
     if (error) {
       console.error("Error deleting enrollment guide:", error);
-<<<<<<< HEAD
-=======
-      toast.error("删除课程指南失败");
->>>>>>> 313105d5aa6c97290f03cadb3a15d4262397e308
       throw error;
     }
     
@@ -135,10 +119,6 @@ export const updateEnrollmentGuideOrder = async (items: { id: string, position: 
     
     if (errors.length > 0) {
       console.error("Errors updating guide positions:", errors);
-<<<<<<< HEAD
-=======
-      toast.error("更新指南顺序失败");
->>>>>>> 313105d5aa6c97290f03cadb3a15d4262397e308
       return { error: errors[0] };
     }
     
@@ -154,20 +134,11 @@ export const uploadGuideImage = async (courseId: number, file: File) => {
   try {
     const fileExt = file.name.split('.').pop();
     const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
-<<<<<<< HEAD
     const filePath = `course_guides/${courseId}/${fileName}`;
     
     const { data, error } = await supabase
       .storage
       .from('public')
-=======
-    const filePath = `${courseId}/${fileName}`;
-    
-    // Using the 'course_guides' bucket which was created in Supabase
-    const { data, error } = await supabase
-      .storage
-      .from('course_guides')
->>>>>>> 313105d5aa6c97290f03cadb3a15d4262397e308
       .upload(filePath, file, {
         cacheControl: '3600',
         upsert: false
@@ -175,30 +146,18 @@ export const uploadGuideImage = async (courseId: number, file: File) => {
       
     if (error) {
       console.error("Error uploading guide image:", error);
-<<<<<<< HEAD
-=======
-      toast.error("上传指南图片失败: " + error.message);
->>>>>>> 313105d5aa6c97290f03cadb3a15d4262397e308
       throw error;
     }
     
     // Get the public URL for the uploaded image
     const { data: { publicUrl } } = supabase
       .storage
-<<<<<<< HEAD
       .from('public')
-=======
-      .from('course_guides')
->>>>>>> 313105d5aa6c97290f03cadb3a15d4262397e308
       .getPublicUrl(filePath);
       
     return { data: publicUrl, error: null };
   } catch (error) {
     console.error("Exception uploading guide image:", error);
-<<<<<<< HEAD
-=======
-    toast.error("上传图片过程出错");
->>>>>>> 313105d5aa6c97290f03cadb3a15d4262397e308
     return { data: null, error };
   }
 };

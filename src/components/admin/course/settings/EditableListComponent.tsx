@@ -1,5 +1,5 @@
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,21 +9,19 @@ import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-
 import { CSS } from '@dnd-kit/utilities';
 import { restrictToParentElement, restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import IconSelect from './IconSelect';
-import ModuleTitleEdit from './ModuleTitleEdit';
+import ModuleTitleEdit, { ModuleSettings } from './ModuleTitleEdit';
 import { ListItem } from '@/lib/types/course-new';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
-import { getModuleSettings } from '@/lib/services/moduleSettingsService';
 
 interface EditableListComponentProps {
-  courseId: number;
-  itemType: string;
   title: string;
-  description?: string;
-  tableName: string;
-  isVisible: boolean;
-  onVisibilityChange: (isVisible: boolean) => Promise<void>;
+  description: string;
+  items: ListItem[];
+  onChange: (items: ListItem[]) => void;
   placeholder?: string;
+  moduleType?: string;
+  moduleSettings?: ModuleSettings;
+  onUpdateModuleSettings?: (settings: ModuleSettings) => Promise<void>;
+  courseId?: number;
 }
 
 interface SortableItemProps {
@@ -136,25 +134,17 @@ const SortableItem: React.FC<SortableItemProps> = ({ id, item, onDelete, onUpdat
 };
 
 export const EditableListComponent: React.FC<EditableListComponentProps> = ({
-  courseId,
-  itemType,
   title,
-  description = "",
-  tableName,
-  isVisible,
-  onVisibilityChange,
-  placeholder = "添加新项目..."
+  description,
+  items,
+  onChange,
+  placeholder = "添加新项目...",
+  moduleType,
+  moduleSettings,
+  onUpdateModuleSettings,
+  courseId
 }) => {
-  const [items, setItems] = useState<ListItem[]>([]);
   const [newItemText, setNewItemText] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
-  const [moduleSettings, setModuleSettings] = useState({
-    title: title,
-    icon: itemType === 'objectives' ? 'target' : 
-          itemType === 'requirements' ? 'book-open' : 
-          itemType === 'audiences' ? 'users' : 'check',
-    module_type: itemType
-  });
   
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -164,125 +154,22 @@ export const EditableListComponent: React.FC<EditableListComponentProps> = ({
     })
   );
 
-  // Load items from database
-  useEffect(() => {
-    const fetchItems = async () => {
-      if (!courseId || !tableName) return;
-      
-      try {
-        setIsLoading(true);
-        
-        // Fetch module settings
-        if (['objectives', 'requirements', 'audiences'].includes(itemType)) {
-          try {
-            const settings = await getModuleSettings(courseId, itemType);
-            setModuleSettings(settings);
-          } catch (error) {
-            console.error(`Error fetching ${itemType} settings:`, error);
-          }
-        }
-        
-        // Fetch items
-        const { data, error } = await supabase
-          .from(tableName)
-          .select('*')
-          .eq('course_id', courseId)
-          .order('position');
-          
-        if (error) {
-          console.error(`Error fetching ${tableName}:`, error);
-          toast.error(`无法加载${title}`);
-          return;
-        }
-        
-        if (data) {
-          const formattedItems: ListItem[] = data.map(item => ({
-            id: item.id,
-            text: item.content,
-            position: item.position,
-            is_visible: item.is_visible !== false,
-            icon: item.icon || 'check'
-          }));
-          
-          setItems(formattedItems);
-        }
-      } catch (err) {
-        console.error(`Exception fetching ${tableName}:`, err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    fetchItems();
-  }, [courseId, tableName, itemType]);
-
-  // Save item to database
-  const saveItem = async (item: ListItem) => {
-    try {
-      const { error } = await supabase
-        .from(tableName)
-        .upsert({
-          id: item.id,
-          course_id: courseId,
-          content: item.text,
-          position: item.position,
-          is_visible: item.is_visible,
-          icon: item.icon || 'check'
-        });
-        
-      if (error) {
-        console.error(`Error saving ${tableName} item:`, error);
-        toast.error(`保存项目失败`);
-        return false;
-      }
-      
-      return true;
-    } catch (err) {
-      console.error(`Exception saving ${tableName} item:`, err);
-      return false;
-    }
-  };
-  
-  // Delete item from database
-  const deleteItemFromDB = async (id: string) => {
-    try {
-      const { error } = await supabase
-        .from(tableName)
-        .delete()
-        .eq('id', id);
-        
-      if (error) {
-        console.error(`Error deleting ${tableName} item:`, error);
-        toast.error(`删除项目失败`);
-        return false;
-      }
-      
-      return true;
-    } catch (err) {
-      console.error(`Exception deleting ${tableName} item:`, err);
-      return false;
-    }
-  };
-
-  const handleAddItem = async () => {
+  const handleAddItem = () => {
     if (newItemText.trim() === "") return;
     
     const newItem: ListItem = {
       id: `item-${Date.now()}`,
       text: newItemText.trim(),
       position: items.length,
-      icon: 'check',
+      icon: 'smile',
       is_visible: true
     };
     
-    const success = await saveItem(newItem);
-    if (success) {
-      setItems([...items, newItem]);
-      setNewItemText("");
-    }
+    onChange([...items, newItem]);
+    setNewItemText("");
   };
 
-  const handleUpdateItem = async (id: string, text: string, icon: string) => {
+  const handleUpdateItem = (id: string, text: string, icon: string) => {
     const updatedItems = items.map(item => {
       if (item.id === id) {
         return { ...item, text, icon };
@@ -290,26 +177,14 @@ export const EditableListComponent: React.FC<EditableListComponentProps> = ({
       return item;
     });
     
-    const itemToUpdate = updatedItems.find(item => item.id === id);
-    if (itemToUpdate) {
-      const success = await saveItem(itemToUpdate);
-      if (success) {
-        setItems(updatedItems);
-      }
-    }
+    onChange(updatedItems);
   };
 
-  const handleDeleteItem = async (id: string) => {
-    const success = await deleteItemFromDB(id);
-    if (success) {
-      const updatedItems = items.filter(item => item.id !== id)
-        .map((item, index) => ({ ...item, position: index }));
-        
-      // Update positions in database
-      await Promise.all(updatedItems.map(saveItem));
-      
-      setItems(updatedItems);
-    }
+  const handleDeleteItem = (id: string) => {
+    const updatedItems = items.filter(item => item.id !== id)
+      .map((item, index) => ({ ...item, position: index }));
+    
+    onChange(updatedItems);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -318,103 +193,66 @@ export const EditableListComponent: React.FC<EditableListComponentProps> = ({
     }
   };
 
-  const handleDragEnd = useCallback(async (event: DragEndEvent) => {
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event;
     
     if (over && active.id !== over.id) {
       const oldIndex = items.findIndex(item => item.id === active.id);
       const newIndex = items.findIndex(item => item.id === over.id);
       
-      if (oldIndex !== -1 && newIndex !== -1) {
-        const newItems = [...items];
-        const [removed] = newItems.splice(oldIndex, 1);
-        newItems.splice(newIndex, 0, removed);
-        
-        // Update positions
-        const reorderedItems = newItems.map((item, index) => ({
-          ...item,
-          position: index
-        }));
-        
-        // Save updated positions to database
-        await Promise.all(reorderedItems.map(saveItem));
-        
-        setItems(reorderedItems);
-      }
-    }
-  }, [items]);
-
-  const handleModuleSettingsUpdate = async (settings: any) => {
-    try {
-      // Update module_settings in database
-      const { error } = await supabase
-        .rpc('upsert_course_section_config', {
-          p_course_id: courseId,
-          p_section_type: settings.module_type,
-          p_title: settings.title,
-          p_description: '',
-          p_icon: settings.icon
-        });
-        
-      if (error) {
-        console.error(`Error updating ${settings.module_type} settings:`, error);
-        toast.error(`更新模块设置失败`);
-        return;
-      }
+      const newItems = [...items];
+      const [removed] = newItems.splice(oldIndex, 1);
+      newItems.splice(newIndex, 0, removed);
       
-      setModuleSettings(settings);
-      toast.success("模块设置已更新");
-    } catch (err) {
-      console.error(`Exception updating ${itemType} settings:`, err);
-      toast.error(`更新模块设置失败`);
+      // Update positions
+      const reorderedItems = newItems.map((item, index) => ({
+        ...item,
+        position: index
+      }));
+      
+      onChange(reorderedItems);
     }
-  };
+  }, [items, onChange]);
 
   return (
     <Card>
-      {['objectives', 'requirements', 'audiences'].includes(itemType) ? (
+      {moduleSettings && onUpdateModuleSettings ? (
         <ModuleTitleEdit 
-          courseId={courseId}
-          moduleType={itemType}
-          defaultTitle={moduleSettings.title}
-          defaultIcon={moduleSettings.icon}
+          settings={moduleSettings}
+          onUpdate={onUpdateModuleSettings}
           className="mb-2"
         />
       ) : (
         <CardHeader className="pb-3">
           <CardTitle>{title}</CardTitle>
-          {description && <CardDescription>{description}</CardDescription>}
+          <CardDescription>{description}</CardDescription>
         </CardHeader>
       )}
       
       <CardContent className="space-y-4">
-        {isLoading ? (
-          <div className="py-4 text-center text-gray-500">加载中...</div>
-        ) : (
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-            modifiers={[restrictToVerticalAxis, restrictToParentElement]}
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+          modifiers={[restrictToVerticalAxis, restrictToParentElement]}
+        >
+          <SortableContext 
+            items={items.map(item => item.id)} 
+            strategy={verticalListSortingStrategy}
           >
-            <SortableContext 
-              items={items.map(item => item.id)} 
-              strategy={verticalListSortingStrategy}
-            >
-              <div className="space-y-1">
-                {items.map((item) => (
-                  <SortableItem
-                    key={item.id}
-                    id={item.id}
-                    item={item}
-                    onDelete={handleDeleteItem}
-                    onUpdate={handleUpdateItem}
-                  />
-                ))}
-              </div>
-            </SortableContext>
-          </DndContext>
-        )}
+            <div className="space-y-1">
+              {items.map((item) => (
+                <SortableItem
+                  key={item.id}
+                  id={item.id}
+                  item={item}
+                  onDelete={handleDeleteItem}
+                  onUpdate={handleUpdateItem}
+                />
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
 
         <div className="flex items-center gap-2 pt-2">
           <IconSelect

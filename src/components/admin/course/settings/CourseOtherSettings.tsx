@@ -1,13 +1,12 @@
-
-import React, { useState, useEffect } from 'react';
-import CourseHighlightsList from './CourseHighlightsList';
-import EditableListComponent from './EditableListComponent';
-import ModuleTitleEdit from './ModuleTitleEdit';
-import EnrollmentGuidesEditor from './EnrollmentGuidesEditor';
-import { getModuleVisibilities } from '@/lib/services/courseSettingsService';
+import React, { useEffect, useState } from 'react';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { EditableListComponent } from './EditableListComponent';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-<<<<<<< HEAD
 import { ListItem } from '@/lib/types/course-new';
 import { 
   getObjectives, 
@@ -37,73 +36,592 @@ import { Loader2 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import CourseHighlightsList from './CourseHighlightsList';
 import EnrollmentGuidesEditor from './EnrollmentGuidesEditor';
-=======
->>>>>>> 313105d5aa6c97290f03cadb3a15d4262397e308
 
-type SectionType = 'objectives' | 'requirements' | 'audiences';
-
-type ModuleVisibilities = {
-  objectives_visible: boolean;
-  requirements_visible: boolean;
-  audiences_visible: boolean;
-};
-
+// Define props for the CourseOtherSettings component
 interface CourseOtherSettingsProps {
-  courseId: number;
+  courseId?: number;
+  learningObjectives?: string[];
+  requirements?: string[];
+  targetAudience?: string[];
+  onUpdate?: (field: string, value: any) => void;
+  savedSections?: {
+    objectives: boolean;
+    requirements: boolean;
+    audiences: boolean;
+  };
+  sectionVisibility?: {
+    objectives: boolean;
+    requirements: boolean;
+    audiences: boolean;
+    materials: boolean;
+  };
 }
 
-export const CourseOtherSettings = ({ courseId }: CourseOtherSettingsProps) => {
-  const [moduleVisibilities, setModuleVisibilities] = useState<ModuleVisibilities | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({
+  courseId,
+  learningObjectives = [],
+  requirements = [],
+  targetAudience = [],
+  onUpdate,
+  savedSections = {
+    objectives: false,
+    requirements: false,
+    audiences: false
+  },
+  sectionVisibility = {
+    objectives: true,
+    requirements: true,
+    audiences: true,
+    materials: false
+  },
+}) => {
+  const [isFeatured, setIsFeatured] = useState<boolean>(false);
+  const [isPaidContent, setIsPaidContent] = useState<boolean>(true);
+  const [courseVisibility, setCourseVisibility] = useState<string>("draft");
   
-  // 加载模块可见性设置
+  // 新增单次购买和订阅计划选项状态
+  const [allowsOneTimePurchase, setAllowsOneTimePurchase] = useState<boolean>(true);
+  const [allowsSubscription, setAllowsSubscription] = useState<boolean>(true);
+  const [purchaseOptionsError, setPurchaseOptionsError] = useState<string | null>(null);
+  
+  // State for module settings
+  const [objectivesSettings, setObjectivesSettings] = useState<ModuleSettings>({
+    title: '学习目标',
+    icon: 'target',
+    module_type: 'objectives'
+  });
+
+  const [requirementsSettings, setRequirementsSettings] = useState<ModuleSettings>({
+    title: '学习模式',
+    icon: 'book-open',
+    module_type: 'requirements'
+  });
+
+  const [audiencesSettings, setAudiencesSettings] = useState<ModuleSettings>({
+    title: '适合人群',
+    icon: 'users',
+    module_type: 'audiences'
+  });
+
+  // Course highlights state
+  const [courseHighlights, setCourseHighlights] = useState<ListItem[]>([
+    { id: 'highlight-1', text: '高清视频课程', position: 0, icon: 'video', is_visible: true },
+    { id: 'highlight-2', text: '随时随地学习', position: 1, icon: 'clock', is_visible: true },
+    { id: 'highlight-3', text: '精选章节', position: 2, icon: 'star', is_visible: true },
+    { id: 'highlight-4', text: '课程语言: 中文', position: 3, icon: 'language', is_visible: true },
+    { id: 'highlight-5', text: '内容持续更新', position: 4, icon: 'file-text', is_visible: true },
+    { id: 'highlight-6', text: '学员专属社群', position: 5, icon: 'users', is_visible: true },
+    { id: 'highlight-7', text: '附赠学习资料', position: 6, icon: 'book', is_visible: true },
+  ]);
+
+  // Loading states
+  const [loadingObjectives, setLoadingObjectives] = useState(true);
+  const [loadingRequirements, setLoadingRequirements] = useState(true);
+  const [loadingAudiences, setLoadingAudiences] = useState(true);
+  
+  // Convert string arrays to object arrays with IDs for the editable lists
+  const formatArrayToListItems = (arr: string[]): ListItem[] => {
+    return arr.map((item, index) => ({
+      id: `item-${index}`,
+      text: item,
+      position: index,
+      icon: 'smile',
+      is_visible: true
+    }));
+  };
+
+  const [learningObjectivesList, setLearningObjectivesList] = useState<ListItem[]>(
+    formatArrayToListItems(learningObjectives)
+  );
+  const [requirementsList, setRequirementsList] = useState<ListItem[]>(
+    formatArrayToListItems(requirements)
+  );
+  const [targetAudienceList, setTargetAudienceList] = useState<ListItem[]>(
+    formatArrayToListItems(targetAudience)
+  );
+
+  // Validate purchase options whenever they change
   useEffect(() => {
-    const fetchModuleVisibilities = async () => {
+    if (!allowsOneTimePurchase && !allowsSubscription) {
+      setPurchaseOptionsError("请至少选择一种购买方式");
+    } else {
+      setPurchaseOptionsError(null);
+    }
+  }, [allowsOneTimePurchase, allowsSubscription]);
+
+  // Load course information and module settings
+  useEffect(() => {
+    async function loadCourseSettings() {
       if (!courseId) return;
-      
+
       try {
-        setIsLoading(true);
-        const { data, error } = await getModuleVisibilities(courseId);
-        
-        if (error) {
-          console.error('Error fetching module visibilities:', error);
-        } else if (data) {
-          setModuleVisibilities(data);
+        const { data, error } = await supabase
+          .from('courses_new')
+          .select('is_featured, price, status, allows_one_time_purchase, allows_subscription')
+          .eq('id', courseId)
+          .single();
+
+        if (error) throw error;
+
+        if (data) {
+          setIsFeatured(data.is_featured || false);
+          setIsPaidContent((data.price || 0) > 0);
+          setCourseVisibility(data.status || "draft");
+          
+          // 设置购买选项
+          setAllowsOneTimePurchase(data.allows_one_time_purchase !== false); // 默认为true
+          setAllowsSubscription(data.allows_subscription !== false); // 默认为true
         }
-      } catch (err) {
-        console.error('Exception fetching module visibilities:', err);
-      } finally {
-        setIsLoading(false);
+      } catch (error) {
+        console.error("Error loading course settings:", error);
+        toast.error("无法加载课程设置");
       }
-    };
-    
-    fetchModuleVisibilities();
+    }
+
+    async function loadModuleSettings() {
+      if (!courseId) return;
+
+      try {
+        // Load module settings
+        const [objSettings, reqSettings, audSettings] = await Promise.all([
+          getModuleSettings(courseId, 'objectives'),
+          getModuleSettings(courseId, 'requirements'),
+          getModuleSettings(courseId, 'audiences')
+        ]);
+
+        setObjectivesSettings(objSettings);
+        setRequirementsSettings(reqSettings);
+        setAudiencesSettings(audSettings);
+      } catch (error) {
+        console.error("Error loading module settings:", error);
+      }
+    }
+
+    loadCourseSettings();
+    loadModuleSettings();
   }, [courseId]);
 
-  // 模块可见性切换处理
-  const handleVisibilityChange = async (sectionType: SectionType, isVisible: boolean) => {
-    if (!moduleVisibilities) return;
+  // Load existing module items from database
+  useEffect(() => {
+    async function loadModuleItems() {
+      if (!courseId) return;
+
+      // Load learning objectives
+      setLoadingObjectives(true);
+      try {
+        const { data: objectivesData } = await getObjectives(courseId);
+        
+        if (!objectivesData || objectivesData.length === 0) {
+          // If no objectives found, try to add default ones
+          const { data: defaultObjectivesData } = await addDefaultObjectives(courseId);
+          if (defaultObjectivesData && defaultObjectivesData.length > 0) {
+            const formattedObjectives = defaultObjectivesData.map(item => ({
+              id: item.id,
+              text: item.content,
+              position: item.position,
+              icon: item.icon || 'smile',
+              is_visible: item.is_visible
+            }));
+            setLearningObjectivesList(formattedObjectives);
+          }
+        } else {
+          const formattedObjectives = objectivesData.map(item => ({
+            id: item.id,
+            text: item.content,
+            position: item.position,
+            icon: item.icon || 'smile',
+            is_visible: item.is_visible
+          }));
+          setLearningObjectivesList(formattedObjectives);
+        }
+      } catch (error) {
+        console.error("Error loading learning objectives:", error);
+      } finally {
+        setLoadingObjectives(false);
+      }
+
+      // Load requirements
+      setLoadingRequirements(true);
+      try {
+        const { data: requirementsData } = await getRequirements(courseId);
+        
+        if (!requirementsData || requirementsData.length === 0) {
+          // If no requirements found, try to add default ones
+          const { data: defaultRequirementsData } = await addDefaultRequirements(courseId);
+          if (defaultRequirementsData && defaultRequirementsData.length > 0) {
+            const formattedRequirements = defaultRequirementsData.map(item => ({
+              id: item.id,
+              text: item.content,
+              position: item.position,
+              icon: item.icon || 'smile',
+              is_visible: item.is_visible
+            }));
+            setRequirementsList(formattedRequirements);
+          }
+        } else {
+          const formattedRequirements = requirementsData.map(item => ({
+            id: item.id,
+            text: item.content,
+            position: item.position,
+            icon: item.icon || 'smile',
+            is_visible: item.is_visible
+          }));
+          setRequirementsList(formattedRequirements);
+        }
+      } catch (error) {
+        console.error("Error loading requirements:", error);
+      } finally {
+        setLoadingRequirements(false);
+      }
+
+      // Load target audiences
+      setLoadingAudiences(true);
+      try {
+        const { data: audiencesData } = await getAudiences(courseId);
+        
+        if (!audiencesData || audiencesData.length === 0) {
+          // If no audiences found, try to add default ones
+          const { data: defaultAudiencesData } = await addDefaultAudiences(courseId);
+          if (defaultAudiencesData && defaultAudiencesData.length > 0) {
+            const formattedAudiences = defaultAudiencesData.map(item => ({
+              id: item.id,
+              text: item.content,
+              position: item.position,
+              icon: item.icon || 'smile',
+              is_visible: item.is_visible
+            }));
+            setTargetAudienceList(formattedAudiences);
+          }
+        } else {
+          const formattedAudiences = audiencesData.map(item => ({
+            id: item.id,
+            text: item.content,
+            position: item.position,
+            icon: item.icon || 'smile',
+            is_visible: item.is_visible
+          }));
+          setTargetAudienceList(formattedAudiences);
+        }
+      } catch (error) {
+        console.error("Error loading target audiences:", error);
+      } finally {
+        setLoadingAudiences(false);
+      }
+    }
+
+    loadModuleItems();
+  }, [courseId]);
+
+  // Handle module settings update
+  const handleUpdateObjectivesSettings = async (settings: Partial<ModuleSettings>) => {
+    if (!courseId) return;
+    
+    // Create a complete ModuleSettings object by merging with existing settings
+    const updatedSettings: ModuleSettings = {
+      ...objectivesSettings,
+      ...settings,
+      module_type: 'objectives' // Ensure module_type is set correctly
+    };
+    
+    await updateModuleSettings(courseId, 'objectives', updatedSettings);
+    setObjectivesSettings(updatedSettings);
+  };
+
+  const handleUpdateRequirementsSettings = async (settings: Partial<ModuleSettings>) => {
+    if (!courseId) return;
+    
+    // Create a complete ModuleSettings object by merging with existing settings
+    const updatedSettings: ModuleSettings = {
+      ...requirementsSettings,
+      ...settings,
+      module_type: 'requirements' // Ensure module_type is set correctly
+    };
+    
+    await updateModuleSettings(courseId, 'requirements', updatedSettings);
+    setRequirementsSettings(updatedSettings);
+  };
+
+  const handleUpdateAudiencesSettings = async (settings: Partial<ModuleSettings>) => {
+    if (!courseId) return;
+    
+    // Create a complete ModuleSettings object by merging with existing settings
+    const updatedSettings: ModuleSettings = {
+      ...audiencesSettings,
+      ...settings,
+      module_type: 'audiences' // Ensure module_type is set correctly
+    };
+    
+    await updateModuleSettings(courseId, 'audiences', updatedSettings);
+    setAudiencesSettings(updatedSettings);
+  };
+
+  // Handle learning objectives changes
+  const handleLearningObjectivesChange = async (newItems: ListItem[]) => {
+    if (!courseId) return;
+    setLearningObjectivesList(newItems);
     
     try {
-      // 更新数据库中的可见性
-      let tableName: string;
+      // Get existing items to compare what's changed
+      const { data: existingItems } = await getObjectives(courseId);
+      const existingIds = new Set(existingItems?.map(item => item.id) || []);
       
-      switch(sectionType) {
-        case 'objectives':
-          tableName = 'course_learning_objectives';
-          break;
-        case 'requirements':
-          tableName = 'course_requirements';
-          break;
-        case 'audiences':
-          tableName = 'course_audiences';
-          break;
-        default:
-          throw new Error(`Unknown section type: ${sectionType}`);
+      // Determine which items are new, updated, or deleted
+      const itemsToAdd: ListItem[] = [];
+      const itemsToUpdate: { id: string, text: string, icon: string }[] = [];
+      const itemsToUpdatePosition: { id: string, position: number }[] = [];
+      const itemsToDelete: string[] = [];
+      
+      // Find items to add or update
+      for (const item of newItems) {
+        if (!existingIds.has(item.id)) {
+          // New item
+          itemsToAdd.push(item);
+        } else {
+          // Check if text content changed for existing items
+          const existingItem = existingItems?.find(existing => existing.id === item.id);
+          if (existingItem && (existingItem.content !== item.text || existingItem.icon !== item.icon)) {
+            itemsToUpdate.push({ id: item.id, text: item.text, icon: item.icon || 'smile' });
+          }
+          
+          // Check if position changed
+          if (existingItem && existingItem.position !== item.position) {
+            itemsToUpdatePosition.push({ id: item.id, position: item.position });
+          }
+        }
       }
       
+      // Find items to delete
+      if (existingItems) {
+        for (const existingItem of existingItems) {
+          if (!newItems.find(item => item.id === existingItem.id)) {
+            itemsToDelete.push(existingItem.id);
+          }
+        }
+      }
+      
+      // Execute the changes
+      // Add new items
+      for (const item of itemsToAdd) {
+        await addObjective(courseId, item.text, item.position, true);
+      }
+      
+      // Update modified items
+      for (const item of itemsToUpdate) {
+        await updateObjective(item.id, item.text);
+        // Note: we would need to update the icon here if updateObjective supported icons
+      }
+      
+      // Delete removed items
+      for (const id of itemsToDelete) {
+        await deleteObjective(id);
+      }
+      
+      // Update positions if needed
+      if (itemsToUpdatePosition.length > 0) {
+        await updateObjectiveOrder(itemsToUpdatePosition);
+      }
+      
+      if (onUpdate) {
+        onUpdate('learning_objectives', newItems.map(item => item.text));
+      }
+    } catch (error) {
+      console.error("Error updating learning objectives:", error);
+      toast.error("更新学习目标失败");
+    }
+  };
+
+  // Handle requirements changes
+  const handleRequirementsChange = async (newItems: ListItem[]) => {
+    if (!courseId) return;
+    setRequirementsList(newItems);
+    
+    try {
+      // Get existing items to compare what's changed
+      const { data: existingItems } = await getRequirements(courseId);
+      const existingIds = new Set(existingItems?.map(item => item.id) || []);
+      
+      // Determine which items are new, updated, or deleted
+      const itemsToAdd: ListItem[] = [];
+      const itemsToUpdate: { id: string, text: string, icon: string }[] = [];
+      const itemsToUpdatePosition: { id: string, position: number }[] = [];
+      const itemsToDelete: string[] = [];
+      
+      // Find items to add or update
+      for (const item of newItems) {
+        if (!existingIds.has(item.id)) {
+          // New item
+          itemsToAdd.push(item);
+        } else {
+          // Check if text content changed for existing items
+          const existingItem = existingItems?.find(existing => existing.id === item.id);
+          if (existingItem && (existingItem.content !== item.text || existingItem.icon !== item.icon)) {
+            itemsToUpdate.push({ id: item.id, text: item.text, icon: item.icon || 'smile' });
+          }
+          
+          // Check if position changed
+          if (existingItem && existingItem.position !== item.position) {
+            itemsToUpdatePosition.push({ id: item.id, position: item.position });
+          }
+        }
+      }
+      
+      // Find items to delete
+      if (existingItems) {
+        for (const existingItem of existingItems) {
+          if (!newItems.find(item => item.id === existingItem.id)) {
+            itemsToDelete.push(existingItem.id);
+          }
+        }
+      }
+      
+      // Execute the changes
+      // Add new items
+      for (const item of itemsToAdd) {
+        await addRequirement(courseId, item.text, item.position, true);
+      }
+      
+      // Update modified items
+      for (const item of itemsToUpdate) {
+        await updateRequirement(item.id, item.text);
+        // Note: we would need to update the icon here if updateRequirement supported icons
+      }
+      
+      // Delete removed items
+      for (const id of itemsToDelete) {
+        await deleteRequirement(id);
+      }
+      
+      // Update positions if needed
+      if (itemsToUpdatePosition.length > 0) {
+        await updateRequirementOrder(itemsToUpdatePosition);
+      }
+      
+      if (onUpdate) {
+        onUpdate('requirements', newItems.map(item => item.text));
+      }
+    } catch (error) {
+      console.error("Error updating requirements:", error);
+      toast.error("更新学习模式失败");
+    }
+  };
+
+  // Handle target audience changes
+  const handleTargetAudienceChange = async (newItems: ListItem[]) => {
+    if (!courseId) return;
+    setTargetAudienceList(newItems);
+    
+    try {
+      // Get existing items to compare what's changed
+      const { data: existingItems } = await getAudiences(courseId);
+      const existingIds = new Set(existingItems?.map(item => item.id) || []);
+      
+      // Determine which items are new, updated, or deleted
+      const itemsToAdd: ListItem[] = [];
+      const itemsToUpdate: { id: string, text: string, icon: string }[] = [];
+      const itemsToUpdatePosition: { id: string, position: number }[] = [];
+      const itemsToDelete: string[] = [];
+      
+      // Find items to add or update
+      for (const item of newItems) {
+        if (!existingIds.has(item.id)) {
+          // New item
+          itemsToAdd.push(item);
+        } else {
+          // Check if text content changed for existing items
+          const existingItem = existingItems?.find(existing => existing.id === item.id);
+          if (existingItem && (existingItem.content !== item.text || existingItem.icon !== item.icon)) {
+            itemsToUpdate.push({ id: item.id, text: item.text, icon: item.icon || 'smile' });
+          }
+          
+          // Check if position changed
+          if (existingItem && existingItem.position !== item.position) {
+            itemsToUpdatePosition.push({ id: item.id, position: item.position });
+          }
+        }
+      }
+      
+      // Find items to delete
+      if (existingItems) {
+        for (const existingItem of existingItems) {
+          if (!newItems.find(item => item.id === existingItem.id)) {
+            itemsToDelete.push(existingItem.id);
+          }
+        }
+      }
+      
+      // Execute the changes
+      // Add new items
+      for (const item of itemsToAdd) {
+        await addAudience(courseId, item.text, item.position, true);
+      }
+      
+      // Update modified items
+      for (const item of itemsToUpdate) {
+        await updateAudience(item.id, item.text);
+        // Note: we would need to update the icon here if updateAudience supported icons
+      }
+      
+      // Delete removed items
+      for (const id of itemsToDelete) {
+        await deleteAudience(id);
+      }
+      
+      // Update positions if needed
+      if (itemsToUpdatePosition.length > 0) {
+        await updateAudienceOrder(itemsToUpdatePosition);
+      }
+      
+      if (onUpdate) {
+        onUpdate('target_audience', newItems.map(item => item.text));
+      }
+    } catch (error) {
+      console.error("Error updating target audiences:", error);
+      toast.error("更新适合人群失败");
+    }
+  };
+
+  // Handle course highlights changes
+  const handleCourseHighlightsChange = (newItems: ListItem[]) => {
+    setCourseHighlights(newItems);
+  };
+
+  // 处理购买选项变更
+  const handleOneTimePurchaseChange = (checked: boolean) => {
+    // 不允许两个选项同时为false
+    if (!checked && !allowsSubscription) {
+      return;
+    }
+    
+    setAllowsOneTimePurchase(checked);
+    if (courseId && onUpdate) {
+      onUpdate('allows_one_time_purchase', checked);
+    }
+    
+    // 保存到数据库
+    saveCoursePurchaseOptions(checked, allowsSubscription);
+  };
+
+  const handleSubscriptionChange = (checked: boolean) => {
+    // 不允许两个选项同时为false
+    if (!checked && !allowsOneTimePurchase) {
+      return;
+    }
+    
+    setAllowsSubscription(checked);
+    if (courseId && onUpdate) {
+      onUpdate('allows_subscription', checked);
+    }
+    
+    // 保存到数据库
+    saveCoursePurchaseOptions(allowsOneTimePurchase, checked);
+  };
+
+  // 保存购买选项到数据库
+  const saveCoursePurchaseOptions = async (oneTime: boolean, subscription: boolean) => {
+    if (!courseId) return;
+    
+    try {
       const { error } = await supabase
-<<<<<<< HEAD
         .from('courses_new')
         .update({
           allows_one_time_purchase: oneTime,
@@ -215,132 +733,88 @@ export const CourseOtherSettings = ({ courseId }: CourseOtherSettingsProps) => {
             title="购买后引导页面"
           />
         )}
-=======
-        .from(tableName)
-        .update({ is_visible: isVisible })
-        .eq('course_id', courseId);
-        
-      if (error) {
-        console.error(`Error updating ${sectionType} visibility:`, error);
-        toast.error(`更新${sectionType}可见性失败`);
-        return;
-      }
-      
-      // 更新本地状态
-      setModuleVisibilities(prev => {
-        if (!prev) return prev;
-        
-        const updatedVisibilities = { ...prev };
-        switch(sectionType) {
-          case 'objectives':
-            updatedVisibilities.objectives_visible = isVisible;
-            break;
-          case 'requirements':
-            updatedVisibilities.requirements_visible = isVisible;
-            break;
-          case 'audiences':
-            updatedVisibilities.audiences_visible = isVisible;
-            break;
-        }
-        
-        return updatedVisibilities;
-      });
-      
-      // 更新本地存储
-      const storageKey = `course_${courseId}_section_visibility`;
-      const currentStorage = JSON.parse(localStorage.getItem(storageKey) || '{}');
-      const updatedStorage = { 
-        ...currentStorage,
-        [sectionType]: isVisible 
-      };
-      localStorage.setItem(storageKey, JSON.stringify(updatedStorage));
-      
-      toast.success(`${sectionType}可见性已更新`);
-    } catch (err) {
-      console.error(`Error updating ${sectionType} visibility:`, err);
-      toast.error(`更新${sectionType}可见性失败`);
-    }
-  };
-  
-  return (
-    <div className="space-y-6">
-      {/* 课程亮点 */}
-      <div>
-        <h3 className="text-lg font-medium mb-4">课程亮点</h3>
-        <CourseHighlightsList courseId={courseId} />
->>>>>>> 313105d5aa6c97290f03cadb3a15d4262397e308
       </div>
-      
-      {/* 购买后引导页面 */}
-      <div>
-        <h3 className="text-lg font-medium mb-4">购买后引导页面</h3>
-        <EnrollmentGuidesEditor courseId={courseId} />
-      </div>
-      
-      {/* 学习目标设置 */}
-      <div>
-        <ModuleTitleEdit 
-          courseId={courseId} 
-          moduleType="objectives"
-          defaultTitle="学习目标"
-          defaultIcon="target"
-        />
 
-        <div className="mt-4">
-          <EditableListComponent
-            courseId={courseId}
-            itemType="objectives"
-            title="学习目标"
-            tableName="course_learning_objectives"
-            isVisible={moduleVisibilities?.objectives_visible ?? true}
-            onVisibilityChange={(isVisible) => handleVisibilityChange('objectives', isVisible)}
-          />
-        </div>
-      </div>
-      
-      {/* 学习要求设置 */}
-      <div>
-        <ModuleTitleEdit 
-          courseId={courseId} 
-          moduleType="requirements"
-          defaultTitle="学习要求"
-          defaultIcon="list-checks"
-        />
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle>课程特性</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="featured-course">精选课程</Label>
+            <Switch
+              id="featured-course"
+              checked={isFeatured}
+              onCheckedChange={handleFeaturedChange}
+            />
+          </div>
+          <div className="flex items-center justify-between">
+            <Label htmlFor="paid-content">付费内容</Label>
+            <Switch
+              id="paid-content"
+              checked={isPaidContent}
+              onCheckedChange={handlePaidContentChange}
+            />
+          </div>
+        </CardContent>
+      </Card>
 
-        <div className="mt-4">
+      {/* Horizontal layout for the three modules */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {loadingObjectives ? (
+          <Card className="flex items-center justify-center p-8">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </Card>
+        ) : (
           <EditableListComponent
+            title={objectivesSettings.title}
+            description="列出学习者完成课程后将获得的技能"
+            items={learningObjectivesList}
+            onChange={handleLearningObjectivesChange}
+            placeholder="例如: 掌握基础Python语法"
+            moduleType="objectives"
+            moduleSettings={objectivesSettings}
+            onUpdateModuleSettings={handleUpdateObjectivesSettings}
             courseId={courseId}
-            itemType="requirements"
-            title="课程要求"
-            tableName="course_requirements"
-            isVisible={moduleVisibilities?.requirements_visible ?? true}
-            onVisibilityChange={(isVisible) => handleVisibilityChange('requirements', isVisible)}
           />
-        </div>
-      </div>
-      
-      {/* 适合人群设置 */}
-      <div>
-        <ModuleTitleEdit 
-          courseId={courseId} 
-          moduleType="audiences"
-          defaultTitle="适合人群"
-          defaultIcon="users"
-        />
+        )}
 
-        <div className="mt-4">
+        {loadingRequirements ? (
+          <Card className="flex items-center justify-center p-8">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </Card>
+        ) : (
           <EditableListComponent
+            title={requirementsSettings.title}
+            description="列出参加课程所需的先决条件"
+            items={requirementsList}
+            onChange={handleRequirementsChange}
+            placeholder="例如: 基本计算机操作技能"
+            moduleType="requirements"
+            moduleSettings={requirementsSettings}
+            onUpdateModuleSettings={handleUpdateRequirementsSettings}
             courseId={courseId}
-            itemType="audiences"
-            title="适合人群"
-            tableName="course_audiences"
-            isVisible={moduleVisibilities?.audiences_visible ?? true}
-            onVisibilityChange={(isVisible) => handleVisibilityChange('audiences', isVisible)}
           />
-        </div>
+        )}
+
+        {loadingAudiences ? (
+          <Card className="flex items-center justify-center p-8">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </Card>
+        ) : (
+          <EditableListComponent
+            title={audiencesSettings.title}
+            description="说明这门课程适合哪类学习者"
+            items={targetAudienceList}
+            onChange={handleTargetAudienceChange}
+            placeholder="例如: 初学者, 想转行的专业人士"
+            moduleType="audiences"
+            moduleSettings={audiencesSettings}
+            onUpdateModuleSettings={handleUpdateAudiencesSettings}
+            courseId={courseId}
+          />
+        )}
       </div>
     </div>
   );
 };
-
-export default CourseOtherSettings;

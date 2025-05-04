@@ -7,7 +7,6 @@ import { cn } from "@/lib/utils";
 import IconSelect from './IconSelect';
 import { Edit2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { upsertSectionConfig } from '@/lib/services/moduleSettingsService';
 
 export interface ModuleSettings {
   title: string;
@@ -15,32 +14,28 @@ export interface ModuleSettings {
   module_type: string;
 }
 
-export interface ModuleTitleEditProps {
-  courseId: number;
-  moduleType: string;
-  defaultTitle: string;
-  defaultIcon: string;
+interface ModuleTitleEditProps {
+  settings: ModuleSettings;
+  onUpdate: (settings: ModuleSettings) => Promise<void>;
   className?: string;
 }
 
 export const ModuleTitleEdit: React.FC<ModuleTitleEditProps> = ({
-  courseId,
-  moduleType,
-  defaultTitle,
-  defaultIcon,
+  settings,
+  onUpdate,
   className
 }) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [title, setTitle] = useState(defaultTitle);
-  const [icon, setIcon] = useState(defaultIcon);
+  const [title, setTitle] = useState(settings.title);
+  const [icon, setIcon] = useState(settings.icon);
   const [isSaving, setIsSaving] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setTitle(defaultTitle);
-    setIcon(defaultIcon);
-  }, [defaultTitle, defaultIcon]);
+    setTitle(settings.title);
+    setIcon(settings.icon);
+  }, [settings]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -65,26 +60,30 @@ export const ModuleTitleEdit: React.FC<ModuleTitleEditProps> = ({
 
   const saveChanges = async () => {
     if (!title.trim()) {
-      setTitle(defaultTitle);
-      setIcon(defaultIcon);
+      setTitle(settings.title);
+      setIcon(settings.icon);
       setIsEditing(false);
       return;
     }
 
-    if (title === defaultTitle && icon === defaultIcon) {
+    if (title === settings.title && icon === settings.icon) {
       setIsEditing(false);
       return;
     }
 
     setIsSaving(true);
     try {
-      await upsertSectionConfig(courseId, moduleType, title.trim(), '', icon);
+      await onUpdate({
+        ...settings,
+        title: title.trim(),
+        icon: icon
+      });
       toast.success("模块标题已更新");
     } catch (error) {
       console.error("Error updating module title:", error);
       toast.error("更新模块标题失败");
-      setTitle(defaultTitle);
-      setIcon(defaultIcon);
+      setTitle(settings.title);
+      setIcon(settings.icon);
     } finally {
       setIsSaving(false);
       setIsEditing(false);
@@ -95,8 +94,8 @@ export const ModuleTitleEdit: React.FC<ModuleTitleEditProps> = ({
     if (e.key === 'Enter') {
       saveChanges();
     } else if (e.key === 'Escape') {
-      setTitle(defaultTitle);
-      setIcon(defaultIcon);
+      setTitle(settings.title);
+      setIcon(settings.icon);
       setIsEditing(false);
     }
   };

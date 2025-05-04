@@ -6,12 +6,8 @@ import { useTranslations } from "@/hooks/useTranslations";
 import { supabase } from '@/integrations/supabase/client';
 import { Target, BookOpen, Users } from 'lucide-react';
 import IconDisplay from './IconDisplay';
-import { 
-  ModuleSettings, 
-  ModuleItem, 
-  getModuleSettings, 
-  getModuleItems 
-} from '@/lib/services/moduleSettingsService';
+import { ModuleSettings, ModuleItem, getDefaultModuleSettings } from '@/lib/services/moduleSettingsService';
+import { typeSafeSupabase } from '@/lib/services/typeSafeSupabase';
 
 interface CourseDetailContentProps {
   course: Course;
@@ -53,6 +49,57 @@ export function CourseDetailContent({ course }: CourseDetailContentProps) {
       if (!course.id) return;
       
       try {
+        // Fetch module items using typeSafeSupabase helper to avoid type issues
+        const fetchModuleItems = async (tableName: string): Promise<ModuleItem[]> => {
+          try {
+            // Use explicit type casting to avoid TypeScript limitations with dynamic table names
+            const { data, error } = await supabase
+              .from(tableName as any)
+              .select('*')
+              .eq('course_id', course.id)
+              .eq('is_visible', true)
+              .order('position');
+              
+            if (error) throw error;
+            
+            // Add default icon if missing and convert to ModuleItem type
+            return (Array.isArray(data) ? data : []).map((item: any) => ({
+              ...item,
+              icon: item.icon || 'check'
+            })) as ModuleItem[];
+          } catch (error) {
+            console.error(`Error fetching ${tableName}:`, error);
+            return [];
+          }
+        };
+        
+        // Fetch module settings using RPC function
+        const fetchSettings = async (moduleType: string): Promise<ModuleSettings> => {
+          try {
+            const { data, error } = await supabase.rpc('get_module_settings', {
+              p_course_id: course.id,
+              p_module_type: moduleType
+            });
+            
+            if (error) throw error;
+            
+            // Convert JSON data to ModuleSettings type with proper type safety
+            if (data && typeof data === 'object' && !Array.isArray(data)) {
+              const jsonData = data as Record<string, any>;
+              return {
+                title: jsonData.title || getDefaultTitle(moduleType),
+                icon: jsonData.icon || getDefaultIcon(moduleType),
+                module_type: moduleType
+              };
+            }
+            
+            return getDefaultModuleSettings(moduleType);
+          } catch (error) {
+            console.error(`Error fetching ${moduleType} settings:`, error);
+            return getDefaultModuleSettings(moduleType);
+          }
+        };
+        
         // Fetch all data in parallel
         const [
           objectivesData,
@@ -62,12 +109,12 @@ export function CourseDetailContent({ course }: CourseDetailContentProps) {
           reqSettings,
           audSettings
         ] = await Promise.all([
-          getModuleItems('course_learning_objectives', course.id),
-          getModuleItems('course_requirements', course.id),
-          getModuleItems('course_audiences', course.id),
-          getModuleSettings(course.id, 'objectives'),
-          getModuleSettings(course.id, 'requirements'),
-          getModuleSettings(course.id, 'audiences')
+          fetchModuleItems('course_learning_objectives'),
+          fetchModuleItems('course_requirements'),
+          fetchModuleItems('course_audiences'),
+          fetchSettings('objectives'),
+          fetchSettings('requirements'),
+          fetchSettings('audiences')
         ]);
         
         // Update state with fetched data
@@ -76,9 +123,9 @@ export function CourseDetailContent({ course }: CourseDetailContentProps) {
         setAudiences(audiencesData);
         
         // Update settings
-        setObjectivesSettings(objSettings);
-        setRequirementsSettings(reqSettings);
-        setAudiencesSettings(audSettings);
+        if (objSettings) setObjectivesSettings(objSettings);
+        if (reqSettings) setRequirementsSettings(reqSettings);
+        if (audSettings) setAudiencesSettings(audSettings);
       } catch (error) {
         console.error("Error fetching course module data:", error);
       }
@@ -86,6 +133,25 @@ export function CourseDetailContent({ course }: CourseDetailContentProps) {
     
     fetchModuleData();
   }, [course.id]);
+  
+  // Helper functions for getting specific default values
+  const getDefaultTitle = (moduleType: string): string => {
+    const titles: Record<string, string> = {
+      'objectives': '学习目标',
+      'requirements': '学习模式',
+      'audiences': '适合人群'
+    };
+    return titles[moduleType] || '课程部分';
+  };
+  
+  const getDefaultIcon = (moduleType: string): string => {
+    const icons: Record<string, string> = {
+      'objectives': 'target',
+      'requirements': 'book-open',
+      'audiences': 'users'
+    };
+    return icons[moduleType] || 'check';
+  };
   
   // Fallback to whatyouwilllearn if no objectives in database
   const displayObjectives = objectives.length > 0 
