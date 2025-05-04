@@ -136,9 +136,10 @@ export const uploadGuideImage = async (courseId: number, file: File) => {
     const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
     const filePath = `course_guides/${courseId}/${fileName}`;
     
+    // Using the 'public' bucket, which should be created in Supabase
     const { data, error } = await supabase
       .storage
-      .from('public')
+      .from('course_guides')  // Changed from 'public' to 'course_guides'
       .upload(filePath, file, {
         cacheControl: '3600',
         upsert: false
@@ -152,7 +153,7 @@ export const uploadGuideImage = async (courseId: number, file: File) => {
     // Get the public URL for the uploaded image
     const { data: { publicUrl } } = supabase
       .storage
-      .from('public')
+      .from('course_guides')  // Changed from 'public' to 'course_guides'
       .getPublicUrl(filePath);
       
     return { data: publicUrl, error: null };
