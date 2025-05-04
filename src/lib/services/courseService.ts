@@ -73,8 +73,12 @@ export const getCourses = async (
 // Get featured courses
 export const getFeaturedCourses = async (limit = 6): Promise<CourseResponse> => {
   try {
-    const { data, error } = await supabase
-      .from('courses')
+    // Use a type assertion to help TypeScript resolve the types
+    type CourseQueryResult = Awaited<ReturnType<typeof supabase.from<'courses'>>['select']>;
+    
+    // Execute the query in steps with explicit typing
+    const query = supabase.from('courses');
+    const { data, error } = await query
       .select('*')
       .eq('is_featured', true)
       .eq('status', 'published')
