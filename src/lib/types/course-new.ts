@@ -135,13 +135,16 @@ export interface CourseData {
   syllabus_data?: any;
   syllabus_json?: any;
   materials?: any[];
+  requirements?: string[];
   requirements_data?: any;
   requirements_json?: any;
-  learning_objectives?: any;
+  learning_objectives?: string[];
   learning_objectives_json?: any;
+  target_audience?: string[];
   target_audience_data?: any;
   audience_json?: any;
   audience?: any;
+  highlights?: string[];
   highlights_data?: any;
   highlights_json?: any;
   lectures?: number;
@@ -149,12 +152,21 @@ export interface CourseData {
   enrollment_count?: number;
   display_order?: number;
   is_featured?: boolean;
+  featured?: boolean; // For backward compatibility
   original_price?: number;
+  language?: string;
+  category?: string;
   video_url?: string;
+  imageurl?: string;
+  instructor?: string;
+  instructor_name?: string;
+  instructor_bio?: string;
+  instructor_avatar?: string;
+  sections?: CourseSection[];
 }
 
 export interface CourseResponse {
-  data?: CourseData | CourseData[];
+  data?: CourseWithDetails | CourseData[];
   error?: any;
   meta?: {
     total: number;

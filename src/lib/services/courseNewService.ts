@@ -17,7 +17,7 @@ export const getAllCoursesNew = async (): Promise<CourseResponse> => {
       return { error };
     }
     
-    return { data };
+    return { data: data as CourseData[] };
   } catch (error) {
     console.error('[courseNewService] 获取所有课程异常:', error);
     return { error };

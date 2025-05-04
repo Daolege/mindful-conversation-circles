@@ -4,6 +4,22 @@ import { CourseData, CourseResponse } from "@/lib/types/course-new";
 import { selectFromTable } from "@/lib/services/typeSafeSupabase";
 
 // Simplified interface to avoid deep type instantiations
+export interface SimpleCourseData {
+  id: number;
+  title: string;
+  description?: string;
+  price?: number;
+  original_price?: number;
+  status?: string;
+  category?: string;
+  language?: string;
+  thumbnail_url?: string;
+  is_featured?: boolean;
+  display_order?: number;
+  created_at?: string;
+}
+
+// Simplified interface to avoid deep type instantiations
 export interface CourseWithSections {
   id: number;
   title: string;
@@ -48,7 +64,7 @@ export const getCourses = async (
   limit = 10,
   category?: string,
   search?: string
-): Promise<CourseResponse> => {
+): Promise<{ data: SimpleCourseData[]; meta?: { total: number; page: number; limit: number } }> => {
   try {
     let query = supabase
       .from('courses')
@@ -73,7 +89,7 @@ export const getCourses = async (
     }
     
     return { 
-      data: data as CourseData[],
+      data: data as SimpleCourseData[],
       meta: {
         total: count || 0,
         page,
@@ -82,12 +98,12 @@ export const getCourses = async (
     };
   } catch (error) {
     console.error("Error fetching courses:", error);
-    return { error };
+    return { data: [] };
   }
 };
 
 // Get featured courses
-export const getFeaturedCourses = async (limit = 6): Promise<CourseResponse> => {
+export const getFeaturedCourses = async (limit = 6): Promise<{ data: SimpleCourseData[] }> => {
   try {
     // Fixed version without complex type definition
     const { data, error } = await supabase
@@ -102,10 +118,10 @@ export const getFeaturedCourses = async (limit = 6): Promise<CourseResponse> => 
       throw new Error(error.message);
     }
     
-    return { data: data as CourseData[] };
+    return { data: data as SimpleCourseData[] };
   } catch (error) {
     console.error("Error fetching featured courses:", error);
-    return { error };
+    return { data: [] };
   }
 };
 
