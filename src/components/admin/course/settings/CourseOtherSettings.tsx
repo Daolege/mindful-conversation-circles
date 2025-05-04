@@ -6,7 +6,6 @@ import { CourseHighlightsList } from './CourseHighlightsList';
 import { BlockSettingsEditor } from './BlockSettingsEditor';
 import EnrollmentGuidesEditor from './EnrollmentGuidesEditor';
 import { toast } from 'sonner';
-import { getCourseHighlights } from '@/lib/services/courseNewService';
 import { Separator } from '@/components/ui/separator';
 
 interface CourseOtherSettingsProps {
