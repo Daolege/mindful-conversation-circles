@@ -174,6 +174,7 @@ export const CourseEditorProvider: React.FC<{
   const [hasChanges, setHasChanges] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [activeSaveSection, setActiveSaveSection] = useState<string | null>(null);
+  const [saveSuccess, setSaveSuccess] = useState(false); // Add missing saveSuccess state
   
   // State for section visibility and saved status
   const [savedSections, setSavedSections] = useState({
@@ -420,8 +421,13 @@ export const CourseEditorProvider: React.FC<{
         toast.success('课程保存成功');
         
         // 刷新React Query缓存，确保页面刷新后显示最新数据
-        const { queryClient } = await import('@tanstack/react-query');
-        queryClient.invalidateQueries(['course-new', courseId]);
+        try {
+          const { QueryClient } = await import('@tanstack/react-query');
+          const queryClient = new QueryClient();
+          queryClient.invalidateQueries({queryKey: ['course-new', courseId]});
+        } catch (err) {
+          console.error('Error invalidating React Query cache:', err);
+        }
         
       } else {
         toast.error('保存课程时出错');
@@ -431,6 +437,7 @@ export const CourseEditorProvider: React.FC<{
       toast.error('保存课程失败');
     } finally {
       setIsSaving(false);
+      setSaving(false);
     }
   };
 

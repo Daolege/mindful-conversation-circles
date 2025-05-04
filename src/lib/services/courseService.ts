@@ -170,8 +170,7 @@ export const updateCourseOrder = async (courseIds: number[]) => {
   }
 };
 
-// Save course 
-// Fix the type errors by using a simpler type definition
+// Save course - simplified interface to fix type errors
 export const saveCourse = async (courseData: {
   id?: number; 
   title: string;

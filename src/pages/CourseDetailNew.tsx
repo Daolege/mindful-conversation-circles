@@ -20,7 +20,7 @@ const CourseDetailNew = () => {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
 
-  const { data: course, isLoading, error } = useQuery({
+  const { data: course, isLoading, error, refetch } = useQuery({
     queryKey: ['course-new', courseIdNum],
     queryFn: () => getCourseNewById(courseIdNum),
     enabled: !!courseIdNum && !isNaN(courseIdNum),
@@ -32,7 +32,12 @@ const CourseDetailNew = () => {
   // Force smooth scrolling to top when page loads
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [courseId]);
+    
+    // Force data refetch when courseId changes
+    if (courseIdNum && !isNaN(courseIdNum)) {
+      refetch();
+    }
+  }, [courseId, courseIdNum, refetch]);
 
   // Add enhanced debug logging
   useEffect(() => {
