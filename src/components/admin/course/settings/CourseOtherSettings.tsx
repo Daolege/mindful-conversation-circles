@@ -35,6 +35,7 @@ import { getModuleSettings, ModuleSettings, updateModuleSettings } from '@/lib/s
 import { Loader2 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import CourseHighlightsList from './CourseHighlightsList';
+import EnrollmentGuidesEditor from './EnrollmentGuidesEditor';
 
 // Define props for the CourseOtherSettings component
 interface CourseOtherSettingsProps {
@@ -718,7 +719,7 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({
         </Card>
       </div>
 
-      {/* 课程亮点 (NEW) - 左半屏 */}
+      {/* 课程亮点和购买后引导页面 - 使用网格布局 */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <CourseHighlightsList
           highlights={courseHighlights}
@@ -726,8 +727,12 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({
           title="课程亮点"
         />
         
-        {/* 右半屏 预留空间 */}
-        <div className="hidden md:block"></div>
+        {courseId && (
+          <EnrollmentGuidesEditor
+            courseId={courseId}
+            title="购买后引导页面"
+          />
+        )}
       </div>
 
       <Card>
