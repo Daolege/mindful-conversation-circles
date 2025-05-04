@@ -66,16 +66,14 @@ export const saveSectionConfig = async (
   try {
     console.log(`[courseDefaultContentService] Saving ${sectionType} section config for course ${courseId}:`, config);
     
-    const { error } = await supabase
-      .from('course_section_configs')
-      .upsert({
-        course_id: courseId,
-        section_type: sectionType,
-        title: config.title,
-        description: config.description,
-        icon: config.icon,
-        updated_at: new Date().toISOString()
-      });
+    // Use a custom query with upsert functionality instead of direct table access
+    const { error } = await supabase.rpc('upsert_course_section_config', {
+      p_course_id: courseId,
+      p_section_type: sectionType,
+      p_title: config.title,
+      p_description: config.description,
+      p_icon: config.icon || null
+    });
     
     if (error) {
       console.error(`[courseDefaultContentService] Error saving ${sectionType} section config:`, error);
@@ -97,14 +95,13 @@ export const getSectionConfig = async (
   try {
     console.log(`[courseDefaultContentService] Getting ${sectionType} section config for course ${courseId}`);
     
-    const { data, error } = await supabase
-      .from('course_section_configs')
-      .select('*')
-      .eq('course_id', courseId)
-      .eq('section_type', sectionType)
-      .single();
+    // Use a custom RPC function to get section configuration
+    const { data, error } = await supabase.rpc('get_course_section_config', {
+      p_course_id: courseId,
+      p_section_type: sectionType
+    });
     
-    if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned" error
+    if (error) {
       console.error(`[courseDefaultContentService] Error getting ${sectionType} section config:`, error);
       return { error };
     }

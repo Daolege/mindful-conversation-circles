@@ -140,15 +140,27 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({
         ]);
         
         if (objectivesConfigRes.data) {
-          setObjectivesConfig(objectivesConfigRes.data);
+          setObjectivesConfig({
+            title: objectivesConfigRes.data.title || '学习目标',
+            description: objectivesConfigRes.data.description || '列出学习者完成课程后将获得的技能',
+            icon: objectivesConfigRes.data.icon || 'target'
+          });
         }
         
         if (modesConfigRes.data) {
-          setModesConfig(modesConfigRes.data);
+          setModesConfig({
+            title: modesConfigRes.data.title || '学习模式',
+            description: modesConfigRes.data.description || '列出课程的学习方式和教学模式',
+            icon: modesConfigRes.data.icon || 'video'
+          });
         }
         
         if (audiencesConfigRes.data) {
-          setAudiencesConfig(audiencesConfigRes.data);
+          setAudiencesConfig({
+            title: audiencesConfigRes.data.title || '适合人群',
+            description: audiencesConfigRes.data.description || '说明这门课程适合哪类学习者',
+            icon: audiencesConfigRes.data.icon || 'users'
+          });
         }
       } catch (error) {
         console.error("Error loading course settings:", error);
@@ -315,3 +327,4 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({
     </div>
   );
 };
+
