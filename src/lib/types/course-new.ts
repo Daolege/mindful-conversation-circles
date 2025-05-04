@@ -1,4 +1,3 @@
-
 export interface ListItem {
   id: string;
   text: string;
@@ -122,7 +121,7 @@ export interface SubscriptionPlan {
   updated_at?: string;
 }
 
-// CourseData and CourseResponse for compatibility
+// CourseData interface with all possible properties
 export interface CourseData {
   id: number;
   title: string;

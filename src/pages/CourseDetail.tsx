@@ -1,4 +1,3 @@
-
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
@@ -10,7 +9,9 @@ import { CourseEnrollCard } from "@/components/course-detail/CourseEnrollCard";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { CourseWithDetails } from "@/lib/types/course";
+import React from 'react';
 
+// Let's replace only the problematic section that has the type error
 const CourseDetail = () => {
   const { courseId } = useParams<{ courseId: string }>();
   const courseIdNumber = Number(courseId);
@@ -23,8 +24,12 @@ const CourseDetail = () => {
     refetchOnWindowFocus: false
   });
 
-  const course = courseResponse?.data;
-
+  // Ensure we have a single course, not an array
+  const course = courseResponse?.data && !Array.isArray(courseResponse.data) ? courseResponse.data : null;
+  
+  // Now we can safely access course.price
+  const price = course?.price || 0;
+  
   if (isLoading) {
     return (
       <>

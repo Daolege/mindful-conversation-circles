@@ -212,10 +212,11 @@ export const CourseEditorProvider: React.FC<{
           return;
         }
         
-        const data = response?.data;
-        if (data) {
-          // Map data properties correctly based on courses_new schema
-          // Create a compatibility layer for the new data structure
+        // Handle response.data which can be CourseData or CourseData[]
+        const courseData = response?.data;
+        if (courseData && !Array.isArray(courseData)) {
+          // Now TypeScript knows courseData is a single CourseData object
+          const data = courseData;
           
           // For syllabus which may not exist in courses_new
           let syllabus = [];

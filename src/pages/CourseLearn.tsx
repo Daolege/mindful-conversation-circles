@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery } from "@tanstack/react-query";
@@ -135,7 +134,7 @@ const CourseLearn = () => {
   // Process course data based on source
   let course = isNewCourse ? newCourse : standardCourse;
   let title = isNewCourse && newCourse ? newCourse.title : standardCourse?.title || '';
-  let videoUrl = isNewCourse && newCourse ? undefined : standardCourse?.video_url;
+  let videoUrl = isNewCourse && newCourse ? undefined : (standardCourse && !Array.isArray(standardCourse) ? standardCourse.video_url : '');
   
   // Transform syllabus data based on the course type
   let syllabusData: CourseSyllabusSection[] = [];
@@ -147,7 +146,7 @@ const CourseLearn = () => {
       sections: syllabusData.length,
       firstSectionTitle: syllabusData[0]?.title || t('courses:noSections')
     });
-  } else if (standardCourse?.syllabus) {
+  } else if (standardCourse && !Array.isArray(standardCourse) && standardCourse.syllabus) {
     // Handle standard course syllabus
     syllabusData = typeof standardCourse.syllabus === 'string'
       ? JSON.parse(standardCourse.syllabus)
@@ -299,7 +298,7 @@ const CourseLearn = () => {
   // Get materials based on course type
   const materials = isNewCourse && newCourse ? 
     newCourse.materials : 
-    standardCourse?.materials as CourseMaterial[] | null;
+    (standardCourse && !Array.isArray(standardCourse) ? standardCourse.materials as CourseMaterial[] | null : null);
 
   return (
     <div className="min-h-screen flex flex-col">

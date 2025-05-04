@@ -131,19 +131,14 @@ export const deleteCourse = async (courseId: number) => {
 // Update course order (needed by CourseManagement.tsx)
 export const updateCourseOrder = async (courseIds: number[]) => {
   try {
-    // Update each course with its new display order
-    const updates = courseIds.map((courseId, index) => ({
-      id: courseId,
-      display_order: index
-    }));
-    
-    // Batch update
-    const { error } = await supabase
-      .from('courses')
-      .upsert(updates);
-    
-    if (error) {
-      throw error;
+    // Process updates one by one instead of batch to avoid type issues
+    for (let i = 0; i < courseIds.length; i++) {
+      const { error } = await supabase
+        .from('courses')
+        .update({ display_order: i })
+        .eq('id', courseIds[i]);
+        
+      if (error) throw error;
     }
     
     return { success: true };
