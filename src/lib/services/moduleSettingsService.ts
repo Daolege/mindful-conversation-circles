@@ -29,7 +29,8 @@ export const getModuleSettings = async (courseId: number, moduleType: string): P
       throw error;
     }
 
-    return settings as ModuleSettings;
+    // Cast the data to ModuleSettings and return
+    return settings as unknown as ModuleSettings;
   } catch (error) {
     console.error(`Failed to get module settings for ${moduleType}:`, error);
     
