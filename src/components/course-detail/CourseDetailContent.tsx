@@ -52,9 +52,9 @@ export function CourseDetailContent({ course }: CourseDetailContentProps) {
         // Fetch module items using typeSafeSupabase helper to avoid type issues
         const fetchModuleItems = async (tableName: string): Promise<ModuleItem[]> => {
           try {
-            // Using the type-safe method provided by the library
+            // Using direct method for type-safety
             const { data, error } = await supabase
-              .from(tableName as any)
+              .from(tableName)
               .select('*')
               .eq('course_id', course.id)
               .eq('is_visible', true)
@@ -85,9 +85,10 @@ export function CourseDetailContent({ course }: CourseDetailContentProps) {
             
             // Convert JSON data to ModuleSettings type with proper type safety
             if (data && typeof data === 'object') {
+              const jsonData = data as Record<string, any>;
               return {
-                title: data.title || getDefaultTitle(moduleType),
-                icon: data.icon || getDefaultIcon(moduleType),
+                title: jsonData.title || getDefaultTitle(moduleType),
+                icon: jsonData.icon || getDefaultIcon(moduleType),
                 module_type: moduleType
               };
             }

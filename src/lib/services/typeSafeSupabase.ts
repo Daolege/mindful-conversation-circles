@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { PostgrestFilterBuilder } from "@supabase/postgrest-js";
 
@@ -127,6 +128,5 @@ export async function upsertIntoTable<T = any>(
   return query;
 }
 
-// Adding an export to make sure we can import the typeSafeSupabase correctly
-export { selectFromTable, insertIntoTable, updateTable, deleteFromTable, callRpcFunction, upsertIntoTable } from './typeSafeSupabase';
+// Export all functions as a single object to avoid duplicate exports
 export const typeSafeSupabase = { selectFromTable, insertIntoTable, updateTable, deleteFromTable, callRpcFunction, upsertIntoTable };

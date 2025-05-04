@@ -44,10 +44,13 @@ export const getModuleSettings = async (courseId: number, moduleType: string): P
       return getDefaultModuleSettings(moduleType);
     }
 
+    // Type assertion to safely access properties from the JSON response
+    const jsonData = settingsData as Record<string, any>;
+
     // Convert the data to ModuleSettings type and return
     const settings: ModuleSettings = {
-      title: settingsData.title || getDefaultModuleSettings(moduleType).title,
-      icon: settingsData.icon || getDefaultModuleSettings(moduleType).icon,
+      title: jsonData.title || getDefaultModuleSettings(moduleType).title,
+      icon: jsonData.icon || getDefaultModuleSettings(moduleType).icon,
       module_type: moduleType
     };
 
