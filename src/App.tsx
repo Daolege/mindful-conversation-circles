@@ -1,8 +1,9 @@
 
 import React, { Suspense, useEffect } from 'react';
-import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Home from './pages/Home';
 import Courses from './pages/Courses';
+import CourseDetail from './pages/CourseDetail';
 import CourseDetailNew from './pages/CourseDetailNew';
 import Auth from './pages/Auth';
 import MyCourses from './pages/MyCourses';
@@ -15,6 +16,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import Admin from './pages/Admin';
 import Dashboard from './pages/Dashboard';
 import NotFound from './pages/NotFound';
+import CourseEditor from './pages/CourseEditor';
 import CourseNewEditor from './pages/CourseNewEditor';
 import CourseLearn from './pages/CourseLearn';
 import OrderDetail from './pages/OrderDetail';
@@ -64,13 +66,7 @@ function App() {
               <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/courses" element={<Courses />} />
-                
-                {/* Fix type error - use string literals for redirect paths */}
-                <Route path="/courses/:courseId" element={
-                  <Navigate to="/courses-new/:courseId" replace />
-                } />
-                
-                {/* Use the new course detail page */}
+                <Route path="/courses/:courseId" element={<CourseDetail />} />
                 <Route path="/courses-new/:courseId" element={<CourseDetailNew />} />
                 <Route path="/courses/:courseId/learn" element={<CourseLearn />} />
                 <Route path="/learn/:courseId" element={<CourseLearn />} />
@@ -81,14 +77,8 @@ function App() {
                 <Route path="/payment-failed" element={<PaymentFailed />} />
                 <Route path="/admin" element={<Admin />} />
                 <Route path="/dashboard" element={<Dashboard />} />
-                
-                {/* Fix type error - use string literals for redirect paths */}
-                <Route path="/admin/courses/:courseId" element={
-                  <Navigate to="/admin/courses-new/:courseId" replace />
-                } />
-                <Route path="/admin/courses/new" element={<Navigate to="/admin/courses-new/new" replace />} />
-                
-                {/* Use the new course editor */}
+                <Route path="/admin/courses/new" element={<CourseEditor />} />
+                <Route path="/admin/courses/:courseId" element={<CourseEditor />} />
                 <Route path="/admin/courses-new/new" element={<CourseNewEditor />} />
                 <Route path="/admin/courses-new/:courseId" element={<CourseNewEditor />} />
                 <Route path="/admin/courses-new/:courseId/homework" element={<HomeworkSubmissionsPage />} />

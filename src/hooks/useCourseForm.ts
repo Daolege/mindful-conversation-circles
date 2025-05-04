@@ -17,7 +17,6 @@ const formSchema = z.object({
   language: z.string().default("zh"),
   category: z.string().default("zh"), // Add category field
   featured: z.boolean().default(false).optional(),
-  is_featured: z.boolean().default(false).optional(),
   display_order: z.number().optional(),
   status: z.string().optional(),
   learning_objectives: z.array(z.string()).optional(),
@@ -58,9 +57,6 @@ export function useCourseForm(initialData?: Partial<CourseWithDetails>) {
 
   // For backward compatibility, use either language or category
   const initialLanguage = initialData?.language || initialData?.category || 'zh';
-  
-  // Handle both is_featured and featured for backward compatibility
-  const isFeatured = initialData?.is_featured ?? initialData?.featured ?? false;
 
   const defaultValues: CourseWithDetails = {
     id: initialData?.id ?? 0,
@@ -70,8 +66,7 @@ export function useCourseForm(initialData?: Partial<CourseWithDetails>) {
     currency: initialData?.currency ?? 'cny',
     language: initialLanguage, // Use detected language value
     category: initialData?.category ?? initialLanguage, // Keep category synced with language for backward compatibility
-    is_featured: isFeatured,
-    featured: isFeatured, // Add featured for backward compatibility
+    featured: initialData?.featured ?? false,
     display_order: initialData?.display_order ?? 0,
     status: initialData?.status ?? 'draft',
     learning_objectives: initialData?.learning_objectives ?? [],

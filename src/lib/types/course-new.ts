@@ -1,113 +1,77 @@
-export interface ListItem {
-  id: string;
-  text: string;
-  position: number;
-  is_visible: boolean;
-  icon?: string;
-}
 
-export interface ListSectionConfig {
-  title: string;
-  description: string;
-  icon?: string;
-}
+import { Course } from "./course";
 
 export interface CourseSection {
   id: string;
   title: string;
+  description?: string;
   position: number;
-  course_id: number;
-  created_at?: string;
-  updated_at?: string;
   lectures?: CourseLecture[];
 }
 
 export interface CourseLecture {
   id: string;
   title: string;
-  position: number;
-  section_id: string;
-  duration?: string;
-  is_free?: boolean;
-  video_url?: string;
-  requires_homework_completion?: boolean;
-  created_at?: string;
-  updated_at?: string;
-}
-
-// CourseNew interface
-export interface CourseNew {
-  id: number;
-  title: string;
   description?: string;
-  price: number; // Required in CourseNew and CourseWithDetails
-  original_price?: number | null;
-  display_order: number;
-  is_featured?: boolean;
-  featured?: boolean; // For backward compatibility
-  status: 'published' | 'draft' | 'archived';
-  enrollment_count?: number;
-  lecture_count?: number;
-  language?: string;
-  category?: string;
-  currency?: string;
-  created_at?: string;
-  updated_at?: string;
-  published_at?: string;
-  allows_subscription?: boolean;
-  allows_one_time_purchase?: boolean;
-  thumbnail_url?: string;
-  materials?: CourseMaterial[];
-  video_url?: string; // Added for backward compatibility
-  syllabus?: any; // Added for backward compatibility
+  duration?: string;
+  position: number;
+  video_url?: string;
+  has_homework?: boolean;
+  section_id?: string;
+  is_free?: boolean;
+  requires_homework_completion?: boolean;
 }
 
-// CourseWithDetails interface with additional instructor fields
-export interface CourseWithDetails extends CourseNew {
-  sections?: CourseSection[];
-  learning_objectives?: string[];
-  requirements?: string[];
-  target_audience?: string[];
-  materials?: CourseMaterial[];
-  syllabus?: any;
-  instructor?: any;
-  instructor_name?: string; // Added explicitly
-  instructor_bio?: string;   // Added explicitly  
-  instructor_avatar?: string; // Added explicitly
-  rating?: number;
-  rating_count?: number;
-  featured?: boolean; // For backward compatibility
-  
-  // These fields are added for backward compatibility with the error messages
-  highlights?: string[];
-  imageurl?: string;
-  lectures?: number;
-  
-  // Added for backward compatibility with CourseEditorContext
-  syllabus_data?: any;
-  syllabus_json?: any;
-  requirements_data?: any;
-  requirements_json?: any;
-  learning_objectives_json?: any;
-  target_audience_data?: any;
-  audience_json?: any;
-  audience?: any;
-  highlights_data?: any;
-  highlights_json?: any;
-}
-
-// CourseMaterial interface
+// Define and export CourseMaterial interface
 export interface CourseMaterial {
   id: string;
   course_id: number;
   name: string;
   url: string;
   position: number;
-  is_visible?: boolean;
-  created_at?: string;
+  is_visible: boolean;
 }
 
-// CourseFormValues interface
+export interface CourseWithDetails extends Omit<Course, 'language'> {
+  sections?: CourseSection[];
+  learning_objectives?: string[];
+  requirements?: string[];
+  target_audience?: string[];
+  instructor_name?: string;
+  instructor_bio?: string;
+  instructor_avatar?: string;
+  original_price?: number;
+  materials?: CourseMaterial[];
+  status?: 'published' | 'draft' | 'archived';
+  thumbnail_url?: string;
+  language?: string; // Make language optional in CourseWithDetails
+}
+
+// Add the CourseNew interface for admin components
+export interface CourseNew {
+  id: number;
+  title: string;
+  description?: string;
+  price: number;
+  original_price?: number | null;
+  currency: string;
+  language: string;
+  display_order: number;
+  status: 'published' | 'draft' | 'archived';
+  is_featured: boolean;
+  sections?: CourseSection[];
+  created_at?: string;
+  updated_at?: string;
+  student_count?: number;
+  enrollment_count?: number;
+  thumbnail_url?: string;
+  published_at?: string;
+  lecture_count?: number;
+  // Add for backwards compatibility
+  category?: string;
+}
+
+// For form handling
 export interface CourseFormValues {
   title: string;
   description?: string;
@@ -116,129 +80,134 @@ export interface CourseFormValues {
   currency: string;
   language: string;
   display_order: number;
-  status: 'draft' | 'published' | 'archived';
+  status: 'published' | 'draft' | 'archived';
   is_featured: boolean;
-  featured?: boolean; // Added for backward compatibility
 }
 
-// Updated subscription related interfaces to include all used values
-export type SubscriptionPeriod = 'monthly' | 'quarterly' | 'yearly' | 'annual' | '2years' | '3years';
+// Define ListItem interface for EditableListComponent
+export interface ListItem {
+  id: string;
+  text: string;
+  content?: string;
+  position?: number;
+  is_visible?: boolean;
+}
 
+// Properly export SubscriptionPeriod type
+export type SubscriptionPeriod = 'monthly' | 'quarterly' | 'yearly' | '2years' | '3years';
+
+// Update SubscriptionPlan interface to ensure features is correctly typed
 export interface SubscriptionPlan {
   id: string;
   name: string;
+  description: string | null;
   price: number;
-  interval: SubscriptionPeriod | string; // Make interval accept string for flexibility
   currency: string;
-  discount_percentage: number;
-  description?: string;
-  is_active: boolean;
+  interval: string;
   display_order: number;
+  is_active: boolean;
+  features?: string[] | null;
   created_at?: string;
   updated_at?: string;
+  discount_percentage?: number;
 }
 
-// CourseData interface refined to include all fields from CourseNew and CourseWithDetails
+// Add CourseData and CourseResponse types for courseService.ts
 export interface CourseData {
-  id: number;
-  title: string;
-  description?: string;
-  price: number; // Made required to match CourseWithDetails
-  original_price?: number | null;
-  status: string; // Made required to match CourseWithDetails
-  currency?: string;
-  thumbnail_url?: string;
-  syllabus?: any;
-  syllabus_data?: any;
-  syllabus_json?: any;
-  materials?: any[];
-  requirements?: string[];
-  requirements_data?: any;
-  requirements_json?: any;
-  learning_objectives?: string[];
-  learning_objectives_json?: any;
-  target_audience?: string[];
-  target_audience_data?: any;
-  audience_json?: any;
-  audience?: any;
-  highlights?: string[];
-  highlights_data?: any;
-  highlights_json?: any;
-  lectures?: number;
-  lecture_count?: number;
-  enrollment_count?: number;
-  display_order: number; // Made required to match CourseWithDetails
-  is_featured?: boolean;
-  featured?: boolean;
-  language?: string;
-  category?: string;
-  video_url?: string;
-  imageurl?: string;
-  instructor?: any;
-  instructor_name?: string;
-  instructor_bio?: string;
-  instructor_avatar?: string;
-  sections?: CourseSection[];
-  rating?: number;
-  rating_count?: number;
-  updated_at?: string;
-  created_at?: string;
-  published_at?: string;
-  allows_subscription?: boolean;
-  allows_one_time_purchase?: boolean;
-}
-
-// Modified version for insert/update operations with appropriate optional fields
-export interface CourseDataForInsert {
+  id?: number;
   title: string;
   description?: string;
   price?: number;
-  original_price?: number | null;
-  status?: string;
   currency?: string;
-  language?: string;
-  category?: string;
   display_order?: number;
+  status?: 'published' | 'draft' | 'archived';
   is_featured?: boolean;
-  allows_subscription?: boolean;
-  allows_one_time_purchase?: boolean;
+  language?: string;
+  created_at?: string;
+  updated_at?: string;
+  enrollment_count?: number;
+  student_count?: number;
   thumbnail_url?: string;
-  instructor_id?: string;
+  original_price?: number | null;
+  [key: string]: any;
 }
 
-// Update CourseResponse to use more specific return types
-export interface CourseResponseSingle {
-  data?: CourseWithDetails;
-  error?: any;
+export interface CourseResponse<T> {
+  data: T | null;
+  error: Error | null;
 }
 
-export interface CourseResponseMultiple {
-  data?: CourseData[];
-  error?: any;
-  meta?: {
-    total: number;
-    page: number;
-    limit: number;
-  };
-}
-
-export type CourseResponse = CourseResponseSingle | CourseResponseMultiple;
-
-// SiteSetting interface with optional id and site_name
+// Updated SiteSetting interface to include both database structure and compatibility with migration functions
 export interface SiteSetting {
+  // Database fields
   id?: string;
   site_name?: string;
   site_description?: string;
-  contact_email?: string;
-  support_phone?: string;
   logo_url?: string;
-  enable_registration?: boolean;
+  support_phone?: string;
+  contact_email?: string;
   maintenance_mode?: boolean;
+  enable_registration?: boolean;
   created_at?: string;
   updated_at?: string;
+  
+  // Compatibility fields for migration function
+  key?: string;
+  value?: string;
 }
 
-// CourseWithSections for backward compatibility
-export interface CourseWithSections extends CourseNew {
-  sections?: CourseSection[];
+// Define OrderLineItem interface with required properties
+export interface OrderLineItem {
+  order_id: string;
+  course_id: number;
+  price: number;
+  currency: string;
+  id?: string;
+  created_at?: string;
+  updated_at?: string;
+  [key: string]: any;
+}
+
+// Update DatabaseFunctions to include all functions needed in the application
+export interface DatabaseFunctions {
+  create_test_subscription: any;
+  has_role: any;
+  update_exchange_rate: any;
+  update_site_settings: any;
+  user_has_course_access: any;
+  enroll_user_in_course: any;
+  update_course_progress: any;
+  admin_add_course_item: any;
+  get_dashboard_stats: any;
+  get_financial_stats: any;
+  get_payment_method_stats: any;
+  check_table_exists: any;
+  execute_sql: any;
+  insert_order_item: any;
+  get_order_items: any;
+  delete_order: any;
+}
+
+// Define the CourseWithSections interface that was missing
+export interface CourseWithSections {
+  id: number;
+  title: string;
+  description?: string;
+  price?: number;
+  currency?: string;
+  category?: string;
+  sections?: {
+    id: string;
+    title: string;
+    position: number;
+    lectures?: {
+      id: string;
+      title: string;
+      position: number;
+      video_url?: string;
+      duration?: string;
+      description?: string;
+    }[];
+  }[];
+  [key: string]: any; // Allow other properties
 }

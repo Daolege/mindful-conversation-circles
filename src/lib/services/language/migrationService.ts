@@ -314,7 +314,7 @@ export const addLanguageColumnToCourses = async (): Promise<boolean> => {
 /**
  * Run all migrations needed for language functionality
  * This consolidates all required migrations in one place
- * Modified to handle different database environments and be more resilient to failures
+ * Modified to handle different database environments
  */
 export const runAllLanguageMigrations = async (): Promise<boolean> => {
   try {
@@ -324,67 +324,39 @@ export const runAllLanguageMigrations = async (): Promise<boolean> => {
     const tableExists = await checkLanguagesTableExists();
     if (!tableExists) {
       console.log('Languages table does not exist, creating it');
-      try {
-        const tableCreated = await createLanguagesTableIfNeeded();
-        if (!tableCreated) {
-          console.error('Failed to create languages table, but continuing with other operations');
-          // Continue anyway, just log the error
-        }
-      } catch (err) {
-        console.error('Error creating languages table, but continuing with other operations:', err);
-        // Continue anyway, just log the error
+      const tableCreated = await createLanguagesTableIfNeeded();
+      if (!tableCreated) {
+        console.error('Failed to create languages table');
+        // Continue anyway, as we might still be able to add the language column
       }
     }
     
     // 2. Check if courses_new has language column
-    try {
-      const languageColumnExists = await checkCoursesLanguageColumn();
-      if (!languageColumnExists) {
-        console.log('Language column does not exist, adding it');
-        try {
-          const columnAdded = await addLanguageColumnToCourses();
-          if (!columnAdded) {
-            console.error('Failed to add language column, but continuing with other operations');
-            // Continue anyway, just log the error
-          }
-        } catch (err) {
-          console.error('Error adding language column, but continuing with other operations:', err);
-          // Continue anyway, just log the error
-        }
+    const languageColumnExists = await checkCoursesLanguageColumn();
+    if (!languageColumnExists) {
+      console.log('Language column does not exist, adding it');
+      const columnAdded = await addLanguageColumnToCourses();
+      if (!columnAdded) {
+        console.error('Failed to add language column');
+        // Continue anyway, as we might still be able to add languages
       }
-    } catch (err) {
-      console.error('Error checking language column, but continuing with other operations:', err);
-      // Continue anyway, just log the error
     }
     
     // 3. Check if language migration is needed for default languages
-    try {
-      if (tableExists) {
-        const isMigrated = await checkLanguageMigrationStatus();
-        if (!isMigrated) {
-          console.log('Language migration needed, running now...');
-          try {
-            const result = await runLanguageMigration();
-            if (!result.success) {
-              console.error('Language migration failed:', result.error);
-              // Continue anyway, just log the error
-            }
-          } catch (err) {
-            console.error('Error running language migration, but continuing with other operations:', err);
-            // Continue anyway, just log the error
-          }
-        }
+    const isMigrated = await checkLanguageMigrationStatus();
+    if (!isMigrated && tableExists) {
+      console.log('Language migration needed, running now...');
+      const result = await runLanguageMigration();
+      if (!result.success) {
+        console.error('Language migration failed:', result.error);
       }
-    } catch (err) {
-      console.error('Error checking migration status, but continuing with other operations:', err);
-      // Continue anyway, just log the error
     }
     
-    // Return success to prevent blocking the application
+    // Return success as long as we could check something
     console.log('Language migrations completed with available capabilities');
     return true;
   } catch (error) {
-    console.error('Error running all language migrations, but continuing with other operations:', error);
+    console.error('Error running all language migrations:', error);
     // Return true anyway to prevent blocking the application
     return true;
   }

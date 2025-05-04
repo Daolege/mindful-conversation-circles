@@ -2,19 +2,13 @@
 import React, { useEffect, useState } from 'react';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { EditableListComponent } from './EditableListComponent';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { ListItem, ListSectionConfig } from '@/lib/types/course-new';
-import { 
-  getDefaultLearningObjectives, 
-  getDefaultLearningModes, 
-  getDefaultTargetAudience,
-  saveSectionConfig,
-  getSectionConfig
-} from '@/lib/services/courseDefaultContentService';
+import { ListItem } from '@/lib/types/course-new';
 
 // Define props for the CourseOtherSettings component
 interface CourseOtherSettingsProps {
@@ -58,66 +52,32 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({
   const [isPaidContent, setIsPaidContent] = useState<boolean>(true);
   const [courseVisibility, setCourseVisibility] = useState<string>("published");
   
-  // Section configurations with titles and icons
-  const [objectivesConfig, setObjectivesConfig] = useState<ListSectionConfig>({
-    title: "学习目标",
-    description: "列出学习者完成课程后将获得的技能",
-    icon: "target"
-  });
-  
-  const [modesConfig, setModesConfig] = useState<ListSectionConfig>({
-    title: "学习模式",
-    description: "列出课程的学习方式和教学模式",
-    icon: "video"
-  });
-  
-  const [audiencesConfig, setAudiencesConfig] = useState<ListSectionConfig>({
-    title: "适合人群",
-    description: "说明这门课程适合哪类学习者",
-    icon: "users"
-  });
-  
   // Convert string arrays to object arrays with IDs for the editable lists
-  const formatArrayToListItems = (arr: string[], defaultIcon?: string): ListItem[] => {
-    if (!arr || arr.length === 0) {
-      switch (defaultIcon) {
-        case 'target':
-          return getDefaultLearningObjectives();
-        case 'video':
-          return getDefaultLearningModes();
-        case 'users':
-          return getDefaultTargetAudience();
-        default:
-          return [];
-      }
-    }
-    
+  const formatArrayToListItems = (arr: string[]): ListItem[] => {
     return arr.map((item, index) => ({
       id: `item-${index}`,
       text: item,
       position: index,
-      is_visible: true,
-      icon: defaultIcon
+      is_visible: true
     }));
   };
 
   const [learningObjectivesList, setLearningObjectivesList] = useState<ListItem[]>(
-    formatArrayToListItems(learningObjectives, 'target')
+    formatArrayToListItems(learningObjectives)
   );
-  const [learningModesList, setLearningModesList] = useState<ListItem[]>(
-    formatArrayToListItems(requirements, 'video')
+  const [requirementsList, setRequirementsList] = useState<ListItem[]>(
+    formatArrayToListItems(requirements)
   );
   const [targetAudienceList, setTargetAudienceList] = useState<ListItem[]>(
-    formatArrayToListItems(targetAudience, 'users')
+    formatArrayToListItems(targetAudience)
   );
 
-  // Load course information and section configurations
+  // Load course information
   useEffect(() => {
     async function loadCourseSettings() {
       if (!courseId) return;
 
       try {
-        // Load course settings
         const { data, error } = await supabase
           .from('courses_new')
           .select('is_featured, price, status')
@@ -130,25 +90,6 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({
           setIsFeatured(data.is_featured || false);
           setIsPaidContent((data.price || 0) > 0);
           setCourseVisibility(data.status || "published");
-        }
-        
-        // Load section configurations
-        const [objectivesConfigRes, modesConfigRes, audiencesConfigRes] = await Promise.all([
-          getSectionConfig(courseId, 'objectives'),
-          getSectionConfig(courseId, 'modes'),
-          getSectionConfig(courseId, 'audiences')
-        ]);
-        
-        if (objectivesConfigRes.data) {
-          setObjectivesConfig(objectivesConfigRes.data as ListSectionConfig);
-        }
-        
-        if (modesConfigRes.data) {
-          setModesConfig(modesConfigRes.data as ListSectionConfig);
-        }
-        
-        if (audiencesConfigRes.data) {
-          setAudiencesConfig(audiencesConfigRes.data as ListSectionConfig);
         }
       } catch (error) {
         console.error("Error loading course settings:", error);
@@ -171,8 +112,8 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({
     }
   };
 
-  const handleLearningModesChange = (newItems: ListItem[]) => {
-    setLearningModesList(newItems);
+  const handleRequirementsChange = (newItems: ListItem[]) => {
+    setRequirementsList(newItems);
     if (onUpdate) {
       onUpdate('requirements', formatListItemsToArray(newItems));
     }
@@ -182,30 +123,6 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({
     setTargetAudienceList(newItems);
     if (onUpdate) {
       onUpdate('target_audience', formatListItemsToArray(newItems));
-    }
-  };
-  
-  const handleObjectivesConfigChange = async (config: ListSectionConfig) => {
-    setObjectivesConfig(config);
-    if (courseId) {
-      await saveSectionConfig(courseId, 'objectives', config);
-      toast.success("学习目标设置已更新");
-    }
-  };
-  
-  const handleModesConfigChange = async (config: ListSectionConfig) => {
-    setModesConfig(config);
-    if (courseId) {
-      await saveSectionConfig(courseId, 'modes', config);
-      toast.success("学习模式设置已更新");
-    }
-  };
-  
-  const handleAudiencesConfigChange = async (config: ListSectionConfig) => {
-    setAudiencesConfig(config);
-    if (courseId) {
-      await saveSectionConfig(courseId, 'audiences', config);
-      toast.success("适合人群设置已更新");
     }
   };
 
@@ -280,38 +197,29 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({
         </CardContent>
       </Card>
 
-      {/* Grid layout for the three editable list components */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <EditableListComponent
-          title={objectivesConfig.title}
-          description={objectivesConfig.description}
-          items={learningObjectivesList}
-          onChange={handleLearningObjectivesChange}
-          placeholder="例如: 掌握基础Python语法"
-          sectionIcon={objectivesConfig.icon}
-          onSectionConfigChange={handleObjectivesConfigChange}
-        />
+      <EditableListComponent
+        title="学习目标"
+        description="列出学习者完成课程后将获得的技能"
+        items={learningObjectivesList}
+        onChange={handleLearningObjectivesChange}
+        placeholder="例如: 掌握基础Python语法"
+      />
 
-        <EditableListComponent
-          title={modesConfig.title}
-          description={modesConfig.description}
-          items={learningModesList}
-          onChange={handleLearningModesChange}
-          placeholder="例如: 在线视频教学"
-          sectionIcon={modesConfig.icon}
-          onSectionConfigChange={handleModesConfigChange}
-        />
+      <EditableListComponent
+        title="课程要求"
+        description="列出参加课程所需的先决条件"
+        items={requirementsList}
+        onChange={handleRequirementsChange}
+        placeholder="例如: 基本计算机操作技能"
+      />
 
-        <EditableListComponent
-          title={audiencesConfig.title}
-          description={audiencesConfig.description}
-          items={targetAudienceList}
-          onChange={handleTargetAudienceChange}
-          placeholder="例如: 零基础学习者"
-          sectionIcon={audiencesConfig.icon}
-          onSectionConfigChange={handleAudiencesConfigChange}
-        />
-      </div>
+      <EditableListComponent
+        title="适合人群"
+        description="说明这门课程适合哪类学习者"
+        items={targetAudienceList}
+        onChange={handleTargetAudienceChange}
+        placeholder="例如: 初学者, 想转行的专业人士"
+      />
     </div>
   );
 };

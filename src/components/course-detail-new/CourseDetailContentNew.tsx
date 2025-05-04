@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState } from 'react';
 import { CourseWithDetails } from '@/lib/types/course-new';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AnimatedCollapsible } from '@/components/ui/animated-collapsible';
@@ -9,7 +10,6 @@ import {
   Download, File, Target, Award, Users, Bookmark, GraduationCap, Book, CheckCircle
 } from 'lucide-react';
 import { useTranslations } from '@/hooks/useTranslations';
-import { getDefaultLearningObjectives, getDefaultLearningModes, getDefaultTargetAudience } from '@/lib/services/courseDefaultContentService';
 
 interface CourseDetailContentNewProps {
   course: CourseWithDetails;
@@ -32,7 +32,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
   
   const [isOutlineLoading, setIsOutlineLoading] = useState(true);
   
-  useEffect(() => {
+  React.useEffect(() => {
     // Simulate outline loading with a short delay to show loading animation
     const timer = setTimeout(() => {
       setIsOutlineLoading(false);
@@ -59,73 +59,34 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
     0
   ) || 0;
 
-  // 详细日志记录，用于调试
-  console.log('[CourseDetailContentNew] 课程数据:', course);
-  console.log('[CourseDetailContentNew] 课程ID:', course.id);
-  console.log('[CourseDetailContentNew] 附件材料:', course.materials);
-  console.log('[CourseDetailContentNew] 学习目标 (直接):', course.learning_objectives);
-  console.log('[CourseDetailContentNew] 课程要求 (直接):', course.requirements);
-  console.log('[CourseDetailContentNew] 适合人群 (直接):', course.target_audience);
-
-  // 改进的数组有效性检查函数 - 明确区分undefined、null和空数组
-  const isValidArray = (arr: any): boolean => {
-    // 只有在数组完全不存在（undefined或null）时才返回false
-    // 如果是空数组也视为有效，因为用户可能故意将列表清空
-    return Array.isArray(arr);
-  };
-  
-  // 改进的非空数组检查
-  const hasItems = (arr: any[]): boolean => {
-    return isValidArray(arr) && arr.length > 0;
-  };
-  
-  // 记录数组有效性
-  console.log('[CourseDetailContentNew] 数据有效性检查:', {
-    learning_objectives: isValidArray(course.learning_objectives),
-    requirements: isValidArray(course.requirements),
-    target_audience: isValidArray(course.target_audience),
-    learning_objectives_length: course.learning_objectives?.length,
-    requirements_length: course.requirements?.length,
-    target_audience_length: course.target_audience?.length,
-    has_learning_items: hasItems(course.learning_objectives || []),
-    has_requirement_items: hasItems(course.requirements || []),
-    has_audience_items: hasItems(course.target_audience || [])
-  });
-
-  // 使用课程中的材料数据，如果不存在则提供默认值
+  // Generate sample materials if none exist
   const courseMaterials = course.materials?.length ? course.materials : [
     { id: "mat1", course_id: course.id, name: "课程讲义.PDF", url: "#", position: 1, is_visible: true, created_at: new Date().toISOString() },
     { id: "mat2", course_id: course.id, name: "练习题.PDF", url: "#", position: 2, is_visible: true, created_at: new Date().toISOString() }
   ];
 
-  // 改进后的数据获取逻辑：只有在数组完全不存在（undefined或null）时才使用默认值
-  // 如果数据库返回了空数组，也应该尊重这个结果（用户可能是想清空这些项）
-  const learningObjectives = isValidArray(course.learning_objectives) 
-    ? course.learning_objectives 
-    : getDefaultLearningObjectives().map(item => item.text);
+  // Default learning objectives if none exist
+  const learningObjectives = course.learning_objectives?.length ? course.learning_objectives : [
+    "人工智能基础知识的掌握",
+    "机器学习算法的理解",
+    "神经网络基础",
+    "AI应用场景理解"
+  ];
 
-  const requirements = isValidArray(course.requirements)
-    ? course.requirements
-    : getDefaultLearningModes().map(item => item.text);
+  // Default requirements if none exist
+  const requirements = course.requirements?.length ? course.requirements : [
+    "基本编程技能(推荐Python)",
+    "具备初步的数学知识(统计学基础)",
+    "有兴趣了解AI发展前沿"
+  ];
 
-  const targetAudience = isValidArray(course.target_audience)
-    ? course.target_audience
-    : getDefaultTargetAudience().map(item => item.text);
-    
-  // 添加日志以显示我们最终使用的数据
-  console.log('[CourseDetailContentNew] 最终使用的数据:', {
-    learningObjectives: learningObjectives?.length || 0,
-    requirements: requirements?.length || 0,
-    targetAudience: targetAudience?.length || 0,
-    isFromDatabase: {
-      learningObjectives: isValidArray(course.learning_objectives),
-      requirements: isValidArray(course.requirements),
-      targetAudience: isValidArray(course.target_audience)
-    },
-    firstLearningObjective: learningObjectives?.length > 0 ? learningObjectives[0] : 'none',
-    firstRequirement: requirements?.length > 0 ? requirements[0] : 'none',
-    firstTargetAudience: targetAudience?.length > 0 ? targetAudience[0] : 'none'
-  });
+  // Default target audience if none exist
+  const targetAudience = course.target_audience?.length ? course.target_audience : [
+    "对人工智能感兴趣的初学者",
+    "希望提升个人技能的专业人士",
+    "想在AI领域发展的学习者",
+    "对技术有兴趣的爱好者"
+  ];
 
   return (
     <div className="space-y-8">
@@ -195,7 +156,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
                   className="border-gray-200 hover:bg-gray-50 transition-colors shadow-sm hover:shadow-md"
                 >
                   <ul className="space-y-3">
-                    {section.lectures?.map((lecture) => (
+                    {section.lectures?.map((lecture, lectureIdx) => (
                       <li
                         key={lecture.id}
                         className="flex justify-between items-center p-4 border rounded-lg 
@@ -244,7 +205,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
         <CardContent className="pt-4">
           {courseMaterials && courseMaterials.length > 0 ? (
             <ul className="space-y-3">
-              {courseMaterials.map((material) => (
+              {courseMaterials.map((material, idx) => (
                 <li 
                   key={material.id} 
                   className="flex justify-between items-center p-4 border rounded-lg hover:bg-gray-50 
@@ -272,7 +233,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
         </CardContent>
       </Card>
 
-      {/* 学习信息栏 - 三栏布局 */}
+      {/* 学习信息栏 - 三栏布局 - Enhanced with better 3D effects */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* 学习目标 */}
         <Card 
@@ -305,7 +266,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
           </CardContent>
         </Card>
 
-        {/* 学习模式 (Previously called 课程要求) */}
+        {/* 课程要求 */}
         <Card 
           className="hover:shadow-xl transition-all duration-500 ease-in-out shadow-lg shadow-gray-200/60 border-2 
             transform hover:-translate-y-1 hover:scale-[1.01] focus:scale-[1.01]
@@ -314,7 +275,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
           <CardHeader className="pb-0">
             <CardTitle className="text-lg flex items-center gap-2">
               <Book className="h-5 w-5" />
-              {t('courses:learningModes')}
+              {t('courses:requirements')}
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-4">

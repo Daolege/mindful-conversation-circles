@@ -72,8 +72,6 @@ export function SubscriptionCheckout({
       case 'quarterly': return t('checkout:quarterly'); 
       case '2years': return t('checkout:twoYears');
       case '3years': return t('checkout:threeYears');
-      case 'annual': 
-      case 'yearly': 
       default: return t('checkout:yearly');
     }
   };

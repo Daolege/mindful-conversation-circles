@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery } from "@tanstack/react-query";
@@ -19,7 +20,7 @@ import { CourseLoadingState } from "@/components/course/CourseLoadingState";
 import { CourseNotFound } from "@/components/course/CourseNotFound";
 import { CourseLearnHeader } from "@/components/course/CourseLearnHeader";
 import { CourseSyllabus } from "@/components/course/CourseSyllabus";
-import { CourseWithDetails, CourseData } from "@/lib/types/course-new";
+import { CourseWithDetails } from "@/lib/types/course-new";
 import { DatabaseFixInitializer } from "@/components/course/DatabaseFixInitializer";
 import { useTranslations } from "@/hooks/useTranslations";
 
@@ -77,20 +78,20 @@ const CourseLearn = () => {
     queryFn: () => getCourseNewById(courseId || '0'),
     enabled: !!courseId && isNewCourse,
   });
-  
+
   // Log query results for debugging
   useEffect(() => {
     if (isNewCourse) {
       console.log('New course query result:', {
-        data: newCourseResponse && 'data' in newCourseResponse ? 
-          { id: (newCourseResponse.data as CourseWithDetails).id, title: (newCourseResponse.data as CourseWithDetails).title } : 
+        data: newCourseResponse?.data ? 
+          { id: newCourseResponse.data.id, title: newCourseResponse.data.title } : 
           null,
         error: newCourseError,
         isLoading: isLoadingNewCourse
       });
     } else {
       console.log('Standard course query result:', {
-        data: courseResponse && 'data' in courseResponse ? 
+        data: courseResponse?.data ? 
           { id: courseResponse.data.id, title: courseResponse.data.title } : 
           null,
         error: standardCourseError,
@@ -126,23 +127,15 @@ const CourseLearn = () => {
     enabled: !!courseId && !!user?.id,
   });
 
-  // Determine course data based on source - with type safety
+  // Determine course data based on source
   const isLoading = isLoadingStandardCourse || isLoadingNewCourse;
-  const standardCourse = courseResponse && 'data' in courseResponse ? courseResponse.data : null;
-  const newCourse = newCourseResponse && 'data' in newCourseResponse ? newCourseResponse.data : null;
+  const standardCourse = courseResponse?.data;
+  const newCourse = newCourseResponse?.data;
   
   // Process course data based on source
   let course = isNewCourse ? newCourse : standardCourse;
-  let title = '';
-  let videoUrl = '';
-  
-  // Safely access properties
-  if (isNewCourse && newCourse) {
-    title = (newCourse as CourseWithDetails).title || '';
-  } else if (standardCourse) {
-    title = standardCourse.title || '';
-    videoUrl = standardCourse.video_url || '';
-  }
+  let title = isNewCourse && newCourse ? newCourse.title : standardCourse?.title || '';
+  let videoUrl = isNewCourse && newCourse ? undefined : standardCourse?.video_url;
   
   // Transform syllabus data based on the course type
   let syllabusData: CourseSyllabusSection[] = [];
@@ -154,7 +147,7 @@ const CourseLearn = () => {
       sections: syllabusData.length,
       firstSectionTitle: syllabusData[0]?.title || t('courses:noSections')
     });
-  } else if (standardCourse && !Array.isArray(standardCourse) && standardCourse.syllabus) {
+  } else if (standardCourse?.syllabus) {
     // Handle standard course syllabus
     syllabusData = typeof standardCourse.syllabus === 'string'
       ? JSON.parse(standardCourse.syllabus)
@@ -303,10 +296,10 @@ const CourseLearn = () => {
     return <CourseNotFound />;
   }
 
-  // Get materials based on course type - with type safety
+  // Get materials based on course type
   const materials = isNewCourse && newCourse ? 
-    (newCourse as CourseWithDetails).materials : 
-    (standardCourse && !Array.isArray(standardCourse) ? standardCourse.materials as CourseMaterial[] | null : null);
+    newCourse.materials : 
+    standardCourse?.materials as CourseMaterial[] | null;
 
   return (
     <div className="min-h-screen flex flex-col">

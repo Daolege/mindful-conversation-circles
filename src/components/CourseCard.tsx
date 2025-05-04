@@ -1,4 +1,3 @@
-
 import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -101,7 +100,7 @@ const CourseCard = ({
 
   const gradientColors = getGradientColors();
   
-  // Always use the courses-new URL format for consistency
+  // Use consistent URL format for course navigation - courses-new for all cards
   const courseUrl = `/courses-new/${id}`;
 
   // Translate the language

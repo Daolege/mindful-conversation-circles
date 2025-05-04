@@ -60,12 +60,8 @@ const CourseLearn = () => {
     enabled: !!courseId && !!user?.id,
   });
 
-  // Get the course data safely
-  const courseData = courseResponse && 'data' in courseResponse ? courseResponse.data : null;
-  // Ensure we're handling a single course, not an array
-  const course = Array.isArray(courseData) ? null : courseData;
-  
-  // If we have course data, safely process the syllabus
+  const course = courseResponse?.data;
+  // 修复类型转换问题，正确处理课程大纲数据
   const syllabusData = course?.syllabus 
     ? (typeof course.syllabus === 'string' 
         ? JSON.parse(course.syllabus) 

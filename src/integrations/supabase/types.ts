@@ -429,39 +429,6 @@ export type Database = {
           },
         ]
       }
-      course_section_configs: {
-        Row: {
-          course_id: number
-          created_at: string | null
-          description: string | null
-          icon: string | null
-          id: string
-          section_type: string
-          title: string
-          updated_at: string | null
-        }
-        Insert: {
-          course_id: number
-          created_at?: string | null
-          description?: string | null
-          icon?: string | null
-          id?: string
-          section_type: string
-          title: string
-          updated_at?: string | null
-        }
-        Update: {
-          course_id?: number
-          created_at?: string | null
-          description?: string | null
-          icon?: string | null
-          id?: string
-          section_type?: string
-          title?: string
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
       course_sections: {
         Row: {
           course_id: number | null
@@ -1509,10 +1476,6 @@ export type Database = {
         Args: { p_user_id: string; p_course_id: number; p_purchased_at: string }
         Returns: undefined
       }
-      get_course_section_config: {
-        Args: { p_course_id: number; p_section_type: string }
-        Returns: Json
-      }
       get_dashboard_stats: {
         Args: { p_demo?: boolean }
         Returns: Json
@@ -1555,16 +1518,6 @@ export type Database = {
           p_support_phone: string
           p_enable_registration: boolean
           p_maintenance_mode: boolean
-        }
-        Returns: undefined
-      }
-      upsert_course_section_config: {
-        Args: {
-          p_course_id: number
-          p_section_type: string
-          p_title: string
-          p_description: string
-          p_icon: string
         }
         Returns: undefined
       }

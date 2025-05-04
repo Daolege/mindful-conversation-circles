@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { AlertCircle } from "lucide-react";
@@ -9,7 +10,6 @@ import CourseGrid from "./courses/CourseGrid";
 import LoadingState from "./courses/LoadingState";
 import { transformCourseNewToOld } from "@/lib/utils/courseTransformers";
 import { useTranslations } from "@/hooks/useTranslations";
-import { CourseData } from "@/lib/types/course-new";
 
 const mockCourses: Course[] = [
   {
@@ -246,14 +246,13 @@ const FeaturedCourses = () => {
   useEffect(() => {
     if (dataFetchedRef.current) return;
 
-    const coursesArray = coursesResponse?.data as CourseData[] | undefined;
-    const shouldUseApiData = coursesArray && coursesArray.length > 0;
-    const shouldUseMockData = isError || (coursesArray && coursesArray.length === 0);
+    const shouldUseApiData = coursesResponse?.data && coursesResponse.data.length > 0;
+    const shouldUseMockData = isError || (coursesResponse?.data && coursesResponse.data.length === 0);
     
     if (shouldUseApiData) {
       console.log('Using API data from courses_new:', coursesResponse.data);
       // Transform the courses data to ensure consistent format - convert CourseNew to Course
-      const transformedCourses = (coursesArray as CourseData[]).map((course) => transformCourseNewToOld(course));
+      const transformedCourses = coursesResponse.data.map((course) => transformCourseNewToOld(course));
       // Sort courses by display_order
       const sortedCourses = [...transformedCourses].sort((a, b) => 
         (a.display_order || 999) - (b.display_order || 999)

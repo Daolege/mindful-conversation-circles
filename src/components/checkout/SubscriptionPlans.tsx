@@ -44,7 +44,7 @@ export function SubscriptionPlans({ selectedPlan, onPlanChange, paymentMethod, e
             (selectedPlan === 'quarterly' && p.name.includes('季')) ||
             (selectedPlan === '2years' && p.name.includes('2年')) ||
             (selectedPlan === '3years' && p.name.includes('3年')) ||
-            ((selectedPlan === 'yearly' || selectedPlan === 'annual') && p.name.includes('年') && 
+            (selectedPlan === 'yearly' && p.name.includes('年') && 
               !p.name.includes('2年') && !p.name.includes('3年'))
           ));
       });
@@ -95,8 +95,7 @@ export function SubscriptionPlans({ selectedPlan, onPlanChange, paymentMethod, e
     switch (interval) {
       case 'monthly': return '月付';
       case 'quarterly': return '季付';
-      case 'yearly': 
-      case 'annual': return '年付';
+      case 'yearly': return '年付';
       case '2years': return '2年付';
       case '3years': return '3年付';
       default: return interval;
@@ -108,10 +107,9 @@ export function SubscriptionPlans({ selectedPlan, onPlanChange, paymentMethod, e
   const handlePlanSelect = (plan: SubscriptionPlan) => {
     console.log("SubscriptionPlans - Selecting plan:", plan);
     
-    let interval: SubscriptionPeriod = 'monthly';
-    let planInterval = plan.interval as string || '';
+    let interval = plan.interval;
     
-    if (!planInterval || planInterval.trim() === '') {
+    if (!interval || interval.trim() === '') {
       console.log("计划interval为空，根据名称判断订阅周期");
       if (plan.name.includes("月") || plan.name.includes("月付")) {
         interval = "monthly";
@@ -126,12 +124,10 @@ export function SubscriptionPlans({ selectedPlan, onPlanChange, paymentMethod, e
       } else {
         interval = "monthly";
       }
-    } else if (['monthly', 'quarterly', 'yearly', 'annual', '2years', '3years'].includes(planInterval)) {
-      interval = planInterval as SubscriptionPeriod;
     }
     
     console.log("设置订阅周期为:", interval);
-    onPlanChange(interval, plan.price, plan.name, plan.discount_percentage || 0);
+    onPlanChange(interval as SubscriptionPeriod, plan.price, plan.name, plan.discount_percentage || 0);
   };
 
   return (
@@ -140,19 +136,11 @@ export function SubscriptionPlans({ selectedPlan, onPlanChange, paymentMethod, e
       <RadioGroup 
         value={selectedPlan} 
         onValueChange={(value) => {
-          const planValue = value as SubscriptionPeriod;
-          const selectedPlanObj = sortedPlans.find(p => {
-            const pInterval = p.interval as string || '';
-            return pInterval === planValue || 
-              (pInterval === '' && (
-                (planValue === "quarterly" && p.name.includes("季")) || 
-                (planValue === "monthly" && p.name.includes("月")) || 
-                (planValue === "2years" && p.name.includes("2年")) || 
-                (planValue === "3years" && p.name.includes("3年")) || 
-                ((planValue === "yearly" || planValue === "annual") && p.name.includes("年") && 
-                  !p.name.includes("2年") && !p.name.includes("3年"))
-              ));
-          });
+          const selectedPlanObj = sortedPlans.find(p => p.interval === value || 
+            (p.name.includes(value === "quarterly" ? "季" : 
+             value === "monthly" ? "月" : 
+             value === "2years" ? "2年" : 
+             value === "3years" ? "3年" : "年")));
           
           if (selectedPlanObj) {
             handlePlanSelect(selectedPlanObj);
@@ -161,32 +149,26 @@ export function SubscriptionPlans({ selectedPlan, onPlanChange, paymentMethod, e
         className="space-y-4"
       >
         {sortedPlans.map((plan) => {
-          let planInterval = plan.interval as string || '';
-          let periodValue: SubscriptionPeriod = 'monthly';
-          
+          let planInterval = plan.interval;
           if (!planInterval || planInterval.trim() === '') {
             if (plan.name.includes("月") || plan.name.includes("月付")) {
-              periodValue = "monthly";
+              planInterval = "monthly";
             } else if (plan.name.includes("季") || plan.name.includes("季度") || plan.name.includes("季付")) {
-              periodValue = "quarterly";
+              planInterval = "quarterly";
             } else if (plan.name.includes("2年") || plan.name.includes("2年付")) {
-              periodValue = "2years";
+              planInterval = "2years";
             } else if (plan.name.includes("3年") || plan.name.includes("3年付")) {
-              periodValue = "3years";
+              planInterval = "3years";
             } else if (plan.name.includes("年") || plan.name.includes("年付")) {
-              periodValue = "yearly";
+              planInterval = "yearly";
             } else {
-              periodValue = "monthly";
+              planInterval = "monthly";
             }
-          } else if (['monthly', 'quarterly', 'yearly', 'annual', '2years', '3years'].includes(planInterval)) {
-            periodValue = planInterval as SubscriptionPeriod;
-            // For compatibility, map 'annual' to 'yearly' in the UI
-            if (periodValue === 'annual') periodValue = 'yearly';
           }
           
-          console.log(`计划 ${plan.name} 的interval值为: ${planInterval}, 使用值: ${periodValue}`);
+          console.log(`计划 ${plan.name} 的interval值为: ${planInterval}`);
           
-          const isSelected = selectedPlan === periodValue;
+          const isSelected = selectedPlan === planInterval;
           
           return (
             <div 
@@ -203,7 +185,7 @@ export function SubscriptionPlans({ selectedPlan, onPlanChange, paymentMethod, e
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                   <RadioGroupItem 
-                    value={periodValue} 
+                    value={planInterval} 
                     id={`plan-${plan.id}`} 
                     checked={isSelected}
                     className={`
@@ -225,7 +207,7 @@ export function SubscriptionPlans({ selectedPlan, onPlanChange, paymentMethod, e
                       text-sm
                       ${isSelected ? "text-gray-300" : "text-muted-foreground"}
                     `}>
-                      {plan.description || `${getPlanDisplayName(periodValue)}订阅计划`}
+                      {plan.description || `${getPlanDisplayName(planInterval)}订阅计划`}
                     </p>
                   </Label>
                 </div>
