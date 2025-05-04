@@ -1608,10 +1608,6 @@ export type Database = {
         Args: { p_course_id: number }
         Returns: undefined
       }
-      update_chapter_count_highlight: {
-        Args: { p_course_id: number }
-        Returns: undefined
-      }
       update_course_progress: {
         Args: {
           p_user_id: string
