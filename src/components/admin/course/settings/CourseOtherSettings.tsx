@@ -33,6 +33,7 @@ import {
 } from '@/lib/services/courseSettingsService';
 import { getModuleSettings, ModuleSettings, updateModuleSettings } from '@/lib/services/moduleSettingsService';
 import { Loader2 } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 
 // Define props for the CourseOtherSettings component
 interface CourseOtherSettingsProps {
@@ -75,6 +76,11 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({
   const [isFeatured, setIsFeatured] = useState<boolean>(false);
   const [isPaidContent, setIsPaidContent] = useState<boolean>(true);
   const [courseVisibility, setCourseVisibility] = useState<string>("draft");
+  
+  // 新增单次购买和订阅计划选项状态
+  const [allowsOneTimePurchase, setAllowsOneTimePurchase] = useState<boolean>(true);
+  const [allowsSubscription, setAllowsSubscription] = useState<boolean>(true);
+  const [purchaseOptionsError, setPurchaseOptionsError] = useState<string | null>(null);
   
   // State for module settings
   const [objectivesSettings, setObjectivesSettings] = useState<ModuleSettings>({
@@ -121,6 +127,15 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({
     formatArrayToListItems(targetAudience)
   );
 
+  // Validate purchase options whenever they change
+  useEffect(() => {
+    if (!allowsOneTimePurchase && !allowsSubscription) {
+      setPurchaseOptionsError("请至少选择一种购买方式");
+    } else {
+      setPurchaseOptionsError(null);
+    }
+  }, [allowsOneTimePurchase, allowsSubscription]);
+
   // Load course information and module settings
   useEffect(() => {
     async function loadCourseSettings() {
@@ -129,7 +144,7 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({
       try {
         const { data, error } = await supabase
           .from('courses_new')
-          .select('is_featured, price, status')
+          .select('is_featured, price, status, allows_one_time_purchase, allows_subscription')
           .eq('id', courseId)
           .single();
 
@@ -139,6 +154,10 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({
           setIsFeatured(data.is_featured || false);
           setIsPaidContent((data.price || 0) > 0);
           setCourseVisibility(data.status || "draft");
+          
+          // 设置购买选项
+          setAllowsOneTimePurchase(data.allows_one_time_purchase !== false); // 默认为true
+          setAllowsSubscription(data.allows_subscription !== false); // 默认为true
         }
       } catch (error) {
         console.error("Error loading course settings:", error);
@@ -548,6 +567,61 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({
     }
   };
 
+  // 处理购买选项变更
+  const handleOneTimePurchaseChange = (checked: boolean) => {
+    // 不允许两个选项同时为false
+    if (!checked && !allowsSubscription) {
+      return;
+    }
+    
+    setAllowsOneTimePurchase(checked);
+    if (courseId && onUpdate) {
+      onUpdate('allows_one_time_purchase', checked);
+    }
+    
+    // 保存到数据库
+    saveCoursePurchaseOptions(checked, allowsSubscription);
+  };
+
+  const handleSubscriptionChange = (checked: boolean) => {
+    // 不允许两个选项同时为false
+    if (!checked && !allowsOneTimePurchase) {
+      return;
+    }
+    
+    setAllowsSubscription(checked);
+    if (courseId && onUpdate) {
+      onUpdate('allows_subscription', checked);
+    }
+    
+    // 保存到数据库
+    saveCoursePurchaseOptions(allowsOneTimePurchase, checked);
+  };
+
+  // 保存购买选项到数据库
+  const saveCoursePurchaseOptions = async (oneTime: boolean, subscription: boolean) => {
+    if (!courseId) return;
+    
+    try {
+      const { error } = await supabase
+        .from('courses_new')
+        .update({
+          allows_one_time_purchase: oneTime,
+          allows_subscription: subscription,
+        })
+        .eq('id', courseId);
+      
+      if (error) {
+        console.error("Error updating course purchase options:", error);
+        toast.error("保存课程购买选项失败");
+      }
+    } catch (error) {
+      console.error("Exception saving course purchase options:", error);
+      toast.error("保存课程购买选项失败");
+    }
+  };
+
+  // Handle featured change
   const handleFeaturedChange = async (checked: boolean) => {
     setIsFeatured(checked);
     if (courseId && onUpdate) {
@@ -569,31 +643,63 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({
 
   return (
     <div className="space-y-8 py-4">
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle>课程可见性</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <RadioGroup 
-            value={courseVisibility}
-            onValueChange={handleVisibilityChange}
-            className="flex flex-col space-y-2 mt-2"
-          >
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* 课程可见性 - 左半屏 */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle>课程可见性</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <RadioGroup 
+              value={courseVisibility}
+              onValueChange={handleVisibilityChange}
+              className="flex flex-col space-y-2 mt-2"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="published" id="published" />
+                <Label htmlFor="published">已发布 - 所有用户可见</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="draft" id="draft" />
+                <Label htmlFor="draft">草稿 - 仅管理员可见</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="archived" id="archived" />
+                <Label htmlFor="archived">已归档 - 不显示在课程列表</Label>
+              </div>
+            </RadioGroup>
+          </CardContent>
+        </Card>
+
+        {/* 购买选项 - 右半屏 */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle>购买选项</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-gray-500">请至少选择一种购买方式</p>
             <div className="flex items-center space-x-2">
-              <RadioGroupItem value="published" id="published" />
-              <Label htmlFor="published">已发布 - 所有用户可见</Label>
+              <Checkbox 
+                id="one-time-purchase" 
+                checked={allowsOneTimePurchase}
+                onCheckedChange={handleOneTimePurchaseChange}
+              />
+              <Label htmlFor="one-time-purchase">支持单次购买</Label>
             </div>
             <div className="flex items-center space-x-2">
-              <RadioGroupItem value="draft" id="draft" />
-              <Label htmlFor="draft">草稿 - 仅管理员可见</Label>
+              <Checkbox 
+                id="subscription" 
+                checked={allowsSubscription}
+                onCheckedChange={handleSubscriptionChange}
+              />
+              <Label htmlFor="subscription">支持订阅计划</Label>
             </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="archived" id="archived" />
-              <Label htmlFor="archived">已归档 - 不显示在课程列表</Label>
-            </div>
-          </RadioGroup>
-        </CardContent>
-      </Card>
+            {purchaseOptionsError && (
+              <div className="text-sm text-red-500">{purchaseOptionsError}</div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
       <Card>
         <CardHeader className="pb-2">

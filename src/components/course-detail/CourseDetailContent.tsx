@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { CourseMaterials } from '@/components/course/CourseMaterials';
 import { Course } from '@/lib/types/course';
@@ -6,7 +5,7 @@ import { useTranslations } from "@/hooks/useTranslations";
 import { supabase } from '@/integrations/supabase/client';
 import { Target, BookOpen, Users } from 'lucide-react';
 import IconDisplay from './IconDisplay';
-import { ModuleSettings, ModuleItem, getDefaultSettings } from '@/lib/services/moduleSettingsService';
+import { ModuleSettings, ModuleItem, getDefaultModuleSettings } from '@/lib/services/moduleSettingsService';
 import { typeSafeSupabase } from '@/lib/services/typeSafeSupabase';
 
 interface CourseDetailContentProps {
@@ -84,7 +83,7 @@ export function CourseDetailContent({ course }: CourseDetailContentProps) {
             if (error) throw error;
             
             // Convert JSON data to ModuleSettings type with proper type safety
-            if (data && typeof data === 'object') {
+            if (data && typeof data === 'object' && !Array.isArray(data)) {
               const jsonData = data as Record<string, any>;
               return {
                 title: jsonData.title || getDefaultTitle(moduleType),
@@ -93,10 +92,10 @@ export function CourseDetailContent({ course }: CourseDetailContentProps) {
               };
             }
             
-            return getDefaultSettings(moduleType);
+            return getDefaultModuleSettings(moduleType);
           } catch (error) {
             console.error(`Error fetching ${moduleType} settings:`, error);
-            return getDefaultSettings(moduleType);
+            return getDefaultModuleSettings(moduleType);
           }
         };
         
@@ -134,17 +133,7 @@ export function CourseDetailContent({ course }: CourseDetailContentProps) {
     fetchModuleData();
   }, [course.id]);
   
-  // Helper function to get default settings
-  const getDefaultSettings = (moduleType: string): ModuleSettings => {
-    const defaultSettings: Record<string, ModuleSettings> = {
-      'objectives': { title: '学习目标', icon: 'target', module_type: 'objectives' },
-      'requirements': { title: '学习模式', icon: 'book-open', module_type: 'requirements' },
-      'audiences': { title: '适合人群', icon: 'users', module_type: 'audiences' }
-    };
-    
-    return defaultSettings[moduleType] || defaultSettings['objectives'];
-  };
-  
+  // Helper functions for getting specific default values
   const getDefaultTitle = (moduleType: string): string => {
     const titles: Record<string, string> = {
       'objectives': '学习目标',
@@ -270,7 +259,7 @@ export function CourseDetailContent({ course }: CourseDetailContentProps) {
         </section>
       )}
       
-      {course.materials && course.materials.length > 0 && (
+      {course.materials && course.materials.length > 0 && materialsVisible && (
         <section>
           <h2 className="text-xl font-bold mb-3">{t('courses:courseMaterials')}</h2>
           <CourseMaterials 

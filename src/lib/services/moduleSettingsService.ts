@@ -23,7 +23,7 @@ export interface ModuleSettings {
 /**
  * Get module settings for a specific course and module type
  */
-export const getModuleSettings = async (courseId: number, moduleType: string) => {
+export const getModuleSettings = async (courseId: number, moduleType: string): Promise<ModuleSettings> => {
   try {
     const { data, error } = await supabase.rpc('get_module_settings', {
       p_course_id: courseId,
@@ -32,19 +32,23 @@ export const getModuleSettings = async (courseId: number, moduleType: string) =>
     
     if (error) {
       console.error("Error getting module settings:", error);
-      return null;
+      return getDefaultModuleSettings(moduleType);
     }
     
     // Type safety: Convert data to ModuleSettings or use defaults
-    if (data && typeof data === 'object') {
-      return data as ModuleSettings;
+    if (data && typeof data === 'object' && !Array.isArray(data)) {
+      return {
+        title: (data as any).title || getDefaultTitle(moduleType),
+        icon: (data as any).icon || getDefaultIcon(moduleType),
+        module_type: moduleType
+      };
     }
     
     // Return default settings if no data found or invalid format
-    return getDefaultSettings(moduleType);
+    return getDefaultModuleSettings(moduleType);
   } catch (error) {
     console.error("Exception getting module settings:", error);
-    return null;
+    return getDefaultModuleSettings(moduleType);
   }
 };
 
@@ -79,7 +83,7 @@ export const updateModuleSettings = async (
 };
 
 // Helper function to get default settings
-const getDefaultSettings = (moduleType: string): ModuleSettings => {
+export const getDefaultModuleSettings = (moduleType: string): ModuleSettings => {
   const defaultSettings: Record<string, ModuleSettings> = {
     'objectives': { title: '学习目标', icon: 'target', module_type: 'objectives' },
     'requirements': { title: '学习模式', icon: 'book-open', module_type: 'requirements' },
@@ -87,4 +91,23 @@ const getDefaultSettings = (moduleType: string): ModuleSettings => {
   };
   
   return defaultSettings[moduleType] || defaultSettings['objectives'];
+};
+
+// Helper functions for getting specific default values
+const getDefaultTitle = (moduleType: string): string => {
+  const titles: Record<string, string> = {
+    'objectives': '学习目标',
+    'requirements': '学习模式',
+    'audiences': '适合人群'
+  };
+  return titles[moduleType] || '课程部分';
+};
+
+const getDefaultIcon = (moduleType: string): string => {
+  const icons: Record<string, string> = {
+    'objectives': 'target',
+    'requirements': 'book-open',
+    'audiences': 'users'
+  };
+  return icons[moduleType] || 'check';
 };
