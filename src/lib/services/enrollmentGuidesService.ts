@@ -1,6 +1,5 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 
 export interface EnrollmentGuide {
   id?: string;
@@ -13,9 +12,20 @@ export interface EnrollmentGuide {
   position: number;
 }
 
-/**
- * Fetch all enrollment guides for a course
- */
+interface GuideOrderUpdate {
+  id: string;
+  position: number;
+}
+
+export const PLATFORM_TYPES = [
+  { value: 'wechat', label: '微信群', icon: 'message-circle' },
+  { value: 'whatsapp', label: 'WhatsApp', icon: 'message-circle' },
+  { value: 'qq', label: 'QQ群', icon: 'message-circle' },
+  { value: 'telegram', label: 'Telegram', icon: 'message-circle' },
+  { value: 'discord', label: 'Discord', icon: 'message-circle' },
+  { value: 'custom', label: '自定义', icon: 'link' },
+];
+
 export const getEnrollmentGuides = async (courseId: number) => {
   try {
     const { data, error } = await supabase
@@ -23,186 +33,133 @@ export const getEnrollmentGuides = async (courseId: number) => {
       .select('*')
       .eq('course_id', courseId)
       .order('position');
-
-    if (error) throw error;
     
-    return { data, error: null };
-  } catch (error: any) {
-    console.error('Error fetching enrollment guides:', error);
-    return { data: null, error };
+    return { data, error };
+  } catch (err) {
+    console.error('Error getting enrollment guides:', err);
+    return { data: null, error: err };
   }
 };
 
-/**
- * Add a new enrollment guide
- */
 export const addEnrollmentGuide = async (guide: EnrollmentGuide) => {
   try {
     const { data, error } = await supabase
       .from('course_enrollment_guides')
       .insert([guide])
       .select();
-
-    if (error) throw error;
     
-    return { data: data[0], error: null };
-  } catch (error: any) {
-    console.error('Error adding enrollment guide:', error);
-    return { data: null, error };
+    return { data: data?.[0] as EnrollmentGuide, error };
+  } catch (err) {
+    console.error('Error adding enrollment guide:', err);
+    return { data: null, error: err };
   }
 };
 
-/**
- * Update an existing enrollment guide
- */
-export const updateEnrollmentGuide = async (id: string, updates: Partial<EnrollmentGuide>) => {
+export const updateEnrollmentGuide = async (id: string, guide: Partial<EnrollmentGuide>) => {
   try {
     const { data, error } = await supabase
       .from('course_enrollment_guides')
-      .update(updates)
+      .update(guide)
       .eq('id', id)
       .select();
-
-    if (error) throw error;
     
-    return { data: data[0], error: null };
-  } catch (error: any) {
-    console.error('Error updating enrollment guide:', error);
-    return { data: null, error };
+    return { data: data?.[0] as EnrollmentGuide, error };
+  } catch (err) {
+    console.error('Error updating enrollment guide:', err);
+    return { data: null, error: err };
   }
 };
 
-/**
- * Delete an enrollment guide
- */
 export const deleteEnrollmentGuide = async (id: string) => {
   try {
     const { error } = await supabase
       .from('course_enrollment_guides')
       .delete()
       .eq('id', id);
-
-    if (error) throw error;
     
-    return { success: true, error: null };
-  } catch (error: any) {
-    console.error('Error deleting enrollment guide:', error);
-    return { success: false, error };
+    return { success: !error, error };
+  } catch (err) {
+    console.error('Error deleting enrollment guide:', err);
+    return { success: false, error: err };
   }
 };
 
-/**
- * Update positions of enrollment guides for reordering
- */
-export const updateGuidesOrder = async (guides: { id: string; position: number }[]) => {
+export const updateGuidesOrder = async (guides: GuideOrderUpdate[]) => {
   try {
-    const updates = guides.map(guide => ({
-      id: guide.id,
-      position: guide.position
-    }));
-
-    // Use Promise.all to wait for all updates to complete
-    const promises = updates.map(item => 
+    // Use Promise.all to handle all updates concurrently
+    const promises = guides.map(guide => 
       supabase
         .from('course_enrollment_guides')
-        .update({ position: item.position })
-        .eq('id', item.id)
+        .update({ position: guide.position })
+        .eq('id', guide.id)
     );
-
-    await Promise.all(promises);
     
+    await Promise.all(promises);
     return { success: true, error: null };
-  } catch (error: any) {
-    console.error('Error updating guide order:', error);
-    return { success: false, error };
+  } catch (err) {
+    console.error('Error updating guides order:', err);
+    return { success: false, error: err };
   }
 };
 
-/**
- * Upload an image for a guide
- */
-export const uploadGuideImage = async (courseId: number, file: File): Promise<{ url: string | null; error: any }> => {
+export const uploadGuideImage = async (courseId: number, file: File) => {
   try {
+    // Generate unique filename
     const fileExt = file.name.split('.').pop();
-    const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+    const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
     const filePath = `course_guides/${courseId}/${fileName}`;
-
-    const { error } = await supabase.storage
-      .from('public')
+    
+    // Upload to storage
+    const { error: uploadError } = await supabase.storage
+      .from('uploads')
       .upload(filePath, file);
-
-    if (error) throw error;
-
-    const { data } = supabase.storage.from('public').getPublicUrl(filePath);
+    
+    if (uploadError) {
+      throw uploadError;
+    }
+    
+    // Get URL
+    const { data } = supabase.storage
+      .from('uploads')
+      .getPublicUrl(filePath);
     
     return { url: data.publicUrl, error: null };
-  } catch (error) {
-    console.error('Error uploading image:', error);
-    return { url: null, error };
+  } catch (err) {
+    console.error('Error uploading guide image:', err);
+    return { url: null, error: err };
   }
-};
-
-// Platform-specific validation functions
-export const validateWeChatGuide = (guide: EnrollmentGuide): string | null => {
-  if (!guide.title) return "微信群标题不能为空";
-  if (!guide.image_url) return "请上传二维码图片";
-  return null;
-};
-
-export const validateWhatsAppGuide = (guide: EnrollmentGuide): string | null => {
-  if (!guide.title) return "WhatsApp群标题不能为空";
-  if (!guide.link && !guide.image_url) return "请提供链接或上传二维码图片";
-  return null;
-};
-
-export const validateTelegramGuide = (guide: EnrollmentGuide): string | null => {
-  if (!guide.title) return "Telegram群标题不能为空";
-  if (!guide.link) return "请提供Telegram群链接";
-  return null;
-};
-
-export const validateQQGuide = (guide: EnrollmentGuide): string | null => {
-  if (!guide.title) return "QQ群标题不能为空";
-  if (!guide.content && !guide.image_url) return "请提供QQ群号或上传二维码图片";
-  return null;
-};
-
-export const validateDiscordGuide = (guide: EnrollmentGuide): string | null => {
-  if (!guide.title) return "Discord服务器标题不能为空";
-  if (!guide.link) return "请提供Discord邀请链接";
-  return null;
-};
-
-export const validateCustomGuide = (guide: EnrollmentGuide): string | null => {
-  if (!guide.title) return "标题不能为空";
-  return null;
 };
 
 export const validateGuideByType = (guide: EnrollmentGuide): string | null => {
+  if (!guide.title.trim()) {
+    return '请输入标题';
+  }
+  
   switch (guide.guide_type) {
     case 'wechat':
-      return validateWeChatGuide(guide);
+      if (!guide.image_url) {
+        return '请上传微信群二维码';
+      }
+      break;
+      
     case 'whatsapp':
-      return validateWhatsAppGuide(guide);
+      if (!guide.link && !guide.image_url) {
+        return '请提供WhatsApp群链接或二维码';
+      }
+      break;
+      
     case 'telegram':
-      return validateTelegramGuide(guide);
-    case 'qq':
-      return validateQQGuide(guide);
+      if (!guide.link) {
+        return '请提供Telegram群链接';
+      }
+      break;
+      
     case 'discord':
-      return validateDiscordGuide(guide);
-    case 'custom':
-      return validateCustomGuide(guide);
-    default:
-      return validateCustomGuide(guide);
+      if (!guide.link) {
+        return '请提供Discord邀请链接';
+      }
+      break;
   }
+  
+  return null;
 };
-
-// Get supported platform types
-export const PLATFORM_TYPES = [
-  { value: 'wechat', label: '微信', icon: 'wechat' },
-  { value: 'whatsapp', label: 'WhatsApp', icon: 'whatsapp' },
-  { value: 'qq', label: 'QQ', icon: 'qq' },
-  { value: 'telegram', label: 'Telegram', icon: 'telegram' },
-  { value: 'discord', label: 'Discord', icon: 'discord' },
-  { value: 'custom', label: '其他', icon: 'message-circle' }
-];

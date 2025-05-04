@@ -15,12 +15,18 @@ interface BlockSettingsEditorProps {
   title?: string;
 }
 
+interface SectionConfig {
+  title: string;
+  description: string;
+  icon: string;
+}
+
 export const BlockSettingsEditor: React.FC<BlockSettingsEditorProps> = ({
   courseId,
   sectionType,
   title = '板块设置'
 }) => {
-  const [settings, setSettings] = useState({
+  const [settings, setSettings] = useState<SectionConfig>({
     title: '',
     description: '',
     icon: 'book-open'
@@ -46,10 +52,12 @@ export const BlockSettingsEditor: React.FC<BlockSettingsEditorProps> = ({
       }
       
       if (data) {
+        // Cast the data to the correct shape
+        const configData = data as unknown as SectionConfig;
         setSettings({
-          title: data.title || '',
-          description: data.description || '',
-          icon: data.icon || 'book-open'
+          title: configData.title || '',
+          description: configData.description || '',
+          icon: configData.icon || 'book-open'
         });
       }
     } catch (error) {

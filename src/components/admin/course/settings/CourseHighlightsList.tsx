@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,12 +10,17 @@ import { PlusCircle, Trash2, GripVertical, ChevronUp, ChevronDown } from 'lucide
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 
+// Define the interface based on the actual database schema
 interface CourseHighlight {
-  id?: number;
+  id?: string;  // Change from number to string for UUID
   course_id: number;
-  title: string;
-  description?: string;
+  content: string;  // This is the title content in the database schema
+  icon: string;
+  description?: string; // Not in DB, but used in UI
   position: number;
+  is_visible?: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
 interface CourseHighlightsListProps {
@@ -31,7 +37,8 @@ export const CourseHighlightsList: React.FC<CourseHighlightsListProps> = ({
   const [saving, setSaving] = useState(false);
   const [newHighlight, setNewHighlight] = useState<CourseHighlight>({
     course_id: courseId,
-    title: '',
+    content: '',
+    icon: 'check-circle',
     description: '',
     position: 0
   });
@@ -51,7 +58,19 @@ export const CourseHighlightsList: React.FC<CourseHighlightsListProps> = ({
       
       if (error) throw error;
       
-      setHighlights(data || []);
+      // Map the database fields to our interface
+      const mappedHighlights = data?.map(item => ({
+        id: item.id,
+        course_id: item.course_id,
+        content: item.content,
+        icon: item.icon,
+        position: item.position,
+        is_visible: item.is_visible,
+        created_at: item.created_at,
+        updated_at: item.updated_at
+      })) || [];
+      
+      setHighlights(mappedHighlights);
     } catch (error) {
       console.error('Error loading highlights:', error);
       toast.error('加载课程亮点失败');
@@ -61,7 +80,7 @@ export const CourseHighlightsList: React.FC<CourseHighlightsListProps> = ({
   };
 
   const handleAddHighlight = async () => {
-    if (!newHighlight.title.trim()) {
+    if (!newHighlight.content.trim()) {
       toast.error('请输入亮点标题');
       return;
     }
@@ -72,23 +91,28 @@ export const CourseHighlightsList: React.FC<CourseHighlightsListProps> = ({
       const { data, error } = await supabase
         .from('course_highlights')
         .insert([{
-          ...newHighlight,
-          position
+          course_id: newHighlight.course_id,
+          content: newHighlight.content,
+          icon: newHighlight.icon,
+          position: position,
+          is_visible: true
         }])
         .select();
       
       if (error) throw error;
       
-      setHighlights([...highlights, data[0]]);
-      setNewHighlight({
-        course_id: courseId,
-        title: '',
-        description: '',
-        position: highlights.length + 1
-      });
-      
-      if (onSaveSuccess) onSaveSuccess();
-      toast.success('成功添加课程亮点');
+      if (data && data.length > 0) {
+        setHighlights([...highlights, data[0] as CourseHighlight]);
+        setNewHighlight({
+          course_id: courseId,
+          content: '',
+          icon: 'check-circle',
+          position: highlights.length + 1
+        });
+        
+        if (onSaveSuccess) onSaveSuccess();
+        toast.success('成功添加课程亮点');
+      }
     } catch (error) {
       console.error('Error adding highlight:', error);
       toast.error('添加课程亮点失败');
@@ -97,7 +121,7 @@ export const CourseHighlightsList: React.FC<CourseHighlightsListProps> = ({
     }
   };
 
-  const handleDeleteHighlight = async (id: number) => {
+  const handleDeleteHighlight = async (id: string) => {
     if (!window.confirm('确认要删除此亮点吗？')) {
       return;
     }
@@ -162,17 +186,12 @@ export const CourseHighlightsList: React.FC<CourseHighlightsListProps> = ({
 
   const updateHighlightsOrder = async (highlights: CourseHighlight[]) => {
     try {
-      const updates = highlights.map(highlight => ({
-        id: highlight.id,
-        position: highlight.position
-      }));
-      
       // Use Promise.all to wait for all updates to complete
-      const promises = updates.map(item => 
+      const promises = highlights.map(highlight => 
         supabase
           .from('course_highlights')
-          .update({ position: item.position })
-          .eq('id', item.id)
+          .update({ position: highlight.position })
+          .eq('id', highlight.id as string)  // Convert to string explicitly
       );
       
       await Promise.all(promises);
@@ -219,7 +238,7 @@ export const CourseHighlightsList: React.FC<CourseHighlightsListProps> = ({
                       </div>
                       
                       <div className="flex-1">
-                        <h3 className="font-medium">{highlight.title}</h3>
+                        <h3 className="font-medium">{highlight.content}</h3>
                         {highlight.description && (
                           <p className="text-sm text-slate-600 mt-1">{highlight.description}</p>
                         )}
@@ -252,8 +271,8 @@ export const CourseHighlightsList: React.FC<CourseHighlightsListProps> = ({
                     <Label htmlFor="new-title">亮点标题 *</Label>
                     <Input
                       id="new-title"
-                      value={newHighlight.title}
-                      onChange={(e) => setNewHighlight({ ...newHighlight, title: e.target.value })}
+                      value={newHighlight.content}
+                      onChange={(e) => setNewHighlight({ ...newHighlight, content: e.target.value })}
                       placeholder="输入亮点标题"
                     />
                   </div>
@@ -271,7 +290,7 @@ export const CourseHighlightsList: React.FC<CourseHighlightsListProps> = ({
                   
                   <Button
                     onClick={handleAddHighlight}
-                    disabled={saving || !newHighlight.title.trim()}
+                    disabled={saving || !newHighlight.content.trim()}
                     className="w-full"
                   >
                     <PlusCircle className="h-4 w-4 mr-2" />
