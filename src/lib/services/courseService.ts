@@ -152,9 +152,19 @@ export const updateCourseOrder = async (courseIds: number[]) => {
   }
 };
 
-// Save course (needed by CourseEditorContext.tsx)
-// Fix the type instantiation issue by simplifying the parameter type
-export const saveCourse = async (courseData: { id?: number; title: string; [key: string]: any }) => {
+// Save course 
+// Fix the type instantiation issue by explicitly defining the parameter type
+export const saveCourse = async (courseData: { 
+  id?: number; 
+  title: string;
+  price?: number;
+  original_price?: number;
+  description?: string;
+  language?: string;
+  display_order?: number;
+  is_featured?: boolean;
+  [key: string]: any;
+}) => {
   try {
     const { id, ...courseFields } = courseData;
     let result;

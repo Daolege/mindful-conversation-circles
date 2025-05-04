@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { CourseWithDetails } from '@/lib/types/course-new';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -59,34 +58,47 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
     0
   ) || 0;
 
+  // Debug logs to check what data we have
+  console.log('[CourseDetailContentNew] Course data:', course);
+  console.log('[CourseDetailContentNew] Materials:', course.materials);
+  console.log('[CourseDetailContentNew] Learning objectives:', course.learning_objectives);
+  console.log('[CourseDetailContentNew] Requirements:', course.requirements);
+  console.log('[CourseDetailContentNew] Target audience:', course.target_audience);
+
   // Generate sample materials if none exist
   const courseMaterials = course.materials?.length ? course.materials : [
     { id: "mat1", course_id: course.id, name: "课程讲义.PDF", url: "#", position: 1, is_visible: true, created_at: new Date().toISOString() },
     { id: "mat2", course_id: course.id, name: "练习题.PDF", url: "#", position: 2, is_visible: true, created_at: new Date().toISOString() }
   ];
 
-  // Default learning objectives if none exist
-  const learningObjectives = course.learning_objectives?.length ? course.learning_objectives : [
-    "人工智能基础知识的掌握",
-    "机器学习算法的理解",
-    "神经网络基础",
-    "AI应用场景理解"
-  ];
+  // Use database learning objectives if they exist, otherwise use defaults
+  const learningObjectives = (course.learning_objectives && course.learning_objectives.length > 0) 
+    ? course.learning_objectives 
+    : [
+      "人工智能基础知识的掌握",
+      "机器学习算法的理解",
+      "神经网络基础",
+      "AI应用场景理解"
+    ];
 
-  // Default requirements if none exist
-  const requirements = course.requirements?.length ? course.requirements : [
-    "基本编程技能(推荐Python)",
-    "具备初步的数学知识(统计学基础)",
-    "有兴趣了解AI发展前沿"
-  ];
+  // Use database requirements if they exist, otherwise use defaults
+  const requirements = (course.requirements && course.requirements.length > 0)
+    ? course.requirements 
+    : [
+      "基本编程技能(推荐Python)",
+      "具备初步的数学知识(统计学基础)",
+      "有兴趣了解AI发展前沿"
+    ];
 
-  // Default target audience if none exist
-  const targetAudience = course.target_audience?.length ? course.target_audience : [
-    "对人工智能感兴趣的初学者",
-    "希望提升个人技能的专业人士",
-    "想在AI领域发展的学习者",
-    "对技术有兴趣的爱好者"
-  ];
+  // Use database target audience if they exist, otherwise use defaults
+  const targetAudience = (course.target_audience && course.target_audience.length > 0)
+    ? course.target_audience
+    : [
+      "对人工智能感兴趣的初学者",
+      "希望提升个人技能的专业人士",
+      "想在AI领域发展的学习者",
+      "对技术有兴趣的爱好者"
+    ];
 
   return (
     <div className="space-y-8">

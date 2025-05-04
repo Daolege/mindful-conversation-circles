@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { getCourseNewById } from '@/lib/services/courseNewService';
 import { saveCourse } from '@/lib/services/courseService';
+import { supabase } from '@/integrations/supabase/client';
 
 // Define CourseMaterial type to fix TypeScript errors
 interface CourseMaterial {
@@ -345,22 +346,21 @@ export const CourseEditorProvider: React.FC<{
         // Save was successful
         toast.success('课程保存成功');
         
-        // If we have other collections to save (requirements, objectives, etc.), we would save them here
-        // For example, save learning objectives
+        // Get the courseId (either existing or newly created)
+        const courseId = numericCourseId || result.data.id;
+        
+        // If we have learning objectives to save
         if (formData.whatyouwilllearn && formData.whatyouwilllearn.length > 0) {
-          const courseId = numericCourseId || result.data.id;
           await saveCourseCollectionItems('course_learning_objectives', courseId, formData.whatyouwilllearn);
         }
         
         // Save requirements
         if (formData.requirements && formData.requirements.length > 0) {
-          const courseId = numericCourseId || result.data.id;
           await saveCourseCollectionItems('course_requirements', courseId, formData.requirements);
         }
         
         // Save target audience
         if (formData.target_audience && formData.target_audience.length > 0) {
-          const courseId = numericCourseId || result.data.id;
           await saveCourseCollectionItems('course_audiences', courseId, formData.target_audience);
         }
         
@@ -378,12 +378,19 @@ export const CourseEditorProvider: React.FC<{
   // Helper function to save collection items (learning objectives, requirements, or target audience)
   const saveCourseCollectionItems = async (tableName: string, courseId: number, items: string[]) => {
     try {
-      // First, delete existing items for this course
-      await supabase
+      console.log(`[CourseEditorContext] Saving ${tableName} for course ${courseId}, ${items.length} items`);
+      
+      // First, delete existing items for this course to prevent duplicates
+      const { error: deleteError } = await supabase
         .from(tableName)
         .delete()
         .eq('course_id', courseId);
         
+      if (deleteError) {
+        console.error(`[CourseEditorContext] Error deleting existing ${tableName}:`, deleteError);
+        throw deleteError;
+      }
+      
       // Then insert all items with positions
       if (items.length > 0) {
         const itemsToInsert = items.map((content, index) => ({
@@ -393,16 +400,20 @@ export const CourseEditorProvider: React.FC<{
           is_visible: true
         }));
         
-        const { error } = await supabase
+        const { error: insertError } = await supabase
           .from(tableName)
           .insert(itemsToInsert);
           
-        if (error) {
-          console.error(`Error saving ${tableName}:`, error);
+        if (insertError) {
+          console.error(`[CourseEditorContext] Error saving ${tableName}:`, insertError);
+          throw insertError;
+        } else {
+          console.log(`[CourseEditorContext] Successfully saved ${items.length} items to ${tableName}`);
         }
       }
     } catch (err) {
-      console.error(`Error in saveCourseCollectionItems for ${tableName}:`, err);
+      console.error(`[CourseEditorContext] Error in saveCourseCollectionItems for ${tableName}:`, err);
+      throw err;
     }
   };
   
