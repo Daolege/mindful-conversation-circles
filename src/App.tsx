@@ -11,7 +11,7 @@ import Checkout from './pages/Checkout';
 import { Toaster } from "sonner";
 import PaymentSuccess from './pages/PaymentSuccess';
 import PaymentFailed from './pages/PaymentFailed';
-import { AuthProvider } from './contexts/AuthProvider';
+import AuthProvider from './contexts/AuthProvider';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import Admin from './pages/Admin';
 import Dashboard from './pages/Dashboard';

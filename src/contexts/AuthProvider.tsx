@@ -402,4 +402,5 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
+export default AuthProvider;
 export { AuthContext };

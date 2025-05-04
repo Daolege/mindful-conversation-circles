@@ -128,3 +128,5 @@ export async function upsertIntoTable<T = any>(
   return query;
 }
 
+// Export all functions as a single object to avoid duplicate exports
+export const typeSafeSupabase = { selectFromTable, insertIntoTable, updateTable, deleteFromTable, callRpcFunction, upsertIntoTable };

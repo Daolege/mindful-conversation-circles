@@ -89,7 +89,8 @@ export interface ListItem {
   id: string;
   text: string;
   content?: string;
-  position?: number;
+  position: number;
+  icon?: string;
   is_visible?: boolean;
 }
 

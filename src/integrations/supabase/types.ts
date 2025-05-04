@@ -88,6 +88,7 @@ export type Database = {
         Row: {
           content: string
           course_id: number | null
+          icon: string | null
           id: string
           is_visible: boolean | null
           position: number
@@ -95,6 +96,7 @@ export type Database = {
         Insert: {
           content: string
           course_id?: number | null
+          icon?: string | null
           id?: string
           is_visible?: boolean | null
           position?: number
@@ -102,6 +104,7 @@ export type Database = {
         Update: {
           content?: string
           course_id?: number | null
+          icon?: string | null
           id?: string
           is_visible?: boolean | null
           position?: number
@@ -243,6 +246,7 @@ export type Database = {
         Row: {
           content: string
           course_id: number | null
+          icon: string | null
           id: string
           is_visible: boolean | null
           position: number
@@ -250,6 +254,7 @@ export type Database = {
         Insert: {
           content: string
           course_id?: number | null
+          icon?: string | null
           id?: string
           is_visible?: boolean | null
           position?: number
@@ -257,6 +262,7 @@ export type Database = {
         Update: {
           content?: string
           course_id?: number | null
+          icon?: string | null
           id?: string
           is_visible?: boolean | null
           position?: number
@@ -401,6 +407,7 @@ export type Database = {
         Row: {
           content: string
           course_id: number | null
+          icon: string | null
           id: string
           is_visible: boolean | null
           position: number
@@ -408,6 +415,7 @@ export type Database = {
         Insert: {
           content: string
           course_id?: number | null
+          icon?: string | null
           id?: string
           is_visible?: boolean | null
           position?: number
@@ -415,6 +423,7 @@ export type Database = {
         Update: {
           content?: string
           course_id?: number | null
+          icon?: string | null
           id?: string
           is_visible?: boolean | null
           position?: number
@@ -428,6 +437,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      course_section_configs: {
+        Row: {
+          course_id: number
+          created_at: string | null
+          description: string | null
+          icon: string | null
+          id: string
+          section_type: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          course_id: number
+          created_at?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          section_type: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          course_id?: number
+          created_at?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          section_type?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       course_sections: {
         Row: {
@@ -688,6 +730,30 @@ export type Database = {
         }
         Relationships: []
       }
+      default_module_items: {
+        Row: {
+          content: string
+          icon: string
+          id: string
+          module_type: string
+          position: number
+        }
+        Insert: {
+          content: string
+          icon: string
+          id?: string
+          module_type: string
+          position: number
+        }
+        Update: {
+          content?: string
+          icon?: string
+          id?: string
+          module_type?: string
+          position?: number
+        }
+        Relationships: []
+      }
       exchange_rates: {
         Row: {
           created_at: string | null
@@ -924,6 +990,36 @@ export type Database = {
           id?: string
           name?: string
           status?: string
+        }
+        Relationships: []
+      }
+      module_settings: {
+        Row: {
+          course_id: number
+          created_at: string | null
+          icon: string | null
+          id: string
+          module_type: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          course_id: number
+          created_at?: string | null
+          icon?: string | null
+          id?: string
+          module_type: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          course_id?: number
+          created_at?: string | null
+          icon?: string | null
+          id?: string
+          module_type?: string
+          title?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -1457,6 +1553,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_default_module_items: {
+        Args: {
+          p_course_id: number
+          p_module_type: string
+          p_table_name: string
+        }
+        Returns: undefined
+      }
       admin_add_course_item: {
         Args: {
           p_table_name: string
@@ -1476,12 +1580,20 @@ export type Database = {
         Args: { p_user_id: string; p_course_id: number; p_purchased_at: string }
         Returns: undefined
       }
+      get_course_section_config: {
+        Args: { p_course_id: number; p_section_type: string }
+        Returns: Json
+      }
       get_dashboard_stats: {
         Args: { p_demo?: boolean }
         Returns: Json
       }
       get_financial_stats: {
         Args: { p_demo?: boolean }
+        Returns: Json
+      }
+      get_module_settings: {
+        Args: { p_course_id: number; p_module_type: string }
         Returns: Json
       }
       get_payment_method_stats: {
@@ -1518,6 +1630,16 @@ export type Database = {
           p_support_phone: string
           p_enable_registration: boolean
           p_maintenance_mode: boolean
+        }
+        Returns: undefined
+      }
+      upsert_course_section_config: {
+        Args: {
+          p_course_id: number
+          p_section_type: string
+          p_title: string
+          p_description: string
+          p_icon: string
         }
         Returns: undefined
       }
