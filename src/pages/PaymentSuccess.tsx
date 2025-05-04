@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -9,11 +9,15 @@ import { Separator } from "@/components/ui/separator";
 import { CheckCircle, Download } from "lucide-react";
 import { toast } from 'sonner';
 import { useTranslations } from "@/hooks/useTranslations";
+import { EnrollmentGuide, getEnrollmentGuides } from '@/lib/services/enrollmentGuideService';
+import { EnrollmentGuideDisplay } from '@/components/enrollment/EnrollmentGuideDisplay';
 
 const PaymentSuccess = () => {
   const location = useLocation();
   const { state } = location;
   const { t } = useTranslations();
+  const [guides, setGuides] = useState<EnrollmentGuide[]>([]);
+  const [loadingGuides, setLoadingGuides] = useState(false);
   
   const orderDetails = state?.orderDetails || {
     orderId: 'ORD-1703157',
@@ -32,6 +36,28 @@ const PaymentSuccess = () => {
   
   // Determine the correct learning route
   const learningUrl = `/learn/${courseId}${isNewCourse ? '?source=new' : ''}`;
+
+  // Load enrollment guides
+  useEffect(() => {
+    const fetchGuides = async () => {
+      if (!courseId) return;
+      
+      setLoadingGuides(true);
+      try {
+        const courseIdNum = parseInt(courseId);
+        if (!isNaN(courseIdNum)) {
+          const guidesData = await getEnrollmentGuides(courseIdNum);
+          setGuides(guidesData);
+        }
+      } catch (error) {
+        console.error('Error fetching enrollment guides:', error);
+      } finally {
+        setLoadingGuides(false);
+      }
+    };
+    
+    fetchGuides();
+  }, [courseId]);
 
   // Log the course ID and learning URL for debugging
   useEffect(() => {
@@ -59,7 +85,15 @@ const PaymentSuccess = () => {
               </div>
               <h1 className="text-2xl font-bold mb-2">{t('checkout:paymentSuccess')}</h1>
               <p className="text-gray-500">{t('checkout:paymentCompleted')}</p>
-              <Button className="mt-6 w-full bg-[#0f172a] hover:bg-[#1e293b] text-white h-12 text-base font-medium" asChild>
+            </div>
+
+            {/* Enrollment Guide Display */}
+            {guides.length > 0 && (
+              <EnrollmentGuideDisplay guides={guides} />
+            )}
+
+            <div className="text-center mb-8">
+              <Button className="w-full bg-[#0f172a] hover:bg-[#1e293b] text-white h-12 text-base font-medium" asChild>
                 <Link to={learningUrl}>{t('courses:startLearning')} ›</Link>
               </Button>
               <p className="mt-2 text-sm text-gray-500">{t('courses:enrolledCoursesInDashboard')}</p>
