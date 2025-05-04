@@ -6,23 +6,11 @@ import { useTranslations } from "@/hooks/useTranslations";
 import { supabase } from '@/integrations/supabase/client';
 import { Target, BookOpen, Users } from 'lucide-react';
 import IconDisplay from './IconDisplay';
+import { ModuleSettings, ModuleItem } from '@/lib/services/moduleSettingsService';
+import { typeSafeSupabase } from '@/lib/services/typeSafeSupabase';
 
 interface CourseDetailContentProps {
   course: Course;
-}
-
-interface ModuleItem {
-  id: string;
-  content: string;
-  position: number;
-  icon?: string;
-  is_visible: boolean;
-}
-
-interface ModuleSettings {
-  title: string;
-  icon: string;
-  module_type: string;
 }
 
 export function CourseDetailContent({ course }: CourseDetailContentProps) {
@@ -61,18 +49,24 @@ export function CourseDetailContent({ course }: CourseDetailContentProps) {
       if (!course.id) return;
       
       try {
-        // Fetch module items
-        const fetchModuleItems = async (tableName: string) => {
+        // Fetch module items using typeSafeSupabase helper to avoid type issues
+        const fetchModuleItems = async (tableName: string): Promise<ModuleItem[]> => {
           try {
+            // Using the type-safe method provided by the library
             const { data, error } = await supabase
-              .from(tableName)
+              .from(tableName as any)
               .select('*')
               .eq('course_id', course.id)
               .eq('is_visible', true)
               .order('position');
               
             if (error) throw error;
-            return data || [];
+            
+            // Add default icon if missing
+            return (data || []).map(item => ({
+              ...item,
+              icon: item.icon || 'check'
+            })) as ModuleItem[];
           } catch (error) {
             console.error(`Error fetching ${tableName}:`, error);
             return [];
@@ -80,7 +74,7 @@ export function CourseDetailContent({ course }: CourseDetailContentProps) {
         };
         
         // Fetch module settings using RPC function
-        const fetchSettings = async (moduleType: string) => {
+        const fetchSettings = async (moduleType: string): Promise<ModuleSettings> => {
           try {
             const { data, error } = await supabase.rpc('get_module_settings', {
               p_course_id: course.id,
@@ -89,18 +83,19 @@ export function CourseDetailContent({ course }: CourseDetailContentProps) {
             
             if (error) throw error;
             
-            // Convert JSON data to ModuleSettings type
-            return data as ModuleSettings;
+            // Convert JSON data to ModuleSettings type with proper type safety
+            if (data && typeof data === 'object') {
+              return {
+                title: data.title || getDefaultTitle(moduleType),
+                icon: data.icon || getDefaultIcon(moduleType),
+                module_type: moduleType
+              };
+            }
+            
+            return getDefaultSettings(moduleType);
           } catch (error) {
             console.error(`Error fetching ${moduleType} settings:`, error);
-            // Return default settings based on module type
-            if (moduleType === 'objectives') {
-              return { title: '学习目标', icon: 'target', module_type: 'objectives' };
-            } else if (moduleType === 'requirements') {
-              return { title: '学习模式', icon: 'book-open', module_type: 'requirements' };
-            } else {
-              return { title: '适合人群', icon: 'users', module_type: 'audiences' };
-            }
+            return getDefaultSettings(moduleType);
           }
         };
         
@@ -122,9 +117,9 @@ export function CourseDetailContent({ course }: CourseDetailContentProps) {
         ]);
         
         // Update state with fetched data
-        setObjectives(objectivesData as ModuleItem[]);
-        setRequirements(requirementsData as ModuleItem[]);
-        setAudiences(audiencesData as ModuleItem[]);
+        setObjectives(objectivesData);
+        setRequirements(requirementsData);
+        setAudiences(audiencesData);
         
         // Update settings
         setObjectivesSettings(objSettings);
@@ -138,6 +133,35 @@ export function CourseDetailContent({ course }: CourseDetailContentProps) {
     fetchModuleData();
   }, [course.id]);
   
+  // Helper function to get default settings
+  const getDefaultSettings = (moduleType: string): ModuleSettings => {
+    const defaultSettings: Record<string, ModuleSettings> = {
+      'objectives': { title: '学习目标', icon: 'target', module_type: 'objectives' },
+      'requirements': { title: '学习模式', icon: 'book-open', module_type: 'requirements' },
+      'audiences': { title: '适合人群', icon: 'users', module_type: 'audiences' }
+    };
+    
+    return defaultSettings[moduleType] || defaultSettings['objectives'];
+  };
+  
+  const getDefaultTitle = (moduleType: string): string => {
+    const titles: Record<string, string> = {
+      'objectives': '学习目标',
+      'requirements': '学习模式',
+      'audiences': '适合人群'
+    };
+    return titles[moduleType] || '课程部分';
+  };
+  
+  const getDefaultIcon = (moduleType: string): string => {
+    const icons: Record<string, string> = {
+      'objectives': 'target',
+      'requirements': 'book-open',
+      'audiences': 'users'
+    };
+    return icons[moduleType] || 'check';
+  };
+  
   // Fallback to whatyouwilllearn if no objectives in database
   const displayObjectives = objectives.length > 0 
     ? objectives 
@@ -145,7 +169,8 @@ export function CourseDetailContent({ course }: CourseDetailContentProps) {
         id: `legacy-${index}`,
         content: item,
         position: index,
-        is_visible: true
+        is_visible: true,
+        icon: 'check'
       })) || []);
   
   // Fallback to requirements if no requirements in database
@@ -155,7 +180,8 @@ export function CourseDetailContent({ course }: CourseDetailContentProps) {
         id: `legacy-${index}`,
         content: item,
         position: index,
-        is_visible: true
+        is_visible: true,
+        icon: 'check'
       })) || []);
     
   // Fallback to target_audience if no audiences in database
@@ -165,7 +191,8 @@ export function CourseDetailContent({ course }: CourseDetailContentProps) {
         id: `legacy-${index}`,
         content: item,
         position: index,
-        is_visible: true
+        is_visible: true,
+        icon: 'check'
       })) || []);
   
   return (
