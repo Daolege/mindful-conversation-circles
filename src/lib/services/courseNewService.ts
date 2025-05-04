@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { CourseNew, CourseSection, CourseMaterial } from '@/lib/types/course-new';
 
@@ -110,6 +109,13 @@ export const getCourseNewById = async (courseId: number) => {
       return { data: null, error: courseError };
     }
     
+    if (!course) {
+      console.error('[courseNewService] 找不到课程:', courseId);
+      return { data: null, error: new Error('找不到课程') };
+    }
+    
+    console.log('[courseNewService] 成功获取课程基本信息:', course.title);
+    
     // 获取课程章节
     const { data: sections, error: sectionError } = await supabase
       .from('course_sections')
@@ -136,44 +142,58 @@ export const getCourseNewById = async (courseId: number) => {
     // 获取学习目标 - 确保我们正确从 course_learning_objectives 表获取数据
     const { data: learningObjectives, error: objectivesError } = await supabase
       .from('course_learning_objectives')
-      .select('content, position, is_visible')
+      .select('*')
       .eq('course_id', courseId)
+      .eq('is_visible', true)
       .order('position', { ascending: true });
       
-    console.log('[courseNewService] 学习目标数据:', learningObjectives, objectivesError);
-    
-    if (objectivesError) {
-      console.error('[courseNewService] 获取学习目标出错:', objectivesError);
-    }
+    console.log('[courseNewService] 学习目标数据:', 
+      learningObjectives ? `找到${learningObjectives.length}条记录` : '无数据', 
+      objectivesError ? `错误:${objectivesError.message}` : '');
     
     // 获取课程要求 - 从 course_requirements 表获取
     const { data: requirements, error: requirementsError } = await supabase
       .from('course_requirements')
-      .select('content, position, is_visible')
+      .select('*')
       .eq('course_id', courseId)
+      .eq('is_visible', true)
       .order('position', { ascending: true });
       
-    console.log('[courseNewService] 课程要求数据:', requirements, requirementsError);
-    
-    if (requirementsError) {
-      console.error('[courseNewService] 获取课程要求出错:', requirementsError);
-    }
+    console.log('[courseNewService] 课程要求数据:', 
+      requirements ? `找到${requirements.length}条记录` : '无数据', 
+      requirementsError ? `错误:${requirementsError.message}` : '');
     
     // 获取适合人群 - 从 course_audiences 表获取
     const { data: targetAudience, error: audienceError } = await supabase
       .from('course_audiences')
-      .select('content, position, is_visible')
+      .select('*')
       .eq('course_id', courseId)
+      .eq('is_visible', true)
       .order('position', { ascending: true });
       
-    console.log('[courseNewService] 适合人群数据:', targetAudience, audienceError);
+    console.log('[courseNewService] 适合人群数据:', 
+      targetAudience ? `找到${targetAudience.length}条记录` : '无数据', 
+      audienceError ? `错误:${audienceError.message}` : '');
     
-    if (audienceError) {
-      console.error('[courseNewService] 获取适合人群出错:', audienceError);
-    }
+    // 转换数据为所需的格式
+    const processData = (items: any[] | null): string[] => {
+      if (!items || items.length === 0) return [];
+      return items.map(item => item.content).filter(Boolean);
+    };
     
+    const learningObjectivesArray = processData(learningObjectives);
+    const requirementsArray = processData(requirements);
+    const targetAudienceArray = processData(targetAudience);
+    
+    console.log('[courseNewService] 处理后的数据:', {
+      learning_objectives_count: learningObjectivesArray.length,
+      requirements_count: requirementsArray.length,
+      target_audience_count: targetAudienceArray.length
+    });
+    
+    // 获取章节下的课时
+    let sectionsWithLectures = sections || [];
     if (sections && sections.length > 0) {
-      // 获取所有章节下的课时
       const { data: lectures, error: lectureError } = await supabase
         .from('course_lectures')
         .select('*')
@@ -185,7 +205,7 @@ export const getCourseNewById = async (courseId: number) => {
       }
       
       // 将课时添加到对应章节
-      const sectionsWithLectures = sections.map(section => {
+      sectionsWithLectures = sections.map(section => {
         const sectionLectures = lectures ? lectures.filter(l => l.section_id === section.id) : [];
         return {
           ...section,
@@ -194,83 +214,20 @@ export const getCourseNewById = async (courseId: number) => {
       });
       
       console.log(`[courseNewService] 找到 ${sections.length} 个章节，共 ${lectures?.length || 0} 个课时`);
-      
-      // 转换学习目标、要求和适合人群为字符串数组，只包含有效数据
-      const learningObjectivesArray = learningObjectives && learningObjectives.length > 0
-        ? learningObjectives
-            .filter(item => item && item.content && item.is_visible !== false)
-            .map(item => item.content)
-        : [];
-      
-      const requirementsArray = requirements && requirements.length > 0
-        ? requirements
-            .filter(item => item && item.content && item.is_visible !== false)
-            .map(item => item.content)
-        : [];
-      
-      const targetAudienceArray = targetAudience && targetAudience.length > 0
-        ? targetAudience
-            .filter(item => item && item.content && item.is_visible !== false)
-            .map(item => item.content)
-        : [];
-      
-      console.log('[courseNewService] 处理后的数据:', {
-        learning_objectives: learningObjectivesArray,
-        requirements: requirementsArray,
-        target_audience: targetAudienceArray
-      });
-      
-      return { 
-        data: { 
-          ...course, 
-          sections: sectionsWithLectures,
-          materials: materials || [],
-          learning_objectives: learningObjectivesArray,
-          requirements: requirementsArray,
-          target_audience: targetAudienceArray
-        }, 
-        error: null 
-      };
-    } else {
-      console.log('[courseNewService] 未找到章节');
-      
-      // 转换学习目标、要求和适合人群为字符串数组，只包含有效数据
-      const learningObjectivesArray = learningObjectives && learningObjectives.length > 0
-        ? learningObjectives
-            .filter(item => item && item.content && item.is_visible !== false)
-            .map(item => item.content)
-        : [];
-      
-      const requirementsArray = requirements && requirements.length > 0
-        ? requirements
-            .filter(item => item && item.content && item.is_visible !== false)
-            .map(item => item.content)
-        : [];
-      
-      const targetAudienceArray = targetAudience && targetAudience.length > 0
-        ? targetAudience
-            .filter(item => item && item.content && item.is_visible !== false)
-            .map(item => item.content)
-        : [];
-      
-      console.log('[courseNewService] 处理后的数据（无章节）:', {
-        learning_objectives: learningObjectivesArray,
-        requirements: requirementsArray,
-        target_audience: targetAudienceArray
-      });
-      
-      return { 
-        data: { 
-          ...course, 
-          sections: [],
-          materials: materials || [],
-          learning_objectives: learningObjectivesArray,
-          requirements: requirementsArray,
-          target_audience: targetAudienceArray
-        }, 
-        error: null 
-      };
     }
+    
+    // 返回完整的课程数据
+    return { 
+      data: { 
+        ...course, 
+        sections: sectionsWithLectures,
+        materials: materials || [],
+        learning_objectives: learningObjectivesArray,
+        requirements: requirementsArray,
+        target_audience: targetAudienceArray
+      }, 
+      error: null 
+    };
   } catch (err: any) {
     console.error('[courseNewService] getCourseNewById异常:', err);
     return { data: null, error: err };
@@ -420,8 +377,8 @@ export const batchUpdateCourseStatus = async (courseIds: number[], status: 'publ
 // 保存完整课程（包括基本信息、章节和课时）
 export const saveFullCourse = async (
   courseId: number, 
-  courseData: Partial<CourseNew>, 
-  sections: CourseSection[] = []
+  courseData: any, 
+  sections: any[] = []
 ) => {
   try {
     console.log(`[courseNewService] 保存完整课程 ${courseId}`);

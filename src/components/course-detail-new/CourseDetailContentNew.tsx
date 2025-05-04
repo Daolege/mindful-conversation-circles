@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { CourseWithDetails } from '@/lib/types/course-new';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -31,24 +32,6 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
   });
   
   const [isOutlineLoading, setIsOutlineLoading] = useState(true);
-  const [defaultObjectives, setDefaultObjectives] = useState<string[]>([]);
-  const [defaultRequirements, setDefaultRequirements] = useState<string[]>([]);
-  const [defaultTargetAudience, setDefaultTargetAudience] = useState<string[]>([]);
-  
-  useEffect(() => {
-    // Load default content
-    const loadDefaults = () => {
-      const objectives = getDefaultLearningObjectives().map(item => item.text);
-      const requirements = getDefaultLearningModes().map(item => item.text);
-      const audience = getDefaultTargetAudience().map(item => item.text);
-      
-      setDefaultObjectives(objectives);
-      setDefaultRequirements(requirements);
-      setDefaultTargetAudience(audience);
-    };
-    
-    loadDefaults();
-  }, []);
   
   useEffect(() => {
     // Simulate outline loading with a short delay to show loading animation
@@ -84,48 +67,38 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
   console.log('[CourseDetailContentNew] Requirements:', course.requirements);
   console.log('[CourseDetailContentNew] Target audience:', course.target_audience);
 
-  // Use course materials from database or provide defaults if none exist
+  // 使用课程中的材料数据，如果不存在则提供默认值
   const courseMaterials = course.materials?.length ? course.materials : [
     { id: "mat1", course_id: course.id, name: "课程讲义.PDF", url: "#", position: 1, is_visible: true, created_at: new Date().toISOString() },
     { id: "mat2", course_id: course.id, name: "练习题.PDF", url: "#", position: 2, is_visible: true, created_at: new Date().toISOString() }
   ];
 
-  // Use learning objectives from database if they exist, otherwise use our loaded defaults
+  // 首先尝试使用从数据库获取的学习目标，如果不存在或为空，则使用默认值
   const learningObjectives = (course.learning_objectives && course.learning_objectives.length > 0) 
     ? course.learning_objectives 
-    : defaultObjectives.length > 0 ? defaultObjectives : [
-      "品牌出海全案策划",
-      "国货出海全流程掌握",
-      "行业圈子完整开放",
-      "本土化运营实战训练",
-      "各类跨境纠纷与应对",
-      "本土市场运营套路传授"
-    ];
+    : getDefaultLearningObjectives().map(item => item.text);
 
-  // Use requirements from database if they exist, otherwise use our loaded defaults
+  // 首先尝试使用从数据库获取的课程要求，如果不存在或为空，则使用默认值
   const requirements = (course.requirements && course.requirements.length > 0)
     ? course.requirements 
-    : defaultRequirements.length > 0 ? defaultRequirements : [
-      "在线精录视频+直播",
-      "周周诊断+1v1指导",
-      "一线店铺运营官亲授",
-      "私域疑问秒解,问题不过夜",
-      "私域小组开放式交流",
-      "困难户帮协解决模式"
-    ];
+    : getDefaultLearningModes().map(item => item.text);
 
-  // Use target audience from database if they exist, otherwise use our loaded defaults
+  // 首先尝试使用从数据库获取的目标受众，如果不存在或为空，则使用默认值
   const targetAudience = (course.target_audience && course.target_audience.length > 0)
     ? course.target_audience
-    : defaultTargetAudience.length > 0 ? defaultTargetAudience : [
-      "个人或供应链企业",
-      "具备货源优势着更佳",
-      "转型或搞副业的人群",
-      "有决心搞钱搞流量的",
-      "搞钱恨人或职业收割者",
-      "数字游民爱好者",
-      "对抗型规则爱好者"
-    ];
+    : getDefaultTargetAudience().map(item => item.text);
+    
+  // 添加日志以显示我们最终使用的数据
+  console.log('[CourseDetailContentNew] 最终使用的数据:', {
+    learningObjectives: learningObjectives.length,
+    requirements: requirements.length,
+    targetAudience: targetAudience.length,
+    isFromDatabase: {
+      learningObjectives: course.learning_objectives && course.learning_objectives.length > 0,
+      requirements: course.requirements && course.requirements.length > 0,
+      targetAudience: course.target_audience && course.target_audience.length > 0
+    }
+  });
 
   return (
     <div className="space-y-8">
@@ -195,7 +168,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
                   className="border-gray-200 hover:bg-gray-50 transition-colors shadow-sm hover:shadow-md"
                 >
                   <ul className="space-y-3">
-                    {section.lectures?.map((lecture, lectureIdx) => (
+                    {section.lectures?.map((lecture) => (
                       <li
                         key={lecture.id}
                         className="flex justify-between items-center p-4 border rounded-lg 
@@ -244,7 +217,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
         <CardContent className="pt-4">
           {courseMaterials && courseMaterials.length > 0 ? (
             <ul className="space-y-3">
-              {courseMaterials.map((material, idx) => (
+              {courseMaterials.map((material) => (
                 <li 
                   key={material.id} 
                   className="flex justify-between items-center p-4 border rounded-lg hover:bg-gray-50 
@@ -272,7 +245,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
         </CardContent>
       </Card>
 
-      {/* 学习信息栏 - 三栏布局 - Enhanced with better 3D effects */}
+      {/* 学习信息栏 - 三栏布局 */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* 学习目标 */}
         <Card 

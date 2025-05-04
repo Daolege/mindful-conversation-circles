@@ -1,6 +1,23 @@
 import { supabase } from "@/integrations/supabase/client";
-import { CourseData, CourseResponse, CourseWithSections } from "@/lib/types/course-new";
+import { CourseData, CourseResponse } from "@/lib/types/course-new";
 import { selectFromTable } from "@/lib/services/typeSafeSupabase";
+
+// Simplified interface for CourseWithSections to avoid deep instantiation
+export interface CourseWithSections {
+  id: number;
+  title: string;
+  description?: string;
+  sections?: Array<{
+    id: string;
+    title: string;
+    lectures?: Array<{
+      id: string;
+      title: string;
+      is_free?: boolean;
+    }>;
+  }>;
+  [key: string]: any; // Allow additional properties without deep nesting
+}
 
 // Get course by ID 
 export const getCourseById = async (courseId: number): Promise<CourseResponse> => {
