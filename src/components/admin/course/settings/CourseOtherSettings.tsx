@@ -5,8 +5,10 @@ import EditableListComponent from './EditableListComponent';
 import ModuleTitleEdit from './ModuleTitleEdit';
 import EnrollmentGuidesEditor from './EnrollmentGuidesEditor';
 import { getModuleVisibilities } from '@/lib/services/courseSettingsService';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
-type SectionType = 'objectives' | 'requirements' | 'audience';
+type SectionType = 'objectives' | 'requirements' | 'audiences';
 
 type ModuleVisibilities = {
   objectives_visible: boolean;
@@ -28,6 +30,7 @@ export const CourseOtherSettings = ({ courseId }: CourseOtherSettingsProps) => {
       if (!courseId) return;
       
       try {
+        setIsLoading(true);
         const { data, error } = await getModuleVisibilities(courseId);
         
         if (error) {
@@ -49,25 +52,57 @@ export const CourseOtherSettings = ({ courseId }: CourseOtherSettingsProps) => {
   const handleVisibilityChange = async (sectionType: SectionType, isVisible: boolean) => {
     if (!moduleVisibilities) return;
     
-    // 更新本地状态
-    setModuleVisibilities(prev => {
-      if (!prev) return prev;
-      
-      const updatedVisibilities = { ...prev };
-      switch(sectionType) {
-        case 'objectives':
-          updatedVisibilities.objectives_visible = isVisible;
-          break;
-        case 'requirements':
-          updatedVisibilities.requirements_visible = isVisible;
-          break;
-        case 'audience':
-          updatedVisibilities.audiences_visible = isVisible;
-          break;
+    try {
+      // 更新数据库中的可见性
+      const tableName = `course_${sectionType === 'audiences' ? 'audiences' : 
+                        sectionType === 'objectives' ? 'learning_objectives' : 
+                        'requirements'}`;
+                        
+      const { error } = await supabase
+        .from(tableName)
+        .update({ is_visible: isVisible })
+        .eq('course_id', courseId);
+        
+      if (error) {
+        console.error(`Error updating ${sectionType} visibility:`, error);
+        toast.error(`更新${sectionType}可见性失败`);
+        return;
       }
       
-      return updatedVisibilities;
-    });
+      // 更新本地状态
+      setModuleVisibilities(prev => {
+        if (!prev) return prev;
+        
+        const updatedVisibilities = { ...prev };
+        switch(sectionType) {
+          case 'objectives':
+            updatedVisibilities.objectives_visible = isVisible;
+            break;
+          case 'requirements':
+            updatedVisibilities.requirements_visible = isVisible;
+            break;
+          case 'audiences':
+            updatedVisibilities.audiences_visible = isVisible;
+            break;
+        }
+        
+        return updatedVisibilities;
+      });
+      
+      // 更新本地存储
+      const storageKey = `course_${courseId}_section_visibility`;
+      const currentStorage = JSON.parse(localStorage.getItem(storageKey) || '{}');
+      const updatedStorage = { 
+        ...currentStorage,
+        [sectionType]: isVisible 
+      };
+      localStorage.setItem(storageKey, JSON.stringify(updatedStorage));
+      
+      toast.success(`${sectionType}可见性已更新`);
+    } catch (err) {
+      console.error(`Error updating ${sectionType} visibility:`, err);
+      toast.error(`更新${sectionType}可见性失败`);
+    }
   };
   
   return (
@@ -142,7 +177,7 @@ export const CourseOtherSettings = ({ courseId }: CourseOtherSettingsProps) => {
             title="适合人群"
             tableName="course_audiences"
             isVisible={moduleVisibilities?.audiences_visible ?? true}
-            onVisibilityChange={(isVisible) => handleVisibilityChange('audience', isVisible)}
+            onVisibilityChange={(isVisible) => handleVisibilityChange('audiences', isVisible)}
           />
         </div>
       </div>
