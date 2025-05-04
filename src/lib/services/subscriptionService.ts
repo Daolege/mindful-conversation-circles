@@ -17,7 +17,7 @@ export const getSubscriptionPlans = async (): Promise<SubscriptionPlan[]> => {
       .order('display_order', { ascending: true });
       
     if (error) throw error;
-    return data || [];
+    return data as SubscriptionPlan[] || [];
   } catch (error) {
     console.error('Error fetching subscription plans:', error);
     return [];
@@ -102,7 +102,7 @@ export const createSubscription = async (user: User, period: SubscriptionPeriod,
       endDate.setMonth(endDate.getMonth() + 1);
     } else if (period === 'quarterly') {
       endDate.setMonth(endDate.getMonth() + 3);
-    } else if (period === 'yearly') {
+    } else if (period === 'yearly' || period === 'annual') {
       endDate.setFullYear(endDate.getFullYear() + 1);
     } else if (period === '2years') {
       endDate.setFullYear(endDate.getFullYear() + 2);
@@ -197,7 +197,7 @@ export const createTestSubscription = async (userId: string, period: Subscriptio
       endDate.setMonth(endDate.getMonth() + 1);
     } else if (period === 'quarterly') {
       endDate.setMonth(endDate.getMonth() + 3);
-    } else if (period === 'yearly') {
+    } else if (period === 'yearly' || period === 'annual') {
       endDate.setFullYear(endDate.getFullYear() + 1);
     } else if (period === '2years') {
       endDate.setFullYear(endDate.getFullYear() + 2);

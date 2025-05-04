@@ -1,5 +1,4 @@
 
-
 export interface ListItem {
   id: string;
   text: string;
@@ -37,7 +36,7 @@ export interface CourseLecture {
   updated_at?: string;
 }
 
-// Add missing CourseNew interface
+// CourseNew interface
 export interface CourseNew {
   id: number;
   title: string;
@@ -61,7 +60,7 @@ export interface CourseNew {
   materials?: CourseMaterial[];
 }
 
-// Add CourseWithDetails interface
+// CourseWithDetails interface with additional instructor fields
 export interface CourseWithDetails extends CourseNew {
   sections?: CourseSection[];
   learning_objectives?: string[];
@@ -70,11 +69,14 @@ export interface CourseWithDetails extends CourseNew {
   materials?: CourseMaterial[];
   syllabus?: any;
   instructor?: any;
+  instructor_name?: string; // Added explicitly
+  instructor_bio?: string;   // Added explicitly  
+  instructor_avatar?: string; // Added explicitly
   rating?: number;
   rating_count?: number;
 }
 
-// Add CourseMaterial interface
+// CourseMaterial interface
 export interface CourseMaterial {
   id: string;
   course_id: number;
@@ -85,7 +87,7 @@ export interface CourseMaterial {
   created_at?: string;
 }
 
-// Add CourseFormValues interface
+// CourseFormValues interface
 export interface CourseFormValues {
   title: string;
   description?: string;
@@ -96,16 +98,17 @@ export interface CourseFormValues {
   display_order: number;
   status: 'draft' | 'published' | 'archived';
   is_featured: boolean;
+  featured?: boolean; // Added for backward compatibility
 }
 
-// Add subscription related interfaces
-export type SubscriptionPeriod = 'monthly' | 'quarterly' | 'annual';
+// Updated subscription related interfaces to include all used values
+export type SubscriptionPeriod = 'monthly' | 'quarterly' | 'yearly' | 'annual' | '2years' | '3years';
 
 export interface SubscriptionPlan {
   id: string;
   name: string;
   price: number;
-  interval: SubscriptionPeriod;
+  interval: SubscriptionPeriod | string; // Make interval accept string for flexibility
   currency: string;
   discount_percentage: number;
   description?: string;
@@ -115,12 +118,15 @@ export interface SubscriptionPlan {
   updated_at?: string;
 }
 
-// Add CourseData and CourseResponse for compatibility
+// CourseData and CourseResponse for compatibility
 export interface CourseData {
   id: number;
   title: string;
   description?: string;
-  // Add other required fields as needed
+  price?: number;
+  status?: string;
+  currency?: string;
+  thumbnail_url?: string;
 }
 
 export interface CourseResponse {
@@ -128,10 +134,10 @@ export interface CourseResponse {
   error?: any;
 }
 
-// Add SiteSetting interface
+// SiteSetting interface with optional id and site_name
 export interface SiteSetting {
-  id: string;
-  site_name: string;
+  id?: string;
+  site_name?: string;
   site_description?: string;
   contact_email?: string;
   support_phone?: string;
@@ -142,7 +148,7 @@ export interface SiteSetting {
   updated_at?: string;
 }
 
-// Add CourseWithSections for backward compatibility
+// CourseWithSections for backward compatibility
 export interface CourseWithSections extends CourseNew {
   sections?: CourseSection[];
 }

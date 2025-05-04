@@ -19,13 +19,13 @@ export const getSiteSettings = async (): Promise<SiteSetting> => {
 
     if (error) {
       console.error("Error fetching site settings:", error);
-      return {};
+      return { id: "default", site_name: "Site" };
     }
 
-    return data || {};
+    return data || { id: "default", site_name: "Site" };
   } catch (error) {
     console.error("Error in getSiteSettings:", error);
-    return {};
+    return { id: "default", site_name: "Site" };
   }
 };
 
@@ -45,7 +45,7 @@ export const updateSiteSettings = async (settings: SiteSetting): Promise<boolean
     
     const { error } = await supabase.from("site_settings").upsert({
       id: settings.id || "default", // Use existing ID or 'default' for new record
-      site_name: settings.site_name,
+      site_name: settings.site_name || "Site",
       site_description: settings.site_description,
       logo_url: settings.logo_url,
       support_phone: settings.support_phone,
