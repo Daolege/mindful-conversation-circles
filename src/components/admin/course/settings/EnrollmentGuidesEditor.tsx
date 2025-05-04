@@ -74,7 +74,8 @@ const getPlatformFields = (type: string) => {
       break;
     case 'other':
       fields.link = true;
-      fields.image = true;
+      // Changed: image is now optional for 'other' type
+      fields.image = false;
       break;
   }
 
@@ -215,7 +216,7 @@ const SortableGuideItem: React.FC<{
     const fields = getPlatformFields(item.guide_type);
     
     // Check required fields
-    if (fields.image && !imageUrl) {
+    if (fields.image && !imageUrl && item.guide_type === 'wechat') {
       toast.error('请上传图片');
       return;
     }
@@ -436,8 +437,8 @@ export const EnrollmentGuidesEditor: React.FC<EnrollmentGuidesEditorProps> = ({
       return;
     }
     
-    // Check image for WeChat and Other
-    if ((newPlatform === 'wechat' || newPlatform === 'other') && !newImageUrl) {
+    // Check image for WeChat only (not for Other anymore)
+    if (newPlatform === 'wechat' && !newImageUrl) {
       toast.error('请上传图片');
       return;
     }
@@ -619,7 +620,7 @@ export const EnrollmentGuidesEditor: React.FC<EnrollmentGuidesEditorProps> = ({
             imageUrl={newImageUrl}
             onChange={setNewImageUrl}
             courseId={courseId}
-            required={newPlatform === 'wechat' || newPlatform === 'other'}
+            required={newPlatform === 'wechat'}
           />
         )}
       </div>
