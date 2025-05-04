@@ -7,9 +7,11 @@ import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { 
   Lock, BookOpen, 
-  Download, File, Target, Award, Users, Bookmark, GraduationCap, Book, CheckCircle
+  Download, File, Target, Award, Users, Bookmark, GraduationCap, Book, CheckCircle,
+  Video, Clock, Star, Language, FileText
 } from 'lucide-react';
 import { useTranslations } from '@/hooks/useTranslations';
+import IconDisplay from '../course-detail/IconDisplay';
 
 interface CourseDetailContentNewProps {
   course: CourseWithDetails;
@@ -88,6 +90,17 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
     "对技术有兴趣的爱好者"
   ];
 
+  // Default course highlights
+  const courseHighlights = [
+    { icon: 'video', text: '高清视频课程' },
+    { icon: 'clock', text: '随时随地学习' },
+    { icon: 'star', text: `${course.sections?.length || 0}个精选章节` },
+    { icon: 'language', text: `课程语言: ${course.language === 'zh' ? '中文' : '英文'}` },
+    { icon: 'file-text', text: '内容持续更新' },
+    { icon: 'users', text: '学员专属社群' },
+    { icon: 'book', text: '附赠学习资料' }
+  ];
+
   return (
     <div className="space-y-8">
       {/* 课程介绍 */}
@@ -105,6 +118,32 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
             ) : (
               <div className="text-gray-500">{t('courses:noDescription')}</div>
             )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* 课程亮点 (NEW) */}
+      <Card className="hover:shadow-lg transition-shadow duration-500 shadow-sm animate-in fade-in duration-500">
+        <CardHeader className="pb-0">
+          <CardTitle className="text-xl flex items-center gap-2">
+            <Award className="h-5 w-5" />
+            课程亮点
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-4">
+            {courseHighlights.map((highlight, index) => (
+              <div 
+                key={index} 
+                className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors animate-in fade-in duration-300"
+                style={{ animationDelay: `${index * 100}ms` }}
+              >
+                <div className="flex-shrink-0 w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center text-primary">
+                  <IconDisplay iconName={highlight.icon} size={20} />
+                </div>
+                <div className="font-medium text-gray-800">{highlight.text}</div>
+              </div>
+            ))}
           </div>
         </CardContent>
       </Card>

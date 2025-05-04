@@ -31,7 +31,10 @@ import {
   
   // Common icons
   Activity, Heart, Star, 
-  LucideIcon
+  LucideIcon,
+  
+  // Icons for course highlights
+  Video, Clock, Language, FileText, Book
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -83,6 +86,13 @@ const iconMap: Record<string, React.ForwardRefExoticComponent<any>> = {
   'smile': Smile,
   'alert-circle': AlertCircle,
   'bar-chart': BarChart,
+  
+  // Icons for course highlights
+  'video': Video,
+  'clock': Clock,
+  'language': Language,
+  'file-text': FileText,
+  'book': Book,
 };
 
 export const IconDisplay: React.FC<IconDisplayProps> = ({
