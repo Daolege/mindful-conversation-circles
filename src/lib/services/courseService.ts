@@ -74,12 +74,18 @@ export const getCourses = async (
 // Get featured courses
 export const getFeaturedCourses = async (limit = 6): Promise<CourseResponse> => {
   try {
-    // Execute query in a single chain to maintain type information
-    const { data, error } = await supabase
+    // Using a more explicit approach to avoid deep type instantiation
+    const result = await supabase
       .from('courses')
-      .select('*')
+      .select('*');
+    
+    // Apply filters separately to avoid excessive type nesting
+    const filteredResult = result
       .eq('is_featured', true)
-      .eq('status', 'published')
+      .eq('status', 'published');
+    
+    // Apply ordering and limit separately
+    const { data, error } = await filteredResult
       .order('created_at', { ascending: false })
       .limit(limit);
     
