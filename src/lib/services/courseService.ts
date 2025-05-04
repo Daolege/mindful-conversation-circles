@@ -1,9 +1,8 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { CourseData, CourseResponse } from "@/lib/types/course-new";
 import { selectFromTable } from "@/lib/services/typeSafeSupabase";
 
-// Simplified interface for CourseWithSections to avoid deep instantiation
+// Simplified interface to avoid deep type instantiations
 export interface CourseWithSections {
   id: number;
   title: string;
@@ -17,7 +16,6 @@ export interface CourseWithSections {
       is_free?: boolean;
     }>;
   }>;
-  [key: string]: any; // Allow additional properties without deep nesting
 }
 
 // Get course by ID 
@@ -170,8 +168,8 @@ export const updateCourseOrder = async (courseIds: number[]) => {
   }
 };
 
-// Save course - simplified interface to fix type errors
-export const saveCourse = async (courseData: {
+// Save course - simplify type to avoid excessive type instantiation
+interface SaveCourseData {
   id?: number; 
   title: string;
   price?: number;
@@ -185,7 +183,9 @@ export const saveCourse = async (courseData: {
   currency?: string;
   thumbnail_url?: string;
   instructor_id?: string;
-}) => {
+}
+
+export const saveCourse = async (courseData: SaveCourseData) => {
   try {
     const { id, ...courseFields } = courseData;
     let result;

@@ -20,21 +20,22 @@ const CourseDetailNew = () => {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
 
-  // 强制每次访问页面时重新获取数据
+  // 强制每次访问页面时重新获取数据，修改staleTime为0
   const { data: course, isLoading, error, refetch } = useQuery({
     queryKey: ['course-new', courseIdNum],
     queryFn: () => getCourseNewById(courseIdNum),
     enabled: !!courseIdNum && !isNaN(courseIdNum),
-    staleTime: 0, // 设置为0，确保每次访问页面都重新获取数据
+    staleTime: 0, // 确保每次访问页面时都重新获取数据
     refetchOnWindowFocus: true, // 当窗口重获焦点时刷新数据
-    refetchOnMount: true, // 当组件挂载时刷新数据
+    refetchOnMount: 'always', // 修改为"always"，确保每次组件挂载时都刷新数据
+    cacheTime: 1000, // 设置很短的缓存时间，确保数据总是最新的
   });
   
   // Force smooth scrolling to top when page loads
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
     
-    // Force data refetch when courseId changes
+    // Force data refetch when courseId changes or component mounts
     if (courseIdNum && !isNaN(courseIdNum)) {
       console.log(`[CourseDetailNew] 强制重新获取课程 ${courseIdNum} 数据`);
       refetch();
@@ -44,22 +45,25 @@ const CourseDetailNew = () => {
   // Add enhanced debug logging
   useEffect(() => {
     if (course?.data) {
-      console.log('CourseDetailNew: 课程数据加载成功:', course.data);
-      console.log('CourseDetailNew: 学习目标数据:', {
+      console.log('[CourseDetailNew] 课程数据加载成功:', course.data);
+      console.log('[CourseDetailNew] 学习目标数据:', {
         length: course.data.learning_objectives?.length || 0,
-        data: course.data.learning_objectives
+        data: course.data.learning_objectives,
+        isArray: Array.isArray(course.data.learning_objectives),
       });
-      console.log('CourseDetailNew: 课程要求数据:', {
+      console.log('[CourseDetailNew] 课程要求数据:', {
         length: course.data.requirements?.length || 0,
-        data: course.data.requirements
+        data: course.data.requirements,
+        isArray: Array.isArray(course.data.requirements),
       });
-      console.log('CourseDetailNew: 适合人群数据:', {
+      console.log('[CourseDetailNew] 适合人群数据:', {
         length: course.data.target_audience?.length || 0,
-        data: course.data.target_audience
+        data: course.data.target_audience,
+        isArray: Array.isArray(course.data.target_audience),
       });
     }
     if (error) {
-      console.error('CourseDetailNew: 加载课程时出错:', error);
+      console.error('[CourseDetailNew] 加载课程时出错:', error);
     }
   }, [course, error]);
 

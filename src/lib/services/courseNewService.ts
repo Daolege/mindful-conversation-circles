@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { CourseNew, CourseSection, CourseMaterial } from '@/lib/types/course-new';
 
@@ -712,7 +713,13 @@ export const updateCourseEnrollmentCount = async (courseId: number, count?: numb
 };
 
 // 改进保存功能，确保Collections项目能正确保存
-export const saveCourseCollectionItem = async (tableName: string, courseId: number, content: string, position: number = 0) => {
+// 修复类型错误：使用硬编码的表名而不是动态字符串类型
+export const saveCourseCollectionItem = async (
+  tableName: 'course_learning_objectives' | 'course_requirements' | 'course_audiences',
+  courseId: number, 
+  content: string, 
+  position: number = 0
+) => {
   try {
     console.log(`[courseNewService] 保存单个集合项目到 ${tableName}:`, {
       courseId,
@@ -728,7 +735,7 @@ export const saveCourseCollectionItem = async (tableName: string, courseId: numb
     };
     
     const { data, error } = await supabase
-      .from(tableName)
+      .from(tableName) // 现在这里是一个类型安全的表名
       .insert(item)
       .select();
       
@@ -743,3 +750,4 @@ export const saveCourseCollectionItem = async (tableName: string, courseId: numb
     return { success: false, error: err };
   }
 };
+
