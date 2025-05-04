@@ -20,7 +20,7 @@ const CourseDetailNew = () => {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
 
-  // 强制每次访问页面时重新获取数据，修改staleTime为0
+  // 强制每次访问页面时重新获取数据，使用新的 React Query v5 属性
   const { data: course, isLoading, error, refetch } = useQuery({
     queryKey: ['course-new', courseIdNum],
     queryFn: () => getCourseNewById(courseIdNum),
@@ -28,7 +28,7 @@ const CourseDetailNew = () => {
     staleTime: 0, // 确保每次访问页面时都重新获取数据
     refetchOnWindowFocus: true, // 当窗口重获焦点时刷新数据
     refetchOnMount: 'always', // 修改为"always"，确保每次组件挂载时都刷新数据
-    cacheTime: 1000, // 设置很短的缓存时间，确保数据总是最新的
+    gcTime: 1000, // 替换 cacheTime，设置很短的垃圾回收时间，确保数据总是最新的
   });
   
   // Force smooth scrolling to top when page loads

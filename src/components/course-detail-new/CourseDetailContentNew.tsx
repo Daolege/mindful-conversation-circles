@@ -67,10 +67,16 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
   console.log('[CourseDetailContentNew] 课程要求 (直接):', course.requirements);
   console.log('[CourseDetailContentNew] 适合人群 (直接):', course.target_audience);
 
-  // 改进的数组有效性检查函数 - 改进后明确区分undefined和空数组
+  // 改进的数组有效性检查函数 - 明确区分undefined、null和空数组
   const isValidArray = (arr: any): boolean => {
-    // 数组存在，无论是否为空数组都视为有效
+    // 只有在数组完全不存在（undefined或null）时才返回false
+    // 如果是空数组也视为有效，因为用户可能故意将列表清空
     return Array.isArray(arr);
+  };
+  
+  // 改进的非空数组检查
+  const hasItems = (arr: any[]): boolean => {
+    return isValidArray(arr) && arr.length > 0;
   };
   
   // 记录数组有效性
@@ -80,7 +86,10 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
     target_audience: isValidArray(course.target_audience),
     learning_objectives_length: course.learning_objectives?.length,
     requirements_length: course.requirements?.length,
-    target_audience_length: course.target_audience?.length
+    target_audience_length: course.target_audience?.length,
+    has_learning_items: hasItems(course.learning_objectives || []),
+    has_requirement_items: hasItems(course.requirements || []),
+    has_audience_items: hasItems(course.target_audience || [])
   });
 
   // 使用课程中的材料数据，如果不存在则提供默认值
@@ -89,8 +98,8 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
     { id: "mat2", course_id: course.id, name: "练习题.PDF", url: "#", position: 2, is_visible: true, created_at: new Date().toISOString() }
   ];
 
-  // 改进后的数据获取逻辑：只有在数组完全不存在（undefined）时才使用默认值
-  // 如果数据库返回了空数组，也应该尊重这个结果
+  // 改进后的数据获取逻辑：只有在数组完全不存在（undefined或null）时才使用默认值
+  // 如果数据库返回了空数组，也应该尊重这个结果（用户可能是想清空这些项）
   const learningObjectives = isValidArray(course.learning_objectives) 
     ? course.learning_objectives 
     : getDefaultLearningObjectives().map(item => item.text);
@@ -105,17 +114,17 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
     
   // 添加日志以显示我们最终使用的数据
   console.log('[CourseDetailContentNew] 最终使用的数据:', {
-    learningObjectives: learningObjectives.length,
-    requirements: requirements.length,
-    targetAudience: targetAudience.length,
+    learningObjectives: learningObjectives?.length || 0,
+    requirements: requirements?.length || 0,
+    targetAudience: targetAudience?.length || 0,
     isFromDatabase: {
       learningObjectives: isValidArray(course.learning_objectives),
       requirements: isValidArray(course.requirements),
       targetAudience: isValidArray(course.target_audience)
     },
-    firstLearningObjective: learningObjectives.length > 0 ? learningObjectives[0] : 'none',
-    firstRequirement: requirements.length > 0 ? requirements[0] : 'none',
-    firstTargetAudience: targetAudience.length > 0 ? targetAudience[0] : 'none'
+    firstLearningObjective: learningObjectives?.length > 0 ? learningObjectives[0] : 'none',
+    firstRequirement: requirements?.length > 0 ? requirements[0] : 'none',
+    firstTargetAudience: targetAudience?.length > 0 ? targetAudience[0] : 'none'
   });
 
   return (
