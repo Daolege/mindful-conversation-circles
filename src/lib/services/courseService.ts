@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { CourseData, CourseResponse } from "@/lib/types/course-new";
 import { selectFromTable } from "@/lib/services/typeSafeSupabase";
@@ -170,7 +171,7 @@ export const updateCourseOrder = async (courseIds: number[]) => {
 };
 
 // Save course 
-// Fix the type errors by explicitly listing all allowed fields
+// Fix the type errors by using a simpler type definition
 export const saveCourse = async (courseData: {
   id?: number; 
   title: string;

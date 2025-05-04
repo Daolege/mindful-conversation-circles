@@ -213,7 +213,7 @@ export const CourseEditorProvider: React.FC<{
       }
       
       try {
-        console.log('[CourseEditorContext] Loading course data for ID:', numericCourseId);
+        console.log('[CourseEditorContext] 开始加载课程数据:', numericCourseId);
         const response = await getCourseNewById(numericCourseId);
         
         if (response && response.error) {
@@ -263,6 +263,13 @@ export const CourseEditorProvider: React.FC<{
           let requirements = getDefaultLearningModes().map(item => item.text);
           let targetAudience = getDefaultTargetAudience().map(item => item.text);
           
+          // Add detailed logging for the data we're receiving
+          console.log('[CourseEditorContext] 数据字段值:', {
+            learning_objectives: data.learning_objectives,
+            requirements: data.requirements,
+            target_audience: data.target_audience,
+          });
+          
           // Map for properties with different names in courses_new
           const formattedData = {
             ...formData,
@@ -287,7 +294,11 @@ export const CourseEditorProvider: React.FC<{
             imageurl: data.thumbnail_url || data.imageurl || ''
           };
           
-          console.log('[CourseEditorContext] Formatted course data:', formattedData);
+          console.log('[CourseEditorContext] 格式化后的数据:', {
+            requirements: formattedData.requirements.length,
+            whatyouwilllearn: formattedData.whatyouwilllearn.length,
+            target_audience: formattedData.target_audience.length,
+          });
           setFormData(formattedData);
         } else {
           console.warn('[CourseEditorContext] No course data or unexpected format received:', courseData);
@@ -334,6 +345,10 @@ export const CourseEditorProvider: React.FC<{
     
     setIsSaving(true);
     try {
+      setSaving(true);
+      setSaveSuccess(false);
+      setSaveError(null);
+      
       // Import directly to avoid circular dependencies
       const { updateCourseNew, createCourseNew } = await import('@/lib/services/courseNewService');
       
@@ -351,7 +366,7 @@ export const CourseEditorProvider: React.FC<{
         // Map other fields needed
       };
       
-      console.log('[CourseEditorContext] Saving course data:', courseData);
+      console.log('[CourseEditorContext] 保存课程基本数据:', courseData);
       
       let result;
       if (numericCourseId) {
@@ -364,25 +379,49 @@ export const CourseEditorProvider: React.FC<{
       
       if (result && result.data) {
         // Save was successful
-        toast.success('课程保存成功');
+        toast.success('课程基本信息保存成功');
         
         // Get the courseId (either existing or newly created)
         const courseId = numericCourseId || result.data.id;
+        
+        // 详细记录要保存的学习目标内容
+        console.log('[CourseEditorContext] 准备保存学习目标:', {
+          count: formData.whatyouwilllearn.length,
+          items: formData.whatyouwilllearn
+        });
         
         // If we have learning objectives to save
         if (formData.whatyouwilllearn && formData.whatyouwilllearn.length > 0) {
           await saveCourseCollectionItems('course_learning_objectives', courseId, formData.whatyouwilllearn);
         }
         
+        // 详细记录要保存的课程要求内容
+        console.log('[CourseEditorContext] 准备保存课程要求:', {
+          count: formData.requirements.length,
+          items: formData.requirements
+        });
+        
         // Save requirements
         if (formData.requirements && formData.requirements.length > 0) {
           await saveCourseCollectionItems('course_requirements', courseId, formData.requirements);
         }
         
+        // 详细记录要保存的目标受众内容
+        console.log('[CourseEditorContext] 准备保存适合人群:', {
+          count: formData.target_audience.length,
+          items: formData.target_audience
+        });
+        
         // Save target audience
         if (formData.target_audience && formData.target_audience.length > 0) {
           await saveCourseCollectionItems('course_audiences', courseId, formData.target_audience);
         }
+
+        toast.success('课程保存成功');
+        
+        // 刷新React Query缓存，确保页面刷新后显示最新数据
+        const { queryClient } = await import('@tanstack/react-query');
+        queryClient.invalidateQueries(['course-new', courseId]);
         
       } else {
         toast.error('保存课程时出错');
@@ -398,13 +437,26 @@ export const CourseEditorProvider: React.FC<{
   // Helper function to save collection items (learning objectives, requirements, or target audience)
   const saveCourseCollectionItems = async (tableName: 'course_learning_objectives' | 'course_requirements' | 'course_audiences', courseId: number, items: string[]) => {
     try {
-      console.log(`[CourseEditorContext] Saving ${tableName} for course ${courseId}, ${items.length} items`);
+      console.log(`[CourseEditorContext] 开始保存 ${tableName} 数据:`, {
+        courseId,
+        itemCount: items.length,
+        firstItem: items[0]
+      });
       
       // First, delete existing items for this course to prevent duplicates
-      await deleteFromTable(tableName, { course_id: courseId });
+      const { error: deleteError } = await supabase
+        .from(tableName)
+        .delete()
+        .eq('course_id', courseId);
+        
+      if (deleteError) {
+        console.error(`[CourseEditorContext] 删除现有 ${tableName} 时出错:`, deleteError);
+        throw deleteError;
+      }
       
       // Then insert all items with positions
       if (items.length > 0) {
+        // 创建插入项目的数组
         const itemsToInsert = items.map((content, index) => ({
           course_id: courseId,
           content,
@@ -412,11 +464,25 @@ export const CourseEditorProvider: React.FC<{
           is_visible: true
         }));
         
-        await insertIntoTable(tableName, itemsToInsert);
-        console.log(`[CourseEditorContext] Successfully saved ${items.length} items to ${tableName}`);
+        console.log(`[CourseEditorContext] 准备插入的 ${tableName} 数据:`, itemsToInsert);
+        
+        // 使用更直接的插入方式，避免typeSafeSupabase可能的问题
+        const { data, error } = await supabase
+          .from(tableName)
+          .insert(itemsToInsert)
+          .select();
+          
+        if (error) {
+          console.error(`[CourseEditorContext] 插入 ${tableName} 时出错:`, error);
+          throw error;
+        }
+        
+        console.log(`[CourseEditorContext] 成功保存了 ${items.length} 项到 ${tableName}:`, {
+          insertedCount: data?.length
+        });
       }
     } catch (err) {
-      console.error(`[CourseEditorContext] Error in saveCourseCollectionItems for ${tableName}:`, err);
+      console.error(`[CourseEditorContext] saveCourseCollectionItems 异常 (${tableName}):`, err);
       throw err;
     }
   };

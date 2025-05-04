@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { CourseWithDetails } from '@/lib/types/course-new';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -60,12 +59,25 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
     0
   ) || 0;
 
-  // Debug logs to check what data we have
-  console.log('[CourseDetailContentNew] Course data:', course);
-  console.log('[CourseDetailContentNew] Materials:', course.materials);
-  console.log('[CourseDetailContentNew] Learning objectives:', course.learning_objectives);
-  console.log('[CourseDetailContentNew] Requirements:', course.requirements);
-  console.log('[CourseDetailContentNew] Target audience:', course.target_audience);
+  // 详细日志记录，用于调试
+  console.log('[CourseDetailContentNew] 课程数据:', course);
+  console.log('[CourseDetailContentNew] 课程ID:', course.id);
+  console.log('[CourseDetailContentNew] 附件材料:', course.materials);
+  console.log('[CourseDetailContentNew] 学习目标 (直接):', course.learning_objectives);
+  console.log('[CourseDetailContentNew] 课程要求 (直接):', course.requirements);
+  console.log('[CourseDetailContentNew] 适合人群 (直接):', course.target_audience);
+
+  // 检查数组数据是否有效
+  const isValidArray = (arr: any): boolean => {
+    return Array.isArray(arr) && arr.length > 0;
+  };
+  
+  // 记录数组有效性
+  console.log('[CourseDetailContentNew] 数据有效性:', {
+    learning_objectives: isValidArray(course.learning_objectives),
+    requirements: isValidArray(course.requirements),
+    target_audience: isValidArray(course.target_audience),
+  });
 
   // 使用课程中的材料数据，如果不存在则提供默认值
   const courseMaterials = course.materials?.length ? course.materials : [
@@ -73,18 +85,18 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
     { id: "mat2", course_id: course.id, name: "练习题.PDF", url: "#", position: 2, is_visible: true, created_at: new Date().toISOString() }
   ];
 
-  // 首先尝试使用从数据库获取的学习目标，如果不存在或为空，则使用默认值
-  const learningObjectives = (course.learning_objectives && course.learning_objectives.length > 0) 
+  // 首先检查learning_objectives是否是有效数据，否则使用默认值
+  const learningObjectives = isValidArray(course.learning_objectives) 
     ? course.learning_objectives 
     : getDefaultLearningObjectives().map(item => item.text);
 
-  // 首先尝试使用从数据库获取的课程要求，如果不存在或为空，则使用默认值
-  const requirements = (course.requirements && course.requirements.length > 0)
+  // 首先检查requirements是否是有效数据，否则使用默认值
+  const requirements = isValidArray(course.requirements) 
     ? course.requirements 
     : getDefaultLearningModes().map(item => item.text);
 
-  // 首先尝试使用从数据库获取的目标受众，如果不存在或为空，则使用默认值
-  const targetAudience = (course.target_audience && course.target_audience.length > 0)
+  // 首先检查target_audience是否是有效数据，否则使用默认值
+  const targetAudience = isValidArray(course.target_audience)
     ? course.target_audience
     : getDefaultTargetAudience().map(item => item.text);
     
@@ -94,10 +106,13 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
     requirements: requirements.length,
     targetAudience: targetAudience.length,
     isFromDatabase: {
-      learningObjectives: course.learning_objectives && course.learning_objectives.length > 0,
-      requirements: course.requirements && course.requirements.length > 0,
-      targetAudience: course.target_audience && course.target_audience.length > 0
-    }
+      learningObjectives: isValidArray(course.learning_objectives),
+      requirements: isValidArray(course.requirements),
+      targetAudience: isValidArray(course.target_audience)
+    },
+    firstLearningObjective: learningObjectives[0],
+    firstRequirement: requirements[0],
+    firstTargetAudience: targetAudience[0]
   });
 
   return (

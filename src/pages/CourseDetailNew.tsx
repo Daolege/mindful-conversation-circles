@@ -24,7 +24,9 @@ const CourseDetailNew = () => {
     queryKey: ['course-new', courseIdNum],
     queryFn: () => getCourseNewById(courseIdNum),
     enabled: !!courseIdNum && !isNaN(courseIdNum),
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 0, // 设置为0，确保每次访问页面都重新获取数据
+    refetchOnWindowFocus: true, // 当窗口重获焦点时刷新数据
+    refetchOnMount: true, // 当组件挂载时刷新数据
   });
   
   // Force smooth scrolling to top when page loads
@@ -32,13 +34,25 @@ const CourseDetailNew = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [courseId]);
 
-  // Add some debug logging to help troubleshoot
+  // Add enhanced debug logging
   useEffect(() => {
     if (course?.data) {
-      console.log('CourseDetailNew: Course data loaded:', course.data);
+      console.log('CourseDetailNew: 课程数据加载成功:', course.data);
+      console.log('CourseDetailNew: 学习目标数据:', {
+        length: course.data.learning_objectives?.length || 0,
+        data: course.data.learning_objectives
+      });
+      console.log('CourseDetailNew: 课程要求数据:', {
+        length: course.data.requirements?.length || 0,
+        data: course.data.requirements
+      });
+      console.log('CourseDetailNew: 适合人群数据:', {
+        length: course.data.target_audience?.length || 0,
+        data: course.data.target_audience
+      });
     }
     if (error) {
-      console.error('CourseDetailNew: Error loading course:', error);
+      console.error('CourseDetailNew: 加载课程时出错:', error);
     }
   }, [course, error]);
 

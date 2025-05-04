@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { CourseNew, CourseSection, CourseMaterial } from '@/lib/types/course-new';
 
@@ -95,7 +96,7 @@ export const updateCourseNew = async (courseId: number, updates: Partial<CourseN
 // 获取课程详情（包括章节和课时）
 export const getCourseNewById = async (courseId: number) => {
   try {
-    console.log(`[courseNewService] 获取课程 ${courseId} 详情`);
+    console.log(`[courseNewService] 开始获取课程 ${courseId} 详情`);
     
     // 获取课程基本信息
     const { data: course, error: courseError } = await supabase
@@ -149,7 +150,12 @@ export const getCourseNewById = async (courseId: number) => {
       
     console.log('[courseNewService] 学习目标数据:', 
       learningObjectives ? `找到${learningObjectives.length}条记录` : '无数据', 
-      objectivesError ? `错误:${objectivesError.message}` : '');
+      objectivesError ? `错误:${objectivesError.message}` : '无错误');
+    
+    // 查询是否有权限问题
+    if (objectivesError) {
+      console.error('[courseNewService] 获取学习目标时出错:', objectivesError);
+    }
     
     // 获取课程要求 - 从 course_requirements 表获取
     const { data: requirements, error: requirementsError } = await supabase
@@ -161,7 +167,11 @@ export const getCourseNewById = async (courseId: number) => {
       
     console.log('[courseNewService] 课程要求数据:', 
       requirements ? `找到${requirements.length}条记录` : '无数据', 
-      requirementsError ? `错误:${requirementsError.message}` : '');
+      requirementsError ? `错误:${requirementsError.message}` : '无错误');
+    
+    if (requirementsError) {
+      console.error('[courseNewService] 获取课程要求时出错:', requirementsError);
+    }
     
     // 获取适合人群 - 从 course_audiences 表获取
     const { data: targetAudience, error: audienceError } = await supabase
@@ -173,14 +183,20 @@ export const getCourseNewById = async (courseId: number) => {
       
     console.log('[courseNewService] 适合人群数据:', 
       targetAudience ? `找到${targetAudience.length}条记录` : '无数据', 
-      audienceError ? `错误:${audienceError.message}` : '');
+      audienceError ? `错误:${audienceError.message}` : '无错误');
     
-    // 转换数据为所需的格式
+    if (audienceError) {
+      console.error('[courseNewService] 获取适合人群时出错:', audienceError);
+    }
+    
+    // 转换数据为所需的格式 - 修改逻辑，优先使用数据库内容
     const processData = (items: any[] | null): string[] => {
       if (!items || items.length === 0) return [];
+      // 确保获取content字段的值
       return items.map(item => item.content).filter(Boolean);
     };
     
+    // 处理数据
     const learningObjectivesArray = processData(learningObjectives);
     const requirementsArray = processData(requirements);
     const targetAudienceArray = processData(targetAudience);
@@ -188,7 +204,10 @@ export const getCourseNewById = async (courseId: number) => {
     console.log('[courseNewService] 处理后的数据:', {
       learning_objectives_count: learningObjectivesArray.length,
       requirements_count: requirementsArray.length,
-      target_audience_count: targetAudienceArray.length
+      target_audience_count: targetAudienceArray.length,
+      has_learning_objectives: learningObjectivesArray.length > 0,
+      has_requirements: requirementsArray.length > 0,
+      has_target_audience: targetAudienceArray.length > 0
     });
     
     // 获取章节下的课时
@@ -216,7 +235,7 @@ export const getCourseNewById = async (courseId: number) => {
       console.log(`[courseNewService] 找到 ${sections.length} 个章节，共 ${lectures?.length || 0} 个课时`);
     }
     
-    // 返回完整的课程数据
+    // 返回完整的课程数据，确保优先使用数据库中的数据
     return { 
       data: { 
         ...course, 
