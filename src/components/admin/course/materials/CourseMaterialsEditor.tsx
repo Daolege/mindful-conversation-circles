@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Card, CardContent } from "@/components/ui/card";
@@ -209,47 +210,58 @@ export const CourseMaterialsEditor = ({ courseId }: CourseMaterialsEditorProps) 
     }
   };
 
-  // Generate mock file for upload functionality
+  // Generate mock file for upload functionality - 改进错误处理
   const generateMockFile = (fileName: string, fileType: string): File => {
-    // Create a small ArrayBuffer (1KB for example)
-    const size = 1024;
-    const buffer = new ArrayBuffer(size);
-    
-    // Create a File object from the buffer
-    // Convert fileType to proper MIME type if needed
-    const mimeType = fileType.startsWith('.') 
-      ? Object.entries(fileTypes).find(([_, exts]) => 
-          (exts as string[]).includes(fileType))?.[0] || 'application/octet-stream'
-      : fileType;
-    
-    // Use the File constructor with buffer
-    return new File([buffer], fileName, { type: mimeType });
+    try {
+      // Create a small ArrayBuffer (1KB for example)
+      const size = 1024;
+      const buffer = new ArrayBuffer(size);
+      
+      // Create a File object from the buffer
+      // Convert fileType to proper MIME type if needed
+      const mimeType = fileType.startsWith('.') 
+        ? Object.entries(fileTypes).find(([_, exts]) => 
+            (exts as string[]).includes(fileType))?.[0] || 'application/octet-stream'
+        : fileType;
+      
+      // Use the File constructor with buffer
+      return new File([buffer], fileName, { type: mimeType });
+    } catch (err) {
+      console.error('生成模拟文件错误:', err);
+      // 返回一个基本的文本文件作为后备
+      return new File(['默认文本内容'], 'fallback-file.txt', { type: 'text/plain' });
+    }
   };
   
   const handleAddMockFile = () => {
-    // Generate random file type from the available file types
-    const fileExtensions = Object.values(fileTypes).flat();
-    const randomExtension = fileExtensions[Math.floor(Math.random() * fileExtensions.length)];
-    
-    // Common document names for mock files
-    const mockFileNames = [
-      "课程教材",
-      "学习指南",
-      "练习题",
-      "参考资料",
-      "课程大纲",
-      "学习计划",
-      "实践案例",
-      "附加阅读",
-      "常见问题解答",
-      "知识点总结"
-    ];
-    
-    const randomName = mockFileNames[Math.floor(Math.random() * mockFileNames.length)];
-    const fileName = `${randomName}${randomExtension}`;
-    const mockFile = generateMockFile(fileName, randomExtension);
-    
-    handleFileUpload([mockFile]);
+    try {
+      // Generate random file type from the available file types
+      const fileExtensions = Object.values(fileTypes).flat();
+      const randomExtension = fileExtensions[Math.floor(Math.random() * fileExtensions.length)];
+      
+      // Common document names for mock files
+      const mockFileNames = [
+        "课程教材",
+        "学习指南",
+        "练习题",
+        "参考资料",
+        "课程大纲",
+        "学习计划",
+        "实践案例",
+        "附加阅读",
+        "常见问题解答",
+        "知识点总结"
+      ];
+      
+      const randomName = mockFileNames[Math.floor(Math.random() * mockFileNames.length)];
+      const fileName = `${randomName}${randomExtension}`;
+      const mockFile = generateMockFile(fileName, randomExtension);
+      
+      handleFileUpload([mockFile]);
+    } catch (err) {
+      console.error('添加模拟文件错误:', err);
+      toast.error('无法创建模拟文件', { description: '请尝试手动上传文件' });
+    }
   };
 
   const handleFileUpload = async (files: File[]) => {
@@ -262,9 +274,12 @@ export const CourseMaterialsEditor = ({ courseId }: CourseMaterialsEditorProps) 
       for (const file of files) {
         const position = materials.length > 0 ? Math.max(...materials.map(m => m.position)) + 1 : 0;
         
+        console.log(`[CourseMaterialsEditor] 准备上传文件: ${file.name}, 大小: ${file.size} bytes`);
+        
         const { data, error } = await uploadCourseMaterial(courseId, file, file.name, position);
         
         if (error) {
+          console.error('[CourseMaterialsEditor] 上传文件错误:', error);
           throw error;
         }
         
@@ -275,7 +290,9 @@ export const CourseMaterialsEditor = ({ courseId }: CourseMaterialsEditorProps) 
       }
     } catch (err: any) {
       console.error("Error uploading files:", err);
-      toast.error("上传文件失败", { description: err.message });
+      toast.error("上传文件失败", { 
+        description: err.message || "可能是文件名包含特殊字符或存储配置问题" 
+      });
       setError(err.message || "上传文件失败");
     } finally {
       setIsUploading(false);
@@ -410,7 +427,14 @@ export const CourseMaterialsEditor = ({ courseId }: CourseMaterialsEditorProps) 
           <Alert variant="destructive" className="mb-4">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>错误</AlertTitle>
-            <AlertDescription>{error}</AlertDescription>
+            <AlertDescription>
+              {error}
+              {error.includes('上传') && (
+                <div className="mt-2 text-sm">
+                  可能原因: 文件名包含特殊字符、文件大小超限或存储配置问题
+                </div>
+              )}
+            </AlertDescription>
           </Alert>
         )}
         

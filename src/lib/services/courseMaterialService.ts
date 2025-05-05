@@ -8,6 +8,24 @@ interface OrderUpdate {
   position: number;
 }
 
+// 添加一个安全的文件名处理函数
+const sanitizeFileName = (fileName: string): string => {
+  // 保留原文件扩展名
+  const lastDot = fileName.lastIndexOf('.');
+  const extension = lastDot !== -1 ? fileName.substring(lastDot) : '';
+  const baseName = lastDot !== -1 ? fileName.substring(0, lastDot) : fileName;
+  
+  // 移除潜在的不安全字符，保留中文和英文字符
+  const sanitizedBaseName = baseName
+    .replace(/[^\w\u4e00-\u9fa5\-\. ]/g, '') // 只保留字母、数字、中文、连字符、点和空格
+    .trim();
+  
+  // 如果处理后名称为空，提供默认名称
+  const finalBaseName = sanitizedBaseName || 'file';
+  
+  return `${finalBaseName}${extension}`;
+};
+
 // Get course materials
 export const getCourseMaterials = async (courseId: number) => {
   try {
@@ -48,10 +66,16 @@ export const uploadCourseMaterial = async (
   position: number
 ) => {
   try {
-    // Generate a unique file path
-    const filePath = `course-materials/${courseId}/${uuidv4()}-${fileName}`;
+    // 处理文件名，确保安全
+    const safeFileName = sanitizeFileName(fileName);
     
-    // Upload the file to storage
+    // 修改：使用正确的文件路径格式，去掉错误的前缀 'course-materials'
+    // 使用课程ID作为文件夹名称，增强组织性
+    const filePath = `${courseId}/${uuidv4()}-${safeFileName}`;
+    
+    console.log(`[courseMaterialService] 上传文件到路径: ${filePath}`);
+    
+    // 上传文件到存储
     const { data: fileData, error: uploadError } = await supabase.storage
       .from('course-files')
       .upload(filePath, file, {
@@ -59,21 +83,30 @@ export const uploadCourseMaterial = async (
         upsert: false
       });
       
-    if (uploadError) throw uploadError;
+    if (uploadError) {
+      console.error('[courseMaterialService] 上传错误:', uploadError);
+      throw new Error(`文件上传失败: ${uploadError.message}`);
+    }
     
-    // Get the public URL
+    // 获取公开URL
     const { data: urlData } = await supabase.storage
       .from('course-files')
       .getPublicUrl(filePath);
+    
+    if (!urlData || !urlData.publicUrl) {
+      throw new Error('无法获取文件公开URL');
+    }
+    
+    console.log(`[courseMaterialService] 获取到公开URL: ${urlData.publicUrl}`);
       
-    // Create a database entry for the material
+    // 为文件创建数据库条目
     const material: CourseMaterial = {
       id: uuidv4(),
-      name: fileName,
+      name: fileName, // 保留原始文件名用于显示
       url: urlData.publicUrl,
       position,
       course_id: courseId,
-      is_visible: false // Default to hidden
+      is_visible: false // 默认隐藏
     };
     
     const { data, error } = await supabase
@@ -82,7 +115,10 @@ export const uploadCourseMaterial = async (
       .select()
       .single();
       
-    if (error) throw error;
+    if (error) {
+      console.error('[courseMaterialService] 创建材料记录错误:', error);
+      throw error;
+    }
     
     return { data, error: null };
   } catch (error) {
@@ -94,7 +130,7 @@ export const uploadCourseMaterial = async (
 // Delete a course material
 export const deleteMaterial = async (id: string) => {
   try {
-    // First, get the material to get the file URL
+    // 首先获取材料信息以获取文件URL
     const { data: material, error: fetchError } = await supabase
       .from('course_materials')
       .select('url')
@@ -103,7 +139,7 @@ export const deleteMaterial = async (id: string) => {
       
     if (fetchError) throw fetchError;
     
-    // Delete from database
+    // 从数据库删除
     const { error: deleteError } = await supabase
       .from('course_materials')
       .delete()
@@ -111,22 +147,35 @@ export const deleteMaterial = async (id: string) => {
       
     if (deleteError) throw deleteError;
 
-    // Try to delete the file from storage if possible
-    // This is optional and we don't want to fail if the file doesn't exist
+    // 尝试从存储中删除文件（如果可能的话）
+    // 这是可选的，如果文件不存在我们不希望失败
     if (material?.url) {
       try {
-        // Extract the file path from the URL
+        // 从URL中提取文件路径
         const url = new URL(material.url);
         const pathParts = url.pathname.split('/');
-        const bucketName = pathParts[1];
-        const filePath = pathParts.slice(2).join('/');
+        
+        // 解析存储桶名称和文件路径
+        // 路径格式通常是 /storage/v1/object/public/bucket-name/file-path
+        let bucketName, filePath;
+        
+        if (pathParts.length >= 5 && pathParts[1] === 'storage' && pathParts[2] === 'v1') {
+          bucketName = pathParts[4]; // 通常是 'course-files'
+          filePath = pathParts.slice(5).join('/');
+        } else {
+          // 兼容性处理，如果URL格式不符合预期
+          console.warn('无法从URL解析存储路径:', material.url);
+          return { error: null }; // 仍然认为删除成功，因为数据库记录已删除
+        }
+        
+        console.log(`[courseMaterialService] 尝试从存储中删除文件: ${bucketName}/${filePath}`);
         
         await supabase.storage
           .from(bucketName)
           .remove([filePath]);
       } catch (storageError) {
-        console.warn('Could not delete file from storage:', storageError);
-        // Don't throw error, as the database entry was successfully deleted
+        console.warn('无法从存储中删除文件:', storageError);
+        // 不抛出错误，因为数据库条目已成功删除
       }
     }
     
