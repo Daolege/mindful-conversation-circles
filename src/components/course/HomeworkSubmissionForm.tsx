@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/authHooks";
@@ -17,13 +16,19 @@ interface HomeworkSubmissionFormProps {
     image_url: string | null;
     lecture_id: string;
   };
-  courseId: string; // Add courseId prop to interface
-  lectureId: string; // Add lectureId prop to interface
+  courseId: string; // Added courseId prop
+  lectureId: string; // Added lectureId prop
   onSubmitSuccess: () => void;
   onCancel: () => void;
 }
 
-export const HomeworkSubmissionForm = ({ homework, courseId, lectureId, onSubmitSuccess, onCancel }: HomeworkSubmissionFormProps) => {
+export const HomeworkSubmissionForm = ({ 
+  homework, 
+  courseId, // Using courseId prop directly
+  lectureId, // Using lectureId prop directly
+  onSubmitSuccess, 
+  onCancel 
+}: HomeworkSubmissionFormProps) => {
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [singleChoiceAnswer, setSingleChoiceAnswer] = useState<string | null>(null);
@@ -91,28 +96,23 @@ export const HomeworkSubmissionForm = ({ homework, courseId, lectureId, onSubmit
         answer = textAnswer;
       }
       
-      // 使用通过props传入的courseId，而不是从URL解析
       const numericCourseId = parseInt(courseId);
       
       if (!numericCourseId || isNaN(numericCourseId)) {
         console.error('无效的课程ID', courseId);
         throw new Error('无效的课程ID');
-      } else {
-        console.log('使用传入的课程ID:', numericCourseId);
       }
       
       const { error } = await supabase
         .from('homework_submissions')
-        .insert([
-          {
-            user_id: user.id,
-            homework_id: homework.id,
-            course_id: numericCourseId,
-            lecture_id: lectureId, // 使用传入的lectureId
-            answer: answer,
-            file_url: fileUrl
-          }
-        ]);
+        .insert([{
+          user_id: user.id,
+          homework_id: homework.id,
+          course_id: numericCourseId,
+          lecture_id: lectureId,
+          answer: answer,
+          file_url: fileUrl
+        }]);
         
       if (error) {
         throw error;
