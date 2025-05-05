@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
@@ -12,6 +11,7 @@ import SaveStatusDisplay from '@/components/admin/course-editor/SaveStatusDispla
 import { useCourseEditor } from '@/hooks/useCourseEditor';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { useHomeworkDraggable } from '@/hooks/useHomeworkDraggable';
+import { supabase } from '@/integrations/supabase/client';
 
 interface HomeworkPanelProps {
   lectureId: string;
