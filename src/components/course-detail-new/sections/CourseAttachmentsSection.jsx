@@ -14,23 +14,9 @@ const CourseAttachmentsSection = ({
 }) => {
   const { t } = useTranslations();
   
-  // 只使用真实附件数据，过滤掉模拟材料和隐藏材料
+  // 只使用可见的课程材料
   const courseMaterials = course?.materials
-    ?.filter(m => {
-      // 排除隐藏的材料
-      if (m.is_visible === false) return false;
-      
-      // 排除模拟文件 - 通过名称或URL特征识别
-      if (
-        m.name?.toLowerCase().includes('模拟') || 
-        m.name?.toLowerCase().includes('mock') || 
-        m.url?.includes('fallback')
-      ) {
-        return false;
-      }
-      
-      return true;
-    }) || [];
+    ?.filter(material => material.is_visible !== false) || [];
     
   const hasMaterials = courseMaterials.length > 0;
   
@@ -86,6 +72,31 @@ const CourseAttachmentsSection = ({
     return null;
   }
 
+  // 获取文件类型图标
+  const getFileIcon = (fileName) => {
+    const extension = fileName.split('.').pop()?.toLowerCase();
+    
+    switch(extension) {
+      case 'pdf':
+        return <File size={18} className="text-red-500" />;
+      case 'xlsx':
+      case 'xls':
+      case 'csv':
+        return <File size={18} className="text-green-600" />;
+      case 'pptx':
+      case 'ppt':
+        return <File size={18} className="text-orange-500" />;
+      case 'docx':
+      case 'doc':
+        return <File size={18} className="text-blue-600" />;
+      case 'zip':
+      case 'rar':
+        return <File size={18} className="text-purple-600" />;
+      default:
+        return <File size={18} className="text-gray-600" />;
+    }
+  };
+
   return (
     <Card id="course-attachments-section" className="hover:shadow-lg transition-shadow duration-500 shadow-sm animate-in fade-in duration-500 mb-12">
       <CardHeader className="pb-0">
@@ -98,14 +109,14 @@ const CourseAttachmentsSection = ({
         <ul className="space-y-3">
           {courseMaterials.map((material, idx) => (
             <li 
-              key={material.id} 
+              key={material.id || idx} 
               className="flex justify-between items-center p-4 border rounded-lg hover:bg-gray-50 
                 transition-all duration-300 ease-in-out 
                 shadow-sm hover:shadow-md animate-in fade-in duration-300"
               style={{ animationDelay: `${idx * 100}ms` }}
             >
               <div className="flex items-center gap-2">
-                <File size={18} className="text-gray-600" />
+                {getFileIcon(material.name)}
                 <span className="font-semibold">{material.name}</span>
               </div>
               <Button
