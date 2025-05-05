@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import {
   Card,
@@ -118,16 +117,7 @@ export const CourseOutlineEditor = ({
     setSaveSuccess(false);
     
     try {
-      // 添加课程级别的学习控制设置
-      const outlineData = {
-        sections: managedSections,
-        settings: {
-          requiresSequentialLearning,
-          requiresHomeworkCompletion
-        }
-      };
-      
-      const { success, error } = await saveCourseOutline(courseId, outlineData);
+      const { success, error } = await saveCourseOutline(courseId, managedSections);
       
       if (!success) {
         throw error || new Error("保存失败");
