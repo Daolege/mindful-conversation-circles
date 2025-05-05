@@ -9,6 +9,30 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      _migrations: {
+        Row: {
+          executed_at: string | null
+          id: number
+          name: string | null
+          sql: string | null
+          success: boolean | null
+        }
+        Insert: {
+          executed_at?: string | null
+          id?: number
+          name?: string | null
+          sql?: string | null
+          success?: boolean | null
+        }
+        Update: {
+          executed_at?: string | null
+          id?: number
+          name?: string | null
+          sql?: string | null
+          success?: boolean | null
+        }
+        Relationships: []
+      }
       about_page_settings: {
         Row: {
           id: string
@@ -896,7 +920,7 @@ export type Database = {
             foreignKeyName: "homework_course_id_fkey"
             columns: ["course_id"]
             isOneToOne: false
-            referencedRelation: "courses"
+            referencedRelation: "courses_new"
             referencedColumns: ["id"]
           },
         ]
@@ -951,7 +975,7 @@ export type Database = {
             foreignKeyName: "homework_submissions_course_id_fkey"
             columns: ["course_id"]
             isOneToOne: false
-            referencedRelation: "courses"
+            referencedRelation: "courses_new"
             referencedColumns: ["id"]
           },
           {
