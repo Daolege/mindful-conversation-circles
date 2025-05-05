@@ -1,9 +1,17 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
-import { MessageSquare, ExternalLink, Link as LinkIcon, Image } from 'lucide-react';
+import { MessageSquare, ExternalLink, Link as LinkIcon, Image, Facebook, Instagram, Twitter } from 'lucide-react';
 import { getEnrollmentGuides } from '@/lib/services/courseEnrollmentGuidesService';
 import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogClose
+} from "@/components/ui/dialog";
 
 // Define the props for the component
 interface EnrollmentGuidesDisplayProps {
@@ -20,6 +28,7 @@ const sampleGuides = [
     guide_type: "wechat",
     image_url: "/lovable-uploads/c2529a3e-ae24-4a84-8d08-21731ee81c2e.png",
     position: 1,
+    is_visible_on_payment_success: true
   },
   {
     id: "2",
@@ -30,6 +39,7 @@ const sampleGuides = [
     guide_type: "telegram",
     image_url: "/lovable-uploads/8793137a-dcfb-409f-a3de-f330a902b9d2.png",
     position: 2,
+    is_visible_on_payment_success: true
   },
   {
     id: "3",
@@ -39,6 +49,7 @@ const sampleGuides = [
     link: "https://example.com/resources",
     guide_type: "other",
     position: 3,
+    is_visible_on_payment_success: true
   }
 ];
 
@@ -46,6 +57,7 @@ const EnrollmentGuidesDisplay = ({ courseId }: EnrollmentGuidesDisplayProps) => 
   const [guides, setGuides] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedImage, setSelectedImage] = useState(null);
 
   useEffect(() => {
     const fetchGuides = async () => {
@@ -59,8 +71,10 @@ const EnrollmentGuidesDisplay = ({ courseId }: EnrollmentGuidesDisplayProps) => 
         // const { data, error } = await getEnrollmentGuides(Number(courseId));
         
         // For now, we'll use sample data
+        // Filter guides that should be visible on payment success page
         setTimeout(() => {
-          setGuides(sampleGuides);
+          const visibleGuides = sampleGuides.filter(guide => guide.is_visible_on_payment_success);
+          setGuides(visibleGuides);
           setLoading(false);
         }, 300);
       } catch (err) {
@@ -84,6 +98,12 @@ const EnrollmentGuidesDisplay = ({ courseId }: EnrollmentGuidesDisplayProps) => 
         return <MessageSquare className="h-5 w-5 text-green-600" />;
       case 'qq':
         return <MessageSquare className="h-5 w-5 text-blue-400" />;
+      case 'facebook':
+        return <Facebook className="h-5 w-5 text-blue-600" />;
+      case 'instagram':
+        return <Instagram className="h-5 w-5 text-pink-500" />;
+      case 'twitter':
+        return <Twitter className="h-5 w-5 text-blue-400" />;
       default:
         return <LinkIcon className="h-5 w-5 text-gray-500" />;
     }
@@ -99,11 +119,11 @@ const EnrollmentGuidesDisplay = ({ courseId }: EnrollmentGuidesDisplayProps) => 
   }
 
   return (
-    <div className="mt-8">
+    <div className="mt-4 w-full">
       <h2 className="text-lg font-semibold mb-4">课程学习指南</h2>
-      <div className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {guides.map((guide) => (
-          <Card key={guide.id} className="overflow-hidden">
+          <Card key={guide.id} className="overflow-hidden hover:shadow-lg transition-shadow duration-300">
             <CardContent className="p-5">
               <div className="flex items-start gap-4">
                 <div className="flex-shrink-0 mt-1">
@@ -115,27 +135,33 @@ const EnrollmentGuidesDisplay = ({ courseId }: EnrollmentGuidesDisplayProps) => 
                   
                   {guide.image_url && (
                     <div className="mt-3">
-                      <div className="border rounded-md inline-block p-2 bg-gray-50">
+                      <div 
+                        className="border rounded-md inline-block p-2 bg-gray-50 cursor-pointer hover:bg-gray-100 transition-all"
+                        onClick={() => setSelectedImage({ src: guide.image_url, title: guide.title })}
+                      >
                         <img 
                           src={guide.image_url} 
                           alt={`${guide.title} QR Code`} 
                           className="max-w-[150px] max-h-[150px] object-contain"
                         />
+                        <p className="text-xs text-center text-gray-500 mt-1">点击二维码放大</p>
                       </div>
                     </div>
                   )}
                   
                   {guide.link && (
                     <div className="mt-3">
-                      <a 
-                        href={guide.link} 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
-                        className="text-blue-500 hover:underline inline-flex items-center gap-1"
+                      <Button 
+                        variant="outline" 
+                        className="flex items-center gap-2 hover:bg-[#0f172a] hover:text-white"
+                        asChild
                       >
-                        <ExternalLink className="h-4 w-4" />
-                        打开链接
-                      </a>
+                        <a href={guide.link} target="_blank" rel="noopener noreferrer">
+                          {getGuideIcon(guide.guide_type)}
+                          <span>打开{guide.title}</span>
+                          <ExternalLink className="h-4 w-4 ml-1" />
+                        </a>
+                      </Button>
                     </div>
                   )}
                 </div>
@@ -144,6 +170,30 @@ const EnrollmentGuidesDisplay = ({ courseId }: EnrollmentGuidesDisplayProps) => 
           </Card>
         ))}
       </div>
+
+      {/* QR Code Enlargement Dialog */}
+      <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{selectedImage?.title} 二维码</DialogTitle>
+          </DialogHeader>
+          {selectedImage && (
+            <div className="flex flex-col items-center justify-center p-4">
+              <img 
+                src={selectedImage.src} 
+                alt={`${selectedImage.title} QR Code`} 
+                className="max-w-full max-h-[400px] object-contain"
+              />
+              <p className="text-sm text-gray-500 mt-4">保存图片或截图后可在相应应用中扫描</p>
+            </div>
+          )}
+          <div className="mt-4 flex justify-center">
+            <DialogClose asChild>
+              <Button variant="secondary">关闭</Button>
+            </DialogClose>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

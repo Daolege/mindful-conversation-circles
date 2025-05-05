@@ -6,7 +6,7 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { CheckCircle, Download } from "lucide-react";
+import { CheckCircle, Download, ChevronLeft } from "lucide-react";
 import { toast } from 'sonner';
 import { useTranslations } from "@/hooks/useTranslations";
 import EnrollmentGuidesDisplay from '@/components/checkout/EnrollmentGuidesDisplay';
@@ -52,86 +52,108 @@ const PaymentSuccess = () => {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       <main className="flex-grow container mx-auto px-4 py-8">
-        <div className="max-w-3xl mx-auto">
-          <Card className="p-8">
-            <div className="text-center mb-8">
-              <div className="flex justify-center mb-4">
-                <CheckCircle className="h-16 w-16 text-green-500" />
-              </div>
-              <h1 className="text-2xl font-bold mb-2">{t('checkout:paymentSuccess')}</h1>
-              <p className="text-gray-500">{t('checkout:paymentCompleted')}</p>
-              <Button className="mt-6 w-full bg-[#0f172a] hover:bg-[#1e293b] text-white h-12 text-base font-medium" asChild>
-                <Link to={learningUrl}>{t('courses:startLearning')} ›</Link>
-              </Button>
-              <p className="mt-2 text-sm text-gray-500">{t('courses:enrolledCoursesInDashboard')}</p>
+        <div className="max-w-7xl mx-auto">
+          {/* Page Header */}
+          <div className="text-center mb-6">
+            <div className="flex justify-center mb-4">
+              <CheckCircle className="h-16 w-16 text-green-500" />
             </div>
+            <h1 className="text-2xl font-bold mb-2">{t('checkout:paymentSuccess')}</h1>
+            <p className="text-gray-500">{t('checkout:paymentCompleted')}</p>
+          </div>
 
-            <div className="space-y-6">
-              <div className="flex justify-between items-center">
-                <h2 className="text-lg font-semibold">{t('checkout:paymentCompleted')}</h2>
-                <Button variant="outline" size="sm">
-                  <Download className="h-4 w-4 mr-2" />
-                  {t('checkout:downloadReceipt')}
+          {/* Two-column Layout */}
+          <div className="flex flex-col lg:flex-row gap-6">
+            {/* Left Column - Primary Content */}
+            <div className="w-full lg:w-2/3">
+              <Card className="p-6 mb-6 animate-fade-in">
+                <div className="mb-6">
+                  <h2 className="text-xl font-semibold mb-4">{t('checkout:startYourLearning')}</h2>
+                  <Button className="w-full bg-[#0f172a] hover:bg-[#1e293b] text-white h-12 text-base font-medium animate-pulse" asChild>
+                    <Link to={learningUrl}>{t('courses:startLearning')} ›</Link>
+                  </Button>
+                  <p className="mt-2 text-sm text-gray-500 text-center">{t('courses:enrolledCoursesInDashboard')}</p>
+                </div>
+                <Separator className="my-6" />
+                
+                {/* Enrollment Guides Display */}
+                <EnrollmentGuidesDisplay courseId={courseId} />
+              </Card>
+                
+              <div className="flex justify-between items-center mt-6">
+                <Button variant="outline" size="sm" className="flex items-center gap-1" asChild>
+                  <Link to="/courses">
+                    <ChevronLeft className="h-4 w-4" />
+                    {t('checkout:viewMoreCourses')}
+                  </Link>
+                </Button>
+                <Button variant="outline" size="sm" asChild>
+                  <Link to="/">
+                    {t('common:backToHome')}
+                  </Link>
                 </Button>
               </div>
+            </div>
+            
+            {/* Right Column - Order Details */}
+            <div className="w-full lg:w-1/3">
+              <Card className="p-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-lg font-semibold">{t('checkout:orderDetails')}</h2>
+                  <Button variant="outline" size="sm">
+                    <Download className="h-4 w-4 mr-2" />
+                    {t('checkout:downloadReceipt')}
+                  </Button>
+                </div>
 
-              <div className="space-y-4">
-                <div className="flex justify-between py-2">
-                  <span className="text-gray-600">{t('checkout:orderNumber')}</span>
-                  <span>{orderDetails.orderId}</span>
+                <div className="space-y-3">
+                  <div className="flex justify-between py-2 border-b">
+                    <span className="text-gray-600">{t('checkout:orderNumber')}</span>
+                    <span className="font-medium">{orderDetails.orderId}</span>
+                  </div>
+                  <div className="flex justify-between py-2 border-b">
+                    <span className="text-gray-600">{t('checkout:orderType')}</span>
+                    <span>{orderDetails.orderType}</span>
+                  </div>
+                  <div className="flex justify-between py-2 border-b">
+                    <span className="text-gray-600">{t('checkout:userEmail')}</span>
+                    <span>{orderDetails.userEmail}</span>
+                  </div>
+                  <div className="flex justify-between py-2 border-b">
+                    <span className="text-gray-600">{t('checkout:paymentDate')}</span>
+                    <span>{orderDetails.paymentDate}</span>
+                  </div>
+                  <div className="flex justify-between py-2 border-b">
+                    <span className="text-gray-600">{t('checkout:paymentAmount')}</span>
+                    <span className="font-semibold">{orderDetails.amount}</span>
+                  </div>
+                  <div className="flex justify-between py-2 border-b">
+                    <span className="text-gray-600">{t('checkout:paymentMethod')}</span>
+                    <span>{orderDetails.paymentMethod}</span>
+                  </div>
+                  <div className="flex justify-between py-2 border-b">
+                    <span className="text-gray-600">{t('checkout:paymentStatus')}</span>
+                    <span className="text-green-500">{orderDetails.paymentStatus}</span>
+                  </div>
+                  <div className="flex justify-between py-2 border-b">
+                    <span className="text-gray-600">{t('checkout:courseId')}</span>
+                    <span>{courseId}</span>
+                  </div>
+                  <div className="flex justify-between py-2">
+                    <span className="text-gray-600">{t('checkout:courseType')}</span>
+                    <span>{isNewCourse ? t('checkout:newCourseSystem') : t('checkout:standardCourse')}</span>
+                  </div>
                 </div>
-                <div className="flex justify-between py-2">
-                  <span className="text-gray-600">{t('checkout:orderType')}</span>
-                  <span>{orderDetails.orderType}</span>
-                </div>
-                <div className="flex justify-between py-2">
-                  <span className="text-gray-600">{t('checkout:userEmail')}</span>
-                  <span>{orderDetails.userEmail}</span>
-                </div>
-                <div className="flex justify-between py-2">
-                  <span className="text-gray-600">{t('checkout:paymentDate')}</span>
-                  <span>{orderDetails.paymentDate}</span>
-                </div>
-                <div className="flex justify-between py-2">
-                  <span className="text-gray-600">{t('checkout:paymentAmount')}</span>
-                  <span>{orderDetails.amount}</span>
-                </div>
-                <div className="flex justify-between py-2">
-                  <span className="text-gray-600">{t('checkout:paymentMethod')}</span>
-                  <span>{orderDetails.paymentMethod}</span>
-                </div>
-                <div className="flex justify-between py-2">
-                  <span className="text-gray-600">{t('checkout:paymentStatus')}</span>
-                  <span className="text-green-500">{orderDetails.paymentStatus}</span>
-                </div>
-                <div className="flex justify-between py-2">
-                  <span className="text-gray-600">{t('checkout:courseId')}</span>
-                  <span>{courseId}</span>
-                </div>
-                <div className="flex justify-between py-2">
-                  <span className="text-gray-600">{t('checkout:courseType')}</span>
-                  <span>{isNewCourse ? t('checkout:newCourseSystem') : t('checkout:standardCourse')}</span>
-                </div>
-              </div>
 
-              <Separator />
-              
-              {/* Enrollment Guides Display Section */}
-              <EnrollmentGuidesDisplay courseId={courseId} />
+                <Separator className="my-4" />
 
-              <Separator />
-
-              <div className="text-center space-y-4">
-                <Button variant="outline" className="w-full" asChild>
-                  <Link to="/courses">{t('checkout:viewMoreCourses')}</Link>
-                </Button>
-                <div className="text-sm text-gray-500">
+                <div className="text-sm text-gray-500 text-center space-y-2">
                   <p>{t('checkout:contactCustomerService')}</p>
                   <p>{t('checkout:contactEmail')}</p>
                 </div>
-              </div>
+              </Card>
             </div>
-          </Card>
+          </div>
         </div>
       </main>
       <Footer />
