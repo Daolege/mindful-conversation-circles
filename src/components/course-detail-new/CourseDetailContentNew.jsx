@@ -1,6 +1,5 @@
 
 import React, { Suspense } from 'react';
-import { CourseWithDetails } from '@/lib/types/course-new';
 import { useVisibilityTracking } from '@/hooks/useVisibilityTracking';
 import CourseDetailErrorBoundary from './CourseDetailErrorBoundary';
 import { Skeleton } from '@/components/ui/skeleton';
