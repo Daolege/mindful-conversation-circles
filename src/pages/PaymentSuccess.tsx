@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { CheckCircle, Download } from "lucide-react";
 import { toast } from 'sonner';
 import { useTranslations } from "@/hooks/useTranslations";
+import EnrollmentGuidesDisplay from '@/components/checkout/EnrollmentGuidesDisplay';
 
 const PaymentSuccess = () => {
   const location = useLocation();
@@ -112,6 +113,11 @@ const PaymentSuccess = () => {
                   <span>{isNewCourse ? t('checkout:newCourseSystem') : t('checkout:standardCourse')}</span>
                 </div>
               </div>
+
+              <Separator />
+              
+              {/* Enrollment Guides Display Section */}
+              <EnrollmentGuidesDisplay courseId={courseId} />
 
               <Separator />
 
