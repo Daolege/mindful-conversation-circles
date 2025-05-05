@@ -10,7 +10,9 @@ import {
   X, 
   GripVertical, 
   Video,
-  BookOpen
+  BookOpen,
+  Check,
+  Square
 } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -196,7 +198,7 @@ export const LectureItem = ({
             {!isEditing ? (
               <>
                 <Button 
-                  variant="outline" 
+                  variant={hasVideo ? "default" : "outline"} 
                   size="sm" 
                   onClick={toggleVideoUploader} 
                   className="h-8 px-2"
@@ -204,7 +206,7 @@ export const LectureItem = ({
                   <Video 
                     className={cn(
                       "h-4 w-4 mr-1",
-                      hasVideo ? "fill-[#262626] text-[#262626]" : ""
+                      hasVideo ? "text-white" : ""
                     )} 
                   />
                   {hasVideo ? "视频已传" : "上传视频"}
@@ -220,20 +222,19 @@ export const LectureItem = ({
                   作业
                 </Button>
                 
-                <div className="flex items-center ml-2">
-                  <Checkbox
-                    id={`lecture-free-${id}`}
-                    checked={localIsFree}
-                    onCheckedChange={handleIsFreeChange}
-                    className="mr-1"
-                  />
-                  <label 
-                    htmlFor={`lecture-free-${id}`}
-                    className="text-xs cursor-pointer"
-                  >
-                    免费
-                  </label>
-                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => handleIsFreeChange(!localIsFree)} 
+                  className="h-8 px-2 ml-2"
+                >
+                  {localIsFree ? (
+                    <Check className="h-4 w-4 mr-1 border rounded text-primary" style={{ borderColor: '#595959' }} />
+                  ) : (
+                    <Square className="h-4 w-4 mr-1" />
+                  )}
+                  免费
+                </Button>
                 
                 <Button
                   size="icon"
