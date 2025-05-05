@@ -134,15 +134,16 @@ export const uploadCourseMaterial = async (
       });
       
     if (uploadError) {
-      console.error(`[uploadCourseMaterial] 上传错误: 代码=${uploadError.code}, 消息="${uploadError.message}"`);
+      console.error(`[uploadCourseMaterial] 上传错误: 消息="${uploadError.message}"`);
       console.error('[uploadCourseMaterial] 详细错误信息:', uploadError);
       
       // 提供更具体的错误消息
       let errorMessage = `文件上传失败: ${uploadError.message}`;
       
-      if (uploadError.code === '404') {
+      // 根据错误信息提供更具体的错误提示
+      if (uploadError.message?.includes('404')) {
         errorMessage = '存储桶未找到，请联系管理员检查"course-files"存储桶是否存在';
-      } else if (uploadError.code === '403') {
+      } else if (uploadError.message?.includes('403')) {
         errorMessage = '无权访问存储桶，请检查存储权限设置';
       } else if (uploadError.message?.includes('Invalid key')) {
         errorMessage = '文件路径无效，可能是文件名包含特殊字符或编码问题';
