@@ -69,7 +69,8 @@ export const saveHomework = async (homeworkData: any): Promise<HomeworkResult> =
       lecture_id: homeworkData.lecture_id,
       course_id: homeworkData.course_id,
       course_id_type: typeof homeworkData.course_id,
-      title: homeworkData.title
+      title: homeworkData.title,
+      position: homeworkData.position || 0 // Log position value
     });
     
     // Validate course_id is a number
@@ -86,6 +87,17 @@ export const saveHomework = async (homeworkData: any): Promise<HomeworkResult> =
       throw error;
     }
     
+    // Prepare data for saving
+    const dataToSave = {
+      lecture_id: homeworkData.lecture_id,
+      course_id: homeworkData.course_id,
+      title: homeworkData.title,
+      type: homeworkData.type,
+      options: homeworkData.options,
+      position: homeworkData.position || 0, // Ensure position is included
+      image_url: homeworkData.image_url || null
+    };
+    
     const { id } = homeworkData;
     let result;
     
@@ -94,7 +106,7 @@ export const saveHomework = async (homeworkData: any): Promise<HomeworkResult> =
       console.log("Updating existing homework ID:", id);
       result = await supabase
         .from('homework')
-        .update(homeworkData)
+        .update(dataToSave)
         .eq('id', id)
         .select();
     } else {
@@ -102,7 +114,7 @@ export const saveHomework = async (homeworkData: any): Promise<HomeworkResult> =
       console.log("Inserting new homework");
       result = await supabase
         .from('homework')
-        .insert(homeworkData)
+        .insert(dataToSave)
         .select();
     }
     
