@@ -34,7 +34,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
   
   const [isOutlineLoading, setIsOutlineLoading] = useState(true);
   
-  // Add state for tracking hovered card
+  // Add state for tracking hovered card and adjacent cards
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
   
   React.useEffect(() => {
@@ -249,61 +249,72 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
         </CardContent>
       </Card>
 
-      {/* 学习信息栏 - 三栏布局 - 全新3D悬浮卡片设计 */}
+      {/* 学习信息栏 - 三栏布局 - 增强3D悬浮卡片设计 */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 perspective-1000">
         {/* 学习目标 */}
         <div 
-          className={`transform transition-all duration-500 ${hoveredCard === 'objectives' ? 'scale-105 -rotate-1 z-10' : hoveredCard ? 'scale-95 opacity-80' : ''}`}
+          className={`transform transition-all duration-700 ${
+            hoveredCard === 'objectives' 
+            ? 'scale-105 rotate-2 z-20 translate-y-[-10px]' 
+            : hoveredCard === 'requirements' || hoveredCard === 'audience' 
+              ? 'scale-95 opacity-80 translate-y-[5px] rotate-[-1deg]'
+              : ''
+          }`}
           onMouseEnter={() => setHoveredCard('objectives')}
           onMouseLeave={() => setHoveredCard(null)}
         >
-          <div className="relative overflow-hidden rounded-lg border border-gray-200 shadow-lg group 
-                        hover:shadow-2xl transition-all duration-500 animate-in fade-in preserve-3d">
+          <div className="relative overflow-visible rounded-lg border border-gray-200 bg-white shadow-lg group 
+                        hover:shadow-2xl transition-all duration-700 animate-in fade-in preserve-3d">
             {/* 顶部边框装饰 */}
             <div className="absolute top-0 left-0 w-full h-1 bg-gray-300"></div>
             
-            {/* 图标 - 居中并完整显示于卡片上边框 */}
-            <div className="absolute left-0 right-0 mx-auto -top-10 flex justify-center transform transition-all duration-500 
-                         group-hover:scale-110 group-hover:-translate-y-1 group-hover:rotate-12">
-              <div className="w-20 h-20 bg-gray-100 rounded-full border-4 border-white shadow-lg 
-                          flex items-center justify-center overflow-visible z-10">
-                <Target className="h-10 w-10 text-gray-700" />
+            {/* 图标 - 完全显示于顶部边框位置，不被遮挡 */}
+            <div className="absolute left-0 right-0 mx-auto -top-12 flex justify-center transform transition-all duration-700 
+                         group-hover:scale-110 group-hover:-translate-y-1 group-hover:rotate-12 z-10">
+              <div className="w-24 h-24 bg-gray-100 rounded-full border-4 border-white shadow-lg 
+                          flex items-center justify-center overflow-visible">
+                <Target className="h-12 w-12 text-gray-700" />
               </div>
             </div>
             
-            <div className="pt-16 pb-6 px-6">
-              {/* 标题居中 */}
-              <h3 className="text-xl font-bold text-center text-gray-800 mb-6 mt-2 transition-all duration-300
-                          group-hover:text-black group-hover:scale-105">
-                {t('courses:learningObjectives')}
-              </h3>
+            <div className="pb-6 pt-20">
+              {/* 标题带背景和封装效果 */}
+              <div className="bg-gray-50 py-3 px-4 mb-6 border-b border-gray-200">
+                <h3 className="text-xl font-bold text-center text-gray-800 transition-all duration-300
+                            group-hover:text-black group-hover:scale-105">
+                  {t('courses:learningObjectives')}
+                </h3>
+              </div>
               
-              {/* 分割线 */}
-              <div className="w-1/3 h-0.5 bg-gray-200 mx-auto mb-6 group-hover:w-2/3 transition-all duration-500"></div>
-              
-              {learningObjectives && learningObjectives.length > 0 ? (
-                <ul className="space-y-4">
-                  {learningObjectives.map((objective, index) => (
-                    <li 
-                      key={index} 
-                      className="flex items-start gap-3 transition-all duration-300 group-hover:translate-x-2 
-                              opacity-90 group-hover:opacity-100"
-                      style={{ animationDelay: `${index * 100}ms`, transitionDelay: `${index * 50}ms` }}
-                    >
-                      <div className="mt-0.5 bg-gray-100 rounded-full p-1 flex-shrink-0 text-gray-700 shadow-sm 
-                                    group-hover:bg-gray-200 transition-all duration-300
-                                    group-hover:scale-110 group-hover:rotate-12">
-                        <CheckCircle className="h-4 w-4" />
-                      </div>
-                      <span className="text-gray-700 font-medium group-hover:font-semibold transition-all duration-300">
-                        {objective}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <div className="text-gray-500 italic text-center">{t('courses:noObjectives')}</div>
-              )}
+              <div className="px-6">
+                {learningObjectives && learningObjectives.length > 0 ? (
+                  <ul className="space-y-4">
+                    {learningObjectives.map((objective, index) => (
+                      <li 
+                        key={index} 
+                        className="flex items-start gap-3 transition-all duration-500 
+                                opacity-90 group-hover:opacity-100"
+                        style={{ 
+                          animationDelay: `${index * 100}ms`, 
+                          transitionDelay: `${index * 50}ms`,
+                          transform: hoveredCard === 'objectives' ? 'translateX(10px)' : 'translateX(0)'
+                        }}
+                      >
+                        <div className="mt-0.5 bg-gray-100 rounded-full p-1 flex-shrink-0 text-gray-700 shadow-sm 
+                                      group-hover:bg-gray-200 transition-all duration-500
+                                      group-hover:scale-110 group-hover:rotate-12">
+                          <CheckCircle className="h-4 w-4" />
+                        </div>
+                        <span className="text-gray-700 font-medium group-hover:font-semibold transition-all duration-300">
+                          {objective}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className="text-gray-500 italic text-center">{t('courses:noObjectives')}</div>
+                )}
+              </div>
             </div>
             
             {/* 底部装饰 */}
@@ -313,57 +324,68 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
 
         {/* 课程要求 */}
         <div 
-          className={`transform transition-all duration-500 ${hoveredCard === 'requirements' ? 'scale-105 rotate-1 z-10' : hoveredCard ? 'scale-95 opacity-80' : ''}`}
+          className={`transform transition-all duration-700 ${
+            hoveredCard === 'requirements' 
+            ? 'scale-105 rotate-[-2deg] z-20 translate-y-[-10px]' 
+            : hoveredCard === 'objectives' || hoveredCard === 'audience' 
+              ? 'scale-95 opacity-80 translate-y-[5px] rotate-[1deg]'
+              : ''
+          }`}
           onMouseEnter={() => setHoveredCard('requirements')}
           onMouseLeave={() => setHoveredCard(null)}
         >
-          <div className="relative overflow-hidden rounded-lg border border-gray-200 shadow-lg group 
-                        hover:shadow-2xl transition-all duration-500 animate-in fade-in preserve-3d">
+          <div className="relative overflow-visible rounded-lg border border-gray-200 bg-white shadow-lg group 
+                        hover:shadow-2xl transition-all duration-700 animate-in fade-in preserve-3d">
             {/* 顶部边框装饰 */}
             <div className="absolute top-0 left-0 w-full h-1 bg-gray-300"></div>
             
-            {/* 图标 - 居中并完整显示于卡片上边框 */}
-            <div className="absolute left-0 right-0 mx-auto -top-10 flex justify-center transform transition-all duration-500 
-                         group-hover:scale-110 group-hover:-translate-y-1 group-hover:-rotate-12">
-              <div className="w-20 h-20 bg-gray-100 rounded-full border-4 border-white shadow-lg 
-                          flex items-center justify-center overflow-visible z-10">
-                <Book className="h-10 w-10 text-gray-700" />
+            {/* 图标 - 完全显示于顶部边框位置，不被遮挡 */}
+            <div className="absolute left-0 right-0 mx-auto -top-12 flex justify-center transform transition-all duration-700 
+                         group-hover:scale-110 group-hover:-translate-y-1 group-hover:rotate-[-12deg] z-10">
+              <div className="w-24 h-24 bg-gray-100 rounded-full border-4 border-white shadow-lg 
+                          flex items-center justify-center overflow-visible">
+                <Book className="h-12 w-12 text-gray-700" />
               </div>
             </div>
             
-            <div className="pt-16 pb-6 px-6">
-              {/* 标题居中 */}
-              <h3 className="text-xl font-bold text-center text-gray-800 mb-6 mt-2 transition-all duration-300
-                          group-hover:text-black group-hover:scale-105">
-                {t('courses:requirements')}
-              </h3>
+            <div className="pb-6 pt-20">
+              {/* 标题带背景和封装效果 */}
+              <div className="bg-gray-50 py-3 px-4 mb-6 border-b border-gray-200">
+                <h3 className="text-xl font-bold text-center text-gray-800 transition-all duration-300
+                            group-hover:text-black group-hover:scale-105">
+                  {t('courses:requirements')}
+                </h3>
+              </div>
               
-              {/* 分割线 */}
-              <div className="w-1/3 h-0.5 bg-gray-200 mx-auto mb-6 group-hover:w-2/3 transition-all duration-500"></div>
-              
-              {requirements && requirements.length > 0 ? (
-                <ul className="space-y-4">
-                  {requirements.map((requirement, index) => (
-                    <li 
-                      key={index} 
-                      className="flex items-start gap-3 transition-all duration-300 group-hover:translate-x-2 
-                              opacity-90 group-hover:opacity-100"
-                      style={{ animationDelay: `${index * 100}ms`, transitionDelay: `${index * 50}ms` }}
-                    >
-                      <div className="mt-0.5 bg-gray-100 rounded-full p-1 flex-shrink-0 text-gray-700 shadow-sm 
-                                    group-hover:bg-gray-200 transition-all duration-300
-                                    group-hover:scale-110 group-hover:rotate-12">
-                        <BookOpen className="h-4 w-4" />
-                      </div>
-                      <span className="text-gray-700 font-medium group-hover:font-semibold transition-all duration-300">
-                        {requirement}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <div className="text-gray-500 italic text-center">{t('courses:noRequirements')}</div>
-              )}
+              <div className="px-6">
+                {requirements && requirements.length > 0 ? (
+                  <ul className="space-y-4">
+                    {requirements.map((requirement, index) => (
+                      <li 
+                        key={index} 
+                        className="flex items-start gap-3 transition-all duration-500 
+                                opacity-90 group-hover:opacity-100"
+                        style={{ 
+                          animationDelay: `${index * 100}ms`, 
+                          transitionDelay: `${index * 50}ms`,
+                          transform: hoveredCard === 'requirements' ? 'translateX(10px)' : 'translateX(0)'
+                        }}
+                      >
+                        <div className="mt-0.5 bg-gray-100 rounded-full p-1 flex-shrink-0 text-gray-700 shadow-sm 
+                                      group-hover:bg-gray-200 transition-all duration-500
+                                      group-hover:scale-110 group-hover:rotate-[-12deg]">
+                          <BookOpen className="h-4 w-4" />
+                        </div>
+                        <span className="text-gray-700 font-medium group-hover:font-semibold transition-all duration-300">
+                          {requirement}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className="text-gray-500 italic text-center">{t('courses:noRequirements')}</div>
+                )}
+              </div>
             </div>
             
             {/* 底部装饰 */}
@@ -373,57 +395,68 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
 
         {/* 适合人群 */}
         <div 
-          className={`transform transition-all duration-500 ${hoveredCard === 'audience' ? 'scale-105 -rotate-1 z-10' : hoveredCard ? 'scale-95 opacity-80' : ''}`}
+          className={`transform transition-all duration-700 ${
+            hoveredCard === 'audience' 
+            ? 'scale-105 rotate-2 z-20 translate-y-[-10px]' 
+            : hoveredCard === 'objectives' || hoveredCard === 'requirements' 
+              ? 'scale-95 opacity-80 translate-y-[5px] rotate-[-1deg]'
+              : ''
+          }`}
           onMouseEnter={() => setHoveredCard('audience')}
           onMouseLeave={() => setHoveredCard(null)}
         >
-          <div className="relative overflow-hidden rounded-lg border border-gray-200 shadow-lg group 
-                        hover:shadow-2xl transition-all duration-500 animate-in fade-in preserve-3d">
+          <div className="relative overflow-visible rounded-lg border border-gray-200 bg-white shadow-lg group 
+                        hover:shadow-2xl transition-all duration-700 animate-in fade-in preserve-3d">
             {/* 顶部边框装饰 */}
             <div className="absolute top-0 left-0 w-full h-1 bg-gray-300"></div>
             
-            {/* 图标 - 居中并完整显示于卡片上边框 */}
-            <div className="absolute left-0 right-0 mx-auto -top-10 flex justify-center transform transition-all duration-500 
-                         group-hover:scale-110 group-hover:-translate-y-1 group-hover:rotate-12">
-              <div className="w-20 h-20 bg-gray-100 rounded-full border-4 border-white shadow-lg 
-                          flex items-center justify-center overflow-visible z-10">
-                <Users className="h-10 w-10 text-gray-700" />
+            {/* 图标 - 完全显示于顶部边框位置，不被遮挡 */}
+            <div className="absolute left-0 right-0 mx-auto -top-12 flex justify-center transform transition-all duration-700 
+                         group-hover:scale-110 group-hover:-translate-y-1 group-hover:rotate-12 z-10">
+              <div className="w-24 h-24 bg-gray-100 rounded-full border-4 border-white shadow-lg 
+                          flex items-center justify-center overflow-visible">
+                <Users className="h-12 w-12 text-gray-700" />
               </div>
             </div>
             
-            <div className="pt-16 pb-6 px-6">
-              {/* 标题居中 */}
-              <h3 className="text-xl font-bold text-center text-gray-800 mb-6 mt-2 transition-all duration-300
-                          group-hover:text-black group-hover:scale-105">
-                {t('courses:targetAudience')}
-              </h3>
+            <div className="pb-6 pt-20">
+              {/* 标题带背景和封装效果 */}
+              <div className="bg-gray-50 py-3 px-4 mb-6 border-b border-gray-200">
+                <h3 className="text-xl font-bold text-center text-gray-800 transition-all duration-300
+                            group-hover:text-black group-hover:scale-105">
+                  {t('courses:targetAudience')}
+                </h3>
+              </div>
               
-              {/* 分割线 */}
-              <div className="w-1/3 h-0.5 bg-gray-200 mx-auto mb-6 group-hover:w-2/3 transition-all duration-500"></div>
-              
-              {targetAudience && targetAudience.length > 0 ? (
-                <ul className="space-y-4">
-                  {targetAudience.map((audience, index) => (
-                    <li 
-                      key={index} 
-                      className="flex items-start gap-3 transition-all duration-300 group-hover:translate-x-2 
-                              opacity-90 group-hover:opacity-100"
-                      style={{ animationDelay: `${index * 100}ms`, transitionDelay: `${index * 50}ms` }}
-                    >
-                      <div className="mt-0.5 bg-gray-100 rounded-full p-1 flex-shrink-0 text-gray-700 shadow-sm 
-                                    group-hover:bg-gray-200 transition-all duration-300
-                                    group-hover:scale-110 group-hover:rotate-12">
-                        <Users className="h-4 w-4" />
-                      </div>
-                      <span className="text-gray-700 font-medium group-hover:font-semibold transition-all duration-300">
-                        {audience}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <div className="text-gray-500 italic text-center">{t('courses:suitableForEveryone')}</div>
-              )}
+              <div className="px-6">
+                {targetAudience && targetAudience.length > 0 ? (
+                  <ul className="space-y-4">
+                    {targetAudience.map((audience, index) => (
+                      <li 
+                        key={index} 
+                        className="flex items-start gap-3 transition-all duration-500 
+                                opacity-90 group-hover:opacity-100"
+                        style={{ 
+                          animationDelay: `${index * 100}ms`, 
+                          transitionDelay: `${index * 50}ms`,
+                          transform: hoveredCard === 'audience' ? 'translateX(10px)' : 'translateX(0)'
+                        }}
+                      >
+                        <div className="mt-0.5 bg-gray-100 rounded-full p-1 flex-shrink-0 text-gray-700 shadow-sm 
+                                      group-hover:bg-gray-200 transition-all duration-500
+                                      group-hover:scale-110 group-hover:rotate-12">
+                          <Users className="h-4 w-4" />
+                        </div>
+                        <span className="text-gray-700 font-medium group-hover:font-semibold transition-all duration-300">
+                          {audience}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className="text-gray-500 italic text-center">{t('courses:suitableForEveryone')}</div>
+                )}
+              </div>
             </div>
             
             {/* 底部装饰 */}
