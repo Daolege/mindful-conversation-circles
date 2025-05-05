@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,11 +17,13 @@ interface HomeworkSubmissionFormProps {
     image_url: string | null;
     lecture_id: string;
   };
+  courseId: string; // Add courseId prop to interface
+  lectureId: string; // Add lectureId prop to interface
   onSubmitSuccess: () => void;
   onCancel: () => void;
 }
 
-export const HomeworkSubmissionForm = ({ homework, onSubmitSuccess, onCancel }: HomeworkSubmissionFormProps) => {
+export const HomeworkSubmissionForm = ({ homework, courseId, lectureId, onSubmitSuccess, onCancel }: HomeworkSubmissionFormProps) => {
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [singleChoiceAnswer, setSingleChoiceAnswer] = useState<string | null>(null);
@@ -88,17 +91,14 @@ export const HomeworkSubmissionForm = ({ homework, onSubmitSuccess, onCancel }: 
         answer = textAnswer;
       }
       
-      const pathParts = location.pathname.split('/');
-      const courseIdIndex = pathParts.indexOf('courses-new') + 1;
-      let courseId = courseIdIndex > 0 && courseIdIndex < pathParts.length ? 
-        parseInt(pathParts[courseIdIndex]) : 
-        null;
+      // 使用通过props传入的courseId，而不是从URL解析
+      const numericCourseId = parseInt(courseId);
       
-      if (!courseId || isNaN(courseId)) {
-        console.error('无法从 URL 获取有效的课程ID', location.pathname);
-        courseId = null;
+      if (!numericCourseId || isNaN(numericCourseId)) {
+        console.error('无效的课程ID', courseId);
+        throw new Error('无效的课程ID');
       } else {
-        console.log('从URL解析的课程ID:', courseId);
+        console.log('使用传入的课程ID:', numericCourseId);
       }
       
       const { error } = await supabase
@@ -107,8 +107,8 @@ export const HomeworkSubmissionForm = ({ homework, onSubmitSuccess, onCancel }: 
           {
             user_id: user.id,
             homework_id: homework.id,
-            course_id: courseId,
-            lecture_id: homework.lecture_id,
+            course_id: numericCourseId,
+            lecture_id: lectureId, // 使用传入的lectureId
             answer: answer,
             file_url: fileUrl
           }
