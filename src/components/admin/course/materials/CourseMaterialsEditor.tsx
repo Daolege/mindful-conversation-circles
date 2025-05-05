@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Card, CardContent } from "@/components/ui/card";
@@ -39,6 +38,7 @@ import {
   updateMaterialOrder, 
   updateMaterialsVisibility 
 } from '@/lib/services/courseMaterialService';
+import { v4 as uuidv4 } from 'uuid';
 
 interface CourseMaterial {
   id: string;
@@ -149,6 +149,7 @@ export const CourseMaterialsEditor = ({ courseId }: CourseMaterialsEditorProps) 
   const [error, setError] = useState<string | null>(null);
   const [debugInfo, setDebugInfo] = useState<any>(null);
   const [debugMode, setDebugMode] = useState<boolean>(false);
+  const [showExampleData, setShowExampleData] = useState<boolean>(false);
   const { user } = useAuth();
   
   // Connect to the CourseEditorContext
@@ -187,6 +188,55 @@ export const CourseMaterialsEditor = ({ courseId }: CourseMaterialsEditorProps) 
       }
     }
   });
+
+  // 生成示例文件数据 - 新函数：创建硬编码的示例文件列表
+  const generateExampleMaterials = (): CourseMaterial[] => {
+    console.log("[CourseMaterialsEditor] 生成示例文件数据");
+    
+    // 创建各种类型的示例文件，覆盖常见文件类型
+    return [
+      {
+        id: `example-pdf-${uuidv4()}`,
+        name: "课程讲义.pdf",
+        url: "https://example.com/mock-file.pdf",
+        position: 0,
+        is_visible: true,
+        isMock: true
+      },
+      {
+        id: `example-docx-${uuidv4()}`,
+        name: "学习指南.docx",
+        url: "https://example.com/mock-file.docx",
+        position: 1,
+        is_visible: true,
+        isMock: true
+      },
+      {
+        id: `example-pptx-${uuidv4()}`,
+        name: "课程幻灯片.pptx",
+        url: "https://example.com/mock-file.pptx",
+        position: 2,
+        is_visible: true,
+        isMock: true
+      },
+      {
+        id: `example-xlsx-${uuidv4()}`,
+        name: "成绩统计表.xlsx",
+        url: "https://example.com/mock-file.xlsx",
+        position: 3,
+        is_visible: true,
+        isMock: true
+      },
+      {
+        id: `example-zip-${uuidv4()}`,
+        name: "课程资源包.zip",
+        url: "https://example.com/mock-file.zip",
+        position: 4,
+        is_visible: true,
+        isMock: true
+      }
+    ];
+  };
   
   // 检查存储桶是否已配置
   const checkStorageBuckets = async () => {
@@ -213,14 +263,7 @@ export const CourseMaterialsEditor = ({ courseId }: CourseMaterialsEditorProps) 
     }
   };
   
-  // Load course materials when component mounts
-  useEffect(() => {
-    fetchMaterials();
-    
-    // 检查存储桶配置
-    checkStorageBuckets();
-  }, [courseId]);
-  
+  // 加载或显示示例文件列表
   const fetchMaterials = async () => {
     if (!courseId) return;
     
@@ -228,12 +271,17 @@ export const CourseMaterialsEditor = ({ courseId }: CourseMaterialsEditorProps) 
     setError(null);
     
     try {
+      // 先尝试从数据库获取真实材料
+      console.log("[CourseMaterialsEditor] 从数据库获取课程材料，课程ID:", courseId);
       const { data, error } = await getCourseMaterials(courseId);
+      
       if (error) {
+        console.error("[CourseMaterialsEditor] 获取材料错误:", error);
         throw error;
       }
       
       const sortedMaterials = data?.sort((a, b) => a.position - b.position) || [];
+      console.log("[CourseMaterialsEditor] 获取到材料数量:", sortedMaterials.length);
       
       // 标记为模拟文件并过滤掉隐藏的材料（在课程详细页中）
       const processedMaterials = sortedMaterials.map(material => ({
@@ -241,7 +289,16 @@ export const CourseMaterialsEditor = ({ courseId }: CourseMaterialsEditorProps) 
         isMock: material.name?.includes('模拟') || material.url?.includes('fallback') || false
       }));
       
-      setMaterials(processedMaterials);
+      // 如果没有真实材料，使用示例材料或打开示例数据标志
+      if (processedMaterials.length === 0) {
+        console.log("[CourseMaterialsEditor] 没有找到真实材料，使用示例数据");
+        setShowExampleData(true);
+        setMaterials(generateExampleMaterials());
+      } else {
+        console.log("[CourseMaterialsEditor] 使用真实材料数据");
+        setShowExampleData(false);
+        setMaterials(processedMaterials);
+      }
       
       // 统计真实文件和模拟文件数量
       const realFiles = processedMaterials.filter(m => !m.isMock).length;
@@ -260,11 +317,24 @@ export const CourseMaterialsEditor = ({ courseId }: CourseMaterialsEditorProps) 
         });
       }
     } catch (err: any) {
-      console.error("Error fetching materials:", err);
+      console.error("[CourseMaterialsEditor] 获取材料失败:", err);
       setError(err.message || "无法加载课程附件");
+      
+      // 在出错时也显示示例数据，确保UI有内容显示
+      console.log("[CourseMaterialsEditor] 出错时使用示例数据");
+      setShowExampleData(true);
+      setMaterials(generateExampleMaterials());
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // 强制显示示例数据
+  const showExampleMaterials = () => {
+    console.log("[CourseMaterialsEditor] 手动显示示例材料");
+    setShowExampleData(true);
+    setMaterials(generateExampleMaterials());
+    toast.info("已显示示例文件列表", { description: "这些是用于展示的模拟文件" });
   };
 
   // Generate mock file for upload functionality - 改进错误处理
@@ -354,7 +424,8 @@ export const CourseMaterialsEditor = ({ courseId }: CourseMaterialsEditorProps) 
             isMock: isMockFile
           };
           
-          setMaterials(prev => [...prev, updatedData]);
+          // 不再手动更新状态，直接重新获取完整列表以确保数据一致
+          console.log('[CourseMaterialsEditor] 文件上传成功，刷新材料列表');
           
           if (isMockFile) {
             toast.info("模拟文件上传成功", { 
@@ -363,6 +434,9 @@ export const CourseMaterialsEditor = ({ courseId }: CourseMaterialsEditorProps) 
           } else {
             toast.success("文件上传成功", { description: file.name });
           }
+          
+          // 上传成功后重新获取材料列表
+          await fetchMaterials();
         }
       }
     } catch (err: any) {
@@ -386,6 +460,14 @@ export const CourseMaterialsEditor = ({ courseId }: CourseMaterialsEditorProps) 
   };
   
   const handleDelete = async (id: string) => {
+    // 检查是否是示例文件，如果是则只从本地状态中删除
+    if (id.startsWith('example-')) {
+      console.log("[CourseMaterialsEditor] 删除示例文件:", id);
+      setMaterials(prev => prev.filter(material => material.id !== id));
+      toast.success("示例文件已从列表中移除");
+      return;
+    }
+    
     try {
       const { error } = await deleteMaterial(id);
       
@@ -393,7 +475,9 @@ export const CourseMaterialsEditor = ({ courseId }: CourseMaterialsEditorProps) 
         throw error;
       }
       
-      setMaterials(prev => prev.filter(material => material.id !== id));
+      // 成功删除后重新获取文件列表
+      console.log("[CourseMaterialsEditor] 文件删除成功，刷新材料列表");
+      await fetchMaterials();
       toast.success("文件已删除");
     } catch (err: any) {
       console.error("Error deleting material:", err);
@@ -402,6 +486,18 @@ export const CourseMaterialsEditor = ({ courseId }: CourseMaterialsEditorProps) 
   };
   
   const handleNameChange = async (id: string, newName: string) => {
+    // 检查是否是示例文件，如果是则只更新本地状态
+    if (id.startsWith('example-')) {
+      console.log("[CourseMaterialsEditor] 更新示例文件名称:", id, newName);
+      setMaterials(prev => 
+        prev.map(material => 
+          material.id === id ? { ...material, name: newName } : material
+        )
+      );
+      toast.success("示例文件名已更新");
+      return;
+    }
+    
     // Update name in UI immediately for responsiveness
     setMaterials(prev => 
       prev.map(material => 
@@ -423,6 +519,8 @@ export const CourseMaterialsEditor = ({ courseId }: CourseMaterialsEditorProps) 
       }
       
       toast.success("文件名已更新");
+      // 成功更新后重新获取文件列表
+      await fetchMaterials();
     } catch (err: any) {
       console.error("Error updating material name:", err);
       toast.error("更新文件名失败");
@@ -432,6 +530,22 @@ export const CourseMaterialsEditor = ({ courseId }: CourseMaterialsEditorProps) 
   };
   
   const handleVisibilityChange = async (checked: boolean) => {
+    // 如果使用的是示例数据，只更新本地状态
+    if (showExampleData) {
+      console.log("[CourseMaterialsEditor] 更新示例数据可见性:", checked);
+      updateSectionVisibility({
+        ...sectionVisibility,
+        materials: checked
+      });
+      
+      setMaterials(prev => 
+        prev.map(material => ({ ...material, is_visible: checked }))
+      );
+      
+      toast.success(checked ? "示例附件已设为可见" : "示例附件已设为隐藏");
+      return;
+    }
+    
     // Update visibility in CourseEditorContext first for responsive UI
     updateSectionVisibility({
       ...sectionVisibility,
@@ -444,10 +558,8 @@ export const CourseMaterialsEditor = ({ courseId }: CourseMaterialsEditorProps) 
         
       if (error) throw error;
       
-      // Update local state
-      setMaterials(prev => 
-        prev.map(material => ({ ...material, is_visible: checked }))
-      );
+      // 成功更新后重新获取文件列表
+      await fetchMaterials();
       
       toast.success(checked ? "课程附件已设为可见" : "课程附件已设为隐藏");
     } catch (err: any) {
@@ -470,6 +582,13 @@ export const CourseMaterialsEditor = ({ courseId }: CourseMaterialsEditorProps) 
       );
       
       setMaterials(newMaterials);
+      
+      // 如果使用的是示例数据，不需要更新数据库
+      if (showExampleData) {
+        console.log("[CourseMaterialsEditor] 更新示例数据顺序");
+        toast.success("示例文件顺序已更新");
+        return;
+      }
       
       // Update in database
       try {
@@ -509,6 +628,14 @@ export const CourseMaterialsEditor = ({ courseId }: CourseMaterialsEditorProps) 
       setDebugInfo(null);
     }
   };
+  
+  // 组件加载时和课程ID变化时获取文件列表
+  useEffect(() => {
+    fetchMaterials();
+    
+    // 检查存储桶配置
+    checkStorageBuckets();
+  }, [courseId]);
   
   return (
     <Card>
@@ -550,6 +677,7 @@ export const CourseMaterialsEditor = ({ courseId }: CourseMaterialsEditorProps) 
             <AlertTitle>{debugMode ? "调试信息" : "存储配置提示"}</AlertTitle>
             <AlertDescription>
               {typeof debugInfo === 'string' ? debugInfo : JSON.stringify(debugInfo)}
+              {showExampleData && <div className="mt-1 text-sm font-medium">当前显示: 示例数据</div>}
             </AlertDescription>
           </Alert>
         )}
@@ -569,7 +697,7 @@ export const CourseMaterialsEditor = ({ courseId }: CourseMaterialsEditorProps) 
           </Alert>
         )}
         
-        <div className="flex gap-4 mb-2">
+        <div className="flex flex-wrap gap-4 mb-2">
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -599,6 +727,18 @@ export const CourseMaterialsEditor = ({ courseId }: CourseMaterialsEditorProps) 
             <Check className="h-4 w-4 mr-1" />
             刷新列表
           </Button>
+
+          {/* 新增：强制显示示例数据按钮 */}
+          <Button 
+            onClick={showExampleMaterials} 
+            variant={showExampleData ? "default" : "outline"}
+            size="sm"
+            className={showExampleData ? "bg-blue-600 text-white" : "text-blue-600"}
+            type="button"
+          >
+            <FileText className="h-4 w-4 mr-1" />
+            显示示例文件
+          </Button>
         </div>
         
         <div 
@@ -624,11 +764,12 @@ export const CourseMaterialsEditor = ({ courseId }: CourseMaterialsEditorProps) 
         <div className="mt-6 space-y-2">
           <div className="flex justify-between items-center">
             <h4 className="font-medium text-gray-800">已上传文件</h4>
-            {materials.length > 0 && debugMode && (
+            {materials.length > 0 && (
               <div className="text-xs text-gray-500">
                 总计: {materials.length} | 
-                真实文件: {materials.filter(m => !m.isMock).length} | 
-                模拟文件: {materials.filter(m => m.isMock).length}
+                {showExampleData ? 
+                  " 示例文件" : 
+                  `真实文件: ${materials.filter(m => !m.isMock).length} | 模拟文件: ${materials.filter(m => m.isMock).length}`}
               </div>
             )}
           </div>
@@ -660,7 +801,7 @@ export const CourseMaterialsEditor = ({ courseId }: CourseMaterialsEditorProps) 
               </SortableContext>
             </DndContext>
           ) : (
-            <p className="text-gray-500 text-center py-4">暂无附件，请上传课程相关文件</p>
+            <p className="text-gray-500 text-center py-4">暂无附件，请上传课程相关文件或点击"显示示例文件"</p>
           )}
         </div>
       </CardContent>
