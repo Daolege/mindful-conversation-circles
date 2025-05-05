@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { CourseWithDetails } from '@/lib/types/course-new';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -539,4 +538,3 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
     </div>
   );
 };
-
