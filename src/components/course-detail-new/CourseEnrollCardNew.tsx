@@ -7,6 +7,7 @@ import { Clock, Calendar, Globe, CheckCircle, Download, Users, MessageSquare, Vi
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useNavigate } from 'react-router-dom';
 import { useTranslations } from '@/hooks/useTranslations';
+import IconDisplay from '../course-detail/IconDisplay';
 
 interface CourseEnrollCardNewProps {
   course: CourseWithDetails;
@@ -60,6 +61,17 @@ export const CourseEnrollCardNew: React.FC<CourseEnrollCardNewProps> = ({ course
     }
   };
 
+  // 课程亮点数据
+  const courseHighlights = [
+    { icon: 'video', text: '高清视频课程' },
+    { icon: 'clock', text: '随时随地学习' },
+    { icon: 'star', text: `${course.sections?.length || 0}个精选章节` },
+    { icon: 'language', text: `课程语言: ${course.language === 'zh' ? '中文' : '英文'}` },
+    { icon: 'file-text', text: '内容持续更新' },
+    { icon: 'users', text: '学员专属社群' },
+    { icon: 'book', text: '附赠学习资料' }
+  ];
+
   return (
     <div className={`sticky transition-all duration-300 animate-in fade-in slide-in-from-right-5 duration-700 ${isScrolled ? "top-24" : "top-4"}`}>
       <Card className="overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-500">
@@ -88,23 +100,26 @@ export const CourseEnrollCardNew: React.FC<CourseEnrollCardNewProps> = ({ course
             {course.price === 0 ? t('courses:freeAccess') : t('courses:enrollAndStart')}
           </Button>
 
-          {/* Course features */}
-          <div className={`space-y-3 text-sm ${isMobile ? 'grid grid-cols-2 gap-2' : ''}`}>
-            <div className="flex items-center animate-in fade-in duration-300">
-              <Video className="h-4 w-4 text-gray-500 mr-2" />
-              <span>{t('courses:hdVideo')}</span>
-            </div>
-            <div className="flex items-center animate-in fade-in duration-300">
-              <Clock className="h-4 w-4 text-gray-500 mr-2" />
-              <span>{t('courses:learnAnytime')}</span>
-            </div>
-            <div className="flex items-center animate-in fade-in duration-300">
-              <BookOpen className="h-4 w-4 text-gray-500 mr-2" />
-              <span>{t('courses:noBarrier')}</span>
-            </div>
-            <div className="flex items-center animate-in fade-in duration-300">
-              <Globe className="h-4 w-4 text-gray-500 mr-2" />
-              <span>{t('courses:courseLanguage', { language: course.language || '中文' })}</span>
+          {/* 课程亮点 - 替换原有的Course features部分 */}
+          <div className="border border-gray-100 rounded-lg bg-gray-50/50 p-4">
+            <h3 className="text-base font-medium mb-3 flex items-center gap-2">
+              <Award className="h-4 w-4 text-primary" />
+              课程亮点
+            </h3>
+            
+            <div className="grid grid-cols-1 gap-3">
+              {courseHighlights.map((highlight, index) => (
+                <div 
+                  key={index}
+                  className="flex items-center gap-2 animate-in fade-in duration-300"
+                  style={{ animationDelay: `${index * 75}ms` }}
+                >
+                  <div className="flex-shrink-0 w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center text-primary">
+                    <IconDisplay iconName={highlight.icon} size={14} />
+                  </div>
+                  <span className="text-sm">{highlight.text}</span>
+                </div>
+              ))}
             </div>
           </div>
         </div>

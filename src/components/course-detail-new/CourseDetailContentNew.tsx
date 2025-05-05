@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { CourseWithDetails } from '@/lib/types/course-new';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -89,7 +90,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
     "对技术有兴趣的爱好者"
   ];
 
-  // Default course highlights
+  // Default course highlights - 保留这个数据，但不在此组件中渲染
   const courseHighlights = [
     { icon: 'video', text: '高清视频课程' },
     { icon: 'clock', text: '随时随地学习' },
@@ -121,31 +122,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
         </CardContent>
       </Card>
 
-      {/* 课程亮点 (NEW) */}
-      <Card className="hover:shadow-lg transition-shadow duration-500 shadow-sm animate-in fade-in duration-500">
-        <CardHeader className="pb-0">
-          <CardTitle className="text-xl flex items-center gap-2">
-            <Award className="h-5 w-5" />
-            课程亮点
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-4">
-            {courseHighlights.map((highlight, index) => (
-              <div 
-                key={index} 
-                className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors animate-in fade-in duration-300"
-                style={{ animationDelay: `${index * 100}ms` }}
-              >
-                <div className="flex-shrink-0 w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center text-primary">
-                  <IconDisplay iconName={highlight.icon} size={20} />
-                </div>
-                <div className="font-medium text-gray-800">{highlight.text}</div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      {/* 删除课程亮点卡片 */}
 
       {/* 课程大纲 */}
       <Card className="hover:shadow-lg transition-shadow duration-500 shadow-sm animate-in fade-in duration-500">
