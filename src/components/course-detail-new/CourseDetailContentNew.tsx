@@ -280,7 +280,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
             </div>
             
             <div className="pb-6 pt-8">
-              {/* 创新标题设计 - 增强光晕效果和线条扩展动画 */}
+              {/* 创新标题设计 - 增强光晕效果和线条扩展动画 - 移除四角边框 */}
               <div className="relative py-4 px-4 mb-4 overflow-hidden group-hover:bg-gradient-to-r group-hover:from-gray-50/80 group-hover:via-gray-100/90 group-hover:to-gray-50/80 transition-all duration-700">
                 {/* 背景增强光晕 - 2倍强度 */}
                 <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700">
@@ -299,22 +299,6 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
                 {/* 底部装饰线条 - 动画扩展效果 */}
                 <div className="absolute bottom-0 left-[30%] right-[30%] h-[1px] bg-gradient-to-r from-transparent via-gray-400 to-transparent
                              transition-all duration-700 group-hover:left-[10%] group-hover:right-[10%] group-hover:via-knowledge-primary/60"></div>
-                
-                {/* 左上角装饰元素 - 扩展效果 */}
-                <div className="absolute left-1 top-1 w-2 h-2 border-t border-l border-gray-400 opacity-70
-                             transition-all duration-700 group-hover:w-3 group-hover:h-3 group-hover:border-knowledge-primary/70"></div>
-                
-                {/* 右上角装饰元素 - 扩展效果 */}
-                <div className="absolute right-1 top-1 w-2 h-2 border-t border-r border-gray-400 opacity-70
-                             transition-all duration-700 group-hover:w-3 group-hover:h-3 group-hover:border-knowledge-primary/70"></div>
-                
-                {/* 左下角装饰元素 - 扩展效果 */}
-                <div className="absolute left-1 bottom-1 w-2 h-2 border-b border-l border-gray-400 opacity-70
-                             transition-all duration-700 group-hover:w-3 group-hover:h-3 group-hover:border-knowledge-primary/70"></div>
-                
-                {/* 右下角装饰元素 - 扩展效果 */}
-                <div className="absolute right-1 bottom-1 w-2 h-2 border-b border-r border-gray-400 opacity-70
-                             transition-all duration-700 group-hover:w-3 group-hover:h-3 group-hover:border-knowledge-primary/70"></div>
                 
                 <h3 className="text-xl font-bold text-center text-gray-800 transition-all duration-500
                             group-hover:text-knowledge-primary relative z-10
@@ -391,7 +375,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
             </div>
             
             <div className="pb-6 pt-8">
-              {/* 创新标题设计 - 增强光晕效果和线条扩展动画 */}
+              {/* 创新标题设计 - 增强光晕效果和线条扩展动画 - 移除四角边框 */}
               <div className="relative py-4 px-4 mb-4 overflow-hidden group-hover:bg-gradient-to-r group-hover:from-gray-50/80 group-hover:via-gray-100/90 group-hover:to-gray-50/80 transition-all duration-700">
                 {/* 背景增强光晕 - 2倍强度 */}
                 <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700">
@@ -410,22 +394,6 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
                 {/* 底部装饰线条 - 动画扩展效果 */}
                 <div className="absolute bottom-0 left-[30%] right-[30%] h-[1px] bg-gradient-to-r from-transparent via-gray-400 to-transparent
                              transition-all duration-700 group-hover:left-[10%] group-hover:right-[10%] group-hover:via-knowledge-primary/60"></div>
-                
-                {/* 左上角装饰元素 - 扩展效果 */}
-                <div className="absolute left-1 top-1 w-2 h-2 border-t border-l border-gray-400 opacity-70
-                             transition-all duration-700 group-hover:w-3 group-hover:h-3 group-hover:border-knowledge-primary/70"></div>
-                
-                {/* 右上角装饰元素 - 扩展效果 */}
-                <div className="absolute right-1 top-1 w-2 h-2 border-t border-r border-gray-400 opacity-70
-                             transition-all duration-700 group-hover:w-3 group-hover:h-3 group-hover:border-knowledge-primary/70"></div>
-                
-                {/* 左下角装饰元素 - 扩展效果 */}
-                <div className="absolute left-1 bottom-1 w-2 h-2 border-b border-l border-gray-400 opacity-70
-                             transition-all duration-700 group-hover:w-3 group-hover:h-3 group-hover:border-knowledge-primary/70"></div>
-                
-                {/* 右下角装饰元素 - 扩展效果 */}
-                <div className="absolute right-1 bottom-1 w-2 h-2 border-b border-r border-gray-400 opacity-70
-                             transition-all duration-700 group-hover:w-3 group-hover:h-3 group-hover:border-knowledge-primary/70"></div>
                 
                 <h3 className="text-xl font-bold text-center text-gray-800 transition-all duration-500
                             group-hover:text-knowledge-primary relative z-10
@@ -502,7 +470,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
             </div>
             
             <div className="pb-6 pt-8">
-              {/* 创新标题设计 - 增强光晕效果和线条扩展动画 */}
+              {/* 创新标题设计 - 增强光晕效果和线条扩展动画 - 移除四角边框 */}
               <div className="relative py-4 px-4 mb-4 overflow-hidden group-hover:bg-gradient-to-r group-hover:from-gray-50/80 group-hover:via-gray-100/90 group-hover:to-gray-50/80 transition-all duration-700">
                 {/* 背景增强光晕 - 2倍强度 */}
                 <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700">
@@ -521,22 +489,6 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
                 {/* 底部装饰线条 - 动画扩展效果 */}
                 <div className="absolute bottom-0 left-[30%] right-[30%] h-[1px] bg-gradient-to-r from-transparent via-gray-400 to-transparent
                              transition-all duration-700 group-hover:left-[10%] group-hover:right-[10%] group-hover:via-knowledge-primary/60"></div>
-                
-                {/* 左上角装饰元素 - 扩展效果 */}
-                <div className="absolute left-1 top-1 w-2 h-2 border-t border-l border-gray-400 opacity-70
-                             transition-all duration-700 group-hover:w-3 group-hover:h-3 group-hover:border-knowledge-primary/70"></div>
-                
-                {/* 右上角装饰元素 - 扩展效果 */}
-                <div className="absolute right-1 top-1 w-2 h-2 border-t border-r border-gray-400 opacity-70
-                             transition-all duration-700 group-hover:w-3 group-hover:h-3 group-hover:border-knowledge-primary/70"></div>
-                
-                {/* 左下角装饰元素 - 扩展效果 */}
-                <div className="absolute left-1 bottom-1 w-2 h-2 border-b border-l border-gray-400 opacity-70
-                             transition-all duration-700 group-hover:w-3 group-hover:h-3 group-hover:border-knowledge-primary/70"></div>
-                
-                {/* 右下角装饰元素 - 扩展效果 */}
-                <div className="absolute right-1 bottom-1 w-2 h-2 border-b border-r border-gray-400 opacity-70
-                             transition-all duration-700 group-hover:w-3 group-hover:h-3 group-hover:border-knowledge-primary/70"></div>
                 
                 <h3 className="text-xl font-bold text-center text-gray-800 transition-all duration-500
                             group-hover:text-knowledge-primary relative z-10
@@ -587,3 +539,4 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
     </div>
   );
 };
+
