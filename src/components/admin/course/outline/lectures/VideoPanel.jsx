@@ -154,7 +154,7 @@ const VideoPanel = ({
                   size="sm"
                   onClick={handleDeleteVideo}
                   disabled={isDeleting}
-                  className="h-8 px-2 text-red-500 hover:text-red-700 hover:bg-red-50"
+                  className="h-8 px-2 text-[#555555] hover:text-[#333333] hover:bg-gray-50"
                 >
                   {isDeleting ? (
                     <span className="flex items-center gap-1">

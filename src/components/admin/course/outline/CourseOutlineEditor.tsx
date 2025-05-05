@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import {
   Card,
@@ -241,7 +242,7 @@ export const CourseOutlineEditor = ({
                     className="text-sm h-9"
                   >
                     {requiresSequentialLearning ? (
-                      <Check className="h-4 w-4 mr-1" />
+                      <Check className="h-4 w-4 mr-1 border rounded text-white" />
                     ) : (
                       <Square className="h-4 w-4 mr-1" />
                     )}
@@ -255,7 +256,7 @@ export const CourseOutlineEditor = ({
                     className="text-sm h-9"
                   >
                     {requiresHomeworkCompletion ? (
-                      <Check className="h-4 w-4 mr-1" />
+                      <Check className="h-4 w-4 mr-1 border rounded text-white" />
                     ) : (
                       <Square className="h-4 w-4 mr-1" />
                     )}

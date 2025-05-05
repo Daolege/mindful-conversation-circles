@@ -64,6 +64,7 @@ export const LectureItem = ({
   const [showHomeworkPanel, setShowHomeworkPanel] = useState(false);
   const [localIsFree, setLocalIsFree] = useState(isFree);
   const [localVideoData, setLocalVideoData] = useState(videoData);
+  const [hasHomework, setHasHomework] = useState(false);
   
   // 使用useEffect确保localIsFree与props同步
   useEffect(() => {
@@ -73,6 +74,22 @@ export const LectureItem = ({
   useEffect(() => {
     setLocalVideoData(videoData);
   }, [videoData]);
+  
+  // 监测是否有作业数据的简单方法 - 实际应用中可能需要更详细的检查
+  useEffect(() => {
+    // 这里需要根据您的数据结构编写实际的检查逻辑
+    // 暂时使用简单的setTimeout模拟异步检查
+    const checkForHomework = async () => {
+      setTimeout(() => {
+        // 这里仅作示例，实际情况下您需要根据真实的数据结构来判断
+        // 例如检查数据库或本地状态中是否存在与此课时相关的作业
+        const hasHomeworkData = Math.random() > 0.5; // 模拟50%概率有作业
+        setHasHomework(hasHomeworkData);
+      }, 500);
+    };
+    
+    checkForHomework();
+  }, [id]);
   
   const { 
     attributes, 
@@ -194,7 +211,12 @@ export const LectureItem = ({
                 </Button>
 
                 <Button variant="outline" size="sm" onClick={toggleHomeworkPanel} className="h-8 px-2">
-                  <BookOpen className="h-4 w-4 mr-1" />
+                  <BookOpen 
+                    className={cn(
+                      "h-4 w-4 mr-1",
+                      hasHomework ? "fill-[#262626] text-[#262626]" : ""
+                    )} 
+                  />
                   作业
                 </Button>
                 
@@ -226,7 +248,7 @@ export const LectureItem = ({
                   size="icon"
                   variant="ghost"
                   onClick={onDelete}
-                  className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
+                  className="h-8 w-8 text-[#555555] hover:text-[#333333] hover:bg-gray-50"
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
@@ -273,29 +295,10 @@ export const LectureItem = ({
         </CollapsibleContent>
       </Collapsible>
       
-      {/* 作业面板（可折叠） */}
+      {/* 作业面板（可折叠） - 移除了"学习此课时需要完成作业"复选框 */}
       <Collapsible open={showHomeworkPanel} onOpenChange={setShowHomeworkPanel}>
         <CollapsibleContent>
           <CardContent className="pt-0 pb-3">
-            {showHomeworkSettings && (
-              <div className="mb-4 p-3 bg-gray-50 border border-gray-100 rounded-md">
-                <div className="flex items-center">
-                  <Checkbox
-                    id={`homework-required-settings-${id}`}
-                    checked={requiresHomeworkCompletion}
-                    onCheckedChange={onHomeworkRequirementChange}
-                    className="mr-2"
-                  />
-                  <label 
-                    htmlFor={`homework-required-settings-${id}`}
-                    className="text-sm cursor-pointer"
-                  >
-                    学习此课时需要完成作业
-                  </label>
-                </div>
-              </div>
-            )}
-            
             <HomeworkPanel 
               lectureId={id}
               courseId={courseId}

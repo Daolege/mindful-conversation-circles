@@ -103,6 +103,7 @@ export const VideoUploader: React.FC<VideoUploaderProps> = ({
           variant={uploading ? "outline" : "default"}
           onClick={() => fileInputRef.current?.click()}
           disabled={uploading}
+          className="h-8 text-gray-600"
         >
           {uploading ? (
             <div className="flex items-center gap-2">
