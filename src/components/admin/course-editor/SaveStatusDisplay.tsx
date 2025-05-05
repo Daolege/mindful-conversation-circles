@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle, AlertCircle } from "lucide-react";
 import { useCourseEditor } from './CourseEditorContext';
@@ -21,23 +21,47 @@ const SaveStatusDisplay: React.FC<SaveStatusDisplayProps> = ({
 }) => {
   const [visible, setVisible] = useState(false);
   const courseEditor = useCourseEditor();
+  const timerRef = useRef<number | null>(null);
+  const isMounted = useRef(true);
   
   // Use either props or context values
   const isSaving = saving !== undefined ? saving : courseEditor.isSaving;
   const showSuccess = success !== undefined ? success : !isSaving && !courseEditor.saveError;
   const showError = error !== undefined ? error : courseEditor.saveError;
   
+  // Clean up on unmount
+  useEffect(() => {
+    return () => {
+      // Mark as unmounted
+      isMounted.current = false;
+      
+      // Clear any running timers
+      if (timerRef.current !== null) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+  }, []);
+  
   // Control display state, success message automatically disappears after delay
   useEffect(() => {
+    // Clear any existing timer
+    if (timerRef.current !== null) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+    
     if (showSuccess || showError) {
       setVisible(true);
       
       if (showSuccess && autoHideSuccess) {
-        const timer = setTimeout(() => {
-          setVisible(false);
+        // Store timer reference so we can clear it if needed
+        timerRef.current = window.setTimeout(() => {
+          if (isMounted.current) {
+            setVisible(false);
+            timerRef.current = null;
+          }
         }, hideDelay);
-        
-        return () => clearTimeout(timer);
       }
     } else {
       setVisible(false);

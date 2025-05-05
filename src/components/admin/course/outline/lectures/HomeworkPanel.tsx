@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
+
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -35,15 +36,39 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
     general: ''
   });
   
+  // Added for tracking component mount state
+  const isMounted = useRef(true);
+  
   // 使用课程编辑器上下文
   const courseEditor = useCourseEditor();
+  
+  // Cleanup effect to handle component unmount
+  useEffect(() => {
+    return () => {
+      // Mark component as unmounted
+      isMounted.current = false;
+      
+      // Clear all active toasts when component unmounts
+      console.log('[HomeworkPanel] Cleaning up toasts on unmount');
+      Object.values(activeToasts).forEach(toastId => {
+        if (toastId) {
+          toast.dismiss(toastId);
+        }
+      });
+      
+      // Also dismiss any other potential toasts related to homework saving
+      toast.dismiss();
+    };
+  }, [activeToasts]);
   
   // 清除特定类型的toast
   const clearToast = useCallback((type: string) => {
     const id = activeToasts[type];
     if (id) {
       toast.dismiss(id);
-      setActiveToasts(prev => ({...prev, [type]: ''}));
+      if (isMounted.current) {
+        setActiveToasts(prev => ({...prev, [type]: ''}));
+      }
     }
   }, [activeToasts]);
   
@@ -52,7 +77,9 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
     Object.entries(activeToasts).forEach(([type, id]) => {
       if (id) toast.dismiss(id);
     });
-    setActiveToasts({save: '', delete: '', refresh: '', general: ''});
+    if (isMounted.current) {
+      setActiveToasts({save: '', delete: '', refresh: '', general: ''});
+    }
   }, [activeToasts]);
   
   // 显示toast并跟踪ID - 确保ID总是存储为字符串类型
@@ -61,7 +88,9 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
     clearToast(type);
     // 确保ID被转换为字符串
     const id = String(toastFn());
-    setActiveToasts(prev => ({...prev, [type]: id}));
+    if (isMounted.current) {
+      setActiveToasts(prev => ({...prev, [type]: id}));
+    }
     return id;
   }, [clearToast]);
   
@@ -185,6 +214,8 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
   // 创建或更新作业 - 确保 course_id 总是有效的数字类型
   const { mutateAsync: saveHomeworkMutation, isPending: isSaving } = useMutation({
     mutationFn: async (data: any) => {
+      if (!isMounted.current) return null; // Safety check
+      
       setSaveStatus({ success: false, error: null });
       clearAllToasts();
       
@@ -216,7 +247,15 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
       });
       
       // 显示保存中的toast - 确保ID被转换为字符串
-      const toastId = showToast('save', () => toast.loading('正在保存作业...'));
+      const toastId = showToast('save', () => toast.loading('正在保存作业...', {
+        duration: 10000, // Set maximum duration to 10 seconds
+        onAutoClose: () => {
+          // Auto cleanup on timeout
+          if (isMounted.current) {
+            clearToast('save');
+          }
+        }
+      }));
       
       try {
         // 确保course_id正确设置为数字类型 - 这是修复的重要部分
@@ -229,10 +268,12 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
         
         const result = await saveHomework(homeworkData);
         
+        if (!isMounted.current) return null; // Check if still mounted
+        
         if (result.error) {
           clearToast('save');
           const errorMsg = '保存失败: ' + (result.error.message || '未知错误');
-          showToast('save', () => toast.error(errorMsg));
+          showToast('save', () => toast.error(errorMsg, { duration: 5000 }));
           
           // 安全地调用handleSaveComplete - 先检查函数是否存在
           if (courseEditor && typeof courseEditor.handleSaveComplete === 'function') {
@@ -247,7 +288,7 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
         }
         
         clearToast('save');
-        showToast('save', () => toast.success('作业保存成功'));
+        showToast('save', () => toast.success('作业保存成功', { duration: 3000 }));
         
         // 安全地调用handleSaveComplete - 先检查函数是否存在
         if (courseEditor && typeof courseEditor.handleSaveComplete === 'function') {
@@ -261,9 +302,11 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
         setSaveStatus({ success: true, error: null });
         return result.data;
       } catch (error: any) {
+        if (!isMounted.current) return null; // Check if still mounted
+        
         clearToast('save');
         const errorMsg = '保存失败: ' + (error.message || '未知错误');
-        showToast('save', () => toast.error(errorMsg));
+        showToast('save', () => toast.error(errorMsg, { duration: 5000 }));
         console.error('[HomeworkPanel] Save error details:', error);
         
         // 确保状态更新
@@ -272,66 +315,108 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
       }
     },
     onSuccess: (data) => {
+      if (!isMounted.current) return; // Safety check
+      
       setShowAddForm(false);
       setEditingHomework(null);
       queryClient.invalidateQueries({ queryKey: ['homework', lectureId] });
       // 同时刷新讲座的作业状态查询
       queryClient.invalidateQueries({ queryKey: ['lecture-homework', lectureId] });
+      
+      // Add a timer to clear success toast after 3 seconds
+      setTimeout(() => {
+        if (isMounted.current) {
+          clearToast('save');
+        }
+      }, 3000);
     },
     onError: (error: Error) => {
+      if (!isMounted.current) return; // Safety check
+      
       console.error('[HomeworkPanel] Mutation error:', error);
       setSaveStatus({ success: false, error: error.message });
+      
+      // Add a timer to clear error toast after 5 seconds
+      setTimeout(() => {
+        if (isMounted.current) {
+          clearToast('save');
+        }
+      }, 5000);
     }
   });
   
   // 删除作业
   const { mutateAsync: deleteHomeworkMutation } = useMutation({
     mutationFn: async (homeworkId: string) => {
+      if (!isMounted.current) return null; // Safety check
+      
       clearAllToasts();
-      const toastId = showToast('delete', () => toast.loading('正在删除作业...'));
+      const toastId = showToast('delete', () => toast.loading('正在删除作业...', { duration: 10000 }));
       
       try {
         const result = await deleteHomework(homeworkId);
         
+        if (!isMounted.current) return null; // Check if still mounted
+        
         if (!result.success) {
           clearToast('delete');
-          showToast('delete', () => toast.error('删除失败: ' + (result.error?.message || '未知错误')));
+          showToast('delete', () => toast.error('删除失败: ' + (result.error?.message || '未知错误'), { duration: 5000 }));
           throw result.error;
         }
         
         clearToast('delete');
-        showToast('delete', () => toast.success('作业删除成功'));
+        showToast('delete', () => toast.success('作业删除成功', { duration: 3000 }));
         return true;
       } catch (error: any) {
+        if (!isMounted.current) return null; // Check if still mounted
+        
         clearToast('delete');
-        showToast('delete', () => toast.error('删除失败: ' + (error?.message || '未知错误')));
+        showToast('delete', () => toast.error('删除失败: ' + (error?.message || '未知错误'), { duration: 5000 }));
         throw error;
       }
     },
     onSuccess: () => {
+      if (!isMounted.current) return; // Safety check
+      
       queryClient.invalidateQueries({ queryKey: ['homework', lectureId] });
       // 同时刷新讲座的作业状态查询
       queryClient.invalidateQueries({ queryKey: ['lecture-homework', lectureId] });
+      
+      // Add a timer to clear success toast after 3 seconds
+      setTimeout(() => {
+        if (isMounted.current) {
+          clearToast('delete');
+        }
+      }, 3000);
     }
   });
   
   // 刷新作业数据
   const handleRefreshHomework = async () => {
+    if (!isMounted.current) return; // Safety check
+    
     setIsRefreshing(true);
     clearAllToasts();
     
     try {
-      showToast('refresh', () => toast.loading('正在刷新作业数据...'));
+      showToast('refresh', () => toast.loading('正在刷新作业数据...', { duration: 10000 }));
       await refetchHomework();
       // 同时刷新讲座的作业状态查询
       await queryClient.invalidateQueries({ queryKey: ['lecture-homework', lectureId] });
+      
+      if (!isMounted.current) return; // Check if still mounted
+      
       clearToast('refresh');
-      showToast('refresh', () => toast.success('作业数据已刷新'));
+      showToast('refresh', () => toast.success('作业数据已刷新', { duration: 3000 }));
     } catch (error: any) {
+      if (!isMounted.current) return; // Check if still mounted
+      
       clearToast('refresh');
-      showToast('refresh', () => toast.error('刷新失败: ' + (error?.message || '未知错误')));
+      showToast('refresh', () => toast.error('刷新失败: ' + (error?.message || '未知错误'), { duration: 5000 }));
     } finally {
-      setIsRefreshing(false);
+      if (isMounted.current) {
+        setIsRefreshing(false);
+      }
     }
   };
   
