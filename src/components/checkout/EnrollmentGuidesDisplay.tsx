@@ -235,3 +235,4 @@ const EnrollmentGuidesDisplay = ({ courseId }: EnrollmentGuidesDisplayProps) => 
 };
 
 export default EnrollmentGuidesDisplay;
+

@@ -658,18 +658,10 @@ export const EnrollmentGuidesEditor: React.FC<EnrollmentGuidesEditorProps> = ({
       </CardHeader>
       
       <CardContent className="space-y-4">
-        {/* New Group Instructions Editor */}
+        {/* New Group Instructions Editor - Removed Save Settings Button */}
         <div className="border rounded-lg p-4 bg-gray-50 space-y-3">
           <div className="flex justify-between items-center">
             <h3 className="font-medium">加群说明</h3>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleSaveSettings}
-              className="text-xs"
-            >
-              保存设置
-            </Button>
           </div>
           
           <Textarea 
@@ -788,3 +780,4 @@ export const EnrollmentGuidesEditor: React.FC<EnrollmentGuidesEditorProps> = ({
 };
 
 export default EnrollmentGuidesEditor;
+
