@@ -248,26 +248,28 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
         </CardContent>
       </Card>
 
-      {/* 学习信息栏 - 三栏布局 - Enhanced with better UI/UX */}
+      {/* 学习信息栏 - 三栏布局 - 全新优化设计 */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* 学习目标 */}
-        <Card 
-          className="overflow-hidden hover:shadow-xl transition-all duration-500 border-0 group
-            animate-in fade-in duration-500 relative"
-        >
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-indigo-50 opacity-70"></div>
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-indigo-500"></div>
+        <Card className="relative overflow-hidden border border-gray-200 shadow-md transition-all duration-300 
+                        hover:shadow-xl group animate-in fade-in duration-500">
+          {/* 顶部边框装饰 */}
+          <div className="absolute top-0 left-0 w-full h-1 bg-gray-800"></div>
           
-          <CardHeader className="pb-0 relative">
-            <div className="mb-2 w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-indigo-600 flex items-center justify-center shadow-lg">
-              <Target className="h-6 w-6 text-white" />
+          {/* 图标 - 部分超出卡片上边框 */}
+          <div className="absolute -top-6 left-6 transform transition-all duration-300 group-hover:scale-110 group-hover:-translate-y-1">
+            <div className="w-16 h-16 bg-gray-100 rounded-full border-4 border-white shadow-lg flex items-center justify-center">
+              <Target className="h-8 w-8 text-gray-700" />
             </div>
-            <CardTitle className="text-lg font-bold text-gray-800">
+          </div>
+          
+          <CardHeader className="pt-12 pb-2">
+            <CardTitle className="text-xl font-bold text-gray-800 ml-2">
               {t('courses:learningObjectives')}
             </CardTitle>
           </CardHeader>
           
-          <CardContent className="pt-4 relative z-10">
+          <CardContent className="pt-2">
             {learningObjectives && learningObjectives.length > 0 ? (
               <ul className="space-y-3">
                 {learningObjectives.map((objective, index) => (
@@ -276,7 +278,8 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
                     className="flex items-start gap-3 group animate-in fade-in duration-300 hover:translate-x-1 transition-transform"
                     style={{ animationDelay: `${index * 100}ms` }}
                   >
-                    <div className="mt-0.5 bg-blue-100 rounded-full p-1 flex-shrink-0 text-blue-700 shadow-sm group-hover:bg-blue-200 transition-colors">
+                    <div className="mt-0.5 bg-gray-100 rounded-full p-1 flex-shrink-0 text-gray-700 shadow-sm 
+                                   group-hover:bg-gray-200 transition-colors">
                       <CheckCircle className="h-4 w-4" />
                     </div>
                     <span className="text-gray-700 font-medium">{objective}</span>
@@ -290,23 +293,25 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
         </Card>
 
         {/* 课程要求 */}
-        <Card 
-          className="overflow-hidden hover:shadow-xl transition-all duration-500 border-0 group
-            animate-in fade-in duration-500 relative"
-        >
-          <div className="absolute inset-0 bg-gradient-to-br from-amber-50 to-orange-50 opacity-70"></div>
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-400 to-orange-400"></div>
+        <Card className="relative overflow-hidden border border-gray-200 shadow-md transition-all duration-300 
+                        hover:shadow-xl group animate-in fade-in duration-500">
+          {/* 顶部边框装饰 */}
+          <div className="absolute top-0 left-0 w-full h-1 bg-gray-700"></div>
           
-          <CardHeader className="pb-0 relative">
-            <div className="mb-2 w-12 h-12 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg">
-              <Book className="h-6 w-6 text-white" />
+          {/* 图标 - 部分超出卡片上边框 */}
+          <div className="absolute -top-6 left-6 transform transition-all duration-300 group-hover:scale-110 group-hover:-translate-y-1">
+            <div className="w-16 h-16 bg-gray-100 rounded-full border-4 border-white shadow-lg flex items-center justify-center">
+              <Book className="h-8 w-8 text-gray-700" />
             </div>
-            <CardTitle className="text-lg font-bold text-gray-800">
+          </div>
+          
+          <CardHeader className="pt-12 pb-2">
+            <CardTitle className="text-xl font-bold text-gray-800 ml-2">
               {t('courses:requirements')}
             </CardTitle>
           </CardHeader>
           
-          <CardContent className="pt-4 relative z-10">
+          <CardContent className="pt-2">
             {requirements && requirements.length > 0 ? (
               <ul className="space-y-3">
                 {requirements.map((requirement, index) => (
@@ -315,7 +320,8 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
                     className="flex items-start gap-3 group animate-in fade-in duration-300 hover:translate-x-1 transition-transform"
                     style={{ animationDelay: `${index * 100}ms` }}
                   >
-                    <div className="mt-0.5 bg-amber-100 rounded-full p-1 flex-shrink-0 text-amber-700 shadow-sm group-hover:bg-amber-200 transition-colors">
+                    <div className="mt-0.5 bg-gray-100 rounded-full p-1 flex-shrink-0 text-gray-700 shadow-sm 
+                                   group-hover:bg-gray-200 transition-colors">
                       <BookOpen className="h-4 w-4" />
                     </div>
                     <span className="text-gray-700 font-medium">{requirement}</span>
@@ -329,23 +335,25 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
         </Card>
 
         {/* 适合人群 */}
-        <Card 
-          className="overflow-hidden hover:shadow-xl transition-all duration-500 border-0 group
-            animate-in fade-in duration-500 relative"
-        >
-          <div className="absolute inset-0 bg-gradient-to-br from-green-50 to-emerald-50 opacity-70"></div>
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-green-400 to-emerald-500"></div>
+        <Card className="relative overflow-hidden border border-gray-200 shadow-md transition-all duration-300 
+                        hover:shadow-xl group animate-in fade-in duration-500">
+          {/* 顶部边框装饰 */}
+          <div className="absolute top-0 left-0 w-full h-1 bg-gray-600"></div>
           
-          <CardHeader className="pb-0 relative">
-            <div className="mb-2 w-12 h-12 rounded-full bg-gradient-to-br from-green-400 to-emerald-600 flex items-center justify-center shadow-lg">
-              <Users className="h-6 w-6 text-white" />
+          {/* 图标 - 部分超出卡片上边框 */}
+          <div className="absolute -top-6 left-6 transform transition-all duration-300 group-hover:scale-110 group-hover:-translate-y-1">
+            <div className="w-16 h-16 bg-gray-100 rounded-full border-4 border-white shadow-lg flex items-center justify-center">
+              <Users className="h-8 w-8 text-gray-700" />
             </div>
-            <CardTitle className="text-lg font-bold text-gray-800">
+          </div>
+          
+          <CardHeader className="pt-12 pb-2">
+            <CardTitle className="text-xl font-bold text-gray-800 ml-2">
               {t('courses:targetAudience')}
             </CardTitle>
           </CardHeader>
           
-          <CardContent className="pt-4 relative z-10">
+          <CardContent className="pt-2">
             {targetAudience && targetAudience.length > 0 ? (
               <ul className="space-y-3">
                 {targetAudience.map((audience, index) => (
@@ -354,7 +362,8 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
                     className="flex items-start gap-3 group animate-in fade-in duration-300 hover:translate-x-1 transition-transform"
                     style={{ animationDelay: `${index * 100}ms` }}
                   >
-                    <div className="mt-0.5 bg-green-100 rounded-full p-1 flex-shrink-0 text-green-700 shadow-sm group-hover:bg-green-200 transition-colors">
+                    <div className="mt-0.5 bg-gray-100 rounded-full p-1 flex-shrink-0 text-gray-700 shadow-sm 
+                                   group-hover:bg-gray-200 transition-colors">
                       <Users className="h-4 w-4" />
                     </div>
                     <span className="text-gray-700 font-medium">{audience}</span>
