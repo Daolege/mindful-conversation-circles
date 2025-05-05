@@ -249,62 +249,75 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
         </CardContent>
       </Card>
 
-      {/* 学习信息栏 - 三栏布局 - 增强3D悬浮卡片设计 - 位置调整到更远的距离 */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 perspective-1000 mt-32">
+      {/* 学习信息栏 - 三栏布局 - 增强3D悬浮卡片设计 - 位置调整到更远的距离 - 顶部增加边距 */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 perspective-1000 mt-36">
         {/* 学习目标 */}
         <div 
           className={`transform transition-all duration-500 ease-out ${
             hoveredCard === 'objectives' 
-            ? 'scale-[1.005] z-20' 
+            ? 'scale-[1.003] z-20' 
             : hoveredCard === 'requirements' || hoveredCard === 'audience' 
-              ? 'scale-[0.998] opacity-98'
+              ? 'scale-[0.999] opacity-99'
               : ''
           }`}
           onMouseEnter={() => setHoveredCard('objectives')}
           onMouseLeave={() => setHoveredCard(null)}
         >
           <div className="relative overflow-visible rounded-lg border border-gray-200 bg-white 
-                        group hover:shadow-[0_10px_40px_-15px_rgba(0,0,0,0.2)] shadow-[0_5px_15px_-3px_rgba(0,0,0,0.1),0_4px_6px_-2px_rgba(0,0,0,0.05)]
+                        group hover:shadow-[0_8px_30px_-12px_rgba(0,0,0,0.18)] shadow-[0_4px_12px_-3px_rgba(0,0,0,0.1),0_3px_4px_-2px_rgba(0,0,0,0.05)]
                         transition-all duration-500 animate-in fade-in preserve-3d">
-            {/* 顶部边框装饰 */}
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200"></div>
+            {/* 顶部边框装饰 - 使用知识主题颜色 */}
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-knowledge-primary/70 via-knowledge-primary to-knowledge-primary/70 transition-all duration-500 group-hover:opacity-100"></div>
             
             {/* 图标 - 调整大小和位置 */}
             <div className="absolute left-0 right-0 mx-auto -top-6 flex justify-center transform transition-all duration-700 
                          group-hover:scale-[1.02] group-hover:-translate-y-0.5 z-10">
               <div className="w-12 h-12 bg-gradient-to-b from-gray-50 to-gray-100 rounded-full border-4 border-white 
-                          shadow-[0_2px_10px_rgba(0,0,0,0.1)] group-hover:shadow-[0_4px_12px_rgba(0,0,0,0.15)]
+                          shadow-[0_2px_10px_rgba(0,0,0,0.12)] group-hover:shadow-[0_4px_12px_rgba(0,0,0,0.16)]
                           flex items-center justify-center overflow-visible transition-all duration-500">
-                <Target className="h-6 w-6 text-gray-700" />
+                <Target className="h-6 w-6 text-gray-700 group-hover:text-knowledge-primary transition-colors duration-500" />
               </div>
             </div>
             
             <div className="pb-6 pt-8">
-              {/* 创新标题设计 - 改进样式和装饰 */}
-              <div className="relative py-4 px-4 mb-4 overflow-hidden">
-                {/* 背景层 - 使用更精致的渐变 */}
-                <div className="absolute inset-0 bg-gradient-to-r from-gray-50 via-gray-100 to-gray-50 opacity-80"></div>
+              {/* 创新标题设计 - 增强光晕效果和线条扩展动画 */}
+              <div className="relative py-4 px-4 mb-4 overflow-hidden group-hover:bg-gradient-to-r group-hover:from-gray-50/80 group-hover:via-gray-100/90 group-hover:to-gray-50/80 transition-all duration-700">
+                {/* 背景增强光晕 - 2倍强度 */}
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700">
+                  {/* 光晕效果增强 */}
+                  <div className="absolute inset-0 bg-radial-gradient from-gray-200/60 via-gray-100/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000 blur-sm"></div>
+                  <div className="absolute inset-0 bg-gradient-to-r from-gray-50/20 via-gray-200/40 to-gray-50/20 opacity-0 group-hover:opacity-100 transition-opacity duration-1000 mix-blend-overlay"></div>
+                  
+                  {/* 扩展光效 */}
+                  <div className="absolute inset-0 bg-gradient-to-b from-gray-50/30 via-transparent to-gray-50/30 opacity-0 group-hover:opacity-100 transition-opacity duration-700 blur-md"></div>
+                </div>
                 
-                {/* 顶部装饰 - 更细腻的边线 */}
-                <div className="absolute top-0 left-4 right-4 h-[1px] bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
+                {/* 顶部装饰线条 - 动画扩展效果 */}
+                <div className="absolute top-0 left-[30%] right-[30%] h-[1px] bg-gradient-to-r from-transparent via-gray-400 to-transparent 
+                             transition-all duration-700 group-hover:left-[10%] group-hover:right-[10%] group-hover:via-knowledge-primary/80"></div>
                 
-                {/* 底部装饰 - 更细腻的边线 */}
-                <div className="absolute bottom-0 left-4 right-4 h-[1px] bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
+                {/* 底部装饰线条 - 动画扩展效果 */}
+                <div className="absolute bottom-0 left-[30%] right-[30%] h-[1px] bg-gradient-to-r from-transparent via-gray-400 to-transparent
+                             transition-all duration-700 group-hover:left-[10%] group-hover:right-[10%] group-hover:via-knowledge-primary/60"></div>
                 
-                {/* 左上角装饰元素 */}
-                <div className="absolute left-1 top-1 w-2 h-2 border-t border-l border-gray-300 opacity-70"></div>
+                {/* 左上角装饰元素 - 扩展效果 */}
+                <div className="absolute left-1 top-1 w-2 h-2 border-t border-l border-gray-400 opacity-70
+                             transition-all duration-700 group-hover:w-3 group-hover:h-3 group-hover:border-knowledge-primary/70"></div>
                 
-                {/* 右上角装饰元素 */}
-                <div className="absolute right-1 top-1 w-2 h-2 border-t border-r border-gray-300 opacity-70"></div>
+                {/* 右上角装饰元素 - 扩展效果 */}
+                <div className="absolute right-1 top-1 w-2 h-2 border-t border-r border-gray-400 opacity-70
+                             transition-all duration-700 group-hover:w-3 group-hover:h-3 group-hover:border-knowledge-primary/70"></div>
                 
-                {/* 左下角装饰元素 */}
-                <div className="absolute left-1 bottom-1 w-2 h-2 border-b border-l border-gray-300 opacity-70"></div>
+                {/* 左下角装饰元素 - 扩展效果 */}
+                <div className="absolute left-1 bottom-1 w-2 h-2 border-b border-l border-gray-400 opacity-70
+                             transition-all duration-700 group-hover:w-3 group-hover:h-3 group-hover:border-knowledge-primary/70"></div>
                 
-                {/* 右下角装饰元素 */}
-                <div className="absolute right-1 bottom-1 w-2 h-2 border-b border-r border-gray-300 opacity-70"></div>
+                {/* 右下角装饰元素 - 扩展效果 */}
+                <div className="absolute right-1 bottom-1 w-2 h-2 border-b border-r border-gray-400 opacity-70
+                             transition-all duration-700 group-hover:w-3 group-hover:h-3 group-hover:border-knowledge-primary/70"></div>
                 
-                <h3 className="text-xl font-bold text-center text-gray-800 transition-all duration-300
-                            group-hover:text-black relative z-10
+                <h3 className="text-xl font-bold text-center text-gray-800 transition-all duration-500
+                            group-hover:text-knowledge-primary relative z-10
                             drop-shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
                   {t('courses:learningObjectives')}
                 </h3>
@@ -323,9 +336,9 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
                         }}
                       >
                         <div className="mt-0.5 shrink-0 w-6 h-6 bg-gradient-to-r from-gray-100 to-gray-50 rounded-full p-1 flex-shrink-0 text-gray-700 shadow-sm 
-                                      group-hover:bg-gray-200 transition-all duration-500 ease-out
+                                      group-hover:bg-gray-100 transition-all duration-500 ease-out
                                       group-hover:shadow-md flex items-center justify-center">
-                          <CheckCircle className="h-4 w-4 transition-all duration-300 ease-in-out" />
+                          <CheckCircle className="h-4 w-4 transition-all duration-300 ease-in-out group-hover:text-knowledge-primary" />
                         </div>
                         <span className="text-gray-700 transition-all duration-300 break-words whitespace-normal">
                           {objective}
@@ -353,56 +366,69 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
         <div 
           className={`transform transition-all duration-500 ease-out ${
             hoveredCard === 'requirements' 
-            ? 'scale-[1.005] z-20' 
+            ? 'scale-[1.003] z-20' 
             : hoveredCard === 'objectives' || hoveredCard === 'audience' 
-              ? 'scale-[0.998] opacity-98'
+              ? 'scale-[0.999] opacity-99'
               : ''
           }`}
           onMouseEnter={() => setHoveredCard('requirements')}
           onMouseLeave={() => setHoveredCard(null)}
         >
           <div className="relative overflow-visible rounded-lg border border-gray-200 bg-white 
-                        group hover:shadow-[0_10px_40px_-15px_rgba(0,0,0,0.2)] shadow-[0_5px_15px_-3px_rgba(0,0,0,0.1),0_4px_6px_-2px_rgba(0,0,0,0.05)]
+                        group hover:shadow-[0_8px_30px_-12px_rgba(0,0,0,0.18)] shadow-[0_4px_12px_-3px_rgba(0,0,0,0.1),0_3px_4px_-2px_rgba(0,0,0,0.05)]
                         transition-all duration-500 animate-in fade-in preserve-3d">
-            {/* 顶部边框装饰 */}
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200"></div>
+            {/* 顶部边框装饰 - 使用知识主题颜色 */}
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-knowledge-primary/70 via-knowledge-primary to-knowledge-primary/70 transition-all duration-500 group-hover:opacity-100"></div>
             
             {/* 图标 - 调整大小和位置 */}
             <div className="absolute left-0 right-0 mx-auto -top-6 flex justify-center transform transition-all duration-700 
                          group-hover:scale-[1.02] group-hover:-translate-y-0.5 z-10">
               <div className="w-12 h-12 bg-gradient-to-b from-gray-50 to-gray-100 rounded-full border-4 border-white 
-                          shadow-[0_2px_10px_rgba(0,0,0,0.1)] group-hover:shadow-[0_4px_12px_rgba(0,0,0,0.15)]
+                          shadow-[0_2px_10px_rgba(0,0,0,0.12)] group-hover:shadow-[0_4px_12px_rgba(0,0,0,0.16)]
                           flex items-center justify-center overflow-visible transition-all duration-500">
-                <Book className="h-6 w-6 text-gray-700" />
+                <Book className="h-6 w-6 text-gray-700 group-hover:text-knowledge-primary transition-colors duration-500" />
               </div>
             </div>
             
             <div className="pb-6 pt-8">
-              {/* 创新标题设计 - 改进样式和装饰 */}
-              <div className="relative py-4 px-4 mb-4 overflow-hidden">
-                {/* 背景层 - 使用更精致的渐变 */}
-                <div className="absolute inset-0 bg-gradient-to-r from-gray-50 via-gray-100 to-gray-50 opacity-80"></div>
+              {/* 创新标题设计 - 增强光晕效果和线条扩展动画 */}
+              <div className="relative py-4 px-4 mb-4 overflow-hidden group-hover:bg-gradient-to-r group-hover:from-gray-50/80 group-hover:via-gray-100/90 group-hover:to-gray-50/80 transition-all duration-700">
+                {/* 背景增强光晕 - 2倍强度 */}
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700">
+                  {/* 光晕效果增强 */}
+                  <div className="absolute inset-0 bg-radial-gradient from-gray-200/60 via-gray-100/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000 blur-sm"></div>
+                  <div className="absolute inset-0 bg-gradient-to-r from-gray-50/20 via-gray-200/40 to-gray-50/20 opacity-0 group-hover:opacity-100 transition-opacity duration-1000 mix-blend-overlay"></div>
+                  
+                  {/* 扩展光效 */}
+                  <div className="absolute inset-0 bg-gradient-to-b from-gray-50/30 via-transparent to-gray-50/30 opacity-0 group-hover:opacity-100 transition-opacity duration-700 blur-md"></div>
+                </div>
                 
-                {/* 顶部装饰 - 更细腻的边线 */}
-                <div className="absolute top-0 left-4 right-4 h-[1px] bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
+                {/* 顶部装饰线条 - 动画扩展效果 */}
+                <div className="absolute top-0 left-[30%] right-[30%] h-[1px] bg-gradient-to-r from-transparent via-gray-400 to-transparent 
+                             transition-all duration-700 group-hover:left-[10%] group-hover:right-[10%] group-hover:via-knowledge-primary/80"></div>
                 
-                {/* 底部装饰 - 更细腻的边线 */}
-                <div className="absolute bottom-0 left-4 right-4 h-[1px] bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
+                {/* 底部装饰线条 - 动画扩展效果 */}
+                <div className="absolute bottom-0 left-[30%] right-[30%] h-[1px] bg-gradient-to-r from-transparent via-gray-400 to-transparent
+                             transition-all duration-700 group-hover:left-[10%] group-hover:right-[10%] group-hover:via-knowledge-primary/60"></div>
                 
-                {/* 左上角装饰元素 */}
-                <div className="absolute left-1 top-1 w-2 h-2 border-t border-l border-gray-300 opacity-70"></div>
+                {/* 左上角装饰元素 - 扩展效果 */}
+                <div className="absolute left-1 top-1 w-2 h-2 border-t border-l border-gray-400 opacity-70
+                             transition-all duration-700 group-hover:w-3 group-hover:h-3 group-hover:border-knowledge-primary/70"></div>
                 
-                {/* 右上角装饰元素 */}
-                <div className="absolute right-1 top-1 w-2 h-2 border-t border-r border-gray-300 opacity-70"></div>
+                {/* 右上角装饰元素 - 扩展效果 */}
+                <div className="absolute right-1 top-1 w-2 h-2 border-t border-r border-gray-400 opacity-70
+                             transition-all duration-700 group-hover:w-3 group-hover:h-3 group-hover:border-knowledge-primary/70"></div>
                 
-                {/* 左下角装饰元素 */}
-                <div className="absolute left-1 bottom-1 w-2 h-2 border-b border-l border-gray-300 opacity-70"></div>
+                {/* 左下角装饰元素 - 扩展效果 */}
+                <div className="absolute left-1 bottom-1 w-2 h-2 border-b border-l border-gray-400 opacity-70
+                             transition-all duration-700 group-hover:w-3 group-hover:h-3 group-hover:border-knowledge-primary/70"></div>
                 
-                {/* 右下角装饰元素 */}
-                <div className="absolute right-1 bottom-1 w-2 h-2 border-b border-r border-gray-300 opacity-70"></div>
+                {/* 右下角装饰元素 - 扩展效果 */}
+                <div className="absolute right-1 bottom-1 w-2 h-2 border-b border-r border-gray-400 opacity-70
+                             transition-all duration-700 group-hover:w-3 group-hover:h-3 group-hover:border-knowledge-primary/70"></div>
                 
-                <h3 className="text-xl font-bold text-center text-gray-800 transition-all duration-300
-                            group-hover:text-black relative z-10
+                <h3 className="text-xl font-bold text-center text-gray-800 transition-all duration-500
+                            group-hover:text-knowledge-primary relative z-10
                             drop-shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
                   {t('courses:requirements')}
                 </h3>
@@ -421,9 +447,9 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
                         }}
                       >
                         <div className="mt-0.5 shrink-0 w-6 h-6 bg-gradient-to-r from-gray-100 to-gray-50 rounded-full p-1 flex-shrink-0 text-gray-700 shadow-sm 
-                                      group-hover:bg-gray-200 transition-all duration-500 ease-out
+                                      group-hover:bg-gray-100 transition-all duration-500 ease-out
                                       group-hover:shadow-md flex items-center justify-center">
-                          <BookOpen className="h-4 w-4 transition-all duration-300 ease-in-out" />
+                          <BookOpen className="h-4 w-4 transition-all duration-300 ease-in-out group-hover:text-knowledge-primary" />
                         </div>
                         <span className="text-gray-700 transition-all duration-300 break-words whitespace-normal">
                           {requirement}
@@ -451,56 +477,69 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
         <div 
           className={`transform transition-all duration-500 ease-out ${
             hoveredCard === 'audience' 
-            ? 'scale-[1.005] z-20' 
+            ? 'scale-[1.003] z-20' 
             : hoveredCard === 'objectives' || hoveredCard === 'requirements' 
-              ? 'scale-[0.998] opacity-98'
+              ? 'scale-[0.999] opacity-99'
               : ''
           }`}
           onMouseEnter={() => setHoveredCard('audience')}
           onMouseLeave={() => setHoveredCard(null)}
         >
           <div className="relative overflow-visible rounded-lg border border-gray-200 bg-white 
-                        group hover:shadow-[0_10px_40px_-15px_rgba(0,0,0,0.2)] shadow-[0_5px_15px_-3px_rgba(0,0,0,0.1),0_4px_6px_-2px_rgba(0,0,0,0.05)]
+                        group hover:shadow-[0_8px_30px_-12px_rgba(0,0,0,0.18)] shadow-[0_4px_12px_-3px_rgba(0,0,0,0.1),0_3px_4px_-2px_rgba(0,0,0,0.05)]
                         transition-all duration-500 animate-in fade-in preserve-3d">
-            {/* 顶部边框装饰 */}
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200"></div>
+            {/* 顶部边框装饰 - 使用知识主题颜色 */}
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-knowledge-primary/70 via-knowledge-primary to-knowledge-primary/70 transition-all duration-500 group-hover:opacity-100"></div>
             
             {/* 图标 - 调整大小和位置 */}
             <div className="absolute left-0 right-0 mx-auto -top-6 flex justify-center transform transition-all duration-700 
                          group-hover:scale-[1.02] group-hover:-translate-y-0.5 z-10">
               <div className="w-12 h-12 bg-gradient-to-b from-gray-50 to-gray-100 rounded-full border-4 border-white 
-                          shadow-[0_2px_10px_rgba(0,0,0,0.1)] group-hover:shadow-[0_4px_12px_rgba(0,0,0,0.15)]
+                          shadow-[0_2px_10px_rgba(0,0,0,0.12)] group-hover:shadow-[0_4px_12px_rgba(0,0,0,0.16)]
                           flex items-center justify-center overflow-visible transition-all duration-500">
-                <Users className="h-6 w-6 text-gray-700" />
+                <Users className="h-6 w-6 text-gray-700 group-hover:text-knowledge-primary transition-colors duration-500" />
               </div>
             </div>
             
             <div className="pb-6 pt-8">
-              {/* 创新标题设计 - 改进样式和装饰 */}
-              <div className="relative py-4 px-4 mb-4 overflow-hidden">
-                {/* 背景层 - 使用更精致的渐变 */}
-                <div className="absolute inset-0 bg-gradient-to-r from-gray-50 via-gray-100 to-gray-50 opacity-80"></div>
+              {/* 创新标题设计 - 增强光晕效果和线条扩展动画 */}
+              <div className="relative py-4 px-4 mb-4 overflow-hidden group-hover:bg-gradient-to-r group-hover:from-gray-50/80 group-hover:via-gray-100/90 group-hover:to-gray-50/80 transition-all duration-700">
+                {/* 背景增强光晕 - 2倍强度 */}
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700">
+                  {/* 光晕效果增强 */}
+                  <div className="absolute inset-0 bg-radial-gradient from-gray-200/60 via-gray-100/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000 blur-sm"></div>
+                  <div className="absolute inset-0 bg-gradient-to-r from-gray-50/20 via-gray-200/40 to-gray-50/20 opacity-0 group-hover:opacity-100 transition-opacity duration-1000 mix-blend-overlay"></div>
+                  
+                  {/* 扩展光效 */}
+                  <div className="absolute inset-0 bg-gradient-to-b from-gray-50/30 via-transparent to-gray-50/30 opacity-0 group-hover:opacity-100 transition-opacity duration-700 blur-md"></div>
+                </div>
                 
-                {/* 顶部装饰 - 更细腻的边线 */}
-                <div className="absolute top-0 left-4 right-4 h-[1px] bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
+                {/* 顶部装饰线条 - 动画扩展效果 */}
+                <div className="absolute top-0 left-[30%] right-[30%] h-[1px] bg-gradient-to-r from-transparent via-gray-400 to-transparent 
+                             transition-all duration-700 group-hover:left-[10%] group-hover:right-[10%] group-hover:via-knowledge-primary/80"></div>
                 
-                {/* 底部装饰 - 更细腻的边线 */}
-                <div className="absolute bottom-0 left-4 right-4 h-[1px] bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
+                {/* 底部装饰线条 - 动画扩展效果 */}
+                <div className="absolute bottom-0 left-[30%] right-[30%] h-[1px] bg-gradient-to-r from-transparent via-gray-400 to-transparent
+                             transition-all duration-700 group-hover:left-[10%] group-hover:right-[10%] group-hover:via-knowledge-primary/60"></div>
                 
-                {/* 左上角装饰元素 */}
-                <div className="absolute left-1 top-1 w-2 h-2 border-t border-l border-gray-300 opacity-70"></div>
+                {/* 左上角装饰元素 - 扩展效果 */}
+                <div className="absolute left-1 top-1 w-2 h-2 border-t border-l border-gray-400 opacity-70
+                             transition-all duration-700 group-hover:w-3 group-hover:h-3 group-hover:border-knowledge-primary/70"></div>
                 
-                {/* 右上角装饰元素 */}
-                <div className="absolute right-1 top-1 w-2 h-2 border-t border-r border-gray-300 opacity-70"></div>
+                {/* 右上角装饰元素 - 扩展效果 */}
+                <div className="absolute right-1 top-1 w-2 h-2 border-t border-r border-gray-400 opacity-70
+                             transition-all duration-700 group-hover:w-3 group-hover:h-3 group-hover:border-knowledge-primary/70"></div>
                 
-                {/* 左下角装饰元素 */}
-                <div className="absolute left-1 bottom-1 w-2 h-2 border-b border-l border-gray-300 opacity-70"></div>
+                {/* 左下角装饰元素 - 扩展效果 */}
+                <div className="absolute left-1 bottom-1 w-2 h-2 border-b border-l border-gray-400 opacity-70
+                             transition-all duration-700 group-hover:w-3 group-hover:h-3 group-hover:border-knowledge-primary/70"></div>
                 
-                {/* 右下角装饰元素 */}
-                <div className="absolute right-1 bottom-1 w-2 h-2 border-b border-r border-gray-300 opacity-70"></div>
+                {/* 右下角装饰元素 - 扩展效果 */}
+                <div className="absolute right-1 bottom-1 w-2 h-2 border-b border-r border-gray-400 opacity-70
+                             transition-all duration-700 group-hover:w-3 group-hover:h-3 group-hover:border-knowledge-primary/70"></div>
                 
-                <h3 className="text-xl font-bold text-center text-gray-800 transition-all duration-300
-                            group-hover:text-black relative z-10
+                <h3 className="text-xl font-bold text-center text-gray-800 transition-all duration-500
+                            group-hover:text-knowledge-primary relative z-10
                             drop-shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
                   {t('courses:targetAudience')}
                 </h3>
@@ -519,9 +558,9 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
                         }}
                       >
                         <div className="mt-0.5 shrink-0 w-6 h-6 bg-gradient-to-r from-gray-100 to-gray-50 rounded-full p-1 flex-shrink-0 text-gray-700 shadow-sm 
-                                      group-hover:bg-gray-200 transition-all duration-500 ease-out
+                                      group-hover:bg-gray-100 transition-all duration-500 ease-out
                                       group-hover:shadow-md flex items-center justify-center">
-                          <Users className="h-4 w-4 transition-all duration-300 ease-in-out" />
+                          <Users className="h-4 w-4 transition-all duration-300 ease-in-out group-hover:text-knowledge-primary" />
                         </div>
                         <span className="text-gray-700 transition-all duration-300 break-words whitespace-normal">
                           {audience}

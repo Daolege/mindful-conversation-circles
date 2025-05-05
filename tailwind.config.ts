@@ -99,6 +99,10 @@ const config = {
         pulse: {
           '0%, 100%': { opacity: '0.6' },
           '50%': { opacity: '0.9' }
+        },
+        glow: {
+          '0%, 100%': { opacity: '0.8', filter: 'brightness(1)' },
+          '50%': { opacity: '1', filter: 'brightness(1.2)' }
         }
       },
       animation: {
@@ -108,6 +112,10 @@ const config = {
         'fade-out': 'fadeOut 0.3s ease-in-out',
         'float': 'float 6s ease-in-out infinite',
         'pulse': 'pulse 3s ease-in-out infinite',
+        'glow': 'glow 3s ease-in-out infinite',
+      },
+      backgroundImage: {
+        'radial-gradient': 'radial-gradient(var(--tw-gradient-stops))',
       },
     },
   },
