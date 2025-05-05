@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import {
   Card,
@@ -6,7 +7,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
-import { Checkbox } from "@/components/ui/checkbox";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Loader2, Save, Plus, RefreshCw, AlertCircle, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -154,6 +155,15 @@ export const CourseOutlineEditor = ({
     reorderSections(reorderedSections);
   };
 
+  // Toggle functions for the button-style toggles
+  const handleSequentialLearningToggle = (value: boolean) => {
+    setRequiresSequentialLearning(value);
+  };
+
+  const handleHomeworkCompletionToggle = (value: boolean) => {
+    setRequiresHomeworkCompletion(value);
+  };
+
   const renderStatusMessage = () => {
     if (loading) {
       return (
@@ -224,36 +234,24 @@ export const CourseOutlineEditor = ({
             <CardTitle>课程大纲</CardTitle>
             {!hideToolbarButtons && (
               <div className="flex gap-2 items-center">
-                <div className="flex items-center gap-4 mr-4 bg-gray-50 px-3 py-1.5 rounded-md border border-gray-200">
-                  <div className="flex items-center">
-                    <Checkbox
-                      id="sequential-learning"
-                      checked={requiresSequentialLearning}
-                      onCheckedChange={(checked) => setRequiresSequentialLearning(!!checked)}
-                      className="mr-2"
-                    />
-                    <label 
-                      htmlFor="sequential-learning"
-                      className="text-sm cursor-pointer whitespace-nowrap"
-                    >
-                      按顺序学习
-                    </label>
-                  </div>
+                <div className="flex items-center gap-2 mr-4">
+                  <Button
+                    variant={requiresSequentialLearning ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => handleSequentialLearningToggle(!requiresSequentialLearning)}
+                    className="text-sm h-9"
+                  >
+                    {requiresSequentialLearning ? "✓ " : ""}按顺序学习
+                  </Button>
                   
-                  <div className="flex items-center">
-                    <Checkbox
-                      id="homework-required"
-                      checked={requiresHomeworkCompletion}
-                      onCheckedChange={(checked) => setRequiresHomeworkCompletion(!!checked)}
-                      className="mr-2"
-                    />
-                    <label 
-                      htmlFor="homework-required"
-                      className="text-sm cursor-pointer whitespace-nowrap"
-                    >
-                      须提交作业
-                    </label>
-                  </div>
+                  <Button
+                    variant={requiresHomeworkCompletion ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => handleHomeworkCompletionToggle(!requiresHomeworkCompletion)}
+                    className="text-sm h-9"
+                  >
+                    {requiresHomeworkCompletion ? "✓ " : ""}须提交作业
+                  </Button>
                 </div>
                 
                 <Button

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,11 +9,8 @@ import {
   Save, 
   X, 
   GripVertical, 
-  Play, 
-  Clock, 
-  BookOpen,
   Video,
-  Settings
+  BookOpen
 } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -66,8 +64,6 @@ export const LectureItem = ({
   const [showHomeworkPanel, setShowHomeworkPanel] = useState(false);
   const [localIsFree, setLocalIsFree] = useState(isFree);
   const [localVideoData, setLocalVideoData] = useState(videoData);
-  const [localRequiresHomeworkCompletion, setLocalRequiresHomeworkCompletion] = useState(requiresHomeworkCompletion);
-  const [localRequiresSequentialLearning, setLocalRequiresSequentialLearning] = useState(requiresSequentialLearning);
   
   // 使用useEffect确保localIsFree与props同步
   useEffect(() => {
@@ -77,14 +73,6 @@ export const LectureItem = ({
   useEffect(() => {
     setLocalVideoData(videoData);
   }, [videoData]);
-  
-  useEffect(() => {
-    setLocalRequiresHomeworkCompletion(requiresHomeworkCompletion);
-  }, [requiresHomeworkCompletion]);
-
-  useEffect(() => {
-    setLocalRequiresSequentialLearning(requiresSequentialLearning);
-  }, [requiresSequentialLearning]);
   
   const { 
     attributes, 
@@ -136,20 +124,6 @@ export const LectureItem = ({
   const toggleVideoUploader = () => {
     setIsVideoUploaderOpen(!isVideoUploaderOpen);
     setShowHomeworkPanel(false); // 关闭作业面板
-  };
-
-  const handleHomeworkRequirementChange = (checked: boolean) => {
-    setLocalRequiresHomeworkCompletion(checked);
-    if (onHomeworkRequirementChange) {
-      onHomeworkRequirementChange(checked);
-    }
-  };
-
-  const handleSequentialLearningChange = (checked: boolean) => {
-    setLocalRequiresSequentialLearning(checked);
-    if (onSequentialLearningChange) {
-      onSequentialLearningChange(checked);
-    }
   };
 
   const handleVideoUpdate = (newVideoData) => {
@@ -205,15 +179,17 @@ export const LectureItem = ({
             {!isEditing ? (
               <>
                 <Button 
-                  variant={hasVideo ? "default" : "outline"} 
+                  variant="outline" 
                   size="sm" 
                   onClick={toggleVideoUploader} 
-                  className={cn(
-                    "h-8 px-2",
-                    hasVideo ? "border border-black bg-black text-white hover:bg-gray-800" : ""
-                  )}
+                  className="h-8 px-2"
                 >
-                  <Video className="h-4 w-4 mr-1" />
+                  <Video 
+                    className={cn(
+                      "h-4 w-4 mr-1",
+                      hasVideo ? "fill-[#262626] text-[#262626]" : ""
+                    )} 
+                  />
                   {hasVideo ? "视频已传" : "上传视频"}
                 </Button>
 
@@ -283,41 +259,6 @@ export const LectureItem = ({
         </div>
       </div>
       
-      {/* 控制选项 */}
-      <div className="px-4 pb-2">
-        <div className="flex flex-wrap gap-4">
-          <div className="flex items-center">
-            <Checkbox
-              id={`sequential-learning-${id}`}
-              checked={localRequiresSequentialLearning}
-              onCheckedChange={handleSequentialLearningChange}
-              className="mr-2"
-            />
-            <label 
-              htmlFor={`sequential-learning-${id}`}
-              className="text-xs cursor-pointer"
-            >
-              按顺序学习
-            </label>
-          </div>
-          
-          <div className="flex items-center">
-            <Checkbox
-              id={`homework-required-${id}`}
-              checked={localRequiresHomeworkCompletion}
-              onCheckedChange={handleHomeworkRequirementChange}
-              className="mr-2"
-            />
-            <label 
-              htmlFor={`homework-required-${id}`}
-              className="text-xs cursor-pointer"
-            >
-              须提交作业
-            </label>
-          </div>
-        </div>
-      </div>
-      
       {/* 视频上传面板（可折叠） */}
       <Collapsible open={isVideoUploaderOpen} onOpenChange={setIsVideoUploaderOpen}>
         <CollapsibleContent>
@@ -342,7 +283,7 @@ export const LectureItem = ({
                   <Checkbox
                     id={`homework-required-settings-${id}`}
                     checked={requiresHomeworkCompletion}
-                    onCheckedChange={handleHomeworkRequirementChange}
+                    onCheckedChange={onHomeworkRequirementChange}
                     className="mr-2"
                   />
                   <label 

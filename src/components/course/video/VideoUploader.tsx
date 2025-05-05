@@ -31,11 +31,11 @@ export const VideoUploader: React.FC<VideoUploaderProps> = ({
     // Set the selected filename
     setSelectedFileName(file.name);
 
-    // Validate file type
-    const validTypes = ['video/mp4', 'video/webm', 'video/avi', 'video/ogg', 'video/quicktime', 'video/x-matroska'];
+    // Validate file type - provide more helpful error message
+    const validTypes = ['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime'];
     if (!validTypes.includes(file.type)) {
-      toast.error('不支持的文件格式', {
-        description: '请上传 MP4、WebM、AVI、OGG、MOV 或 MKV 格式的视频'
+      toast.error('不支持的视频格式', {
+        description: '请上传浏览器支持的视频格式，如 MP4、WebM、OGG 或 QuickTime 格式'
       });
       setSelectedFileName(null);
       return;
@@ -92,7 +92,7 @@ export const VideoUploader: React.FC<VideoUploaderProps> = ({
       <input
         ref={fileInputRef}
         type="file"
-        accept="video/mp4,video/webm,video/avi,video/ogg,video/quicktime,video/x-matroska"
+        accept="video/mp4,video/webm,video/ogg,video/quicktime"
         onChange={handleFileChange}
         className="hidden"
       />

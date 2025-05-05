@@ -106,8 +106,11 @@ const VideoPanel = ({
 
   // 处理失焦自动保存
   const handleBlur = () => {
-    if (isEditingName) {
+    if (isEditingName && videoName.trim() !== '') {
       handleSaveVideoName();
+    } else if (isEditingName) {
+      setIsEditingName(false);
+      setVideoName(videoData?.name || '');
     }
   };
 
@@ -118,7 +121,7 @@ const VideoPanel = ({
           <div className="space-y-4">
             <div className="text-sm font-medium mb-2">上传视频文件</div>
             <div className="text-xs text-gray-500 mb-4">
-              支持MP4, WebM等浏览器可播放的格式，最大10G
+              支持浏览器可直接播放的主流视频格式，最大10G
             </div>
             
             <VideoUploader
@@ -203,8 +206,9 @@ const VideoPanel = ({
                 ) : (
                   <div className="flex items-center gap-2">
                     <span 
-                      className="text-sm font-medium cursor-pointer"
+                      className="text-sm font-medium cursor-pointer hover:text-blue-600 hover:underline"
                       onDoubleClick={handleDoubleClick}
+                      title="双击编辑视频名称"
                     >
                       {videoData.name}
                     </span>
