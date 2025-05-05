@@ -250,14 +250,14 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
       </Card>
 
       {/* 学习信息栏 - 三栏布局 - 增强3D悬浮卡片设计 */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 perspective-1000">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 perspective-1000 mt-16">
         {/* 学习目标 */}
         <div 
-          className={`transform transition-all duration-700 ${
+          className={`transform transition-all duration-700 ease-out ${
             hoveredCard === 'objectives' 
-            ? 'scale-105 rotate-2 z-20 translate-y-[-10px]' 
+            ? 'scale-[1.03] z-20 translate-y-[-10px] shadow-2xl' 
             : hoveredCard === 'requirements' || hoveredCard === 'audience' 
-              ? 'scale-95 opacity-80 translate-y-[5px] rotate-[-1deg]'
+              ? 'scale-[0.98] opacity-85 translate-y-[5px]'
               : ''
           }`}
           onMouseEnter={() => setHoveredCard('objectives')}
@@ -266,27 +266,29 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
           <div className="relative overflow-visible rounded-lg border border-gray-200 bg-white shadow-lg group 
                         hover:shadow-2xl transition-all duration-700 animate-in fade-in preserve-3d">
             {/* 顶部边框装饰 */}
-            <div className="absolute top-0 left-0 w-full h-1 bg-gray-300"></div>
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200"></div>
             
             {/* 图标 - 完全显示于顶部边框位置，不被遮挡 */}
-            <div className="absolute left-0 right-0 mx-auto -top-12 flex justify-center transform transition-all duration-700 
-                         group-hover:scale-110 group-hover:-translate-y-1 group-hover:rotate-12 z-10">
-              <div className="w-24 h-24 bg-gray-100 rounded-full border-4 border-white shadow-lg 
+            <div className="absolute left-0 right-0 mx-auto -top-10 flex justify-center transform transition-all duration-700 
+                         group-hover:scale-110 group-hover:-translate-y-2 z-10">
+              <div className="w-20 h-20 bg-gradient-to-b from-gray-50 to-gray-100 rounded-full border-4 border-white shadow-lg 
                           flex items-center justify-center overflow-visible">
-                <Target className="h-12 w-12 text-gray-700" />
+                <Target className="h-10 w-10 text-gray-700" />
               </div>
             </div>
             
-            <div className="pb-6 pt-20">
+            <div className="pb-6 pt-16">
               {/* 标题带背景和封装效果 */}
-              <div className="bg-gray-50 py-3 px-4 mb-6 border-b border-gray-200">
+              <div className="bg-gradient-to-r from-gray-50 via-gray-100 to-gray-50 py-4 px-4 mb-6 border-b border-gray-200
+                           shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-2px_rgba(0,0,0,0.05)]">
                 <h3 className="text-xl font-bold text-center text-gray-800 transition-all duration-300
-                            group-hover:text-black group-hover:scale-105">
+                            group-hover:text-black group-hover:scale-105
+                            drop-shadow-[0_1px_1px_rgba(0,0,0,0.15)]">
                   {t('courses:learningObjectives')}
                 </h3>
               </div>
               
-              <div className="px-6">
+              <div className="px-6 transition-all duration-500 ease-in-out group-hover:translate-y-[-2px]">
                 {learningObjectives && learningObjectives.length > 0 ? (
                   <ul className="space-y-4">
                     {learningObjectives.map((objective, index) => (
@@ -297,13 +299,13 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
                         style={{ 
                           animationDelay: `${index * 100}ms`, 
                           transitionDelay: `${index * 50}ms`,
-                          transform: hoveredCard === 'objectives' ? 'translateX(10px)' : 'translateX(0)'
+                          transform: hoveredCard === 'objectives' ? 'translateX(5px)' : 'translateX(0)'
                         }}
                       >
-                        <div className="mt-0.5 bg-gray-100 rounded-full p-1 flex-shrink-0 text-gray-700 shadow-sm 
-                                      group-hover:bg-gray-200 transition-all duration-500
-                                      group-hover:scale-110 group-hover:rotate-12">
-                          <CheckCircle className="h-4 w-4" />
+                        <div className="mt-0.5 bg-gradient-to-r from-gray-100 to-gray-50 rounded-full p-1 flex-shrink-0 text-gray-700 shadow-sm 
+                                      group-hover:bg-gray-200 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)]
+                                      group-hover:scale-110 group-hover:shadow-md">
+                          <CheckCircle className="h-4 w-4 transition-all duration-300 ease-in-out group-hover:scale-110" />
                         </div>
                         <span className="text-gray-700 font-medium group-hover:font-semibold transition-all duration-300">
                           {objective}
@@ -324,11 +326,11 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
 
         {/* 课程要求 */}
         <div 
-          className={`transform transition-all duration-700 ${
+          className={`transform transition-all duration-700 ease-out ${
             hoveredCard === 'requirements' 
-            ? 'scale-105 rotate-[-2deg] z-20 translate-y-[-10px]' 
+            ? 'scale-[1.03] z-20 translate-y-[-10px] shadow-2xl' 
             : hoveredCard === 'objectives' || hoveredCard === 'audience' 
-              ? 'scale-95 opacity-80 translate-y-[5px] rotate-[1deg]'
+              ? 'scale-[0.98] opacity-85 translate-y-[5px]'
               : ''
           }`}
           onMouseEnter={() => setHoveredCard('requirements')}
@@ -337,27 +339,29 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
           <div className="relative overflow-visible rounded-lg border border-gray-200 bg-white shadow-lg group 
                         hover:shadow-2xl transition-all duration-700 animate-in fade-in preserve-3d">
             {/* 顶部边框装饰 */}
-            <div className="absolute top-0 left-0 w-full h-1 bg-gray-300"></div>
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200"></div>
             
             {/* 图标 - 完全显示于顶部边框位置，不被遮挡 */}
-            <div className="absolute left-0 right-0 mx-auto -top-12 flex justify-center transform transition-all duration-700 
-                         group-hover:scale-110 group-hover:-translate-y-1 group-hover:rotate-[-12deg] z-10">
-              <div className="w-24 h-24 bg-gray-100 rounded-full border-4 border-white shadow-lg 
+            <div className="absolute left-0 right-0 mx-auto -top-10 flex justify-center transform transition-all duration-700 
+                         group-hover:scale-110 group-hover:-translate-y-2 z-10">
+              <div className="w-20 h-20 bg-gradient-to-b from-gray-50 to-gray-100 rounded-full border-4 border-white shadow-lg 
                           flex items-center justify-center overflow-visible">
-                <Book className="h-12 w-12 text-gray-700" />
+                <Book className="h-10 w-10 text-gray-700" />
               </div>
             </div>
             
-            <div className="pb-6 pt-20">
+            <div className="pb-6 pt-16">
               {/* 标题带背景和封装效果 */}
-              <div className="bg-gray-50 py-3 px-4 mb-6 border-b border-gray-200">
+              <div className="bg-gradient-to-r from-gray-50 via-gray-100 to-gray-50 py-4 px-4 mb-6 border-b border-gray-200
+                           shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-2px_rgba(0,0,0,0.05)]">
                 <h3 className="text-xl font-bold text-center text-gray-800 transition-all duration-300
-                            group-hover:text-black group-hover:scale-105">
+                            group-hover:text-black group-hover:scale-105
+                            drop-shadow-[0_1px_1px_rgba(0,0,0,0.15)]">
                   {t('courses:requirements')}
                 </h3>
               </div>
               
-              <div className="px-6">
+              <div className="px-6 transition-all duration-500 ease-in-out group-hover:translate-y-[-2px]">
                 {requirements && requirements.length > 0 ? (
                   <ul className="space-y-4">
                     {requirements.map((requirement, index) => (
@@ -368,13 +372,13 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
                         style={{ 
                           animationDelay: `${index * 100}ms`, 
                           transitionDelay: `${index * 50}ms`,
-                          transform: hoveredCard === 'requirements' ? 'translateX(10px)' : 'translateX(0)'
+                          transform: hoveredCard === 'requirements' ? 'translateX(5px)' : 'translateX(0)'
                         }}
                       >
-                        <div className="mt-0.5 bg-gray-100 rounded-full p-1 flex-shrink-0 text-gray-700 shadow-sm 
-                                      group-hover:bg-gray-200 transition-all duration-500
-                                      group-hover:scale-110 group-hover:rotate-[-12deg]">
-                          <BookOpen className="h-4 w-4" />
+                        <div className="mt-0.5 bg-gradient-to-r from-gray-100 to-gray-50 rounded-full p-1 flex-shrink-0 text-gray-700 shadow-sm 
+                                      group-hover:bg-gray-200 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)]
+                                      group-hover:scale-110 group-hover:shadow-md">
+                          <BookOpen className="h-4 w-4 transition-all duration-300 ease-in-out group-hover:scale-110" />
                         </div>
                         <span className="text-gray-700 font-medium group-hover:font-semibold transition-all duration-300">
                           {requirement}
@@ -395,11 +399,11 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
 
         {/* 适合人群 */}
         <div 
-          className={`transform transition-all duration-700 ${
+          className={`transform transition-all duration-700 ease-out ${
             hoveredCard === 'audience' 
-            ? 'scale-105 rotate-2 z-20 translate-y-[-10px]' 
+            ? 'scale-[1.03] z-20 translate-y-[-10px] shadow-2xl' 
             : hoveredCard === 'objectives' || hoveredCard === 'requirements' 
-              ? 'scale-95 opacity-80 translate-y-[5px] rotate-[-1deg]'
+              ? 'scale-[0.98] opacity-85 translate-y-[5px]'
               : ''
           }`}
           onMouseEnter={() => setHoveredCard('audience')}
@@ -408,27 +412,29 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
           <div className="relative overflow-visible rounded-lg border border-gray-200 bg-white shadow-lg group 
                         hover:shadow-2xl transition-all duration-700 animate-in fade-in preserve-3d">
             {/* 顶部边框装饰 */}
-            <div className="absolute top-0 left-0 w-full h-1 bg-gray-300"></div>
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200"></div>
             
             {/* 图标 - 完全显示于顶部边框位置，不被遮挡 */}
-            <div className="absolute left-0 right-0 mx-auto -top-12 flex justify-center transform transition-all duration-700 
-                         group-hover:scale-110 group-hover:-translate-y-1 group-hover:rotate-12 z-10">
-              <div className="w-24 h-24 bg-gray-100 rounded-full border-4 border-white shadow-lg 
+            <div className="absolute left-0 right-0 mx-auto -top-10 flex justify-center transform transition-all duration-700 
+                         group-hover:scale-110 group-hover:-translate-y-2 z-10">
+              <div className="w-20 h-20 bg-gradient-to-b from-gray-50 to-gray-100 rounded-full border-4 border-white shadow-lg 
                           flex items-center justify-center overflow-visible">
-                <Users className="h-12 w-12 text-gray-700" />
+                <Users className="h-10 w-10 text-gray-700" />
               </div>
             </div>
             
-            <div className="pb-6 pt-20">
+            <div className="pb-6 pt-16">
               {/* 标题带背景和封装效果 */}
-              <div className="bg-gray-50 py-3 px-4 mb-6 border-b border-gray-200">
+              <div className="bg-gradient-to-r from-gray-50 via-gray-100 to-gray-50 py-4 px-4 mb-6 border-b border-gray-200
+                           shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-2px_rgba(0,0,0,0.05)]">
                 <h3 className="text-xl font-bold text-center text-gray-800 transition-all duration-300
-                            group-hover:text-black group-hover:scale-105">
+                            group-hover:text-black group-hover:scale-105
+                            drop-shadow-[0_1px_1px_rgba(0,0,0,0.15)]">
                   {t('courses:targetAudience')}
                 </h3>
               </div>
               
-              <div className="px-6">
+              <div className="px-6 transition-all duration-500 ease-in-out group-hover:translate-y-[-2px]">
                 {targetAudience && targetAudience.length > 0 ? (
                   <ul className="space-y-4">
                     {targetAudience.map((audience, index) => (
@@ -439,13 +445,13 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
                         style={{ 
                           animationDelay: `${index * 100}ms`, 
                           transitionDelay: `${index * 50}ms`,
-                          transform: hoveredCard === 'audience' ? 'translateX(10px)' : 'translateX(0)'
+                          transform: hoveredCard === 'audience' ? 'translateX(5px)' : 'translateX(0)'
                         }}
                       >
-                        <div className="mt-0.5 bg-gray-100 rounded-full p-1 flex-shrink-0 text-gray-700 shadow-sm 
-                                      group-hover:bg-gray-200 transition-all duration-500
-                                      group-hover:scale-110 group-hover:rotate-12">
-                          <Users className="h-4 w-4" />
+                        <div className="mt-0.5 bg-gradient-to-r from-gray-100 to-gray-50 rounded-full p-1 flex-shrink-0 text-gray-700 shadow-sm 
+                                      group-hover:bg-gray-200 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)]
+                                      group-hover:scale-110 group-hover:shadow-md">
+                          <Users className="h-4 w-4 transition-all duration-300 ease-in-out group-hover:scale-110" />
                         </div>
                         <span className="text-gray-700 font-medium group-hover:font-semibold transition-all duration-300">
                           {audience}
