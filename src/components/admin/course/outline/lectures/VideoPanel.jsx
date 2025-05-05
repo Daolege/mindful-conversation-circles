@@ -206,7 +206,7 @@ const VideoPanel = ({
                 ) : (
                   <div className="flex items-center gap-2">
                     <span 
-                      className="text-sm font-medium cursor-pointer hover:text-blue-600 hover:underline"
+                      className="text-sm font-medium cursor-pointer"
                       onDoubleClick={handleDoubleClick}
                       title="双击编辑视频名称"
                     >

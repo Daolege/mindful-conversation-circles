@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import {
   Card,
@@ -8,7 +7,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { Loader2, Save, Plus, RefreshCw, AlertCircle, CheckCircle } from "lucide-react";
+import { Loader2, Save, Plus, RefreshCw, AlertCircle, CheckCircle, Check, Square } from "lucide-react";
 import { toast } from "sonner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useCourseOutlineManager } from './hooks/useCourseOutlineManager';
@@ -241,7 +240,12 @@ export const CourseOutlineEditor = ({
                     onClick={() => handleSequentialLearningToggle(!requiresSequentialLearning)}
                     className="text-sm h-9"
                   >
-                    {requiresSequentialLearning ? "✓ " : ""}按顺序学习
+                    {requiresSequentialLearning ? (
+                      <Check className="h-4 w-4 mr-1" />
+                    ) : (
+                      <Square className="h-4 w-4 mr-1" />
+                    )}
+                    按顺序学习
                   </Button>
                   
                   <Button
@@ -250,7 +254,12 @@ export const CourseOutlineEditor = ({
                     onClick={() => handleHomeworkCompletionToggle(!requiresHomeworkCompletion)}
                     className="text-sm h-9"
                   >
-                    {requiresHomeworkCompletion ? "✓ " : ""}须提交作业
+                    {requiresHomeworkCompletion ? (
+                      <Check className="h-4 w-4 mr-1" />
+                    ) : (
+                      <Square className="h-4 w-4 mr-1" />
+                    )}
+                    须提交作业
                   </Button>
                 </div>
                 

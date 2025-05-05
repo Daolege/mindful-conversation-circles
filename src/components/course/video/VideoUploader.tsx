@@ -35,7 +35,7 @@ export const VideoUploader: React.FC<VideoUploaderProps> = ({
     const validTypes = ['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime'];
     if (!validTypes.includes(file.type)) {
       toast.error('不支持的视频格式', {
-        description: '请上传浏览器支持的视频格式，如 MP4、WebM、OGG 或 QuickTime 格式'
+        description: '请上传 MP4、WebM、OGG 或 QuickTime 格式的视频文件'
       });
       setSelectedFileName(null);
       return;
