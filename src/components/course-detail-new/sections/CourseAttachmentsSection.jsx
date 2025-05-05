@@ -39,6 +39,7 @@ const CourseAttachmentsSection = ({
         return <FileText size={18} className="text-blue-600" />;
       case 'zip':
       case 'rar':
+        // Replace FileZip with FileArchive with purple color
         return <FileArchive size={18} className="text-purple-600" />;
       case 'mp3':
       case 'wav':
