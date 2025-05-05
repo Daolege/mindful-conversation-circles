@@ -48,10 +48,11 @@ export const CourseDetailContentNew = ({ course }) => {
       {/* 课程附件 - 总是尝试显示 */}
       <CourseDetailErrorBoundary>
         <Suspense fallback={<SkeletonBlock height="h-40" />}>
+          {/* 强制设置为可见 */}
           <CourseAttachmentsSection 
             course={course} 
             isLoading={false}
-            isVisible={true}  {/* 强制设置为可见 */}
+            isVisible={true}
             onVisibilityChange={(isVisible) => updateSectionVisibility('attachments', isVisible)}
           />
         </Suspense>
@@ -60,10 +61,11 @@ export const CourseDetailContentNew = ({ course }) => {
       {/* 学习信息栏 - 三栏布局 */}
       <CourseDetailErrorBoundary>
         <Suspense fallback={<SkeletonBlock height="h-64" count={3} />}>
+          {/* 强制设置为可见 */}
           <CourseLearningInfoSection 
             course={course} 
             isLoading={false}
-            isVisible={true}  {/* 强制设置为可见 */}
+            isVisible={true}
             onVisibilityChange={(isVisible) => updateSectionVisibility('learningInfo', isVisible)}
           />
         </Suspense>
