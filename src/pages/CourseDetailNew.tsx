@@ -13,6 +13,9 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useIsMobile } from '@/hooks/use-mobile';
 
+// Lazy-load the EnrollCardMobile component
+const EnrollCardMobile = React.lazy(() => import('@/components/course-detail-new/EnrollCardMobile'));
+
 const CourseDetailNew = () => {
   const { courseId } = useParams<{ courseId: string }>();
   const courseIdNum = parseInt(courseId || '0', 10);
@@ -30,6 +33,20 @@ const CourseDetailNew = () => {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [courseId]);
+
+  // Enable feature flags if they don't exist
+  useEffect(() => {
+    if (!localStorage.getItem('enableProgressiveLoading')) {
+      localStorage.setItem('enableProgressiveLoading', 'true');
+    }
+    
+    if (!localStorage.getItem('enableMobileOptimizations')) {
+      localStorage.setItem('enableMobileOptimizations', 'true');
+    }
+  }, []);
+
+  const isProgressiveLoadingEnabled = localStorage.getItem('enableProgressiveLoading') === 'true';
+  const isMobileOptimizationsEnabled = localStorage.getItem('enableMobileOptimizations') === 'true';
 
   if (isLoading) {
     return (
@@ -63,19 +80,27 @@ const CourseDetailNew = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className={`${isMobile ? 'order-2' : 'order-1'} lg:col-span-2`}>
             <CourseDetailHeaderNew course={courseData} />
-            <Suspense fallback={<div className="space-y-8">
-              {[1, 2, 3, 4].map(i => (
-                <div key={i} className="h-40 bg-gray-100 rounded-lg animate-pulse"></div>
-              ))}
-            </div>}>
-              <CourseDetailContentNew course={courseData} />
-            </Suspense>
+            <CourseDetailContentNew course={courseData} />
           </div>
-          <div className={`${isMobile ? 'order-1 mb-6' : 'order-2'} lg:col-span-1`}>
+          
+          <div className={`${isMobile ? 'hidden' : 'order-2 block'} lg:col-span-1`}>
             <CourseEnrollCardNew course={courseData} />
           </div>
         </div>
       </div>
+      
+      {/* Mobile-optimized fixed enrollment card at the bottom */}
+      {isMobile && isMobileOptimizationsEnabled && (
+        <Suspense fallback={null}>
+          <EnrollCardMobile course={courseData} />
+        </Suspense>
+      )}
+      
+      {/* Add padding at bottom on mobile to account for the fixed enrollment card */}
+      {isMobile && isMobileOptimizationsEnabled && (
+        <div className="h-24 md:h-0"></div>
+      )}
+      
       <Footer />
     </>
   );
