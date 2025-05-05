@@ -45,13 +45,13 @@ export const CourseDetailContentNew = ({ course }) => {
         </Suspense>
       </CourseDetailErrorBoundary>
 
-      {/* 课程附件 */}
+      {/* 课程附件 - 总是尝试显示 */}
       <CourseDetailErrorBoundary>
         <Suspense fallback={<SkeletonBlock height="h-40" />}>
           <CourseAttachmentsSection 
             course={course} 
             isLoading={false}
-            isVisible={visibleSections.outline} // Load after outline becomes visible
+            isVisible={true}  {/* 强制设置为可见 */}
             onVisibilityChange={(isVisible) => updateSectionVisibility('attachments', isVisible)}
           />
         </Suspense>
@@ -63,7 +63,7 @@ export const CourseDetailContentNew = ({ course }) => {
           <CourseLearningInfoSection 
             course={course} 
             isLoading={false}
-            isVisible={visibleSections.attachments} // Load after attachments become visible
+            isVisible={true}  {/* 强制设置为可见 */}
             onVisibilityChange={(isVisible) => updateSectionVisibility('learningInfo', isVisible)}
           />
         </Suspense>
