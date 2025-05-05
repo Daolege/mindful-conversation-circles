@@ -68,10 +68,10 @@ const PaymentSuccess = () => {
             <div className="w-full lg:w-2/3">
               <Card className="p-6 mb-6 shadow-lg hover:shadow-xl transition-all duration-300 animate-fade-in">
                 <div className="mb-8">
-                  <h2 className="text-xl font-semibold mb-4">{t('checkout:startYourLearning')}</h2>
+                  {/* Removed startYourLearning heading as requested */}
                   <Button 
-                    className="w-full bg-[#0f172a] hover:bg-[#1e293b] text-white h-14 text-lg font-medium 
-                    animate-pulse transition-all duration-300 hover:scale-[1.02] flex items-center justify-center gap-2"
+                    className="w-full bg-[#262626] hover:bg-[#1e293b] text-white h-14 text-lg font-medium 
+                    transition-all duration-300 hover:scale-[1.02] flex items-center justify-center gap-2"
                     asChild
                   >
                     <Link to={learningUrl}>
