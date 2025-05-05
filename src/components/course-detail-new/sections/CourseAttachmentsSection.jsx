@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { File, Download, FileText, FileAudio, FileVideo, FileImage, FileArchive, FileZip } from 'lucide-react';
+import { File, Download, FileText, FileAudio, FileVideo, FileImage, FileArchive } from 'lucide-react';
 import { useTranslations } from '@/hooks/useTranslations';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -149,7 +149,8 @@ const CourseAttachmentsSection = ({
         return <FileText size={18} className="text-blue-600" />;
       case 'zip':
       case 'rar':
-        return <FileZip size={18} className="text-purple-600" />;
+        // Replace FileZip with FileArchive with purple color
+        return <FileArchive size={18} className="text-purple-600" />;
       case 'mp3':
       case 'wav':
       case 'ogg':
