@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
@@ -65,7 +66,7 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
     return id;
   }, [clearToast]);
   
-  // 定义初始化函数，用于获取有效的课程ID - 改进版，确保在调用API前一定有courseId
+  // 改进课程ID提取逻辑，优先从URL路径提取并确保是数字类型
   const initializeCourseId = useCallback(() => {
     console.log('[HomeworkPanel] Initializing, getting course ID');
     console.log('[HomeworkPanel] Props courseId:', courseId);
@@ -182,7 +183,7 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
     refetchOnMount: true
   });
   
-  // 创建或更新作业 - 确保 course_id 总是有效
+  // 创建或更新作业 - 确保 course_id 总是有效的数字类型
   const { mutateAsync: saveHomeworkMutation, isPending: isSaving } = useMutation({
     mutationFn: async (data: any) => {
       setSaveStatus({ success: false, error: null });
@@ -219,10 +220,10 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
       const toastId = showToast('save', () => toast.loading('正在保存作业...'));
       
       try {
-        // 确保course_id正确设置 - 这是修复的重要部分
+        // 确保course_id正确设置为数字类型 - 这是修复的重要部分
         const homeworkData = {
           ...data,
-          course_id: detectedCourseId // 确保这是一个数字
+          course_id: Number(detectedCourseId)  // 明确转换为数字类型
         };
         
         console.log('[HomeworkPanel] Final save data with course_id:', homeworkData.course_id, 'type:', typeof homeworkData.course_id);
@@ -275,6 +276,8 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
       setShowAddForm(false);
       setEditingHomework(null);
       queryClient.invalidateQueries({ queryKey: ['homework', lectureId] });
+      // 同时刷新讲座的作业状态查询
+      queryClient.invalidateQueries({ queryKey: ['lecture-homework', lectureId] });
     },
     onError: (error: Error) => {
       console.error('[HomeworkPanel] Mutation error:', error);
@@ -308,6 +311,8 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['homework', lectureId] });
+      // 同时刷新讲座的作业状态查询
+      queryClient.invalidateQueries({ queryKey: ['lecture-homework', lectureId] });
     }
   });
   
@@ -319,6 +324,8 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
     try {
       showToast('refresh', () => toast.loading('正在刷新作业数据...'));
       await refetchHomework();
+      // 同时刷新讲座的作业状态查询
+      await queryClient.invalidateQueries({ queryKey: ['lecture-homework', lectureId] });
       clearToast('refresh');
       showToast('refresh', () => toast.success('作业数据已刷新'));
     } catch (error: any) {
@@ -340,9 +347,10 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
         }
       }
       
+      // 确保course_id是数字类型
       const result = await saveHomeworkMutation({
         ...data,
-        course_id: effectiveCourseId
+        course_id: Number(effectiveCourseId)
       });
       
       return result;

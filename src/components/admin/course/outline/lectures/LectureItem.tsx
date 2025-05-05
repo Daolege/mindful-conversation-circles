@@ -22,6 +22,8 @@ import { cn } from '@/lib/utils';
 import { HomeworkPanel } from './HomeworkPanel';
 import VideoPanel from './VideoPanel';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { useQuery } from "@tanstack/react-query";
+import { getHomeworksByLectureId } from '@/lib/services/homeworkService';
 
 interface LectureItemProps {
   id: string;
@@ -77,21 +79,30 @@ export const LectureItem = ({
     setLocalVideoData(videoData);
   }, [videoData]);
   
-  // 监测是否有作业数据的简单方法 - 实际应用中可能需要更详细的检查
+  // 使用useQuery从数据库中获取课时作业数据，而不是模拟
+  const { data: homeworkData, isLoading: isLoadingHomework } = useQuery({
+    queryKey: ['lecture-homework', id],
+    queryFn: async () => {
+      try {
+        console.log('Fetching homework data for lecture:', id);
+        const result = await getHomeworksByLectureId(id);
+        return result;
+      } catch (err) {
+        console.error('Error fetching homework data:', err);
+        return { success: false, data: [], error: err };
+      }
+    },
+    enabled: !!id // 只有当id存在时才执行查询
+  });
+  
+  // 当homework数据加载完成后，更新hasHomework状态
   useEffect(() => {
-    // 这里需要根据您的数据结构编写实际的检查逻辑
-    // 暂时使用简单的setTimeout模拟异步检查
-    const checkForHomework = async () => {
-      setTimeout(() => {
-        // 这里仅作示例，实际情况下您需要根据真实的数据结构来判断
-        // 例如检查数据库或本地状态中是否存在与此课时相关的作业
-        const hasHomeworkData = Math.random() > 0.5; // 模拟50%概率有作业
-        setHasHomework(hasHomeworkData);
-      }, 500);
-    };
-    
-    checkForHomework();
-  }, [id]);
+    if (homeworkData && homeworkData.data) {
+      const hasHomeworkItems = Array.isArray(homeworkData.data) && homeworkData.data.length > 0;
+      console.log(`Lecture ${id} has ${homeworkData.data.length} homework items`);
+      setHasHomework(hasHomeworkItems);
+    }
+  }, [homeworkData, id]);
   
   const { 
     attributes, 
@@ -212,7 +223,12 @@ export const LectureItem = ({
                   {hasVideo ? "视频已传" : "上传视频"}
                 </Button>
 
-                <Button variant="outline" size="sm" onClick={toggleHomeworkPanel} className="h-8 px-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={toggleHomeworkPanel} 
+                  className="h-8 px-2"
+                >
                   <BookOpen 
                     className={cn(
                       "h-4 w-4 mr-1",

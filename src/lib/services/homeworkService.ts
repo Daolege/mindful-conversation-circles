@@ -27,12 +27,23 @@ export const debugHomeworkTable = async (): Promise<HomeworkResult> => {
 // Get homework by lecture ID
 export const getHomeworksByLectureId = async (lectureId: string): Promise<HomeworkResult> => {
   try {
+    console.log("Fetching homework for lecture ID:", lectureId);
+    
+    if (!lectureId) {
+      throw new Error("Invalid lecture ID");
+    }
+    
     const { data, error, count } = await supabase
       .from('homework')
       .select('*', { count: 'exact' })
       .eq('lecture_id', lectureId);
     
-    if (error) throw error;
+    if (error) {
+      console.error("Supabase error fetching homework:", error);
+      throw error;
+    }
+    
+    console.log(`Found ${data?.length || 0} homework items for lecture ${lectureId}`);
     
     return {
       success: true,
@@ -53,11 +64,34 @@ export const getHomeworksByLectureId = async (lectureId: string): Promise<Homewo
 // Save or update homework
 export const saveHomework = async (homeworkData: any): Promise<HomeworkResult> => {
   try {
+    console.log("Saving homework with data:", {
+      id: homeworkData.id,
+      lecture_id: homeworkData.lecture_id,
+      course_id: homeworkData.course_id,
+      course_id_type: typeof homeworkData.course_id,
+      title: homeworkData.title
+    });
+    
+    // Validate course_id is a number
+    if (typeof homeworkData.course_id !== 'number' || isNaN(homeworkData.course_id)) {
+      const error = new Error(`Invalid course_id: ${homeworkData.course_id} (${typeof homeworkData.course_id})`);
+      console.error("Validation error:", error.message);
+      throw error;
+    }
+    
+    // Validate lecture_id is a string
+    if (!homeworkData.lecture_id || typeof homeworkData.lecture_id !== 'string') {
+      const error = new Error(`Invalid lecture_id: ${homeworkData.lecture_id}`);
+      console.error("Validation error:", error.message);
+      throw error;
+    }
+    
     const { id } = homeworkData;
     let result;
     
     if (id) {
       // Update existing homework
+      console.log("Updating existing homework ID:", id);
       result = await supabase
         .from('homework')
         .update(homeworkData)
@@ -65,13 +99,19 @@ export const saveHomework = async (homeworkData: any): Promise<HomeworkResult> =
         .select();
     } else {
       // Insert new homework
+      console.log("Inserting new homework");
       result = await supabase
         .from('homework')
         .insert(homeworkData)
         .select();
     }
     
-    if (result.error) throw result.error;
+    if (result.error) {
+      console.error("Supabase error saving homework:", result.error);
+      throw result.error;
+    }
+    
+    console.log("Homework saved successfully:", result.data);
     
     return {
       success: true,
@@ -89,12 +129,23 @@ export const saveHomework = async (homeworkData: any): Promise<HomeworkResult> =
 // Delete homework
 export const deleteHomework = async (homeworkId: string): Promise<HomeworkResult> => {
   try {
+    console.log("Deleting homework ID:", homeworkId);
+    
+    if (!homeworkId) {
+      throw new Error("Invalid homework ID");
+    }
+    
     const { error } = await supabase
       .from('homework')
       .delete()
       .eq('id', homeworkId);
     
-    if (error) throw error;
+    if (error) {
+      console.error("Supabase error deleting homework:", error);
+      throw error;
+    }
+    
+    console.log("Homework deleted successfully");
     
     return { success: true };
   } catch (error) {
