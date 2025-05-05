@@ -34,6 +34,9 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
   
   const [isOutlineLoading, setIsOutlineLoading] = useState(true);
   
+  // Add state for tracking hovered card
+  const [hoveredCard, setHoveredCard] = useState<string | null>(null);
+  
   React.useEffect(() => {
     // Simulate outline loading with a short delay to show loading animation
     const timer = setTimeout(() => {
@@ -121,8 +124,6 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
           </div>
         </CardContent>
       </Card>
-
-      {/* 删除课程亮点卡片 */}
 
       {/* 课程大纲 */}
       <Card className="hover:shadow-lg transition-shadow duration-500 shadow-sm animate-in fade-in duration-500">
@@ -248,133 +249,187 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
         </CardContent>
       </Card>
 
-      {/* 学习信息栏 - 三栏布局 - 全新优化设计 */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* 学习信息栏 - 三栏布局 - 全新3D悬浮卡片设计 */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 perspective-1000">
         {/* 学习目标 */}
-        <Card className="relative overflow-hidden border border-gray-200 shadow-md transition-all duration-300 
-                        hover:shadow-xl group animate-in fade-in duration-500">
-          {/* 顶部边框装饰 */}
-          <div className="absolute top-0 left-0 w-full h-1 bg-gray-800"></div>
-          
-          {/* 图标 - 部分超出卡片上边框 */}
-          <div className="absolute -top-6 left-6 transform transition-all duration-300 group-hover:scale-110 group-hover:-translate-y-1">
-            <div className="w-16 h-16 bg-gray-100 rounded-full border-4 border-white shadow-lg flex items-center justify-center">
-              <Target className="h-8 w-8 text-gray-700" />
+        <div 
+          className={`transform transition-all duration-500 ${hoveredCard === 'objectives' ? 'scale-105 -rotate-1 z-10' : hoveredCard ? 'scale-95 opacity-80' : ''}`}
+          onMouseEnter={() => setHoveredCard('objectives')}
+          onMouseLeave={() => setHoveredCard(null)}
+        >
+          <div className="relative overflow-hidden rounded-lg border border-gray-200 shadow-lg group 
+                        hover:shadow-2xl transition-all duration-500 animate-in fade-in preserve-3d">
+            {/* 顶部边框装饰 */}
+            <div className="absolute top-0 left-0 w-full h-1 bg-gray-300"></div>
+            
+            {/* 图标 - 居中并完整显示于卡片上边框 */}
+            <div className="absolute left-0 right-0 mx-auto -top-10 flex justify-center transform transition-all duration-500 
+                         group-hover:scale-110 group-hover:-translate-y-1 group-hover:rotate-12">
+              <div className="w-20 h-20 bg-gray-100 rounded-full border-4 border-white shadow-lg 
+                          flex items-center justify-center overflow-visible z-10">
+                <Target className="h-10 w-10 text-gray-700" />
+              </div>
             </div>
+            
+            <div className="pt-16 pb-6 px-6">
+              {/* 标题居中 */}
+              <h3 className="text-xl font-bold text-center text-gray-800 mb-6 mt-2 transition-all duration-300
+                          group-hover:text-black group-hover:scale-105">
+                {t('courses:learningObjectives')}
+              </h3>
+              
+              {/* 分割线 */}
+              <div className="w-1/3 h-0.5 bg-gray-200 mx-auto mb-6 group-hover:w-2/3 transition-all duration-500"></div>
+              
+              {learningObjectives && learningObjectives.length > 0 ? (
+                <ul className="space-y-4">
+                  {learningObjectives.map((objective, index) => (
+                    <li 
+                      key={index} 
+                      className="flex items-start gap-3 transition-all duration-300 group-hover:translate-x-2 
+                              opacity-90 group-hover:opacity-100"
+                      style={{ animationDelay: `${index * 100}ms`, transitionDelay: `${index * 50}ms` }}
+                    >
+                      <div className="mt-0.5 bg-gray-100 rounded-full p-1 flex-shrink-0 text-gray-700 shadow-sm 
+                                    group-hover:bg-gray-200 transition-all duration-300
+                                    group-hover:scale-110 group-hover:rotate-12">
+                        <CheckCircle className="h-4 w-4" />
+                      </div>
+                      <span className="text-gray-700 font-medium group-hover:font-semibold transition-all duration-300">
+                        {objective}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div className="text-gray-500 italic text-center">{t('courses:noObjectives')}</div>
+              )}
+            </div>
+            
+            {/* 底部装饰 */}
+            <div className="h-2 w-full bg-gradient-to-r from-transparent via-gray-200 to-transparent absolute bottom-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
           </div>
-          
-          <CardHeader className="pt-12 pb-2">
-            <CardTitle className="text-xl font-bold text-gray-800 ml-2">
-              {t('courses:learningObjectives')}
-            </CardTitle>
-          </CardHeader>
-          
-          <CardContent className="pt-2">
-            {learningObjectives && learningObjectives.length > 0 ? (
-              <ul className="space-y-3">
-                {learningObjectives.map((objective, index) => (
-                  <li 
-                    key={index} 
-                    className="flex items-start gap-3 group animate-in fade-in duration-300 hover:translate-x-1 transition-transform"
-                    style={{ animationDelay: `${index * 100}ms` }}
-                  >
-                    <div className="mt-0.5 bg-gray-100 rounded-full p-1 flex-shrink-0 text-gray-700 shadow-sm 
-                                   group-hover:bg-gray-200 transition-colors">
-                      <CheckCircle className="h-4 w-4" />
-                    </div>
-                    <span className="text-gray-700 font-medium">{objective}</span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <div className="text-gray-500 italic">{t('courses:noObjectives')}</div>
-            )}
-          </CardContent>
-        </Card>
+        </div>
 
         {/* 课程要求 */}
-        <Card className="relative overflow-hidden border border-gray-200 shadow-md transition-all duration-300 
-                        hover:shadow-xl group animate-in fade-in duration-500">
-          {/* 顶部边框装饰 */}
-          <div className="absolute top-0 left-0 w-full h-1 bg-gray-700"></div>
-          
-          {/* 图标 - 部分超出卡片上边框 */}
-          <div className="absolute -top-6 left-6 transform transition-all duration-300 group-hover:scale-110 group-hover:-translate-y-1">
-            <div className="w-16 h-16 bg-gray-100 rounded-full border-4 border-white shadow-lg flex items-center justify-center">
-              <Book className="h-8 w-8 text-gray-700" />
+        <div 
+          className={`transform transition-all duration-500 ${hoveredCard === 'requirements' ? 'scale-105 rotate-1 z-10' : hoveredCard ? 'scale-95 opacity-80' : ''}`}
+          onMouseEnter={() => setHoveredCard('requirements')}
+          onMouseLeave={() => setHoveredCard(null)}
+        >
+          <div className="relative overflow-hidden rounded-lg border border-gray-200 shadow-lg group 
+                        hover:shadow-2xl transition-all duration-500 animate-in fade-in preserve-3d">
+            {/* 顶部边框装饰 */}
+            <div className="absolute top-0 left-0 w-full h-1 bg-gray-300"></div>
+            
+            {/* 图标 - 居中并完整显示于卡片上边框 */}
+            <div className="absolute left-0 right-0 mx-auto -top-10 flex justify-center transform transition-all duration-500 
+                         group-hover:scale-110 group-hover:-translate-y-1 group-hover:-rotate-12">
+              <div className="w-20 h-20 bg-gray-100 rounded-full border-4 border-white shadow-lg 
+                          flex items-center justify-center overflow-visible z-10">
+                <Book className="h-10 w-10 text-gray-700" />
+              </div>
             </div>
+            
+            <div className="pt-16 pb-6 px-6">
+              {/* 标题居中 */}
+              <h3 className="text-xl font-bold text-center text-gray-800 mb-6 mt-2 transition-all duration-300
+                          group-hover:text-black group-hover:scale-105">
+                {t('courses:requirements')}
+              </h3>
+              
+              {/* 分割线 */}
+              <div className="w-1/3 h-0.5 bg-gray-200 mx-auto mb-6 group-hover:w-2/3 transition-all duration-500"></div>
+              
+              {requirements && requirements.length > 0 ? (
+                <ul className="space-y-4">
+                  {requirements.map((requirement, index) => (
+                    <li 
+                      key={index} 
+                      className="flex items-start gap-3 transition-all duration-300 group-hover:translate-x-2 
+                              opacity-90 group-hover:opacity-100"
+                      style={{ animationDelay: `${index * 100}ms`, transitionDelay: `${index * 50}ms` }}
+                    >
+                      <div className="mt-0.5 bg-gray-100 rounded-full p-1 flex-shrink-0 text-gray-700 shadow-sm 
+                                    group-hover:bg-gray-200 transition-all duration-300
+                                    group-hover:scale-110 group-hover:rotate-12">
+                        <BookOpen className="h-4 w-4" />
+                      </div>
+                      <span className="text-gray-700 font-medium group-hover:font-semibold transition-all duration-300">
+                        {requirement}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div className="text-gray-500 italic text-center">{t('courses:noRequirements')}</div>
+              )}
+            </div>
+            
+            {/* 底部装饰 */}
+            <div className="h-2 w-full bg-gradient-to-r from-transparent via-gray-200 to-transparent absolute bottom-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
           </div>
-          
-          <CardHeader className="pt-12 pb-2">
-            <CardTitle className="text-xl font-bold text-gray-800 ml-2">
-              {t('courses:requirements')}
-            </CardTitle>
-          </CardHeader>
-          
-          <CardContent className="pt-2">
-            {requirements && requirements.length > 0 ? (
-              <ul className="space-y-3">
-                {requirements.map((requirement, index) => (
-                  <li 
-                    key={index} 
-                    className="flex items-start gap-3 group animate-in fade-in duration-300 hover:translate-x-1 transition-transform"
-                    style={{ animationDelay: `${index * 100}ms` }}
-                  >
-                    <div className="mt-0.5 bg-gray-100 rounded-full p-1 flex-shrink-0 text-gray-700 shadow-sm 
-                                   group-hover:bg-gray-200 transition-colors">
-                      <BookOpen className="h-4 w-4" />
-                    </div>
-                    <span className="text-gray-700 font-medium">{requirement}</span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <div className="text-gray-500 italic">{t('courses:noRequirements')}</div>
-            )}
-          </CardContent>
-        </Card>
+        </div>
 
         {/* 适合人群 */}
-        <Card className="relative overflow-hidden border border-gray-200 shadow-md transition-all duration-300 
-                        hover:shadow-xl group animate-in fade-in duration-500">
-          {/* 顶部边框装饰 */}
-          <div className="absolute top-0 left-0 w-full h-1 bg-gray-600"></div>
-          
-          {/* 图标 - 部分超出卡片上边框 */}
-          <div className="absolute -top-6 left-6 transform transition-all duration-300 group-hover:scale-110 group-hover:-translate-y-1">
-            <div className="w-16 h-16 bg-gray-100 rounded-full border-4 border-white shadow-lg flex items-center justify-center">
-              <Users className="h-8 w-8 text-gray-700" />
+        <div 
+          className={`transform transition-all duration-500 ${hoveredCard === 'audience' ? 'scale-105 -rotate-1 z-10' : hoveredCard ? 'scale-95 opacity-80' : ''}`}
+          onMouseEnter={() => setHoveredCard('audience')}
+          onMouseLeave={() => setHoveredCard(null)}
+        >
+          <div className="relative overflow-hidden rounded-lg border border-gray-200 shadow-lg group 
+                        hover:shadow-2xl transition-all duration-500 animate-in fade-in preserve-3d">
+            {/* 顶部边框装饰 */}
+            <div className="absolute top-0 left-0 w-full h-1 bg-gray-300"></div>
+            
+            {/* 图标 - 居中并完整显示于卡片上边框 */}
+            <div className="absolute left-0 right-0 mx-auto -top-10 flex justify-center transform transition-all duration-500 
+                         group-hover:scale-110 group-hover:-translate-y-1 group-hover:rotate-12">
+              <div className="w-20 h-20 bg-gray-100 rounded-full border-4 border-white shadow-lg 
+                          flex items-center justify-center overflow-visible z-10">
+                <Users className="h-10 w-10 text-gray-700" />
+              </div>
             </div>
+            
+            <div className="pt-16 pb-6 px-6">
+              {/* 标题居中 */}
+              <h3 className="text-xl font-bold text-center text-gray-800 mb-6 mt-2 transition-all duration-300
+                          group-hover:text-black group-hover:scale-105">
+                {t('courses:targetAudience')}
+              </h3>
+              
+              {/* 分割线 */}
+              <div className="w-1/3 h-0.5 bg-gray-200 mx-auto mb-6 group-hover:w-2/3 transition-all duration-500"></div>
+              
+              {targetAudience && targetAudience.length > 0 ? (
+                <ul className="space-y-4">
+                  {targetAudience.map((audience, index) => (
+                    <li 
+                      key={index} 
+                      className="flex items-start gap-3 transition-all duration-300 group-hover:translate-x-2 
+                              opacity-90 group-hover:opacity-100"
+                      style={{ animationDelay: `${index * 100}ms`, transitionDelay: `${index * 50}ms` }}
+                    >
+                      <div className="mt-0.5 bg-gray-100 rounded-full p-1 flex-shrink-0 text-gray-700 shadow-sm 
+                                    group-hover:bg-gray-200 transition-all duration-300
+                                    group-hover:scale-110 group-hover:rotate-12">
+                        <Users className="h-4 w-4" />
+                      </div>
+                      <span className="text-gray-700 font-medium group-hover:font-semibold transition-all duration-300">
+                        {audience}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div className="text-gray-500 italic text-center">{t('courses:suitableForEveryone')}</div>
+              )}
+            </div>
+            
+            {/* 底部装饰 */}
+            <div className="h-2 w-full bg-gradient-to-r from-transparent via-gray-200 to-transparent absolute bottom-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
           </div>
-          
-          <CardHeader className="pt-12 pb-2">
-            <CardTitle className="text-xl font-bold text-gray-800 ml-2">
-              {t('courses:targetAudience')}
-            </CardTitle>
-          </CardHeader>
-          
-          <CardContent className="pt-2">
-            {targetAudience && targetAudience.length > 0 ? (
-              <ul className="space-y-3">
-                {targetAudience.map((audience, index) => (
-                  <li 
-                    key={index} 
-                    className="flex items-start gap-3 group animate-in fade-in duration-300 hover:translate-x-1 transition-transform"
-                    style={{ animationDelay: `${index * 100}ms` }}
-                  >
-                    <div className="mt-0.5 bg-gray-100 rounded-full p-1 flex-shrink-0 text-gray-700 shadow-sm 
-                                   group-hover:bg-gray-200 transition-colors">
-                      <Users className="h-4 w-4" />
-                    </div>
-                    <span className="text-gray-700 font-medium">{audience}</span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <div className="text-gray-500 italic">{t('courses:suitableForEveryone')}</div>
-            )}
-          </CardContent>
-        </Card>
+        </div>
       </div>
     </div>
   );
