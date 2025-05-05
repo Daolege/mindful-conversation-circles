@@ -20,6 +20,44 @@ const CourseAttachmentsSection = ({
     
   const hasMaterials = courseMaterials.length > 0;
   
+  // 获取文件类型图标 - Moving this function definition up before it's used
+  const getFileIcon = (fileName) => {
+    const extension = fileName.split('.').pop()?.toLowerCase();
+    
+    switch(extension) {
+      case 'pdf':
+        return <FileText size={18} className="text-red-500" />;
+      case 'xlsx':
+      case 'xls':
+      case 'csv':
+        return <FileText size={18} className="text-green-600" />;
+      case 'pptx':
+      case 'ppt':
+        return <FileText size={18} className="text-orange-500" />;
+      case 'docx':
+      case 'doc':
+        return <FileText size={18} className="text-blue-600" />;
+      case 'zip':
+      case 'rar':
+        return <FileArchive size={18} className="text-purple-600" />;
+      case 'mp3':
+      case 'wav':
+      case 'ogg':
+        return <FileAudio size={18} className="text-indigo-500" />;
+      case 'mp4':
+      case 'avi':
+      case 'mov':
+        return <FileVideo size={18} className="text-pink-500" />;
+      case 'jpg':
+      case 'jpeg':
+      case 'png':
+      case 'gif':
+        return <FileImage size={18} className="text-yellow-500" />;
+      default:
+        return <File size={18} className="text-gray-600" />;
+    }
+  };
+  
   // Use IntersectionObserver to detect when component is in viewport
   React.useEffect(() => {
     if (!isLoading) {
@@ -128,46 +166,6 @@ const CourseAttachmentsSection = ({
       </Card>
     );
   }
-
-  // 获取文件类型图标
-  const getFileIcon = (fileName) => {
-    const extension = fileName.split('.').pop()?.toLowerCase();
-    
-    switch(extension) {
-      case 'pdf':
-        // Replace FilePdf with FileText with red color
-        return <FileText size={18} className="text-red-500" />;
-      case 'xlsx':
-      case 'xls':
-      case 'csv':
-        return <FileText size={18} className="text-green-600" />;
-      case 'pptx':
-      case 'ppt':
-        return <FileText size={18} className="text-orange-500" />;
-      case 'docx':
-      case 'doc':
-        return <FileText size={18} className="text-blue-600" />;
-      case 'zip':
-      case 'rar':
-        // Replace FileZip with FileArchive with purple color
-        return <FileArchive size={18} className="text-purple-600" />;
-      case 'mp3':
-      case 'wav':
-      case 'ogg':
-        return <FileAudio size={18} className="text-indigo-500" />;
-      case 'mp4':
-      case 'avi':
-      case 'mov':
-        return <FileVideo size={18} className="text-pink-500" />;
-      case 'jpg':
-      case 'jpeg':
-      case 'png':
-      case 'gif':
-        return <FileImage size={18} className="text-yellow-500" />;
-      default:
-        return <File size={18} className="text-gray-600" />;
-    }
-  };
 
   return (
     <Card id="course-attachments-section" className="hover:shadow-lg transition-shadow duration-500 shadow-sm animate-in fade-in duration-500 mb-12">
