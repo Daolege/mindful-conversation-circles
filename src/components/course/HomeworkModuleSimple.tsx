@@ -22,6 +22,21 @@ export const HomeworkModuleSimple: React.FC<HomeworkModuleSimpleProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [activeToastId, setActiveToastId] = useState<string | number | null>(null);
 
+  // Helper function to safely convert courseId to a number
+  const getNumericCourseId = (courseIdString: string): number | null => {
+    try {
+      const numericId = parseInt(courseIdString, 10);
+      if (isNaN(numericId) || numericId <= 0) {
+        console.error('[HomeworkModuleSimple] Invalid courseId:', courseIdString, 'parsed as', numericId);
+        return null;
+      }
+      return numericId;
+    } catch (err) {
+      console.error('[HomeworkModuleSimple] Error parsing courseId:', err);
+      return null;
+    }
+  };
+
   // Fetch homework for the lecture
   useEffect(() => {
     const fetchHomework = async () => {
@@ -35,7 +50,25 @@ export const HomeworkModuleSimple: React.FC<HomeworkModuleSimpleProps> = ({
           setActiveToastId(null);
         }
         
-        console.log('Fetching homework for lecture:', lectureId, 'courseId:', courseId);
+        // Validate inputs
+        if (!lectureId) {
+          throw new Error('无效的课时ID');
+        }
+        
+        const numericCourseId = getNumericCourseId(courseId);
+        if (numericCourseId === null) {
+          throw new Error('无效的课程ID: ' + courseId);
+        }
+        
+        console.log('[HomeworkModuleSimple] Fetching homework for lecture:', lectureId, 'courseId:', numericCourseId);
+        
+        // First try to fix homework constraints if needed
+        try {
+          await supabase.rpc('fix_homework_constraints');
+        } catch (fixError) {
+          console.warn('[HomeworkModuleSimple] Error fixing homework constraints:', fixError);
+          // Continue with the rest of the process
+        }
         
         const { data: homeworkData, error: homeworkError } = await supabase
           .from('homework')
@@ -43,23 +76,16 @@ export const HomeworkModuleSimple: React.FC<HomeworkModuleSimpleProps> = ({
           .eq('lecture_id', lectureId);
           
         if (homeworkError) {
-          console.error('Error fetching homework:', homeworkError);
+          console.error('[HomeworkModuleSimple] Error fetching homework:', homeworkError);
           throw homeworkError;
         }
         
-        console.log('Homework data:', homeworkData);
+        console.log('[HomeworkModuleSimple] Homework data:', homeworkData);
         
         // If no homework exists for this lecture, create a default one
         if (!homeworkData || homeworkData.length === 0) {
           try {
-            // Create a default homework for this lecture
-            const numericCourseId = parseInt(courseId);
-            
-            if (isNaN(numericCourseId)) {
-              console.error('无效的课程ID (NaN):', courseId);
-              throw new Error('无效的课程ID (NaN)');
-            }
-            
+            // Create a default homework for this lecture with the properly converted courseId
             const defaultHomework = {
               title: '课时练习',
               description: '完成本练习以检验学习成果',
@@ -71,7 +97,7 @@ export const HomeworkModuleSimple: React.FC<HomeworkModuleSimpleProps> = ({
               }
             };
             
-            console.log('Creating default homework:', defaultHomework);
+            console.log('[HomeworkModuleSimple] Creating default homework:', defaultHomework);
             
             const { data: newHomework, error: createError } = await supabase
               .from('homework')
@@ -79,17 +105,17 @@ export const HomeworkModuleSimple: React.FC<HomeworkModuleSimpleProps> = ({
               .select();
               
             if (createError) {
-              console.error('Error creating default homework:', createError);
+              console.error('[HomeworkModuleSimple] Error creating default homework:', createError);
               throw createError;
             }
             
-            console.log('Default homework created:', newHomework);
+            console.log('[HomeworkModuleSimple] Default homework created:', newHomework);
             
             if (newHomework && newHomework.length > 0) {
               setHomeworkList(newHomework);
             }
           } catch (createErr: any) {
-            console.error('Failed to create default homework:', createErr);
+            console.error('[HomeworkModuleSimple] Failed to create default homework:', createErr);
             // Don't show error to user for this case, just log it
           }
         } else {
@@ -104,7 +130,7 @@ export const HomeworkModuleSimple: React.FC<HomeworkModuleSimpleProps> = ({
             .eq('lecture_id', lectureId);
             
           if (submissionsError) {
-            console.error('Error fetching submissions:', submissionsError);
+            console.error('[HomeworkModuleSimple] Error fetching submissions:', submissionsError);
             // Don't throw here, still show homework list
           }
           
@@ -117,7 +143,7 @@ export const HomeworkModuleSimple: React.FC<HomeworkModuleSimpleProps> = ({
           }
         }
       } catch (err: any) {
-        console.error('Error in homework module:', err);
+        console.error('[HomeworkModuleSimple] Error in homework module:', err);
         setError(err.message || '加载作业失败');
         const toastId = toast.error('加载作业失败: ' + (err.message || '未知错误'));
         setActiveToastId(toastId);
@@ -136,7 +162,7 @@ export const HomeworkModuleSimple: React.FC<HomeworkModuleSimpleProps> = ({
         toast.dismiss(activeToastId);
       }
     };
-  }, [courseId, lectureId]);
+  }, [courseId, lectureId, activeToastId]);
 
   // Handle homework submission
   const handleHomeworkSubmitted = () => {
@@ -170,7 +196,8 @@ export const HomeworkModuleSimple: React.FC<HomeworkModuleSimpleProps> = ({
   if (error) {
     return (
       <div className="my-6 p-6 bg-white rounded-lg shadow-sm border-l-4 border-red-500">
-        <p className="text-red-600">加载作业时发生错误。您可以刷新页面再试一次。</p>
+        <p className="text-red-600">加载作业时发生错误：{error}</p>
+        <p className="text-gray-600 text-sm mt-2">您可以刷新页面再试一次。</p>
       </div>
     );
   }

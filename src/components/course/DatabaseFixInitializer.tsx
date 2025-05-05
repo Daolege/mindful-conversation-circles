@@ -16,17 +16,10 @@ export const DatabaseFixInitializer: React.FC = () => {
     const hasExecuted = localStorage.getItem(storageKey) === 'true';
     
     const runMigration = async () => {
-      if (hasExecuted) {
-        console.log('[DatabaseFixInitializer] Migration already executed, skipping');
-        setMigrationExecuted(true);
-        setMigrationSuccess(true);
-        return;
-      }
-      
-      console.log('[DatabaseFixInitializer] Executing database migration');
+      console.log('[DatabaseFixInitializer] Starting database migration check');
       
       try {
-        // First check if specific courses exist in courses_new
+        // Always verify courses_new has valid data
         try {
           // Check for at least one course in courses_new
           const { data: coursesExist, error: coursesError } = await supabase
@@ -34,31 +27,79 @@ export const DatabaseFixInitializer: React.FC = () => {
             .select('id')
             .limit(5);
           
-          if (coursesError || !coursesExist || coursesExist.length === 0) {
-            console.error('[DatabaseFixInitializer] No courses found in courses_new table:', coursesError);
+          if (coursesError) {
+            console.error('[DatabaseFixInitializer] Error checking courses_new table:', coursesError);
+            return;
+          }
+          
+          if (!coursesExist || coursesExist.length === 0) {
+            console.error('[DatabaseFixInitializer] No courses found in courses_new table');
             toast.error('未找到课程数据，请联系管理员');
             return;
           }
           
-          console.log('[DatabaseFixInitializer] Found courses in courses_new:', 
+          console.log('[DatabaseFixInitializer] Found valid courses in courses_new:', 
             coursesExist.map(c => c.id));
         } catch (err) {
           console.error('[DatabaseFixInitializer] Error checking courses_new table:', err);
         }
         
-        // Execute fix_homework_constraints function if it exists
+        // Execute fix_homework_constraints function regardless of whether migration was executed before
+        // This ensures any new issues are fixed on each page load
         try {
+          console.log('[DatabaseFixInitializer] Executing fix_homework_constraints...');
           const { data, error } = await supabase.rpc('fix_homework_constraints');
           
           if (error) {
             console.error('[DatabaseFixInitializer] Error executing fix_homework_constraints:', error);
-            // Don't return here, try other methods
-          } else {
-            console.log('[DatabaseFixInitializer] Successfully executed fix_homework_constraints');
+            throw error;
           }
+          
+          console.log('[DatabaseFixInitializer] Successfully executed fix_homework_constraints');
         } catch (funcError) {
           console.error('[DatabaseFixInitializer] Error calling fix_homework_constraints:', funcError);
-          // Continue with other fixes
+          // Continue with fallback fixes
+        }
+        
+        // Apply direct fixes to any homework with invalid course_id
+        try {
+          // Get first valid course_id from courses_new
+          const { data: validCourse } = await supabase
+            .from('courses_new')
+            .select('id')
+            .order('id')
+            .limit(1)
+            .single();
+            
+          if (validCourse && validCourse.id) {
+            console.log('[DatabaseFixInitializer] Found valid course ID for fixes:', validCourse.id);
+            
+            // Fix homework entries directly
+            const { error: homeworkFixError } = await supabase
+              .from('homework')
+              .update({ course_id: validCourse.id })
+              .filter('course_id', 'is', null);
+              
+            if (homeworkFixError) {
+              console.error('[DatabaseFixInitializer] Error fixing null course_id in homework:', homeworkFixError);
+            } else {
+              console.log('[DatabaseFixInitializer] Fixed homework with null course_id');
+            }
+            
+            // Fix homework submissions directly
+            const { error: submissionsFixError } = await supabase
+              .from('homework_submissions')
+              .update({ course_id: validCourse.id })
+              .filter('course_id', 'is', null);
+              
+            if (submissionsFixError) {
+              console.error('[DatabaseFixInitializer] Error fixing null course_id in submissions:', submissionsFixError);
+            } else {
+              console.log('[DatabaseFixInitializer] Fixed submissions with null course_id');
+            }
+          }
+        } catch (directFixError) {
+          console.error('[DatabaseFixInitializer] Error applying direct fixes:', directFixError);
         }
         
         // Check if migration has already been completed in site_settings
@@ -88,17 +129,20 @@ export const DatabaseFixInitializer: React.FC = () => {
           
           await supabase
             .from('site_settings')
-            .insert(migrationSetting);
+            .upsert(migrationSetting);
             
           localStorage.setItem(storageKey, 'true');
           setMigrationExecuted(true);
           setMigrationSuccess(true);
+          console.log('[DatabaseFixInitializer] Migration completed successfully');
         } catch (settingsError) {
           console.error('[DatabaseFixInitializer] Error recording migration status:', settingsError);
         }
         
-        // Show success toast
-        toast.success('数据库关系已自动修复，作业功能现可正常使用');
+        // Show success toast only on first successful execution
+        if (!hasExecuted) {
+          toast.success('数据库关系已自动修复，作业功能现可正常使用');
+        }
       } catch (error: any) {
         console.error('[DatabaseFixInitializer] Migration error:', error);
         setMigrationExecuted(true);

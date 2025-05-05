@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,16 +16,16 @@ interface HomeworkSubmissionFormProps {
     image_url: string | null;
     lecture_id: string;
   };
-  courseId: string; // Added courseId prop
-  lectureId: string; // Added lectureId prop
+  courseId: string; 
+  lectureId: string;
   onSubmitSuccess: () => void;
   onCancel: () => void;
 }
 
 export const HomeworkSubmissionForm = ({ 
   homework, 
-  courseId, // Using courseId prop directly
-  lectureId, // Using lectureId prop directly
+  courseId,
+  lectureId,
   onSubmitSuccess, 
   onCancel 
 }: HomeworkSubmissionFormProps) => {
@@ -39,10 +38,38 @@ export const HomeworkSubmissionForm = ({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [activeToastId, setActiveToastId] = useState<string | number | null>(null);
+  const [courseIdError, setCourseIdError] = useState<string | null>(null);
+
+  // Helper function to safely convert courseId to a number
+  const getNumericCourseId = (courseIdString: string): number => {
+    try {
+      const numericId = parseInt(courseIdString);
+      if (isNaN(numericId) || numericId <= 0) {
+        setCourseIdError(`无效的课程ID: ${courseIdString}，转换结果: ${numericId}`);
+        console.error('[HomeworkSubmissionForm] Invalid courseId:', courseIdString, 'parsed as', numericId);
+        throw new Error(`无效的课程ID: ${courseIdString}`);
+      }
+      // Clear any previous error
+      setCourseIdError(null);
+      return numericId;
+    } catch (error) {
+      console.error('[HomeworkSubmissionForm] Error parsing courseId:', error);
+      const errorMsg = `解析课程ID时出错: ${error instanceof Error ? error.message : '未知错误'}`;
+      setCourseIdError(errorMsg);
+      throw new Error(errorMsg);
+    }
+  };
 
   useEffect(() => {
-    console.log('Current singleChoiceAnswer:', singleChoiceAnswer);
-  }, [singleChoiceAnswer]);
+    console.log('[HomeworkSubmissionForm] Current form state:', {
+      courseId, 
+      lectureId,
+      singleChoiceAnswer,
+      multipleChoiceAnswers: multipleChoiceAnswers.length,
+      textAnswer: textAnswer.length > 0 ? `${textAnswer.length} chars` : 'empty',
+      isFormValid
+    });
+  }, [courseId, lectureId, singleChoiceAnswer, multipleChoiceAnswers, textAnswer, isFormValid]);
 
   useEffect(() => {
     let valid = false;
@@ -86,6 +113,17 @@ export const HomeworkSubmissionForm = ({
     let fileUrl = null;
     
     try {
+      // First validate the course ID
+      let numericCourseId: number;
+      try {
+        numericCourseId = getNumericCourseId(courseId);
+        console.log('[HomeworkSubmissionForm] Validated courseId:', courseId, '→', numericCourseId);
+      } catch (idError) {
+        console.error('[HomeworkSubmissionForm] Course ID validation failed:', idError);
+        setActiveToastId(toast.error('无效的课程ID，请联系管理员'));
+        return;
+      }
+      
       if (selectedFile && homework.type === 'fill_blank') {
         setIsUploading(true);
         const fileExt = selectedFile.name.split('.').pop();
@@ -113,27 +151,21 @@ export const HomeworkSubmissionForm = ({
         answer = textAnswer;
       }
       
-      // Fix for courseId: ensure it's a valid number
-      let numericCourseId: number;
-      
-      try {
-        numericCourseId = parseInt(courseId);
-        if (isNaN(numericCourseId)) {
-          console.error('无效的课程ID (NaN):', courseId);
-          throw new Error('无效的课程ID (NaN)');
-        }
-      } catch (error) {
-        console.error('解析课程ID时出错:', courseId, error);
-        throw new Error('无效的课程ID格式');
-      }
-      
-      console.log('提交作业数据:', {
+      console.log('[HomeworkSubmissionForm] 提交作业数据:', {
         user_id: user.id,
         homework_id: homework.id,
         course_id: numericCourseId,
         lecture_id: lectureId,
         answer: answer
       });
+      
+      // Call fix_homework_constraints before submitting to ensure everything is okay
+      try {
+        await supabase.rpc('fix_homework_constraints');
+      } catch (fixError) {
+        console.warn('[HomeworkSubmissionForm] Error fixing homework constraints:', fixError);
+        // Continue with submission anyway
+      }
       
       const { error } = await supabase
         .from('homework_submissions')
@@ -147,18 +179,16 @@ export const HomeworkSubmissionForm = ({
         }]);
         
       if (error) {
-        console.error('Supabase insert error:', error);
+        console.error('[HomeworkSubmissionForm] Supabase insert error:', error);
         throw error;
       }
       
-      const toastId = toast.success('作业提交成功');
-      setActiveToastId(toastId);
+      setActiveToastId(toast.success('作业提交成功'));
       onSubmitSuccess();
     } catch (error: any) {
-      console.error('Error submitting homework:', error);
+      console.error('[HomeworkSubmissionForm] Error submitting homework:', error);
       const errorMessage = error.message || '未知错误';
-      const toastId = toast.error('提交作业失败: ' + errorMessage);
-      setActiveToastId(toastId);
+      setActiveToastId(toast.error('提交作业失败: ' + errorMessage));
     } finally {
       setIsSubmitting(false);
       setIsUploading(false);
@@ -266,7 +296,7 @@ export const HomeworkSubmissionForm = ({
               <div className="rounded-lg overflow-hidden bg-gray-50">
                 <img 
                   src={homework.image_url} 
-                  alt="题目��片" 
+                  alt="题目图片" 
                   className="w-full max-h-[400px] object-contain"
                 />
               </div>
@@ -300,6 +330,13 @@ export const HomeworkSubmissionForm = ({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6" onClick={(e) => e.stopPropagation()}>
+      {courseIdError && (
+        <div className="p-3 bg-red-50 border border-red-200 rounded-md text-red-700 text-sm">
+          <p>课程ID错误: {courseIdError}</p>
+          <p className="mt-1">请刷新页面或联系管理员。</p>
+        </div>
+      )}
+      
       <div>
         {homework.options?.question && (
           <div className="mb-4">
@@ -328,7 +365,7 @@ export const HomeworkSubmissionForm = ({
         </Button>
         <Button 
           type="submit"
-          disabled={!isFormValid || isSubmitting || isUploading}
+          disabled={!isFormValid || isSubmitting || isUploading || !!courseIdError}
           className={`rounded-10 border border-black ${isFormValid ? 'bg-white text-black hover:bg-black hover:text-white' : 'bg-gray-200 text-gray-500'}`}
           variant={isFormValid ? "outline" : "secondary"}
         >
