@@ -40,6 +40,8 @@ export function toast(props: ToastProps | string) {
   const options: ExternalToast = {
     description: description,
     action: action,
+    // 设置更短的默认持续时间，避免toast持续时间过长
+    duration: rest.duration || 4000,
     onDismiss: (id) => {
       // 当 toast 被关闭时，从活跃列表中移除
       // 使用两步类型转换: 先转换为unknown，再转换为目标类型
@@ -85,8 +87,16 @@ export function useToast() {
 
 // 添加一个全局函数用于在路由变化或页面卸载时清除所有toasts
 export const dismissAllToasts = () => {
+  // 先记录当前活跃的toast数量，用于调试
+  console.log('Dismissing all toasts, active count:', activeToastIds.size);
+  
+  // 立即调用sonner的dismiss方法
   sonnerToast.dismiss();
+  
+  // 然后清除我们自己跟踪的activeToastIds集合
   activeToastIds.clear();
+  
+  console.log('All toasts dismissed, remaining count:', activeToastIds.size);
 };
 
 // 导出活跃的toast IDs集合，便于调试和管理

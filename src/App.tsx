@@ -104,7 +104,7 @@ function App() {
                 <Route path="/faq" element={<FAQ />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
-              <Toaster richColors position="top-right" toastOptions={{ duration: 5000 }} />
+              <Toaster richColors position="top-right" toastOptions={{ duration: 4000 }} />
             </Suspense>
           </Router>
         </LanguageProvider>

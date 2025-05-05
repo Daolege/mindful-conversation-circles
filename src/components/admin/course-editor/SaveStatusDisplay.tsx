@@ -51,6 +51,12 @@ const SaveStatusDisplay: React.FC<SaveStatusDisplayProps> = ({
       timerRef.current = null;
     }
     
+    // Handle saving state specifically
+    if (isSaving) {
+      setVisible(true);
+      return;
+    }
+    
     if (showSuccess || showError) {
       setVisible(true);
       
@@ -66,9 +72,22 @@ const SaveStatusDisplay: React.FC<SaveStatusDisplayProps> = ({
     } else {
       setVisible(false);
     }
-  }, [showSuccess, showError, autoHideSuccess, hideDelay]);
+  }, [showSuccess, showError, autoHideSuccess, hideDelay, isSaving]);
   
   if (!visible) return null;
+  
+  if (isSaving) {
+    console.log("[SaveStatusDisplay] Showing saving state");
+    return (
+      <Alert className="bg-blue-50 text-blue-800 border-blue-200 mb-4">
+        <AlertCircle className="h-4 w-4" />
+        <AlertTitle>保存中</AlertTitle>
+        <AlertDescription>
+          正在保存作业数据，请稍候...
+        </AlertDescription>
+      </Alert>
+    );
+  }
   
   if (showSuccess) {
     console.log("[SaveStatusDisplay] Showing success alert");

@@ -15,6 +15,7 @@ export const HomeworkModule: React.FC<HomeworkModuleProps> = (props) => {
   useEffect(() => {
     return () => {
       // Ensure any lingering toast notifications are dismissed when navigating away
+      console.log('[HomeworkModule] Cleaning up on unmount, dismissing all toasts');
       dismissAllToasts();
     };
   }, []);
