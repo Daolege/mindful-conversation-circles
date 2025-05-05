@@ -910,13 +910,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "fk_course"
-            columns: ["course_id"]
-            isOneToOne: false
-            referencedRelation: "courses"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "homework_course_id_fkey"
             columns: ["course_id"]
             isOneToOne: false
@@ -957,13 +950,6 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "fk_course"
-            columns: ["course_id"]
-            isOneToOne: false
-            referencedRelation: "courses"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "fk_homework"
             columns: ["homework_id"]

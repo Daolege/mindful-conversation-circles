@@ -66,10 +66,12 @@ BEGIN
   ELSE
     INSERT INTO public.site_settings (
       site_name, 
-      site_description
+      site_description,
+      maintenance_mode
     ) VALUES (
       'homework_migration_completed', 
-      'true'
+      'true',
+      false
     );
   END IF;
 END;
@@ -103,4 +105,3 @@ BEGIN
   );
 END
 $$;
-
