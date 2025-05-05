@@ -53,11 +53,16 @@ const sampleGuides = [
   }
 ];
 
+// Sample group instructions text
+const sampleGroupInstructions = '已报名的同学入群说明\n1. 国内的加微信群\n2. 国际朋友按照自己主要的设计平台选择加入\n3. 所展示的群都是报名本课程的专属群,因此无需重复加群';
+
 const EnrollmentGuidesDisplay = ({ courseId }: EnrollmentGuidesDisplayProps) => {
   const [guides, setGuides] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedImage, setSelectedImage] = useState(null);
+  const [showGuides, setShowGuides] = useState(true);
+  const [groupInstructions, setGroupInstructions] = useState(sampleGroupInstructions);
 
   useEffect(() => {
     const fetchGuides = async () => {
@@ -75,6 +80,7 @@ const EnrollmentGuidesDisplay = ({ courseId }: EnrollmentGuidesDisplayProps) => 
         setTimeout(() => {
           const visibleGuides = sampleGuides.filter(guide => guide.is_visible_on_payment_success);
           setGuides(visibleGuides);
+          setShowGuides(true); // In a real implementation, this would come from the course settings
           setLoading(false);
         }, 300);
       } catch (err) {
@@ -114,22 +120,30 @@ const EnrollmentGuidesDisplay = ({ courseId }: EnrollmentGuidesDisplayProps) => 
     return <div className="text-center py-4">加载学习指南中...</div>;
   }
 
-  if (!guides || guides.length === 0) {
+  if (!guides || guides.length === 0 || !showGuides) {
     return null;
   }
+
+  // Function to convert newlines to <br> elements in the instructions
+  const formatInstructions = (text) => {
+    if (!text) return null;
+    return text.split('\n').map((line, index) => (
+      <React.Fragment key={index}>
+        {line}
+        {index < text.split('\n').length - 1 && <br />}
+      </React.Fragment>
+    ));
+  };
 
   return (
     <div className="mt-4 w-full animate-fade-in">
       <h2 className="text-xl font-bold mb-6 text-center">课程学习指南</h2>
       
-      {/* Explanatory text section */}
+      {/* Explanatory text section with custom instructions */}
       <div className="bg-gray-50 border border-gray-100 rounded-lg p-4 mb-6">
-        <p className="font-medium text-gray-800 mb-2">已报名的同学入群说明</p>
-        <ol className="text-gray-600 space-y-1 pl-6 list-decimal">
-          <li>国内的加微信群</li>
-          <li>国际朋友按照自己主要的设计平台选择加入</li>
-          <li>所展示的群都是报名本课程的专属群,因此无需重复加群</li>
-        </ol>
+        <p className="font-medium text-gray-800 mb-2">
+          {formatInstructions(groupInstructions)}
+        </p>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

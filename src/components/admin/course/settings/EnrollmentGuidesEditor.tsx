@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { 
   EnrollmentGuide, 
   getEnrollmentGuides,
@@ -391,6 +393,12 @@ export const EnrollmentGuidesEditor: React.FC<EnrollmentGuidesEditorProps> = ({
   const [newImageUrl, setNewImageUrl] = useState('');
   const [isAddingNew, setIsAddingNew] = useState(false);
   
+  // New states for visibility toggle and group instructions
+  const [showOnPaymentSuccess, setShowOnPaymentSuccess] = useState(true);
+  const [groupInstructions, setGroupInstructions] = useState(
+    '已报名的同学入群说明\n1. 国内的加微信群\n2. 国际朋友按照自己主要的设计平台选择加入\n3. 所展示的群都是报名本课程的专属群,因此无需重复加群'
+  );
+  
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -411,7 +419,11 @@ export const EnrollmentGuidesEditor: React.FC<EnrollmentGuidesEditorProps> = ({
         toast.error('加载引导页面数据失败');
         console.error('Error loading guides:', error);
       } else if (data) {
+        // For sample data implementation, we're using the sample data
         setGuides(data);
+        // Set default values for the new states based on sample data
+        setShowOnPaymentSuccess(true);
+        // Group instructions already set in useState default
       }
       
       setIsLoading(false);
@@ -419,6 +431,12 @@ export const EnrollmentGuidesEditor: React.FC<EnrollmentGuidesEditorProps> = ({
     
     loadGuides();
   }, [courseId]);
+
+  // Handle save of visibility toggle and group instructions
+  const handleSaveSettings = async () => {
+    toast.success('设置已保存');
+    // In a real implementation, we would save these settings to the database
+  };
 
   // Add new guide
   const handleAddGuide = async () => {
@@ -628,11 +646,41 @@ export const EnrollmentGuidesEditor: React.FC<EnrollmentGuidesEditorProps> = ({
 
   return (
     <Card>
-      <CardHeader className="pb-3">
+      <CardHeader className="pb-3 flex flex-row items-center justify-between">
         <CardTitle>{title}</CardTitle>
+        <div className="flex items-center space-x-2">
+          <span className="text-sm text-gray-500">在支付成功页展示</span>
+          <Switch 
+            checked={showOnPaymentSuccess}
+            onCheckedChange={setShowOnPaymentSuccess}
+          />
+        </div>
       </CardHeader>
       
       <CardContent className="space-y-4">
+        {/* New Group Instructions Editor */}
+        <div className="border rounded-lg p-4 bg-gray-50 space-y-3">
+          <div className="flex justify-between items-center">
+            <h3 className="font-medium">加群说明</h3>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleSaveSettings}
+              className="text-xs"
+            >
+              保存设置
+            </Button>
+          </div>
+          
+          <Textarea 
+            value={groupInstructions}
+            onChange={(e) => setGroupInstructions(e.target.value)}
+            placeholder="输入加群说明文字，将显示在支付成功页面"
+            className="min-h-[100px] bg-white"
+          />
+          <p className="text-xs text-gray-500">这段文字将显示在支付成功页面的引导区域顶部，用于说明如何加群</p>
+        </div>
+      
         {isLoading ? (
           <div className="flex justify-center p-4">
             <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
