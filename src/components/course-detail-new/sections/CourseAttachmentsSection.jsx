@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { File, Download, FileText, FileAudio, FileVideo, FileImage, FileArchive, FilePdf, FileZip } from 'lucide-react';
+import { File, Download, FileText, FileAudio, FileVideo, FileImage, FileArchive, FileZip } from 'lucide-react';
 import { useTranslations } from '@/hooks/useTranslations';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -135,7 +135,8 @@ const CourseAttachmentsSection = ({
     
     switch(extension) {
       case 'pdf':
-        return <FilePdf size={18} className="text-red-500" />;
+        // Replace FilePdf with FileText with red color
+        return <FileText size={18} className="text-red-500" />;
       case 'xlsx':
       case 'xls':
       case 'csv':
