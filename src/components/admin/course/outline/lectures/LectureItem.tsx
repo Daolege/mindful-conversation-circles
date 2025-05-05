@@ -229,7 +229,9 @@ export const LectureItem = ({
                   className="h-8 px-2 ml-2"
                 >
                   {localIsFree ? (
-                    <Check className="h-4 w-4 mr-1 border rounded text-primary" style={{ borderColor: '#595959' }} />
+                    <div className="h-4 w-4 mr-1 flex items-center justify-center bg-[#333333] border border-[#595959] rounded">
+                      <Check className="h-3 w-3 text-white" />
+                    </div>
                   ) : (
                     <Square className="h-4 w-4 mr-1" />
                   )}
