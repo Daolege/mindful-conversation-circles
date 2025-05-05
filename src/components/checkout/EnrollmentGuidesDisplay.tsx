@@ -119,11 +119,25 @@ const EnrollmentGuidesDisplay = ({ courseId }: EnrollmentGuidesDisplayProps) => 
   }
 
   return (
-    <div className="mt-4 w-full">
-      <h2 className="text-lg font-semibold mb-4">课程学习指南</h2>
+    <div className="mt-4 w-full animate-fade-in">
+      <h2 className="text-xl font-bold mb-6 text-center">课程学习指南</h2>
+      
+      {/* Explanatory text section */}
+      <div className="bg-gray-50 border border-gray-100 rounded-lg p-4 mb-6">
+        <p className="font-medium text-gray-800 mb-2">已报名的同学入群说明</p>
+        <ol className="text-gray-600 space-y-1 pl-6 list-decimal">
+          <li>国内的加微信群</li>
+          <li>国际朋友按照自己主要的设计平台选择加入</li>
+          <li>所展示的群都是报名本课程的专属群,因此无需重复加群</li>
+        </ol>
+      </div>
+      
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {guides.map((guide) => (
-          <Card key={guide.id} className="overflow-hidden hover:shadow-lg transition-shadow duration-300">
+          <Card 
+            key={guide.id} 
+            className="overflow-hidden hover:shadow-lg transition-shadow duration-300 border-gray-200 hover:border-gray-300"
+          >
             <CardContent className="p-5">
               <div className="flex items-start gap-4">
                 <div className="flex-shrink-0 mt-1">
@@ -136,7 +150,7 @@ const EnrollmentGuidesDisplay = ({ courseId }: EnrollmentGuidesDisplayProps) => 
                   {guide.image_url && (
                     <div className="mt-3">
                       <div 
-                        className="border rounded-md inline-block p-2 bg-gray-50 cursor-pointer hover:bg-gray-100 transition-all"
+                        className="border rounded-md inline-block p-2 bg-gray-50 cursor-pointer hover:bg-gray-100 transition-all transform hover:scale-105"
                         onClick={() => setSelectedImage({ src: guide.image_url, title: guide.title })}
                       >
                         <img 
@@ -153,7 +167,15 @@ const EnrollmentGuidesDisplay = ({ courseId }: EnrollmentGuidesDisplayProps) => 
                     <div className="mt-3">
                       <Button 
                         variant="outline" 
-                        className="flex items-center gap-2 hover:bg-[#0f172a] hover:text-white"
+                        className={`flex items-center gap-2 transition-all duration-300 hover:scale-105 ${
+                          guide.guide_type === 'telegram' ? 'hover:bg-blue-500 hover:text-white' :
+                          guide.guide_type === 'wechat' ? 'hover:bg-green-500 hover:text-white' :
+                          guide.guide_type === 'whatsapp' ? 'hover:bg-green-600 hover:text-white' :
+                          guide.guide_type === 'facebook' ? 'hover:bg-blue-600 hover:text-white' :
+                          guide.guide_type === 'instagram' ? 'hover:bg-pink-500 hover:text-white' :
+                          guide.guide_type === 'twitter' ? 'hover:bg-blue-400 hover:text-white' :
+                          'hover:bg-[#0f172a] hover:text-white'
+                        }`}
                         asChild
                       >
                         <a href={guide.link} target="_blank" rel="noopener noreferrer">
@@ -173,23 +195,23 @@ const EnrollmentGuidesDisplay = ({ courseId }: EnrollmentGuidesDisplayProps) => 
 
       {/* QR Code Enlargement Dialog */}
       <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md backdrop-blur-sm">
           <DialogHeader>
             <DialogTitle>{selectedImage?.title} 二维码</DialogTitle>
           </DialogHeader>
           {selectedImage && (
-            <div className="flex flex-col items-center justify-center p-4">
+            <div className="flex flex-col items-center justify-center p-4 animate-fade-in">
               <img 
                 src={selectedImage.src} 
                 alt={`${selectedImage.title} QR Code`} 
-                className="max-w-full max-h-[400px] object-contain"
+                className="max-w-full max-h-[400px] object-contain hover:scale-105 transition-all"
               />
               <p className="text-sm text-gray-500 mt-4">保存图片或截图后可在相应应用中扫描</p>
             </div>
           )}
           <div className="mt-4 flex justify-center">
             <DialogClose asChild>
-              <Button variant="secondary">关闭</Button>
+              <Button variant="secondary" className="min-w-[100px]">关闭</Button>
             </DialogClose>
           </div>
         </DialogContent>
