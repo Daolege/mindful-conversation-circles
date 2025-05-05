@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useQuery } from "@tanstack/react-query";
 import { Loader2, AlertCircle } from "lucide-react";
@@ -463,4 +464,125 @@ export const HomeworkModule = ({ courseId, lectureId, onHomeworkSubmit }: Homewo
     }
   };
 
-  // ... keep existing code (loading states, error displays, and component render logic)
+  // 渲染组件
+  return (
+    <div className="w-full">
+      {/* 数据库错误显示 */}
+      {databaseError && (
+        <div className="mb-4 p-4 border border-red-300 bg-red-50 rounded-lg flex items-start">
+          <AlertCircle className="text-red-500 mr-2 flex-shrink-0 mt-0.5" size={18} />
+          <div>
+            <p className="text-red-700 font-medium">数据库错误</p>
+            <p className="text-red-600 text-sm">{databaseError}</p>
+            <div className="mt-2 flex gap-2">
+              <Button 
+                size="sm" 
+                variant="outline" 
+                onClick={handleExecuteMigration}
+                disabled={migrationStatus.executed && migrationStatus.success}
+              >
+                修复数据库关系
+              </Button>
+              <Button 
+                size="sm" 
+                variant="outline" 
+                onClick={handleDiagnoseTable}
+              >
+                诊断表结构
+              </Button>
+              <Button 
+                size="sm" 
+                variant="outline" 
+                onClick={manualRefresh}
+              >
+                重新加载
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 加载状态 */}
+      {isLoadingHomework && (
+        <div className="flex justify-center items-center py-10">
+          <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
+          <span className="ml-2 text-gray-500">正在加载课后练习...</span>
+        </div>
+      )}
+
+      {/* 错误状态处理 */}
+      {homeworkError && !databaseError && (
+        <div className="mb-4 p-4 border border-red-300 bg-red-50 rounded-lg flex items-start">
+          <AlertCircle className="text-red-500 mr-2 flex-shrink-0 mt-0.5" size={18} />
+          <div>
+            <p className="text-red-700 font-medium">加载作业时出错</p>
+            <p className="text-red-600 text-sm">{(homeworkError as Error).message}</p>
+            <div className="mt-2 flex gap-2">
+              <Button 
+                size="sm" 
+                variant="outline" 
+                onClick={manualRefresh}
+              >
+                重新加载
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 没有作业时显示 */}
+      {!isLoadingHomework && !homeworkError && homework && homework.length === 0 && !databaseError && (
+        <div className="rounded-lg border border-dashed border-gray-300 p-6 text-center">
+          <p className="text-gray-500">此课程没有课后练习</p>
+          {user && (
+            <Button
+              onClick={() => {
+                console.log('Creating default homework for lecture:', lectureId);
+                setHomework(null);
+              }}
+              className="mt-4"
+              variant="outline"
+              size="sm"
+              disabled={isCreatingDefaultHomework}
+            >
+              {isCreatingDefaultHomework ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  创建中...
+                </>
+              ) : (
+                '创建默认练习'
+              )}
+            </Button>
+          )}
+        </div>
+      )}
+
+      {/* 作业列表 */}
+      {!isLoadingHomework && homework && homework.length > 0 && (
+        <div className="space-y-4">
+          <h3 className="text-lg font-medium">课后练习</h3>
+          {homework.map((item: any) => (
+            <HomeworkCard
+              key={item.id}
+              homework={item}
+              courseId={numericCourseId.toString()}
+              lectureId={lectureId}
+              isSubmitted={!!submissions?.[item.id]}
+              onSubmitted={handleHomeworkSubmitted}
+            />
+          ))}
+          
+          {allHomeworkCompleted && (
+            <div className="bg-green-50 p-4 rounded-lg border border-green-200 text-green-700 text-sm flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-green-500" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+              恭喜！你已完成所有课后练习
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
