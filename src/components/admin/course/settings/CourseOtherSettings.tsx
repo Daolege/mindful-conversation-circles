@@ -635,6 +635,9 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({
     }
   };
 
+  const [isFeatured, setIsFeatured] = useState(false);
+  const [isPaidContent, setIsPaidContent] = useState(false);
+
   // Handle featured change
   const handleFeaturedChange = async (checked: boolean) => {
     setIsFeatured(checked);
