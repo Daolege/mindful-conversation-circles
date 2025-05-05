@@ -12,6 +12,7 @@ import { useCourseEditor } from '@/hooks/useCourseEditor';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { useHomeworkDraggable } from '@/hooks/useHomeworkDraggable';
 import { supabase } from '@/integrations/supabase/client';
+import { Homework } from '@/lib/types/homework';
 
 interface HomeworkPanelProps {
   lectureId: string;
@@ -20,7 +21,7 @@ interface HomeworkPanelProps {
 
 export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
   const [showAddForm, setShowAddForm] = useState(false);
-  const [editingHomework, setEditingHomework] = useState<any>(null);
+  const [editingHomework, setEditingHomework] = useState<Homework | null>(null);
   const params = useParams();
   const [effectiveCourseId, setEffectiveCourseId] = useState<number | null>(null);
   const [saveStatus, setSaveStatus] = useState<{success: boolean; error: string | null}>({
@@ -517,7 +518,7 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
   };
   
   // 编辑作业
-  const handleEditHomework = (homework: any) => {
+  const handleEditHomework = (homework: Homework) => {
     console.log('[HomeworkPanel] Editing homework:', homework);
     setEditingHomework(homework);
     setShowAddForm(true);

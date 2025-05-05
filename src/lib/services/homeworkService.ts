@@ -1,5 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { Homework } from "@/lib/types/homework";
 
 // Define return types for proper type safety
 interface HomeworkResult {
@@ -62,7 +63,7 @@ export const getHomeworksByLectureId = async (lectureId: string): Promise<Homewo
 };
 
 // Save or update homework
-export const saveHomework = async (homeworkData: any): Promise<HomeworkResult> => {
+export const saveHomework = async (homeworkData: Homework): Promise<HomeworkResult> => {
   try {
     console.log("Saving homework with data:", {
       id: homeworkData.id,
