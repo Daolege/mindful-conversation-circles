@@ -441,14 +441,20 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
             }));
             
             // 批量更新位置
-            Promise.all(
-              renumbered.map(item => 
-                supabase
-                  .from('homework')
-                  .update({ position: item.position })
-                  .eq('id', item.id)
-              )
-            ).catch(err => {
+            const updates = renumbered.map((item) => ({
+              id: item.id,
+              position: item.position
+            }));
+            
+            // 并行执行所有更新
+            const updatePromises = updates.map(update => 
+              supabase
+                .from('homework')
+                .update({ position: update.position } as { position: number })
+                .eq('id', update.id)
+            );
+            
+            Promise.all(updatePromises).catch(err => {
               console.error('更新作业位置失败:', err);
             });
           }
@@ -648,7 +654,7 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
           </div>
         )}
         
-        {/* 作业列表 - 使用拖拽排序 */}
+        {/* 作业列表 - 使��拖拽排序 */}
         {!isLoading && !error && homeworkList && homeworkList.length > 0 && (
           <DragDropContext
             onDragStart={() => setIsDragging(true)}
