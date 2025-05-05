@@ -1,9 +1,11 @@
-
 import React, { useState, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Upload, Loader2, AlertCircle, X, FileText, GripVertical, Plus } from "lucide-react";
+import { 
+  Upload, Loader2, AlertCircle, X, FileText, 
+  GripVertical, Plus, Info, Check 
+} from "lucide-react";
 import { toast } from "sonner";
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -28,7 +30,14 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { getCourseMaterials, uploadCourseMaterial, deleteMaterial, updateMaterialOrder, updateMaterialsVisibility } from '@/lib/services/courseMaterialService';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"; 
+import { 
+  getCourseMaterials, 
+  uploadCourseMaterial, 
+  deleteMaterial, 
+  updateMaterialOrder, 
+  updateMaterialsVisibility 
+} from '@/lib/services/courseMaterialService';
 
 interface CourseMaterial {
   id: string;
@@ -135,6 +144,7 @@ export const CourseMaterialsEditor = ({ courseId }: CourseMaterialsEditorProps) 
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [debugInfo, setDebugInfo] = useState<any>(null);
   const { user } = useAuth();
   
   // Connect to the CourseEditorContext
@@ -174,9 +184,38 @@ export const CourseMaterialsEditor = ({ courseId }: CourseMaterialsEditorProps) 
     }
   });
   
+  // 检查存储桶是否已配置
+  const checkStorageBuckets = async () => {
+    try {
+      const { data: buckets, error } = await supabase.storage.listBuckets();
+      
+      if (error) {
+        console.error("获取存储桶列表错误:", error);
+        return null;
+      }
+      
+      const courseFilesBucket = buckets?.find(b => b.name === 'course-files');
+      return courseFilesBucket;
+    } catch (err) {
+      console.error("检查存储桶错误:", err);
+      return null;
+    }
+  };
+  
   // Load course materials when component mounts
   useEffect(() => {
     fetchMaterials();
+    
+    // 检查存储桶配置
+    const checkBucket = async () => {
+      const bucket = await checkStorageBuckets();
+      console.log("存储桶检查结果:", bucket);
+      if (!bucket) {
+        setDebugInfo("未找到'course-files'存储桶，可能需要配置");
+      }
+    };
+    
+    checkBucket();
   }, [courseId]);
   
   const fetchMaterials = async () => {
@@ -239,18 +278,18 @@ export const CourseMaterialsEditor = ({ courseId }: CourseMaterialsEditorProps) 
       const fileExtensions = Object.values(fileTypes).flat();
       const randomExtension = fileExtensions[Math.floor(Math.random() * fileExtensions.length)];
       
-      // Common document names for mock files
+      // Common document names for mock files - 使用英文文件名避免编码问题
       const mockFileNames = [
-        "课程教材",
-        "学习指南",
-        "练习题",
-        "参考资料",
-        "课程大纲",
-        "学习计划",
-        "实践案例",
-        "附加阅读",
-        "常见问题解答",
-        "知识点总结"
+        "Course_Material",
+        "Study_Guide",
+        "Exercise",
+        "Reference",
+        "Syllabus",
+        "Learning_Plan",
+        "Case_Study",
+        "Reading_Materials",
+        "FAQ",
+        "Summary"
       ];
       
       const randomName = mockFileNames[Math.floor(Math.random() * mockFileNames.length)];
@@ -271,6 +310,12 @@ export const CourseMaterialsEditor = ({ courseId }: CourseMaterialsEditorProps) 
     setError(null);
     
     try {
+      // 首先检查存储桶是否存在
+      const bucket = await checkStorageBuckets();
+      if (!bucket) {
+        throw new Error("未找到'course-files'存储桶，请确保已正确配置存储");
+      }
+      
       for (const file of files) {
         const position = materials.length > 0 ? Math.max(...materials.map(m => m.position)) + 1 : 0;
         
@@ -423,6 +468,16 @@ export const CourseMaterialsEditor = ({ courseId }: CourseMaterialsEditorProps) 
           </div>
         </div>
         
+        {debugInfo && (
+          <Alert variant="warning" className="mb-4">
+            <Info className="h-4 w-4" />
+            <AlertTitle>调试信息</AlertTitle>
+            <AlertDescription>
+              {typeof debugInfo === 'string' ? debugInfo : JSON.stringify(debugInfo)}
+            </AlertDescription>
+          </Alert>
+        )}
+        
         {error && (
           <Alert variant="destructive" className="mb-4">
             <AlertCircle className="h-4 w-4" />
@@ -439,14 +494,34 @@ export const CourseMaterialsEditor = ({ courseId }: CourseMaterialsEditorProps) 
         )}
         
         <div className="flex gap-4 mb-2">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  onClick={handleAddMockFile} 
+                  variant="outline" 
+                  className="flex items-center gap-2"
+                  type="button"
+                >
+                  <Plus className="h-4 w-4" />
+                  添加模拟文件
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>添加一个测试用的模拟文件，用于验证上传功能</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          
           <Button 
-            onClick={handleAddMockFile} 
-            variant="outline" 
-            className="flex items-center gap-2"
+            onClick={() => fetchMaterials()} 
+            variant="ghost"
+            size="sm"
+            className="text-gray-500"
             type="button"
           >
-            <Plus className="h-4 w-4" />
-            添加模拟文件
+            <Check className="h-4 w-4 mr-1" />
+            刷新列表
           </Button>
         </div>
         

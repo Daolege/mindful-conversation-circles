@@ -14,11 +14,9 @@ const CourseAttachmentsSection = ({
 }) => {
   const { t } = useTranslations();
   
-  // Generate sample materials if none exist
-  const courseMaterials = course?.materials?.length ? course.materials : [
-    { id: "mat1", course_id: course?.id, name: "课程讲义.PDF", url: "#", position: 1, is_visible: true },
-    { id: "mat2", course_id: course?.id, name: "练习题.PDF", url: "#", position: 2, is_visible: true }
-  ];
+  // 只使用真实附件数据，避免使用示例数据
+  const courseMaterials = course?.materials?.filter(m => m.is_visible !== false) || [];
+  const hasMaterials = courseMaterials.length > 0;
   
   // Use IntersectionObserver to detect when component is in viewport
   React.useEffect(() => {
@@ -43,6 +41,7 @@ const CourseAttachmentsSection = ({
     }
   }, [isLoading, onVisibilityChange]);
 
+  // 如果正在加载或不可见，显示骨架屏
   if (isLoading || !isVisible) {
     return (
       <Card id="course-attachments-section" className="shadow-sm animate-in fade-in duration-500 mb-12">
@@ -66,6 +65,11 @@ const CourseAttachmentsSection = ({
     );
   }
 
+  // 如果没有材料，不显示此区域
+  if (!hasMaterials) {
+    return null;
+  }
+
   return (
     <Card id="course-attachments-section" className="hover:shadow-lg transition-shadow duration-500 shadow-sm animate-in fade-in duration-500 mb-12">
       <CardHeader className="pb-0">
@@ -75,34 +79,33 @@ const CourseAttachmentsSection = ({
         </CardTitle>
       </CardHeader>
       <CardContent className="pt-4">
-        {courseMaterials && courseMaterials.length > 0 ? (
-          <ul className="space-y-3">
-            {courseMaterials.map((material, idx) => (
-              <li 
-                key={material.id} 
-                className="flex justify-between items-center p-4 border rounded-lg hover:bg-gray-50 
-                  transition-all duration-300 ease-in-out 
-                  shadow-sm hover:shadow-md animate-in fade-in duration-300"
-                style={{ animationDelay: `${idx * 100}ms` }}
+        <ul className="space-y-3">
+          {courseMaterials.map((material, idx) => (
+            <li 
+              key={material.id} 
+              className="flex justify-between items-center p-4 border rounded-lg hover:bg-gray-50 
+                transition-all duration-300 ease-in-out 
+                shadow-sm hover:shadow-md animate-in fade-in duration-300"
+              style={{ animationDelay: `${idx * 100}ms` }}
+            >
+              <div className="flex items-center gap-2">
+                <File size={18} className="text-gray-600" />
+                <span className="font-semibold">{material.name}</span>
+              </div>
+              <Button
+                size="sm"
+                variant="knowledge"
+                className="text-xs py-2 px-3 h-8 flex items-center gap-1"
+                asChild
               >
-                <div className="flex items-center gap-2">
-                  <File size={18} className="text-gray-600" />
-                  <span className="font-semibold">{material.name}</span>
-                </div>
-                <Button
-                  size="sm"
-                  variant="knowledge"
-                  className="text-xs py-2 px-3 h-8 flex items-center gap-1"
-                >
+                <a href={material.url} target="_blank" rel="noopener noreferrer">
                   <Download size={14} />
                   {t('courses:download')}
-                </Button>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <div className="text-gray-500">{t('courses:noAttachments')}</div>
-        )}
+                </a>
+              </Button>
+            </li>
+          ))}
+        </ul>
       </CardContent>
     </Card>
   );
