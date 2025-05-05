@@ -14,8 +14,24 @@ const CourseAttachmentsSection = ({
 }) => {
   const { t } = useTranslations();
   
-  // 只使用真实附件数据，避免使用示例数据
-  const courseMaterials = course?.materials?.filter(m => m.is_visible !== false) || [];
+  // 只使用真实附件数据，过滤掉模拟材料和隐藏材料
+  const courseMaterials = course?.materials
+    ?.filter(m => {
+      // 排除隐藏的材料
+      if (m.is_visible === false) return false;
+      
+      // 排除模拟文件 - 通过名称或URL特征识别
+      if (
+        m.name?.toLowerCase().includes('模拟') || 
+        m.name?.toLowerCase().includes('mock') || 
+        m.url?.includes('fallback')
+      ) {
+        return false;
+      }
+      
+      return true;
+    }) || [];
+    
   const hasMaterials = courseMaterials.length > 0;
   
   // Use IntersectionObserver to detect when component is in viewport

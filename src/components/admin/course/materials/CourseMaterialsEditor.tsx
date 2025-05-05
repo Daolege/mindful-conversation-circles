@@ -1,10 +1,11 @@
+
 import React, { useState, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { 
   Upload, Loader2, AlertCircle, X, FileText, 
-  GripVertical, Plus, Info, Check 
+  GripVertical, Plus, Info, Check, Bug 
 } from "lucide-react";
 import { toast } from "sonner";
 import { useSortable } from '@dnd-kit/sortable';
@@ -45,6 +46,7 @@ interface CourseMaterial {
   url: string;
   position: number;
   is_visible?: boolean;
+  isMock?: boolean;
 }
 
 interface CourseMaterialItemProps {
@@ -82,14 +84,14 @@ const SortableMaterialItem = ({ material, onDelete, onNameChange }: CourseMateri
     <div 
       ref={setNodeRef} 
       style={style} 
-      className="flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition-all duration-200 rounded-lg border border-gray-200 mb-2 group cursor-grab"
+      className={`flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition-all duration-200 rounded-lg border ${material.isMock ? 'border-orange-200' : 'border-gray-200'} mb-2 group cursor-grab`}
     >
       <div className="flex items-center space-x-3 flex-1">
         <div {...attributes} {...listeners} className="cursor-grab">
           <GripVertical className="h-5 w-5 text-gray-400 hover:text-gray-600" />
         </div>
         
-        <FileText className="h-5 w-5 text-gray-500" />
+        <FileText className={`h-5 w-5 ${material.isMock ? 'text-orange-500' : 'text-gray-500'}`} />
         
         {isEditing ? (
           <Input
@@ -102,10 +104,11 @@ const SortableMaterialItem = ({ material, onDelete, onNameChange }: CourseMateri
           />
         ) : (
           <span 
-            className="text-gray-700 hover:text-gray-900 transition-colors flex-1"
+            className={`${material.isMock ? 'text-orange-700' : 'text-gray-700'} hover:text-gray-900 transition-colors flex-1`}
             onClick={() => setIsEditing(true)}
           >
             {material.name}
+            {material.isMock && <span className="ml-2 text-xs bg-orange-100 text-orange-800 px-1 py-0.5 rounded">模拟文件</span>}
           </span>
         )}
       </div>
@@ -145,6 +148,7 @@ export const CourseMaterialsEditor = ({ courseId }: CourseMaterialsEditorProps) 
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [debugInfo, setDebugInfo] = useState<any>(null);
+  const [debugMode, setDebugMode] = useState<boolean>(false);
   const { user } = useAuth();
   
   // Connect to the CourseEditorContext
@@ -179,7 +183,7 @@ export const CourseMaterialsEditor = ({ courseId }: CourseMaterialsEditorProps) 
     maxSize: 100 * 1024 * 1024, // 100MB max file size
     onDrop: async (acceptedFiles) => {
       if (acceptedFiles.length > 0) {
-        handleFileUpload(acceptedFiles);
+        handleFileUpload(acceptedFiles, false);
       }
     }
   });
@@ -191,13 +195,20 @@ export const CourseMaterialsEditor = ({ courseId }: CourseMaterialsEditorProps) 
       
       if (error) {
         console.error("获取存储桶列表错误:", error);
+        setDebugInfo(`获取存储桶列表错误: ${error.message}`);
         return null;
       }
       
       const courseFilesBucket = buckets?.find(b => b.name === 'course-files');
+      if (courseFilesBucket) {
+        setDebugInfo(null); // 清除之前的错误信息
+      } else {
+        setDebugInfo("未找到'course-files'存储桶，请联系管理员配置");
+      }
       return courseFilesBucket;
     } catch (err) {
       console.error("检查存储桶错误:", err);
+      setDebugInfo(`检查存储桶错误: ${err.message || err}`);
       return null;
     }
   };
@@ -207,15 +218,7 @@ export const CourseMaterialsEditor = ({ courseId }: CourseMaterialsEditorProps) 
     fetchMaterials();
     
     // 检查存储桶配置
-    const checkBucket = async () => {
-      const bucket = await checkStorageBuckets();
-      console.log("存储桶检查结果:", bucket);
-      if (!bucket) {
-        setDebugInfo("未找到'course-files'存储桶，可能需要配置");
-      }
-    };
-    
-    checkBucket();
+    checkStorageBuckets();
   }, [courseId]);
   
   const fetchMaterials = async () => {
@@ -231,7 +234,22 @@ export const CourseMaterialsEditor = ({ courseId }: CourseMaterialsEditorProps) 
       }
       
       const sortedMaterials = data?.sort((a, b) => a.position - b.position) || [];
-      setMaterials(sortedMaterials);
+      
+      // 标记为模拟文件并过滤掉隐藏的材料（在课程详细页中）
+      const processedMaterials = sortedMaterials.map(material => ({
+        ...material,
+        isMock: material.name?.includes('模拟') || material.url?.includes('fallback') || false
+      }));
+      
+      setMaterials(processedMaterials);
+      
+      // 统计真实文件和模拟文件数量
+      const realFiles = processedMaterials.filter(m => !m.isMock).length;
+      const mockFiles = processedMaterials.filter(m => m.isMock).length;
+      
+      if (debugMode) {
+        setDebugInfo(`共有${processedMaterials.length}个文件，其中真实文件${realFiles}个，模拟文件${mockFiles}个`);
+      }
       
       // If we have materials, set the visibility state based on the first material
       // Otherwise, use the default visibility from CourseEditorContext
@@ -278,32 +296,33 @@ export const CourseMaterialsEditor = ({ courseId }: CourseMaterialsEditorProps) 
       const fileExtensions = Object.values(fileTypes).flat();
       const randomExtension = fileExtensions[Math.floor(Math.random() * fileExtensions.length)];
       
-      // Common document names for mock files - 使用英文文件名避免编码问题
+      // Common document names for mock files - 使用英文文件名避免编码问题，并添加模拟标记
       const mockFileNames = [
-        "Course_Material",
-        "Study_Guide",
-        "Exercise",
-        "Reference",
-        "Syllabus",
-        "Learning_Plan",
-        "Case_Study",
-        "Reading_Materials",
-        "FAQ",
-        "Summary"
+        "模拟_课程材料",
+        "模拟_学习指南",
+        "模拟_练习题",
+        "模拟_参考资料",
+        "模拟_教学大纲", 
+        "模拟_学习计划",
+        "模拟_案例研究",
+        "模拟_阅读材料",
+        "模拟_常见问题",
+        "模拟_总结"
       ];
       
       const randomName = mockFileNames[Math.floor(Math.random() * mockFileNames.length)];
       const fileName = `${randomName}${randomExtension}`;
       const mockFile = generateMockFile(fileName, randomExtension);
       
-      handleFileUpload([mockFile]);
+      // 调用文件上传函数，标记为模拟文件
+      handleFileUpload([mockFile], true);
     } catch (err) {
       console.error('添加模拟文件错误:', err);
       toast.error('无法创建模拟文件', { description: '请尝试手动上传文件' });
     }
   };
 
-  const handleFileUpload = async (files: File[]) => {
+  const handleFileUpload = async (files: File[], isMockFile: boolean = false) => {
     if (!courseId || !user) return;
     
     setIsUploading(true);
@@ -312,16 +331,16 @@ export const CourseMaterialsEditor = ({ courseId }: CourseMaterialsEditorProps) 
     try {
       // 首先检查存储桶是否存在
       const bucket = await checkStorageBuckets();
-      if (!bucket) {
+      if (!bucket && !isMockFile) {
         throw new Error("未找到'course-files'存储桶，请确保已正确配置存储");
       }
       
       for (const file of files) {
         const position = materials.length > 0 ? Math.max(...materials.map(m => m.position)) + 1 : 0;
         
-        console.log(`[CourseMaterialsEditor] 准备上传文件: ${file.name}, 大小: ${file.size} bytes`);
+        console.log(`[CourseMaterialsEditor] 准备上传文件${isMockFile ? '(模拟)' : ''}: ${file.name}, 大小: ${file.size} bytes`);
         
-        const { data, error } = await uploadCourseMaterial(courseId, file, file.name, position);
+        const { data, error, isMock } = await uploadCourseMaterial(courseId, file, file.name, position, isMockFile);
         
         if (error) {
           console.error('[CourseMaterialsEditor] 上传文件错误:', error);
@@ -329,15 +348,37 @@ export const CourseMaterialsEditor = ({ courseId }: CourseMaterialsEditorProps) 
         }
         
         if (data) {
-          setMaterials(prev => [...prev, data]);
-          toast.success("文件上传成功", { description: file.name });
+          // 添加isMock标志用于UI显示
+          const updatedData = {
+            ...data,
+            isMock: isMockFile
+          };
+          
+          setMaterials(prev => [...prev, updatedData]);
+          
+          if (isMockFile) {
+            toast.info("模拟文件上传成功", { 
+              description: "此为测试用途的模拟文件，在课程页面中不可见" 
+            });
+          } else {
+            toast.success("文件上传成功", { description: file.name });
+          }
         }
       }
     } catch (err: any) {
       console.error("Error uploading files:", err);
-      toast.error("上传文件失败", { 
-        description: err.message || "可能是文件名包含特殊字符或存储配置问题" 
-      });
+      
+      // 区分模拟文件和真实文件的错误提示
+      if (isMockFile) {
+        toast.error("模拟文件上传失败", { 
+          description: "这只是一个测试错误，不影响实际使用" 
+        });
+      } else {
+        toast.error("上传文件失败", { 
+          description: err.message || "可能是文件名包含特殊字符或存储配置问题" 
+        });
+      }
+      
       setError(err.message || "上传文件失败");
     } finally {
       setIsUploading(false);
@@ -453,11 +494,46 @@ export const CourseMaterialsEditor = ({ courseId }: CourseMaterialsEditorProps) 
     }
   };
   
+  // 切换调试模式
+  const toggleDebugMode = () => {
+    setDebugMode(!debugMode);
+    if (!debugMode) {
+      // 切换到调试模式时显示一些调试信息
+      checkStorageBuckets().then(bucket => {
+        const realFiles = materials.filter(m => !m.isMock).length;
+        const mockFiles = materials.filter(m => m.isMock).length;
+        setDebugInfo(`存储桶: ${bucket ? '已找到' : '未找到'}, 文件总数: ${materials.length} (真实: ${realFiles}, 模拟: ${mockFiles})`);
+      });
+    } else {
+      // 关闭调试模式时清除调试信息
+      setDebugInfo(null);
+    }
+  };
+  
   return (
     <Card>
       <CardContent className="p-6 space-y-5">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold">课程附件</h3>
+          <div className="flex items-center gap-2">
+            <h3 className="text-lg font-semibold">课程附件</h3>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    onClick={toggleDebugMode} 
+                    variant="ghost" 
+                    size="icon" 
+                    className={`h-6 w-6 rounded-full ${debugMode ? 'bg-orange-100 text-orange-700' : 'text-gray-400'}`}
+                  >
+                    <Bug className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{debugMode ? '关闭调试模式' : '开启调试模式'}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
           <div className="flex items-center gap-2">
             <Switch
               id="materials-visible"
@@ -469,9 +545,9 @@ export const CourseMaterialsEditor = ({ courseId }: CourseMaterialsEditorProps) 
         </div>
         
         {debugInfo && (
-          <Alert variant="warning" className="mb-4">
+          <Alert variant={debugMode ? "default" : "warning"} className="mb-4">
             <Info className="h-4 w-4" />
-            <AlertTitle>调试信息</AlertTitle>
+            <AlertTitle>{debugMode ? "调试信息" : "存储配置提示"}</AlertTitle>
             <AlertDescription>
               {typeof debugInfo === 'string' ? debugInfo : JSON.stringify(debugInfo)}
             </AlertDescription>
@@ -500,7 +576,7 @@ export const CourseMaterialsEditor = ({ courseId }: CourseMaterialsEditorProps) 
                 <Button 
                   onClick={handleAddMockFile} 
                   variant="outline" 
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 border-orange-300 text-orange-700 bg-orange-50 hover:bg-orange-100"
                   type="button"
                 >
                   <Plus className="h-4 w-4" />
@@ -546,7 +622,16 @@ export const CourseMaterialsEditor = ({ courseId }: CourseMaterialsEditorProps) 
         </div>
         
         <div className="mt-6 space-y-2">
-          <h4 className="font-medium text-gray-800">已上传文件</h4>
+          <div className="flex justify-between items-center">
+            <h4 className="font-medium text-gray-800">已上传文件</h4>
+            {materials.length > 0 && debugMode && (
+              <div className="text-xs text-gray-500">
+                总计: {materials.length} | 
+                真实文件: {materials.filter(m => !m.isMock).length} | 
+                模拟文件: {materials.filter(m => m.isMock).length}
+              </div>
+            )}
+          </div>
           
           {isLoading ? (
             <div className="flex justify-center p-4">

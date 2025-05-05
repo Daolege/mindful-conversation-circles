@@ -105,10 +105,11 @@ export const uploadCourseMaterial = async (
   courseId: number,
   file: File,
   fileName: string,
-  position: number
+  position: number,
+  isMockFile: boolean = false
 ) => {
   try {
-    console.log(`[uploadCourseMaterial] 开始上传文件 "${fileName}" 到课程 ${courseId}`);
+    console.log(`[uploadCourseMaterial] 开始上传文件 "${fileName}" 到课程 ${courseId}${isMockFile ? ' (模拟文件)' : ''}`);
     console.log(`[uploadCourseMaterial] 文件信息: 大小=${file.size} bytes, 类型=${file.type}`);
     
     // 处理文件名，确保安全并记录处理前后的变化
@@ -124,6 +125,20 @@ export const uploadCourseMaterial = async (
     const filePath = `${courseId}/${uniqueId}-${safeFileName}`;
     
     console.log(`[uploadCourseMaterial] 上传文件到路径: "${filePath}"`);
+    
+    // 检查bucket是否存在
+    const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
+    
+    if (bucketsError) {
+      console.error(`[uploadCourseMaterial] 获取存储桶列表失败:`, bucketsError);
+      throw new Error(`无法验证存储桶: ${bucketsError.message}`);
+    }
+    
+    const courseFilesBucket = buckets?.find(b => b.name === 'course-files');
+    if (!courseFilesBucket) {
+      console.error(`[uploadCourseMaterial] 'course-files' 存储桶不存在`);
+      throw new Error(`'course-files' 存储桶不存在，请先创建存储桶`);
+    }
     
     // 上传文件到存储，添加更详细的错误处理
     const { data: fileData, error: uploadError } = await supabase.storage
@@ -147,6 +162,10 @@ export const uploadCourseMaterial = async (
         errorMessage = '无权访问存储桶，请检查存储权限设置';
       } else if (uploadError.message?.includes('Invalid key')) {
         errorMessage = '文件路径无效，可能是文件名包含特殊字符或编码问题';
+      }
+      
+      if (isMockFile) {
+        errorMessage = `模拟文件上传失败: ${errorMessage}`; 
       }
       
       throw new Error(errorMessage);
@@ -173,7 +192,7 @@ export const uploadCourseMaterial = async (
       url: urlData.publicUrl,
       position,
       course_id: courseId,
-      is_visible: false // 默认隐藏
+      is_visible: !isMockFile // 真实文件默认可见，模拟文件默认隐藏
     };
     
     const { data, error } = await supabase
@@ -188,10 +207,10 @@ export const uploadCourseMaterial = async (
     }
     
     console.log('[uploadCourseMaterial] 材料记录创建成功:', data);
-    return { data, error: null };
+    return { data, error: null, isMock: isMockFile };
   } catch (error) {
     console.error('[uploadCourseMaterial] 异常:', error);
-    return { data: null, error };
+    return { data: null, error, isMock: isMockFile };
   }
 };
 
