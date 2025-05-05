@@ -55,10 +55,23 @@ BEGIN
   WHERE s.course_id IS NULL;
   
   -- 记录迁移完成状态
-  INSERT INTO public.site_settings (site_name, site_description)
-  VALUES ('homework_migration_completed', 'true')
-  ON CONFLICT (site_name) 
-  DO UPDATE SET site_description = 'true', updated_at = now();
+  IF EXISTS (
+    SELECT 1 FROM public.site_settings 
+    WHERE site_name = 'homework_migration_completed'
+  ) THEN
+    UPDATE public.site_settings 
+    SET site_description = 'true', 
+        updated_at = now()
+    WHERE site_name = 'homework_migration_completed';
+  ELSE
+    INSERT INTO public.site_settings (
+      site_name, 
+      site_description
+    ) VALUES (
+      'homework_migration_completed', 
+      'true'
+    );
+  END IF;
 END;
 $$;
 
@@ -90,3 +103,4 @@ BEGIN
   );
 END
 $$;
+
