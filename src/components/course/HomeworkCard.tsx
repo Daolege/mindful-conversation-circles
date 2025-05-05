@@ -14,16 +14,26 @@ interface HomeworkCardProps {
     options: any;
     image_url: string | null;
     lecture_id: string;
+    position?: number; // 添加位置字段
   };
-  courseId: string; // Add courseId prop to interface
-  lectureId: string; // Add lectureId prop to interface
+  courseId: string; 
+  lectureId: string;
   isSubmitted: boolean;
   onSubmitted?: () => void;
+  position?: number; // 添加外部传入的位置/序号
 }
 
 // 使用 memo 优化组件，避免不必要的重新渲染
-export const HomeworkCard = React.memo(({ homework, courseId, lectureId, isSubmitted, onSubmitted }: HomeworkCardProps) => {
+export const HomeworkCard = React.memo(({ 
+  homework, 
+  courseId, 
+  lectureId, 
+  isSubmitted, 
+  onSubmitted,
+  position 
+}: HomeworkCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
   const handleHeaderClick = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -43,13 +53,29 @@ export const HomeworkCard = React.memo(({ homework, courseId, lectureId, isSubmi
     setIsExpanded(false);
   }, []);
 
+  // 确定显示的编号
+  const displayPosition = position || homework.position || 1;
+
   return (
-    <Card className="w-full border border-gray-200 shadow-sm">
+    <Card 
+      className={`w-full border border-gray-200 shadow-sm transition-all duration-200 ${
+        isHovered ? 'shadow-md transform translate-y-[-2px]' : ''
+      }`}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       <CardHeader 
-        className={`flex flex-row items-center justify-between ${!isSubmitted ? 'cursor-pointer hover:bg-gray-50' : ''}`}
+        className={`flex flex-row items-center justify-between ${
+          !isSubmitted ? 'cursor-pointer hover:bg-gray-50' : ''
+        }`}
         onClick={handleHeaderClick}
       >
-        <div className="font-medium">{homework.title}</div>
+        <div className="flex items-center gap-3">
+          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-semibold">
+            {displayPosition}
+          </div>
+          <div className="font-medium">{homework.title}</div>
+        </div>
         <div className="flex items-center gap-3">
           <Badge variant={isSubmitted ? "success" : "outline"} className="text-xs">
             {isSubmitted ? "已提交" : "未提交"}
@@ -62,15 +88,18 @@ export const HomeworkCard = React.memo(({ homework, courseId, lectureId, isSubmi
         </div>
       </CardHeader>
       
-      <CardContent className={`data-[state=${isExpanded ? 'open' : 'closed'}]:animate-${isExpanded ? 'accordion-down' : 'accordion-up'} overflow-hidden`}
+      <CardContent 
+        className={`overflow-hidden transition-all duration-300 ${
+          isExpanded && !isSubmitted ? 'max-h-[1000px]' : 'max-h-0'
+        }`}
         style={{ display: isExpanded && !isSubmitted ? 'block' : 'none' }}
       >
         {isExpanded && !isSubmitted && (
           <div className="space-y-4 bg-white rounded-md border border-gray-100 shadow-sm">
             <HomeworkSubmissionForm 
               homework={homework}
-              courseId={courseId} // Pass courseId to HomeworkSubmissionForm
-              lectureId={lectureId} // Pass lectureId to HomeworkSubmissionForm
+              courseId={courseId}
+              lectureId={lectureId}
               onSubmitSuccess={handleSubmissionSuccess}
               onCancel={handleCancel}
             />

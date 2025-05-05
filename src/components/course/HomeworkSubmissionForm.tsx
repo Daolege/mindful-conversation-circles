@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -213,6 +214,12 @@ export const HomeworkSubmissionForm = ({
     });
   };
 
+  // 解析富文本内容
+  const renderRichTextContent = (content) => {
+    if (!content) return null;
+    return <div dangerouslySetInnerHTML={{ __html: content }} />;
+  };
+
   const renderFormByType = () => {
     switch (homework.type) {
       case 'single_choice':
@@ -244,7 +251,9 @@ export const HomeworkSubmissionForm = ({
                     )}
                   </div>
                   <span className={`flex-grow ${isSelected ? 'text-knowledge-primary font-semibold' : 'text-grayscale-600'}`}>
-                    {choice}
+                    {choice.startsWith('<') ? 
+                      renderRichTextContent(choice) : 
+                      choice}
                   </span>
                 </div>
               );
@@ -281,7 +290,9 @@ export const HomeworkSubmissionForm = ({
                     )}
                   </div>
                   <Label className={`flex-grow cursor-pointer ${isSelected ? 'text-knowledge-primary font-semibold' : 'text-grayscale-600'}`}>
-                    {choice}
+                    {choice.startsWith('<') ? 
+                      renderRichTextContent(choice) : 
+                      choice}
                   </Label>
                 </div>
               );
@@ -340,7 +351,10 @@ export const HomeworkSubmissionForm = ({
       <div>
         {homework.options?.question && (
           <div className="mb-4">
-            <p className="whitespace-pre-wrap">{homework.options.question}</p>
+            {typeof homework.options.question === 'string' && homework.options.question.startsWith('<') ? 
+              <div className="prose max-w-none">{renderRichTextContent(homework.options.question)}</div> : 
+              <p className="whitespace-pre-wrap">{homework.options.question}</p>
+            }
           </div>
         )}
         

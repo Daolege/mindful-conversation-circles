@@ -2,7 +2,6 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
@@ -15,6 +14,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { Loader2 } from 'lucide-react';
+import RichTextEditor from './RichTextEditor';
 
 interface HomeworkFormProps {
   lectureId: string;
@@ -25,11 +25,11 @@ interface HomeworkFormProps {
   isSubmitting?: boolean;
 }
 
-// Define schema for homework form
+// Define schema for homework form - 移除描述字段
 const homeworkSchema = z.object({
   title: z.string().min(1, '标题不能为空'),
-  description: z.string().optional(),
   type: z.enum(['single_choice', 'multiple_choice', 'fill_blank']),
+  position: z.number().optional(),
   question: z.string().min(1, '问题不能为空'),
   choices: z.string().optional(),
 });
@@ -42,13 +42,13 @@ export const HomeworkForm: React.FC<HomeworkFormProps> = ({
   onCancel,
   isSubmitting = false,
 }) => {
-  // Initialize form with the proper schema
+  // 初始化表单，不再包含描述字段
   const form = useForm({
     resolver: zodResolver(homeworkSchema),
     defaultValues: {
       title: initialData?.title || '',
-      description: initialData?.description || '',
       type: initialData?.type || 'single_choice',
+      position: initialData?.position || 0,
       question: initialData?.options?.question || '',
       choices: initialData?.options?.choices 
         ? (Array.isArray(initialData?.options?.choices) 
@@ -58,7 +58,7 @@ export const HomeworkForm: React.FC<HomeworkFormProps> = ({
     },
   });
 
-  // Parse the choices string into an array
+  // 解析选项字符串为数组
   const parseChoices = (choicesString: string) => {
     if (!choicesString) return [];
     return choicesString
@@ -67,31 +67,32 @@ export const HomeworkForm: React.FC<HomeworkFormProps> = ({
       .filter((choice) => choice !== '');
   };
 
-  // Handle form submission
+  // 处理表单提交
   const handleFormSubmit = async (values: z.infer<typeof homeworkSchema>) => {
     try {
-      // Prepare options based on homework type
+      // 准备选项基于作业类型
       const options = {
         question: values.question,
         choices: values.type !== 'fill_blank' ? parseChoices(values.choices) : undefined,
       };
 
-      // Prepare data for submission
+      // 准备提交数据
       const homeworkData: any = {
         title: values.title,
-        description: values.description || '',
+        // 已移除description字段
         type: values.type,
         lecture_id: lectureId,
         course_id: courseId,
+        position: values.position || 0, // 添加位置排序字段
         options: options,
       };
 
-      // If we're editing an existing homework, include its ID
+      // 如果编辑现有作业，包含其ID
       if (initialData && initialData.id) {
         homeworkData.id = initialData.id;
       }
 
-      // Submit the data
+      // 提交数据
       await onSubmit(homeworkData);
     } catch (error) {
       console.error('[HomeworkForm] Error submitting form:', error);
@@ -109,19 +110,6 @@ export const HomeworkForm: React.FC<HomeworkFormProps> = ({
               <FormLabel>标题</FormLabel>
               <FormControl>
                 <Input placeholder="作业标题" {...field} />
-              </FormControl>
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>描述（选填）</FormLabel>
-              <FormControl>
-                <Textarea placeholder="作业描述" {...field} />
               </FormControl>
             </FormItem>
           )}
@@ -159,7 +147,11 @@ export const HomeworkForm: React.FC<HomeworkFormProps> = ({
             <FormItem>
               <FormLabel>问题</FormLabel>
               <FormControl>
-                <Textarea placeholder="输入问题内容" {...field} />
+                <RichTextEditor 
+                  value={field.value} 
+                  onChange={field.onChange} 
+                  placeholder="输入问题内容，支持格式化、图片和公式" 
+                />
               </FormControl>
             </FormItem>
           )}
@@ -173,10 +165,10 @@ export const HomeworkForm: React.FC<HomeworkFormProps> = ({
               <FormItem>
                 <FormLabel>选项（每行一个）</FormLabel>
                 <FormControl>
-                  <Textarea
-                    placeholder="输入选项，每行一个"
-                    rows={5}
-                    {...field}
+                  <RichTextEditor 
+                    value={field.value} 
+                    onChange={field.onChange} 
+                    placeholder="输入选项，每行一个" 
                   />
                 </FormControl>
               </FormItem>

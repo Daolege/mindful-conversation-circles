@@ -3,13 +3,15 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Loader2, Plus, RefreshCw } from 'lucide-react';
+import { Loader2, Plus, RefreshCw, GripVertical } from 'lucide-react';
 import { HomeworkForm } from './HomeworkForm';
 import { saveHomework, getHomeworksByLectureId, deleteHomework, debugHomeworkTable } from '@/lib/services/homeworkService';
 import { toast } from 'sonner';
 import { useParams } from 'react-router-dom';
 import SaveStatusDisplay from '@/components/admin/course-editor/SaveStatusDisplay';
 import { useCourseEditor } from '@/hooks/useCourseEditor';
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+import { useHomeworkDraggable } from '@/hooks/useHomeworkDraggable';
 
 interface HomeworkPanelProps {
   lectureId: string;
@@ -28,7 +30,7 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const queryClient = useQueryClient();
   
-  // 改进: 使用Map来管理活跃的toast，按操作类型分类
+  // 使用Map来管理活跃的toast，按操作类型分类
   const [activeToasts, setActiveToasts] = useState<Record<string, string>>({
     save: '',
     delete: '',
@@ -82,7 +84,7 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
     }
   }, [activeToasts]);
   
-  // 显示toast并跟踪ID - 确保ID总是存储为字符串类型
+  // 显示toast并跟踪ID
   const showToast = useCallback((type: string, toastFn: () => string | number) => {
     // 先清除同类型的现有toast
     clearToast(type);
@@ -94,7 +96,7 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
     return id;
   }, [clearToast]);
   
-  // 改进课程ID提取逻辑，优先从URL路径提取并确保是数字类型
+  // 改进课程ID提取逻辑
   const initializeCourseId = useCallback(() => {
     console.log('[HomeworkPanel] Initializing, getting course ID');
     console.log('[HomeworkPanel] Props courseId:', courseId);
@@ -105,7 +107,7 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
     // 尝试从多个来源获取课程ID
     let detectedCourseId: number | null = null;
     
-    // 1. 首先检查URL路径中的数字 - 这通常是最可靠的（如/admin/courses-new/72）
+    // 1. 首先检查URL路径中的数字（如/admin/courses-new/72）
     const pathMatch = window.location.pathname.match(/\/courses-new\/(\d+)/);
     if (pathMatch && pathMatch[1]) {
       const extractedId = Number(pathMatch[1]);
@@ -142,7 +144,7 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
       }
     }
     
-    // 设置有效课程ID，确保它是数字类型
+    // 设置有效课程ID
     if (detectedCourseId !== null && detectedCourseId !== effectiveCourseId) {
       console.log('[HomeworkPanel] Setting effective course ID to:', detectedCourseId, '(type:', typeof detectedCourseId, ')');
       setEffectiveCourseId(detectedCourseId);
@@ -157,7 +159,7 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
     return detectedCourseId;
   }, [courseId, params, courseEditor, effectiveCourseId, window.location.pathname]);
   
-  // 在组件挂载和依赖项变化时尝试获取课程ID
+  // 组件挂载和依赖项变化时尝试获取课程ID
   useEffect(() => {
     const courseId = initializeCourseId();
     if (!courseId) {
@@ -179,7 +181,7 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
       // 首先运行诊断以检查问题
       await debugHomeworkTable();
       
-      // 然后获取此课时的作业
+      // 获取此课时的作业，按position排序
       const result = await getHomeworksByLectureId(lectureId);
       
       console.log('[HomeworkPanel] Homework fetch result:', {
@@ -188,17 +190,27 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
         error: result.error?.message
       });
 
-      // 总是返回一个数组作为result.data，即使它是空的
-      return result.data || [];
+      // 返回数据，如果存在position字段则按position排序
+      const sortedData = result.data ? 
+        [...result.data].sort((a, b) => {
+          // 如果存在position字段，按position排序
+          if (a.position !== undefined && b.position !== undefined) {
+            return a.position - b.position;
+          }
+          return 0; // 保持原顺序
+        }) : 
+        [];
+      
+      return sortedData;
     } catch (err) {
       console.error('[HomeworkPanel] Error fetching homework:', err);
       throw err;
     }
   }, [lectureId, effectiveCourseId]);
   
-  // 使用带有缓存的查询函数获取作业
+  // 使用TanStack Query获取作业
   const { 
-    data: homeworkList, 
+    data: fetchedHomeworkList, 
     isLoading, 
     refetch: refetchHomework,
     error
@@ -207,32 +219,55 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
     queryFn: fetchHomework,
     enabled: !!lectureId,
     retry: 1,
-    staleTime: 1000, // 简短的失效时间以确保频繁刷新
+    staleTime: 1000, // 短暂的失效时间确保频繁刷新
     refetchOnMount: true
   });
   
-  // 创建或更新作业 - 确保 course_id 总是有效的数字类型
+  // 使用拖拽排序的钩子
+  const { 
+    homeworks: homeworkList, 
+    setHomeworks: setHomeworkList,
+    isDragging, 
+    setIsDragging,
+    isSaving: isSortSaving,
+    handleDragEnd
+  } = useHomeworkDraggable(fetchedHomeworkList || [], (newList) => {
+    // 清除缓存以确保数据一致性
+    queryClient.setQueryData(
+      ['homework', lectureId, effectiveCourseId], 
+      newList
+    );
+  });
+  
+  // 当获取的作业发生变化时更新本地状态
+  useEffect(() => {
+    if (fetchedHomeworkList && !isDragging && !isSortSaving) {
+      setHomeworkList(fetchedHomeworkList);
+    }
+  }, [fetchedHomeworkList, isDragging, isSortSaving, setHomeworkList]);
+  
+  // 创建或更新作业，确保course_id总是有效的数字类型
   const { mutateAsync: saveHomeworkMutation, isPending: isSaving } = useMutation({
     mutationFn: async (data: any) => {
-      if (!isMounted.current) return null; // Safety check
+      if (!isMounted.current) return null; // 安全检查
       
       setSaveStatus({ success: false, error: null });
       clearAllToasts();
       
-      // 安全地调用trackSaveAttempt - 先检查函数是否存在
+      // 安全调用trackSaveAttempt
       if (courseEditor && typeof courseEditor.trackSaveAttempt === 'function') {
         try {
           courseEditor.trackSaveAttempt('homework');
           console.log('[HomeworkPanel] Successfully called courseEditor.trackSaveAttempt');
         } catch (err) {
           console.warn('[HomeworkPanel] Error in courseEditor.trackSaveAttempt:', err);
-          // Continue anyway, this is just for UI state
+          // 继续执行，这只是用于UI状态
         }
       } else {
         console.log('[HomeworkPanel] courseEditor.trackSaveAttempt is not available');
       }
       
-      // 获取或更新有效的courseId - 这是关键修复
+      // 获取有效的courseId
       const detectedCourseId = initializeCourseId();
       if (!detectedCourseId || isNaN(Number(detectedCourseId))) {
         const error = new Error(`无效的课程ID: ${detectedCourseId}`);
@@ -246,11 +281,11 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
         courseIdType: typeof detectedCourseId
       });
       
-      // 显示保存中的toast - 确保ID被转换为字符串
+      // 显示保存中的toast
       const toastId = showToast('save', () => toast.loading('正在保存作业...', {
-        duration: 10000, // Set maximum duration to 10 seconds
+        duration: 10000, // 最长10秒
         onAutoClose: () => {
-          // Auto cleanup on timeout
+          // 超时自动清除
           if (isMounted.current) {
             clearToast('save');
           }
@@ -258,24 +293,35 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
       }));
       
       try {
-        // 确保course_id正确设置为数字类型 - 这是修复的重要部分
+        // 确保course_id是数字类型
         const homeworkData = {
           ...data,
-          course_id: Number(detectedCourseId)  // 明确转换为数字类型
+          course_id: Number(detectedCourseId)
         };
         
-        console.log('[HomeworkPanel] Final save data with course_id:', homeworkData.course_id, 'type:', typeof homeworkData.course_id);
+        // 如果没有指定position，赋予一个合理的值
+        if (homeworkData.position === undefined || homeworkData.position === null) {
+          // 如果是新建作业，将position设为现有作业数量+1
+          // 如果是编辑作业，保持原position
+          if (!homeworkData.id && homeworkList && homeworkList.length > 0) {
+            homeworkData.position = homeworkList.length + 1;
+          } else {
+            homeworkData.position = 1; // 默认为1
+          }
+        }
+        
+        console.log('[HomeworkPanel] Final save data with position:', homeworkData.position);
         
         const result = await saveHomework(homeworkData);
         
-        if (!isMounted.current) return null; // Check if still mounted
+        if (!isMounted.current) return null; // 检查组件是否已卸载
         
         if (result.error) {
           clearToast('save');
           const errorMsg = '保存失败: ' + (result.error.message || '未知错误');
           showToast('save', () => toast.error(errorMsg, { duration: 5000 }));
           
-          // 安全地调用handleSaveComplete - 先检查函数是否存在
+          // 安全调用handleSaveComplete
           if (courseEditor && typeof courseEditor.handleSaveComplete === 'function') {
             try {
               courseEditor.handleSaveComplete(false, result.error.message);
@@ -290,7 +336,7 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
         clearToast('save');
         showToast('save', () => toast.success('作业保存成功', { duration: 3000 }));
         
-        // 安全地调用handleSaveComplete - 先检查函数是否存在
+        // 安全调用handleSaveComplete
         if (courseEditor && typeof courseEditor.handleSaveComplete === 'function') {
           try {
             courseEditor.handleSaveComplete(true);
@@ -302,7 +348,7 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
         setSaveStatus({ success: true, error: null });
         return result.data;
       } catch (error: any) {
-        if (!isMounted.current) return null; // Check if still mounted
+        if (!isMounted.current) return null; // 检查组件是否已卸载
         
         clearToast('save');
         const errorMsg = '保存失败: ' + (error.message || '未知错误');
@@ -315,7 +361,7 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
       }
     },
     onSuccess: (data) => {
-      if (!isMounted.current) return; // Safety check
+      if (!isMounted.current) return; // 安全检查
       
       setShowAddForm(false);
       setEditingHomework(null);
@@ -323,7 +369,7 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
       // 同时刷新讲座的作业状态查询
       queryClient.invalidateQueries({ queryKey: ['lecture-homework', lectureId] });
       
-      // Add a timer to clear success toast after 3 seconds
+      // 3秒后清除成功提示
       setTimeout(() => {
         if (isMounted.current) {
           clearToast('save');
@@ -331,12 +377,12 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
       }, 3000);
     },
     onError: (error: Error) => {
-      if (!isMounted.current) return; // Safety check
+      if (!isMounted.current) return; // 安全检查
       
       console.error('[HomeworkPanel] Mutation error:', error);
       setSaveStatus({ success: false, error: error.message });
       
-      // Add a timer to clear error toast after 5 seconds
+      // 5秒后清除错误提示
       setTimeout(() => {
         if (isMounted.current) {
           clearToast('save');
@@ -346,9 +392,9 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
   });
   
   // 删除作业
-  const { mutateAsync: deleteHomeworkMutation } = useMutation({
+  const { mutateAsync: deleteHomeworkMutation, isPending: isDeleting } = useMutation({
     mutationFn: async (homeworkId: string) => {
-      if (!isMounted.current) return null; // Safety check
+      if (!isMounted.current) return null; // 安全检查
       
       clearAllToasts();
       const toastId = showToast('delete', () => toast.loading('正在删除作业...', { duration: 10000 }));
@@ -356,7 +402,7 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
       try {
         const result = await deleteHomework(homeworkId);
         
-        if (!isMounted.current) return null; // Check if still mounted
+        if (!isMounted.current) return null; // 检查组件是否已卸载
         
         if (!result.success) {
           clearToast('delete');
@@ -368,7 +414,7 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
         showToast('delete', () => toast.success('作业删除成功', { duration: 3000 }));
         return true;
       } catch (error: any) {
-        if (!isMounted.current) return null; // Check if still mounted
+        if (!isMounted.current) return null; // 检查组件是否已卸载
         
         clearToast('delete');
         showToast('delete', () => toast.error('删除失败: ' + (error?.message || '未知错误'), { duration: 5000 }));
@@ -376,13 +422,39 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
       }
     },
     onSuccess: () => {
-      if (!isMounted.current) return; // Safety check
+      if (!isMounted.current) return; // 安全检查
       
       queryClient.invalidateQueries({ queryKey: ['homework', lectureId] });
       // 同时刷新讲座的作业状态查询
       queryClient.invalidateQueries({ queryKey: ['lecture-homework', lectureId] });
       
-      // Add a timer to clear success toast after 3 seconds
+      // 删除成功后，更新其他作业的位置，保持连续
+      if (homeworkList && homeworkList.length > 1) {
+        // 重新获取作业列表并重置位置
+        refetchHomework().then(({ data }) => {
+          if (data && data.length > 0) {
+            // 重新编号
+            const renumbered = data.map((item, index) => ({
+              ...item,
+              position: index + 1
+            }));
+            
+            // 批量更新位置
+            Promise.all(
+              renumbered.map(item => 
+                supabase
+                  .from('homework')
+                  .update({ position: item.position })
+                  .eq('id', item.id)
+              )
+            ).catch(err => {
+              console.error('更新作业位置失败:', err);
+            });
+          }
+        });
+      }
+      
+      // 3秒后清除成功提示
       setTimeout(() => {
         if (isMounted.current) {
           clearToast('delete');
@@ -393,7 +465,7 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
   
   // 刷新作业数据
   const handleRefreshHomework = async () => {
-    if (!isMounted.current) return; // Safety check
+    if (!isMounted.current) return; // 安全检查
     
     setIsRefreshing(true);
     clearAllToasts();
@@ -404,12 +476,12 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
       // 同时刷新讲座的作业状态查询
       await queryClient.invalidateQueries({ queryKey: ['lecture-homework', lectureId] });
       
-      if (!isMounted.current) return; // Check if still mounted
+      if (!isMounted.current) return; // 检查组件是否已卸载
       
       clearToast('refresh');
       showToast('refresh', () => toast.success('作业数据已刷新', { duration: 3000 }));
     } catch (error: any) {
-      if (!isMounted.current) return; // Check if still mounted
+      if (!isMounted.current) return; // 检查组件是否已卸载
       
       clearToast('refresh');
       showToast('refresh', () => toast.error('刷新失败: ' + (error?.message || '未知错误'), { duration: 5000 }));
@@ -444,7 +516,7 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
     }
   };
   
-  // 处理编辑作业
+  // 编辑作业
   const handleEditHomework = (homework: any) => {
     console.log('[HomeworkPanel] Editing homework:', homework);
     setEditingHomework(homework);
@@ -458,7 +530,7 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
     setEditingHomework(null);
   };
   
-  // 处理删除作业
+  // 删除作业
   const handleDeleteHomework = async (homeworkId: string) => {
     if (!window.confirm('确定删除此作业？此操作无法撤销。')) {
       return;
@@ -471,7 +543,7 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
     }
   };
   
-  // 添加全新作业按钮点击处理
+  // 添加新作业
   const handleShowAddForm = () => {
     console.log('[HomeworkPanel] Show add form');
     setEditingHomework(null);
@@ -515,7 +587,7 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
       <CardContent>
         {/* 状态显示区域 */}
         <SaveStatusDisplay 
-          saving={isSaving} 
+          saving={isSaving || isSortSaving || isDeleting} 
           success={saveStatus.success}
           error={saveStatus.error}
         />
@@ -575,44 +647,85 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
           </div>
         )}
         
-        {/* 作业列表 */}
+        {/* 作业列表 - 使用拖拽排序 */}
         {!isLoading && !error && homeworkList && homeworkList.length > 0 && (
-          <div className="space-y-4 mt-4">
-            {homeworkList.map((homework) => (
-              <div key={homework.id} className="border rounded-md p-4">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h4 className="font-medium">{homework.title}</h4>
-                    <p className="text-sm text-gray-500">
-                      {homework.type === 'single_choice' ? '单选题' :
-                       homework.type === 'multiple_choice' ? '多选题' :
-                       homework.type === 'fill_blank' ? '填空题' : '未知类型'}
-                    </p>
-                    {homework.description && (
-                      <p className="text-sm mt-1">{homework.description}</p>
-                    )}
-                  </div>
-                  <div className="flex space-x-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => handleEditHomework(homework)}
+          <DragDropContext
+            onDragStart={() => setIsDragging(true)}
+            onDragEnd={handleDragEnd}
+          >
+            <Droppable droppableId="homework-list">
+              {(provided) => (
+                <div 
+                  className="space-y-4 mt-4"
+                  {...provided.droppableProps}
+                  ref={provided.innerRef}
+                >
+                  {homeworkList.map((homework, index) => (
+                    <Draggable 
+                      key={homework.id} 
+                      draggableId={homework.id} 
+                      index={index}
                     >
-                      编辑
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                      onClick={() => handleDeleteHomework(homework.id)}
-                    >
-                      删除
-                    </Button>
-                  </div>
+                      {(provided, snapshot) => (
+                        <div
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          className={`border rounded-md p-4 transition-shadow ${
+                            snapshot.isDragging 
+                              ? 'shadow-lg bg-gray-50' 
+                              : 'hover:shadow-md'
+                          }`}
+                          style={{
+                            ...provided.draggableProps.style
+                          }}
+                        >
+                          <div className="flex justify-between items-start">
+                            <div className="flex items-center gap-3">
+                              <div 
+                                {...provided.dragHandleProps}
+                                className="cursor-move p-1 hover:bg-gray-100 rounded"
+                              >
+                                <GripVertical className="h-5 w-5 text-gray-400" />
+                              </div>
+                              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-semibold">
+                                {index + 1}
+                              </div>
+                              <div>
+                                <h4 className="font-medium">{homework.title}</h4>
+                                <p className="text-sm text-gray-500">
+                                  {homework.type === 'single_choice' ? '单选题' :
+                                   homework.type === 'multiple_choice' ? '多选题' :
+                                   homework.type === 'fill_blank' ? '填空题' : '未知类型'}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex space-x-2">
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={() => handleEditHomework(homework)}
+                              >
+                                编辑
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                onClick={() => handleDeleteHomework(homework.id)}
+                              >
+                                删除
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </Draggable>
+                  ))}
+                  {provided.placeholder}
                 </div>
-              </div>
-            ))}
-          </div>
+              )}
+            </Droppable>
+          </DragDropContext>
         )}
       </CardContent>
     </Card>

@@ -37,6 +37,18 @@ export const HomeworkModuleSimple: React.FC<HomeworkModuleSimpleProps> = ({
     }
   };
 
+  // 按位置字段排序作业
+  const sortHomeworkByPosition = (homeworks: any[]) => {
+    return [...homeworks].sort((a, b) => {
+      // 如果有位置字段，优先按位置排序
+      if (a.position !== undefined && b.position !== undefined) {
+        return a.position - b.position;
+      }
+      // 否则按ID排序
+      return a.id.localeCompare(b.id);
+    });
+  };
+
   // Fetch homework for the lecture
   useEffect(() => {
     const fetchHomework = async () => {
@@ -50,7 +62,7 @@ export const HomeworkModuleSimple: React.FC<HomeworkModuleSimpleProps> = ({
           setActiveToastId(null);
         }
         
-        // Validate inputs
+        // 验证输入
         if (!lectureId) {
           throw new Error('无效的课时ID');
         }
@@ -73,7 +85,8 @@ export const HomeworkModuleSimple: React.FC<HomeworkModuleSimpleProps> = ({
         const { data: homeworkData, error: homeworkError } = await supabase
           .from('homework')
           .select('*')
-          .eq('lecture_id', lectureId);
+          .eq('lecture_id', lectureId)
+          .order('position', { ascending: true });
           
         if (homeworkError) {
           console.error('[HomeworkModuleSimple] Error fetching homework:', homeworkError);
@@ -88,10 +101,10 @@ export const HomeworkModuleSimple: React.FC<HomeworkModuleSimpleProps> = ({
             // Create a default homework for this lecture with the properly converted courseId
             const defaultHomework = {
               title: '课时练习',
-              description: '完成本练习以检验学习成果',
               type: 'fill_blank',
               lecture_id: lectureId,
               course_id: numericCourseId,
+              position: 1, // 设置默认位置
               options: {
                 question: '请简要总结本节课的主要内容和您的收获：'
               }
@@ -119,7 +132,8 @@ export const HomeworkModuleSimple: React.FC<HomeworkModuleSimpleProps> = ({
             // Don't show error to user for this case, just log it
           }
         } else {
-          setHomeworkList(homeworkData);
+          // 按位置排序作业
+          setHomeworkList(sortHomeworkByPosition(homeworkData));
         }
         
         // Check submission status for each homework
@@ -210,7 +224,7 @@ export const HomeworkModuleSimple: React.FC<HomeworkModuleSimpleProps> = ({
     <div className="my-6 space-y-4">
       <h2 className="text-xl font-bold">课时作业</h2>
       <div className="space-y-4">
-        {homeworkList.map((homework) => (
+        {homeworkList.map((homework, index) => (
           <HomeworkCard
             key={homework.id}
             homework={homework}
@@ -218,6 +232,7 @@ export const HomeworkModuleSimple: React.FC<HomeworkModuleSimpleProps> = ({
             lectureId={lectureId}
             isSubmitted={!!submittedHomework[homework.id]}
             onSubmitted={handleHomeworkSubmitted}
+            position={index + 1} // 添加位置编号
           />
         ))}
       </div>

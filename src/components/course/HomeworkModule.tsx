@@ -21,12 +21,12 @@ export const HomeworkModule: React.FC<HomeworkModuleProps> = (props) => {
   }, []);
   
   return (
-    <>
+    <div className="homework-module animate-fade-in">
       {/* Always include the database fixer to ensure homework tables are properly set up */}
       <DatabaseFixInitializer />
       
       {/* Use the simplified version with better error handling */}
       <HomeworkModuleSimple {...props} />
-    </>
+    </div>
   );
 };
