@@ -538,7 +538,8 @@ export const HomeworkModule = ({ courseId, lectureId, onHomeworkSubmit }: Homewo
             <Button
               onClick={() => {
                 console.log('Creating default homework for lecture:', lectureId);
-                setHomework(null);
+                // Fix: Use refetchHomework instead of setHomework
+                refetchHomework();
               }}
               className="mt-4"
               variant="outline"

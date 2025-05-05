@@ -15,12 +15,14 @@ interface HomeworkCardProps {
     image_url: string | null;
     lecture_id: string;
   };
+  courseId: string; // Add courseId prop to interface
+  lectureId: string; // Add lectureId prop to interface
   isSubmitted: boolean;
-  onSubmissionSuccess?: () => void;
+  onSubmitted?: () => void;
 }
 
 // 使用 memo 优化组件，避免不必要的重新渲染
-export const HomeworkCard = React.memo(({ homework, isSubmitted, onSubmissionSuccess }: HomeworkCardProps) => {
+export const HomeworkCard = React.memo(({ homework, courseId, lectureId, isSubmitted, onSubmitted }: HomeworkCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const handleHeaderClick = useCallback((e: React.MouseEvent) => {
@@ -34,8 +36,8 @@ export const HomeworkCard = React.memo(({ homework, isSubmitted, onSubmissionSuc
 
   const handleSubmissionSuccess = useCallback(() => {
     setIsExpanded(false);
-    onSubmissionSuccess?.();
-  }, [onSubmissionSuccess]);
+    onSubmitted?.();
+  }, [onSubmitted]);
 
   const handleCancel = useCallback(() => {
     setIsExpanded(false);
@@ -67,6 +69,8 @@ export const HomeworkCard = React.memo(({ homework, isSubmitted, onSubmissionSuc
           <div className="space-y-4 bg-white rounded-md border border-gray-100 shadow-sm">
             <HomeworkSubmissionForm 
               homework={homework}
+              courseId={courseId} // Pass courseId to HomeworkSubmissionForm
+              lectureId={lectureId} // Pass lectureId to HomeworkSubmissionForm
               onSubmitSuccess={handleSubmissionSuccess}
               onCancel={handleCancel}
             />
