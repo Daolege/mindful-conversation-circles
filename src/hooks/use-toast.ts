@@ -21,7 +21,8 @@ export function toast(props: ToastProps | string) {
   // 处理字符串参数情况
   if (typeof props === 'string') {
     const id = sonnerToast(props);
-    activeToastIds.add(id);
+    // 使用类型断言确保id可以被添加到Set中
+    activeToastIds.add(id as string | number);
     return id;
   }
 
@@ -41,8 +42,8 @@ export function toast(props: ToastProps | string) {
     action: action,
     onDismiss: (id) => {
       // 当 toast 被关闭时，从活跃列表中移除
-      if (activeToastIds.has(id)) {
-        activeToastIds.delete(id);
+      if (activeToastIds.has(id as string | number)) {
+        activeToastIds.delete(id as string | number);
       }
     },
     ...rest
@@ -50,7 +51,8 @@ export function toast(props: ToastProps | string) {
   
   // 调用 sonner 的 toast
   const id = sonnerToast[type](message, options);
-  activeToastIds.add(id);
+  // 使用类型断言确保id可以被添加到Set中
+  activeToastIds.add(id as string | number);
   return id;
 }
 
