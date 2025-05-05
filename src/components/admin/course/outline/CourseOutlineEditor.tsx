@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import {
   Card,
@@ -6,6 +7,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
+import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, Save, Plus, RefreshCw, AlertCircle, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -40,6 +42,8 @@ export const CourseOutlineEditor = ({
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
+  const [requiresSequentialLearning, setRequiresSequentialLearning] = useState(false);
+  const [requiresHomeworkCompletion, setRequiresHomeworkCompletion] = useState(false);
   
   useEffect(() => {
     setShowAddSectionForm(autoShowAddForm);
@@ -114,7 +118,16 @@ export const CourseOutlineEditor = ({
     setSaveSuccess(false);
     
     try {
-      const { success, error } = await saveCourseOutline(courseId, managedSections);
+      // 添加课程级别的学习控制设置
+      const outlineData = {
+        sections: managedSections,
+        settings: {
+          requiresSequentialLearning,
+          requiresHomeworkCompletion
+        }
+      };
+      
+      const { success, error } = await saveCourseOutline(courseId, outlineData);
       
       if (!success) {
         throw error || new Error("保存失败");
@@ -220,7 +233,39 @@ export const CourseOutlineEditor = ({
           <div className="flex justify-between items-center">
             <CardTitle>课程大纲</CardTitle>
             {!hideToolbarButtons && (
-              <div className="flex gap-2">
+              <div className="flex gap-2 items-center">
+                <div className="flex items-center gap-4 mr-4 bg-gray-50 px-3 py-1.5 rounded-md border border-gray-200">
+                  <div className="flex items-center">
+                    <Checkbox
+                      id="sequential-learning"
+                      checked={requiresSequentialLearning}
+                      onCheckedChange={(checked) => setRequiresSequentialLearning(!!checked)}
+                      className="mr-2"
+                    />
+                    <label 
+                      htmlFor="sequential-learning"
+                      className="text-sm cursor-pointer whitespace-nowrap"
+                    >
+                      按顺序学习
+                    </label>
+                  </div>
+                  
+                  <div className="flex items-center">
+                    <Checkbox
+                      id="homework-required"
+                      checked={requiresHomeworkCompletion}
+                      onCheckedChange={(checked) => setRequiresHomeworkCompletion(!!checked)}
+                      className="mr-2"
+                    />
+                    <label 
+                      htmlFor="homework-required"
+                      className="text-sm cursor-pointer whitespace-nowrap"
+                    >
+                      须提交作业
+                    </label>
+                  </div>
+                </div>
+                
                 <Button
                   variant="outline"
                   onClick={handleRetryLoading}

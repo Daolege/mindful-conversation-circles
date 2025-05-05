@@ -32,10 +32,20 @@ export const VideoUploader: React.FC<VideoUploaderProps> = ({
     setSelectedFileName(file.name);
 
     // Validate file type
-    const validTypes = ['video/mp4', 'video/webm', 'video/avi'];
+    const validTypes = ['video/mp4', 'video/webm', 'video/avi', 'video/ogg', 'video/quicktime', 'video/x-matroska'];
     if (!validTypes.includes(file.type)) {
       toast.error('不支持的文件格式', {
-        description: '请上传 MP4、WebM 或 AVI 格式的视频'
+        description: '请上传 MP4、WebM、AVI、OGG、MOV 或 MKV 格式的视频'
+      });
+      setSelectedFileName(null);
+      return;
+    }
+
+    // Validate file size (10GB limit)
+    const maxSize = 10 * 1024 * 1024 * 1024; // 10GB in bytes
+    if (file.size > maxSize) {
+      toast.error('文件过大', {
+        description: '视频文件大小不能超过10G'
       });
       setSelectedFileName(null);
       return;
@@ -82,7 +92,7 @@ export const VideoUploader: React.FC<VideoUploaderProps> = ({
       <input
         ref={fileInputRef}
         type="file"
-        accept="video/mp4,video/webm,video/avi"
+        accept="video/mp4,video/webm,video/avi,video/ogg,video/quicktime,video/x-matroska"
         onChange={handleFileChange}
         className="hidden"
       />
@@ -126,4 +136,3 @@ export const VideoUploader: React.FC<VideoUploaderProps> = ({
     </div>
   );
 };
-

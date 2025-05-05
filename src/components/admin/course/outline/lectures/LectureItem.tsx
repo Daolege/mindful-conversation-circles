@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -206,18 +205,15 @@ export const LectureItem = ({
             {!isEditing ? (
               <>
                 <Button 
-                  variant="outline" 
+                  variant={hasVideo ? "default" : "outline"} 
                   size="sm" 
                   onClick={toggleVideoUploader} 
                   className={cn(
                     "h-8 px-2",
-                    hasVideo ? "bg-gray-100 text-gray-800" : ""
+                    hasVideo ? "border border-black bg-black text-white hover:bg-gray-800" : ""
                   )}
                 >
-                  <Video className={cn(
-                    "h-4 w-4 mr-1", 
-                    hasVideo ? "text-gray-800" : "text-white"
-                  )} />
+                  <Video className="h-4 w-4 mr-1" />
                   {hasVideo ? "视频已传" : "上传视频"}
                 </Button>
 

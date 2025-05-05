@@ -97,6 +97,20 @@ const VideoPanel = ({
     }
   };
 
+  // 处理双击事件
+  const handleDoubleClick = () => {
+    if (!isEditingName && videoData) {
+      setIsEditingName(true);
+    }
+  };
+
+  // 处理失焦自动保存
+  const handleBlur = () => {
+    if (isEditingName) {
+      handleSaveVideoName();
+    }
+  };
+
   return (
     <Card className="border border-gray-200 mb-4">
       <CardContent className="p-4">
@@ -162,6 +176,7 @@ const VideoPanel = ({
                       value={videoName}
                       onChange={(e) => setVideoName(e.target.value)}
                       onKeyDown={handleKeyDown}
+                      onBlur={handleBlur}
                       className="h-8"
                       autoFocus
                     />
@@ -187,7 +202,12 @@ const VideoPanel = ({
                   </div>
                 ) : (
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium">{videoData.name}</span>
+                    <span 
+                      className="text-sm font-medium cursor-pointer"
+                      onDoubleClick={handleDoubleClick}
+                    >
+                      {videoData.name}
+                    </span>
                     <Button
                       size="icon"
                       variant="ghost"
