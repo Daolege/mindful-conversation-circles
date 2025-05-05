@@ -8,6 +8,7 @@ export interface ToastProps {
   description?: React.ReactNode;
   action?: React.ReactNode;
   variant?: "default" | "destructive" | "success" | "warning" | "info";
+  duration?: number; // 添加 duration 属性到接口
 }
 
 // 创建一个 toasts 存储数组，用于兼容 shadcn 风格的 toaster
@@ -26,7 +27,7 @@ export function toast(props: ToastProps | string) {
     return id;
   }
 
-  const { title, description, variant, action, ...rest } = props;
+  const { title, description, variant, action, duration, ...rest } = props;
   
   // 将 shadcn variant 映射到 sonner 类型
   let type: "success" | "info" | "warning" | "error" | "default" = "default";
@@ -41,7 +42,7 @@ export function toast(props: ToastProps | string) {
     description: description,
     action: action,
     // 设置更短的默认持续时间，避免toast持续时间过长
-    duration: rest.duration || 4000,
+    duration: duration || 4000,
     onDismiss: (id) => {
       // 当 toast 被关闭时，从活跃列表中移除
       // 使用两步类型转换: 先转换为unknown，再转换为目标类型
