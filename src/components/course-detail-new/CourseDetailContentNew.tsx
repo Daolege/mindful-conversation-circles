@@ -248,97 +248,121 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
         </CardContent>
       </Card>
 
-      {/* 学习信息栏 - 三栏布局 - Enhanced with better 3D effects */}
+      {/* 学习信息栏 - 三栏布局 - Enhanced with better UI/UX */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* 学习目标 */}
         <Card 
-          className="hover:shadow-xl transition-all duration-500 ease-in-out shadow-lg shadow-gray-200/60 border-2 
-            transform hover:-translate-y-1 hover:scale-[1.01] focus:scale-[1.01]
-            animate-in fade-in duration-500"
+          className="overflow-hidden hover:shadow-xl transition-all duration-500 border-0 group
+            animate-in fade-in duration-500 relative"
         >
-          <CardHeader className="pb-0">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Target className="h-5 w-5" />
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-indigo-50 opacity-70"></div>
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-indigo-500"></div>
+          
+          <CardHeader className="pb-0 relative">
+            <div className="mb-2 w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-indigo-600 flex items-center justify-center shadow-lg">
+              <Target className="h-6 w-6 text-white" />
+            </div>
+            <CardTitle className="text-lg font-bold text-gray-800">
               {t('courses:learningObjectives')}
             </CardTitle>
           </CardHeader>
-          <CardContent className="pt-4">
+          
+          <CardContent className="pt-4 relative z-10">
             {learningObjectives && learningObjectives.length > 0 ? (
-              <ul className="space-y-2">
+              <ul className="space-y-3">
                 {learningObjectives.map((objective, index) => (
                   <li 
                     key={index} 
-                    className="flex items-start gap-2 animate-in fade-in duration-300"
+                    className="flex items-start gap-3 group animate-in fade-in duration-300 hover:translate-x-1 transition-transform"
+                    style={{ animationDelay: `${index * 100}ms` }}
                   >
-                    <Target className="h-4 w-4 text-gray-800 mt-0.5 flex-shrink-0" />
-                    <span className="text-sm font-medium text-gray-700">{objective}</span>
+                    <div className="mt-0.5 bg-blue-100 rounded-full p-1 flex-shrink-0 text-blue-700 shadow-sm group-hover:bg-blue-200 transition-colors">
+                      <CheckCircle className="h-4 w-4" />
+                    </div>
+                    <span className="text-gray-700 font-medium">{objective}</span>
                   </li>
                 ))}
               </ul>
             ) : (
-              <div className="text-gray-500">{t('courses:noObjectives')}</div>
+              <div className="text-gray-500 italic">{t('courses:noObjectives')}</div>
             )}
           </CardContent>
         </Card>
 
         {/* 课程要求 */}
         <Card 
-          className="hover:shadow-xl transition-all duration-500 ease-in-out shadow-lg shadow-gray-200/60 border-2 
-            transform hover:-translate-y-1 hover:scale-[1.01] focus:scale-[1.01]
-            animate-in fade-in duration-500"
+          className="overflow-hidden hover:shadow-xl transition-all duration-500 border-0 group
+            animate-in fade-in duration-500 relative"
         >
-          <CardHeader className="pb-0">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Book className="h-5 w-5" />
+          <div className="absolute inset-0 bg-gradient-to-br from-amber-50 to-orange-50 opacity-70"></div>
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-400 to-orange-400"></div>
+          
+          <CardHeader className="pb-0 relative">
+            <div className="mb-2 w-12 h-12 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg">
+              <Book className="h-6 w-6 text-white" />
+            </div>
+            <CardTitle className="text-lg font-bold text-gray-800">
               {t('courses:requirements')}
             </CardTitle>
           </CardHeader>
-          <CardContent className="pt-4">
+          
+          <CardContent className="pt-4 relative z-10">
             {requirements && requirements.length > 0 ? (
-              <ul className="space-y-2">
+              <ul className="space-y-3">
                 {requirements.map((requirement, index) => (
                   <li 
                     key={index} 
-                    className="flex items-start gap-2 animate-in fade-in duration-300"
+                    className="flex items-start gap-3 group animate-in fade-in duration-300 hover:translate-x-1 transition-transform"
+                    style={{ animationDelay: `${index * 100}ms` }}
                   >
-                    <Book className="h-4 w-4 text-gray-800 mt-0.5 flex-shrink-0" />
-                    <span className="text-sm font-medium text-gray-700">{requirement}</span>
+                    <div className="mt-0.5 bg-amber-100 rounded-full p-1 flex-shrink-0 text-amber-700 shadow-sm group-hover:bg-amber-200 transition-colors">
+                      <BookOpen className="h-4 w-4" />
+                    </div>
+                    <span className="text-gray-700 font-medium">{requirement}</span>
                   </li>
                 ))}
               </ul>
             ) : (
-              <div className="text-gray-500">{t('courses:noRequirements')}</div>
+              <div className="text-gray-500 italic">{t('courses:noRequirements')}</div>
             )}
           </CardContent>
         </Card>
 
         {/* 适合人群 */}
         <Card 
-          className="hover:shadow-xl transition-all duration-500 ease-in-out shadow-lg shadow-gray-200/60 border-2 
-            transform hover:-translate-y-1 hover:scale-[1.01] focus:scale-[1.01]
-            animate-in fade-in duration-500"
+          className="overflow-hidden hover:shadow-xl transition-all duration-500 border-0 group
+            animate-in fade-in duration-500 relative"
         >
-          <CardHeader className="pb-0">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Users className="h-5 w-5" />
+          <div className="absolute inset-0 bg-gradient-to-br from-green-50 to-emerald-50 opacity-70"></div>
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-green-400 to-emerald-500"></div>
+          
+          <CardHeader className="pb-0 relative">
+            <div className="mb-2 w-12 h-12 rounded-full bg-gradient-to-br from-green-400 to-emerald-600 flex items-center justify-center shadow-lg">
+              <Users className="h-6 w-6 text-white" />
+            </div>
+            <CardTitle className="text-lg font-bold text-gray-800">
               {t('courses:targetAudience')}
             </CardTitle>
           </CardHeader>
-          <CardContent className="pt-4">
+          
+          <CardContent className="pt-4 relative z-10">
             {targetAudience && targetAudience.length > 0 ? (
-              <ul className="space-y-2">
+              <ul className="space-y-3">
                 {targetAudience.map((audience, index) => (
                   <li 
                     key={index} 
-                    className="flex items-start gap-2 animate-in fade-in duration-300"
+                    className="flex items-start gap-3 group animate-in fade-in duration-300 hover:translate-x-1 transition-transform"
+                    style={{ animationDelay: `${index * 100}ms` }}
                   >
-                    <Users className="h-4 w-4 text-gray-800 mt-0.5 flex-shrink-0" />
-                    <span className="text-sm font-medium text-gray-700">{audience}</span>
+                    <div className="mt-0.5 bg-green-100 rounded-full p-1 flex-shrink-0 text-green-700 shadow-sm group-hover:bg-green-200 transition-colors">
+                      <Users className="h-4 w-4" />
+                    </div>
+                    <span className="text-gray-700 font-medium">{audience}</span>
                   </li>
                 ))}
               </ul>
             ) : (
-              <div className="text-gray-500">{t('courses:suitableForEveryone')}</div>
+              <div className="text-gray-500 italic">{t('courses:suitableForEveryone')}</div>
             )}
           </CardContent>
         </Card>
