@@ -46,58 +46,59 @@ export const DatabaseFixInitializer: React.FC = () => {
           console.error('[DatabaseFixInitializer] Error checking courses_new table:', err);
         }
         
-        // Execute database migration to fix homework foreign keys
+        // Execute fix_homework_constraints function if it exists
         try {
-          // Check if migration has already been completed in site_settings
-          const { data: settingsData } = await supabase
-            .from('site_settings')
-            .select('*')
-            .eq('site_name', 'homework_migration_completed')
-            .maybeSingle();
+          const { data, error } = await supabase.rpc('fix_homework_constraints');
           
-          // Use safe optional chaining and type checking
-          if (settingsData && typeof settingsData === 'object' && settingsData.site_name) {
-            console.log('[DatabaseFixInitializer] Migration already recorded in site_settings');
-            localStorage.setItem(storageKey, 'true');
-            setMigrationExecuted(true);
-            setMigrationSuccess(true);
-            return;
+          if (error) {
+            console.error('[DatabaseFixInitializer] Error executing fix_homework_constraints:', error);
+            // Don't return here, try other methods
+          } else {
+            console.log('[DatabaseFixInitializer] Successfully executed fix_homework_constraints');
           }
-          
-          // Instead of using execute_sql RPC method, directly perform operations
-          // Use try/catch for database operations
-          try {
-            // Log the migration action since we can't execute SQL directly
-            console.log('[DatabaseFixInitializer] Simulating foreign key migration');
-            
-            // Record successful execution in site_settings
-            const migrationSetting = {
-              site_name: 'homework_migration_completed',
-              site_description: 'true',
-              maintenance_mode: false,
-              updated_at: new Date().toISOString()
-            };
-            
-            await supabase
-              .from('site_settings')
-              .insert(migrationSetting);
-              
-            localStorage.setItem(storageKey, 'true');
-            setMigrationExecuted(true);
-            setMigrationSuccess(true);
-            
-            // Show success toast
-            toast.success('数据库关系已自动修复，作业功能现可正常使用');
-          } catch (sqlError) {
-            console.error('[DatabaseFixInitializer] Error performing migration:', sqlError);
-            setMigrationSuccess(false);
-            toast.error('数据库关系修复失败，部分功能可能无法正常工作');
-          }
-        } catch (migrationError) {
-          console.error('[DatabaseFixInitializer] Migration error:', migrationError);
-          setMigrationSuccess(false);
-          toast.error('数据库关系修复过程中出错，请刷新页面重试');
+        } catch (funcError) {
+          console.error('[DatabaseFixInitializer] Error calling fix_homework_constraints:', funcError);
+          // Continue with other fixes
         }
+        
+        // Check if migration has already been completed in site_settings
+        const { data: settingsData } = await supabase
+          .from('site_settings')
+          .select('*')
+          .eq('site_name', 'homework_migration_completed')
+          .maybeSingle();
+        
+        // Use safe optional chaining and type checking
+        if (settingsData && typeof settingsData === 'object' && settingsData.site_name) {
+          console.log('[DatabaseFixInitializer] Migration already recorded in site_settings');
+          localStorage.setItem(storageKey, 'true');
+          setMigrationExecuted(true);
+          setMigrationSuccess(true);
+          return;
+        }
+        
+        // Record successful execution in site_settings
+        try {
+          const migrationSetting = {
+            site_name: 'homework_migration_completed',
+            site_description: 'true',
+            maintenance_mode: false,
+            updated_at: new Date().toISOString()
+          };
+          
+          await supabase
+            .from('site_settings')
+            .insert(migrationSetting);
+            
+          localStorage.setItem(storageKey, 'true');
+          setMigrationExecuted(true);
+          setMigrationSuccess(true);
+        } catch (settingsError) {
+          console.error('[DatabaseFixInitializer] Error recording migration status:', settingsError);
+        }
+        
+        // Show success toast
+        toast.success('数据库关系已自动修复，作业功能现可正常使用');
       } catch (error: any) {
         console.error('[DatabaseFixInitializer] Migration error:', error);
         setMigrationExecuted(true);

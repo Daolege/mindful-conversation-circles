@@ -38,6 +38,7 @@ export const HomeworkSubmissionForm = ({
   const [isFormValid, setIsFormValid] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [activeToastId, setActiveToastId] = useState<string | number | null>(null);
 
   useEffect(() => {
     console.log('Current singleChoiceAnswer:', singleChoiceAnswer);
@@ -57,6 +58,15 @@ export const HomeworkSubmissionForm = ({
     setIsFormValid(valid);
   }, [singleChoiceAnswer, multipleChoiceAnswers, textAnswer, homework.type]);
 
+  // Clear any active toast when component unmounts
+  useEffect(() => {
+    return () => {
+      if (activeToastId) {
+        toast.dismiss(activeToastId);
+      }
+    };
+  }, [activeToastId]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -64,6 +74,12 @@ export const HomeworkSubmissionForm = ({
     if (!user?.id) {
       toast.error('您需要登录才能提交作业');
       return;
+    }
+    
+    // Clear any previous toast
+    if (activeToastId) {
+      toast.dismiss(activeToastId);
+      setActiveToastId(null);
     }
     
     setIsSubmitting(true);
@@ -97,12 +113,27 @@ export const HomeworkSubmissionForm = ({
         answer = textAnswer;
       }
       
-      const numericCourseId = parseInt(courseId);
+      // Fix for courseId: ensure it's a valid number
+      let numericCourseId: number;
       
-      if (!numericCourseId || isNaN(numericCourseId)) {
-        console.error('无效的课程ID', courseId);
-        throw new Error('无效的课程ID');
+      try {
+        numericCourseId = parseInt(courseId);
+        if (isNaN(numericCourseId)) {
+          console.error('无效的课程ID (NaN):', courseId);
+          throw new Error('无效的课程ID (NaN)');
+        }
+      } catch (error) {
+        console.error('解析课程ID时出错:', courseId, error);
+        throw new Error('无效的课程ID格式');
       }
+      
+      console.log('提交作业数据:', {
+        user_id: user.id,
+        homework_id: homework.id,
+        course_id: numericCourseId,
+        lecture_id: lectureId,
+        answer: answer
+      });
       
       const { error } = await supabase
         .from('homework_submissions')
@@ -116,14 +147,18 @@ export const HomeworkSubmissionForm = ({
         }]);
         
       if (error) {
+        console.error('Supabase insert error:', error);
         throw error;
       }
       
-      toast.success('作业提交成功');
+      const toastId = toast.success('作业提交成功');
+      setActiveToastId(toastId);
       onSubmitSuccess();
     } catch (error: any) {
       console.error('Error submitting homework:', error);
-      toast.error('提交作业失败: ' + (error.message || '未知错误'));
+      const errorMessage = error.message || '未知错误';
+      const toastId = toast.error('提交作业失败: ' + errorMessage);
+      setActiveToastId(toastId);
     } finally {
       setIsSubmitting(false);
       setIsUploading(false);

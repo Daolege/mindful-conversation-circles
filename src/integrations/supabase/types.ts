@@ -1583,6 +1583,10 @@ export type Database = {
         Args: { p_user_id: string; p_course_id: number; p_purchased_at: string }
         Returns: undefined
       }
+      fix_homework_constraints: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       get_course_section_config: {
         Args: { p_course_id: number; p_section_type: string }
         Returns: Json
