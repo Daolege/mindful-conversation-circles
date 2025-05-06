@@ -687,6 +687,14 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
                           }`}
                         >
                           <div className="flex justify-between items-start">
+                            {/* 拖动手柄移至左侧 */}
+                            <div
+                              {...provided.dragHandleProps}
+                              className="cursor-move p-1 mr-3"
+                            >
+                              <GripVertical className="h-5 w-5 text-gray-400" />
+                            </div>
+                            
                             <div className="flex-grow">
                               <h3 className="font-medium text-gray-900">{homework.title}</h3>
                               <div className="mt-1 text-sm text-gray-500 flex items-center space-x-2">
@@ -706,30 +714,22 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
                               )}
                             </div>
                             
-                            <div className="flex space-x-2 ml-4">
-                              <div
-                                {...provided.dragHandleProps}
-                                className="cursor-move p-1"
+                            <div className="flex space-x-1 ml-4">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEditHomework(homework)}
                               >
-                                <GripVertical className="h-5 w-5 text-gray-400" />
-                              </div>
-                              <div className="flex space-x-1">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleEditHomework(homework)}
-                                >
-                                  编辑
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="text-red-600 hover:text-red-800 hover:bg-red-50"
-                                  onClick={() => handleDeleteHomework(homework.id as string)}
-                                >
-                                  删除
-                                </Button>
-                              </div>
+                                编辑
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-red-600 hover:text-red-800 hover:bg-red-50"
+                                onClick={() => handleDeleteHomework(homework.id as string)}
+                              >
+                                删除
+                              </Button>
                             </div>
                           </div>
                         </div>
