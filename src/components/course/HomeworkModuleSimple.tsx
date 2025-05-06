@@ -12,7 +12,7 @@ import { trackCourseProgress } from '@/lib/services/courseNewLearnService';
 import { dismissAllToasts } from '@/hooks/use-toast';
 
 interface HomeworkModuleSimpleProps {
-  courseId: string;
+  courseId: string | number; // Changed to accept both string and number
   lectureId: string;
   onHomeworkSubmit?: () => void;
 }
