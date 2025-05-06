@@ -13,6 +13,9 @@ import {
   List, ListOrdered, Undo, Redo, Code 
 } from 'lucide-react';
 
+// 自定义样式，确保列表在编辑器中正确显示
+import './RichTextEditorStyles.css';
+
 const MenuBar = ({ editor, onImageUpload }) => {
   if (!editor) {
     return null;
@@ -109,7 +112,10 @@ const MenuBar = ({ editor, onImageUpload }) => {
       <Button
         size="sm"
         variant="ghost"
-        onClick={() => editor.chain().focus().toggleBulletList().run()}
+        onClick={() => {
+          console.log('点击无序列表按钮');
+          editor.chain().focus().toggleBulletList().run();
+        }}
         className={editor.isActive('bulletList') ? 'bg-gray-200' : ''}
         title="无序列表"
       >
@@ -120,7 +126,7 @@ const MenuBar = ({ editor, onImageUpload }) => {
         size="sm"
         variant="ghost"
         onClick={() => {
-          // 修复有序列表功能，确保正确应用格式
+          console.log('点击有序列表按钮');
           editor.chain().focus().toggleOrderedList().run();
         }}
         className={editor.isActive('orderedList') ? 'bg-gray-200' : ''}
@@ -181,9 +187,23 @@ const MenuBar = ({ editor, onImageUpload }) => {
 };
 
 const RichTextEditor = ({ value, onChange, placeholder }) => {
+  // Debugging
+  console.log('Initial content loaded into editor:', value);
+  
   const editor = useEditor({
     extensions: [
-      StarterKit,
+      StarterKit.configure({
+        bulletList: {
+          HTMLAttributes: {
+            class: 'editor-list-ul',
+          },
+        },
+        orderedList: {
+          HTMLAttributes: {
+            class: 'editor-list-ol',
+          },
+        },
+      }),
       Image,
       Link.configure({
         openOnClick: false,
@@ -198,16 +218,44 @@ const RichTextEditor = ({ value, onChange, placeholder }) => {
     ],
     content: value,
     onUpdate: ({ editor }) => {
+      const html = editor.getHTML();
+      console.log('Editor content updated:', html);
       if (onChange) {
-        onChange(editor.getHTML());
+        onChange(html);
       }
     },
+    editorProps: {
+      attributes: {
+        class: 'focus:outline-none prose-lists-in-editor',
+      },
+    },
   });
+
+  // Listen for list commands and log them
+  React.useEffect(() => {
+    if (editor) {
+      const originalToggleBulletList = editor.commands.toggleBulletList;
+      const originalToggleOrderedList = editor.commands.toggleOrderedList;
+      
+      editor.commands.toggleBulletList = () => {
+        console.log('执行 toggleBulletList 命令');
+        return originalToggleBulletList();
+      };
+      
+      editor.commands.toggleOrderedList = () => {
+        console.log('执行 toggleOrderedList 命令');
+        return originalToggleOrderedList();
+      };
+    }
+  }, [editor]);
 
   return (
     <div className="border rounded-md">
       <MenuBar editor={editor} />
-      <EditorContent editor={editor} className="p-3 min-h-[150px] prose max-w-none" />
+      <EditorContent 
+        editor={editor} 
+        className="p-3 min-h-[150px] prose max-w-none editor-content" 
+      />
     </div>
   );
 };

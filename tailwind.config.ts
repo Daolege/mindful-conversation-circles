@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 import { fontFamily } from "tailwindcss/defaultTheme";
 import tailwindAnimate from "tailwindcss-animate";
@@ -117,10 +116,42 @@ const config = {
       backgroundImage: {
         'radial-gradient': 'radial-gradient(var(--tw-gradient-stops))',
       },
+      typography: {
+        DEFAULT: {
+          css: {
+            maxWidth: 'none',
+            color: 'inherit',
+            a: {
+              color: 'inherit',
+              textDecoration: 'underline',
+              fontWeight: '500',
+            },
+            ul: {
+              listStyleType: 'disc',
+              paddingLeft: '1.5em',
+            },
+            ol: {
+              listStyleType: 'decimal',
+              paddingLeft: '1.5em',
+            },
+            strong: {
+              fontWeight: '600',
+            },
+            code: {
+              fontWeight: '400',
+            },
+            img: {
+              marginTop: '0',
+              marginBottom: '0',
+            },
+          },
+        },
+      },
     },
   },
   plugins: [
     tailwindAnimate,
+    require('@tailwindcss/typography'),
     function({ addComponents, addUtilities }: any) {
       addComponents({
         '.skeleton-wave-shimmer': {
@@ -138,6 +169,18 @@ const config = {
         },
         '.preserve-3d': {
           transformStyle: 'preserve-3d',
+        },
+        '.editor-list-ul': {
+          listStyleType: 'disc !important',
+          paddingLeft: '1.5em !important',
+          marginTop: '0.5em !important',
+          marginBottom: '0.5em !important',
+        },
+        '.editor-list-ol': {
+          listStyleType: 'decimal !important',
+          paddingLeft: '1.5em !important',
+          marginTop: '0.5em !important',
+          marginBottom: '0.5em !important',
         },
       });
     },
