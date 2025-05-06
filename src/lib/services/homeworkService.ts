@@ -89,6 +89,31 @@ export const saveHomework = async (homeworkData: Homework): Promise<HomeworkResu
       throw error;
     }
     
+    // 确保position字段有值
+    let position = homeworkData.position;
+    if (position === undefined || position === null) {
+      // 如果没有position，获取当前最大position并加1
+      try {
+        const { data, error } = await supabase
+          .from('homework')
+          .select('position')
+          .eq('lecture_id', homeworkData.lecture_id)
+          .order('position', { ascending: false })
+          .limit(1);
+          
+        if (!error && data && data.length > 0) {
+          position = (data[0].position || 0) + 1;
+          console.log(`Automatically assigned position: ${position}`);
+        } else {
+          position = 1; // 默认为第一个位置
+          console.log(`No existing homework, using default position: ${position}`);
+        }
+      } catch (err) {
+        console.warn("Error determining position, using default:", err);
+        position = 1;
+      }
+    }
+    
     // Prepare data for saving
     const dataToSave = {
       lecture_id: homeworkData.lecture_id,
@@ -96,7 +121,7 @@ export const saveHomework = async (homeworkData: Homework): Promise<HomeworkResu
       title: homeworkData.title,
       type: homeworkData.type,
       options: homeworkData.options,
-      position: homeworkData.position || 0,
+      position: position,
       image_url: homeworkData.image_url || null,
       is_required: homeworkData.is_required || false,
       description: homeworkData.description || null
@@ -166,6 +191,55 @@ export const deleteHomework = async (homeworkId: string): Promise<HomeworkResult
     return { success: true };
   } catch (error) {
     console.error("Error deleting homework:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error : new Error("Unknown error")
+    };
+  }
+};
+
+// Fix homework positions
+export const fixHomeworkPositions = async (lectureId: string): Promise<HomeworkResult> => {
+  try {
+    console.log("Fixing homework positions for lecture:", lectureId);
+    
+    // 获取当前所有作业
+    const { data, error } = await supabase
+      .from('homework')
+      .select('*')
+      .eq('lecture_id', lectureId)
+      .order('created_at', { ascending: true });
+      
+    if (error) {
+      throw error;
+    }
+    
+    if (!data || data.length === 0) {
+      return { success: true, data: [] };
+    }
+    
+    // 重新排序
+    const updates = data.map((item, index) => ({
+      id: item.id,
+      position: index + 1
+    }));
+    
+    // 批量更新位置
+    for (const update of updates) {
+      await supabase
+        .from('homework')
+        .update({ position: update.position })
+        .eq('id', update.id);
+    }
+    
+    console.log(`Fixed positions for ${updates.length} homework items`);
+    
+    return {
+      success: true,
+      data: updates
+    };
+  } catch (error) {
+    console.error("Error fixing homework positions:", error);
     return {
       success: false,
       error: error instanceof Error ? error : new Error("Unknown error")

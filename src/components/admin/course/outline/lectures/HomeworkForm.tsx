@@ -84,7 +84,9 @@ export const HomeworkForm: React.FC<HomeworkFormProps> = ({
       description,
       type,
       options: formattedOptions,
-      image_url: imageUrl
+      image_url: imageUrl,
+      // 保留现有position或使用0作为默认值
+      position: initialData?.position || 0
     };
 
     try {
@@ -180,7 +182,7 @@ export const HomeworkForm: React.FC<HomeworkFormProps> = ({
         </div>
       )}
 
-      <div className="flex justify-between items-center space-x-2 pt-4">
+      <div className="flex justify-between items-center pt-4">
         <div>
           {(type === 'single_choice' || type === 'multiple_choice') && (
             <Button 

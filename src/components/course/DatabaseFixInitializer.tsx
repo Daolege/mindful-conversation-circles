@@ -14,6 +14,16 @@ export const DatabaseFixInitializer: React.FC = () => {
         // 修复作业表约束
         await supabase.rpc('fix_homework_constraints');
         
+        // 修复作业表中可能存在的position字段问题
+        try {
+          // 对每个讲座的作业重新排序
+          await supabase.rpc('fix_homework_order');
+          console.log('[DatabaseFixInitializer] Homework order fixed');
+        } catch (orderError) {
+          console.warn('[DatabaseFixInitializer] Error fixing homework order:', orderError);
+          // 继续执行，不要中断流程
+        }
+        
         console.log('[DatabaseFixInitializer] Database fixes completed successfully');
         setInitialized(true);
       } catch (error) {

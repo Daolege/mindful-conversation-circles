@@ -52,7 +52,7 @@ export const HomeworkCard = React.memo(({
     setIsExpanded(false);
   }, []);
 
-  // 确定显示的编号
+  // 确定显示的编号 - 优先使用外部传入的position，否则使用作业自身的position属性，最后使用默认值1
   const displayPosition = position || homework.position || 1;
 
   return (

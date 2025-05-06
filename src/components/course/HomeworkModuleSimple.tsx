@@ -4,6 +4,7 @@ import { HomeworkCard } from './HomeworkCard';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
+import { fixHomeworkPositions } from '@/lib/services/homeworkService';
 
 interface HomeworkModuleSimpleProps {
   courseId: string;
@@ -77,6 +78,9 @@ export const HomeworkModuleSimple: React.FC<HomeworkModuleSimpleProps> = ({
         // First try to fix homework constraints if needed
         try {
           await supabase.rpc('fix_homework_constraints');
+          
+          // 修复作业排序
+          await fixHomeworkPositions(lectureId);
         } catch (fixError) {
           console.warn('[HomeworkModuleSimple] Error fixing homework constraints:', fixError);
           // Continue with the rest of the process
