@@ -156,7 +156,11 @@ export const HomeworkSubmissionForm: React.FC<HomeworkSubmissionFormProps> = ({
                 border transition-all duration-300 hover:bg-gray-50 cursor-pointer p-3
                 ${selectedChoices.includes(choice) ? 'border-gray-400 bg-gray-50 shadow-md' : 'border-gray-200'}
               `}
-              onClick={() => handleChoiceChange(choice)}
+              onClick={(e) => {
+                e.preventDefault(); // Prevent the default form behavior that causes page jumps
+                e.stopPropagation(); // Prevent event bubbling
+                handleChoiceChange(choice);
+              }}
             >
               <div 
                 className="flex items-center space-x-2" 
