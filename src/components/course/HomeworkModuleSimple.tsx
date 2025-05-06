@@ -38,14 +38,23 @@ export const HomeworkModuleSimple: React.FC<HomeworkModuleSimpleProps> = ({
     }
   };
 
-  // 按位置字段排序作业
+  // 按位置字段排序作业 - 兼容position字段可能不存在的情况
   const sortHomeworkByPosition = (homeworks: any[]) => {
     return [...homeworks].sort((a, b) => {
-      // 如果有位置字段，优先按位置排序
-      if (a.position !== undefined && b.position !== undefined) {
+      // 检查是否存在position字段
+      const hasPosition = 'position' in a && 'position' in b;
+      
+      if (hasPosition && a.position !== undefined && b.position !== undefined) {
+        // 如果有位置字段，优先按位置排序
         return a.position - b.position;
       }
-      // 否则按ID排序
+      
+      // 否则按创建时间排序
+      if (a.created_at && b.created_at) {
+        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      }
+      
+      // 最后兜底按ID排序
       return a.id.localeCompare(b.id);
     });
   };
@@ -79,18 +88,47 @@ export const HomeworkModuleSimple: React.FC<HomeworkModuleSimpleProps> = ({
         try {
           await supabase.rpc('fix_homework_constraints');
           
-          // 修复作业排序
-          await fixHomeworkPositions(lectureId);
+          // 尝试修复作业排序，但要处理函数不存在的情况
+          try {
+            // 使用自定义类型断言绕过TypeScript检查
+            const rpcClient = supabase.rpc as any;
+            await rpcClient('fix_homework_order');
+          } catch (orderError) {
+            console.warn('[HomeworkModuleSimple] Error fixing homework order or function may not exist:', orderError);
+            // 尝试使用客户端逻辑修复作业顺序
+            try {
+              await fixHomeworkPositions(lectureId);
+            } catch (clientFixError) {
+              console.warn('[HomeworkModuleSimple] Client-side fix for homework positions failed:', clientFixError);
+              // 继续执行，不要中断流程
+            }
+          }
         } catch (fixError) {
           console.warn('[HomeworkModuleSimple] Error fixing homework constraints:', fixError);
           // Continue with the rest of the process
+        }
+        
+        // 检查表中是否存在position字段
+        let orderByField = 'created_at';
+        try {
+          const { error: testError } = await supabase
+            .from('homework')
+            .select('position')
+            .limit(1);
+          
+          if (!testError) {
+            orderByField = 'position';
+          }
+        } catch (fieldError) {
+          console.warn('[HomeworkModuleSimple] Error checking for position field:', fieldError);
+          // 使用默认的created_at排序
         }
         
         const { data: homeworkData, error: homeworkError } = await supabase
           .from('homework')
           .select('*')
           .eq('lecture_id', lectureId)
-          .order('position', { ascending: true });
+          .order(orderByField, { ascending: true });
           
         if (homeworkError) {
           console.error('[HomeworkModuleSimple] Error fetching homework:', homeworkError);
@@ -103,16 +141,30 @@ export const HomeworkModuleSimple: React.FC<HomeworkModuleSimpleProps> = ({
         if (!homeworkData || homeworkData.length === 0) {
           try {
             // Create a default homework for this lecture with the properly converted courseId
-            const defaultHomework = {
+            const defaultHomework: any = {
               title: '课时练习',
               type: 'fill_blank',
               lecture_id: lectureId,
               course_id: numericCourseId,
-              position: 1, // 设置默认位置
               options: {
                 question: '请简要总结本节课的主要内容和您的收获：'
               }
             };
+            
+            // 检查表中是否存在position字段，如果存在则设置默认值
+            try {
+              const { error: testError } = await supabase
+                .from('homework')
+                .select('position')
+                .limit(1);
+              
+              if (!testError) {
+                defaultHomework.position = 1; // 设置默认位置
+              }
+            } catch (fieldError) {
+              console.warn('[HomeworkModuleSimple] Error checking for position field:', fieldError);
+              // 不设置position字段
+            }
             
             console.log('[HomeworkModuleSimple] Creating default homework:', defaultHomework);
             
@@ -136,7 +188,7 @@ export const HomeworkModuleSimple: React.FC<HomeworkModuleSimpleProps> = ({
             // Don't show error to user for this case, just log it
           }
         } else {
-          // 按位置排序作业
+          // 按位置排序作业，兼容position字段可能不存在的情况
           setHomeworkList(sortHomeworkByPosition(homeworkData));
         }
         
@@ -236,7 +288,7 @@ export const HomeworkModuleSimple: React.FC<HomeworkModuleSimpleProps> = ({
             lectureId={lectureId}
             isSubmitted={!!submittedHomework[homework.id]}
             onSubmitted={handleHomeworkSubmitted}
-            position={index + 1} // 添加位置编号
+            position={index + 1} // 添加位置编号，确保正确显示序号
           />
         ))}
       </div>

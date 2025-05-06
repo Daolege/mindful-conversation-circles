@@ -16,11 +16,23 @@ export const DatabaseFixInitializer: React.FC = () => {
         
         // 修复作业表中可能存在的position字段问题
         try {
-          // 对每个讲座的作业重新排序
-          await supabase.rpc('fix_homework_order');
-          console.log('[DatabaseFixInitializer] Homework order fixed');
+          // 检查fix_homework_order函数是否存在
+          const { error: checkError } = await supabase.rpc('fix_homework_constraints');
+          
+          if (!checkError) {
+            // 尝试调用fix_homework_order函数，如果存在的话
+            try {
+              // 使用自定义类型断言绕过TypeScript检查
+              const rpcClient = supabase.rpc as any;
+              await rpcClient('fix_homework_order');
+              console.log('[DatabaseFixInitializer] Homework order fixed');
+            } catch (orderError) {
+              console.warn('[DatabaseFixInitializer] Error fixing homework order or function does not exist:', orderError);
+              // 继续执行，不要中断流程
+            }
+          }
         } catch (orderError) {
-          console.warn('[DatabaseFixInitializer] Error fixing homework order:', orderError);
+          console.warn('[DatabaseFixInitializer] Error checking homework constraints:', orderError);
           // 继续执行，不要中断流程
         }
         

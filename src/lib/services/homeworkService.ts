@@ -34,11 +34,29 @@ export const getHomeworksByLectureId = async (lectureId: string): Promise<Homewo
       throw new Error("Invalid lecture ID");
     }
     
+    // 首先检查表中是否存在position字段
+    let hasPositionField = true;
+    try {
+      const { error: testError } = await supabase
+        .from('homework')
+        .select('position')
+        .limit(1);
+      
+      if (testError && testError.message && testError.message.includes('does not exist')) {
+        console.warn("The position field does not exist in the homework table");
+        hasPositionField = false;
+      }
+    } catch (fieldError) {
+      console.warn("Error checking for position field:", fieldError);
+      hasPositionField = false;
+    }
+    
+    // 根据是否有position字段决定排序方式
     const { data, error, count } = await supabase
       .from('homework')
       .select('*', { count: 'exact' })
       .eq('lecture_id', lectureId)
-      .order('position', { ascending: true });
+      .order(hasPositionField ? 'position' : 'created_at', { ascending: true });
     
     if (error) {
       console.error("Supabase error fetching homework:", error);
@@ -72,7 +90,7 @@ export const saveHomework = async (homeworkData: Homework): Promise<HomeworkResu
       course_id: homeworkData.course_id,
       course_id_type: typeof homeworkData.course_id,
       title: homeworkData.title,
-      position: homeworkData.position || 0
+      position: homeworkData.position
     });
     
     // Validate course_id is a number
@@ -89,43 +107,39 @@ export const saveHomework = async (homeworkData: Homework): Promise<HomeworkResu
       throw error;
     }
     
-    // 确保position字段有值
-    let position = homeworkData.position;
-    if (position === undefined || position === null) {
-      // 如果没有position，获取当前最大position并加1
-      try {
-        const { data, error } = await supabase
-          .from('homework')
-          .select('position')
-          .eq('lecture_id', homeworkData.lecture_id)
-          .order('position', { ascending: false })
-          .limit(1);
-          
-        if (!error && data && data.length > 0) {
-          position = (data[0].position || 0) + 1;
-          console.log(`Automatically assigned position: ${position}`);
-        } else {
-          position = 1; // 默认为第一个位置
-          console.log(`No existing homework, using default position: ${position}`);
-        }
-      } catch (err) {
-        console.warn("Error determining position, using default:", err);
-        position = 1;
+    // 检查表中是否存在position字段
+    let hasPositionField = true;
+    try {
+      const { error: testError } = await supabase
+        .from('homework')
+        .select('position')
+        .limit(1);
+      
+      if (testError && testError.message && testError.message.includes('does not exist')) {
+        console.warn("The position field does not exist in the homework table");
+        hasPositionField = false;
       }
+    } catch (fieldError) {
+      console.warn("Error checking for position field:", fieldError);
+      hasPositionField = false;
     }
     
-    // Prepare data for saving
-    const dataToSave = {
+    // 准备保存数据，根据是否有position字段调整
+    const dataToSave: any = {
       lecture_id: homeworkData.lecture_id,
       course_id: homeworkData.course_id,
       title: homeworkData.title,
       type: homeworkData.type,
       options: homeworkData.options,
-      position: position,
       image_url: homeworkData.image_url || null,
       is_required: homeworkData.is_required || false,
       description: homeworkData.description || null
     };
+    
+    // 只有当表中存在position字段时才添加
+    if (hasPositionField && homeworkData.position !== undefined) {
+      dataToSave.position = homeworkData.position;
+    }
     
     const { id } = homeworkData;
     let result;
@@ -202,6 +216,29 @@ export const deleteHomework = async (homeworkId: string): Promise<HomeworkResult
 export const fixHomeworkPositions = async (lectureId: string): Promise<HomeworkResult> => {
   try {
     console.log("Fixing homework positions for lecture:", lectureId);
+    
+    // 检查表中是否存在position字段
+    let hasPositionField = true;
+    try {
+      const { error: testError } = await supabase
+        .from('homework')
+        .select('position')
+        .limit(1);
+      
+      if (testError && testError.message && testError.message.includes('does not exist')) {
+        console.warn("The position field does not exist in the homework table, cannot fix positions");
+        return { 
+          success: false, 
+          error: new Error("Position field does not exist in homework table") 
+        };
+      }
+    } catch (fieldError) {
+      console.warn("Error checking for position field:", fieldError);
+      return { 
+        success: false, 
+        error: fieldError instanceof Error ? fieldError : new Error("Unknown error checking position field") 
+      };
+    }
     
     // 获取当前所有作业
     const { data, error } = await supabase
