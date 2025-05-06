@@ -126,14 +126,14 @@ export const HomeworkCard = memo(({
       <CardContent 
         className={`overflow-hidden transition-all duration-500 ease-in-out ${
           isExpanded && !isSubmitted ? 
-            `max-h-[${hasOverflow ? '2000' : '1000'}px] opacity-100 pb-4` : 
+            'opacity-100 pb-4' : 
             'max-h-0 opacity-0 p-0'
         }`}
         onClick={handleContentClick}
         ref={handleContentRef}
       >
         {isExpanded && !isSubmitted && (
-          <div className="bg-white rounded-md border border-gray-100 shadow-sm max-h-[160vh] overflow-auto">
+          <div className="bg-white rounded-md border border-gray-100 shadow-sm">
             <HomeworkSubmissionForm 
               homework={homework}
               courseId={numericCourseId}
