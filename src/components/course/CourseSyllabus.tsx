@@ -248,8 +248,8 @@ export function CourseSyllabus({
             size="icon"
             variant="secondary"
             className="rounded-full shadow-lg transition-all duration-300 z-10 w-10 h-10 
-                     bg-gray-700 text-white border border-gray-600 
-                     hover:bg-gray-900 hover:scale-110"
+                     bg-gray-400 text-white border border-gray-300 
+                     hover:bg-gray-700 hover:scale-110"
             onClick={handleScrollAction}
             title={isAtBottom ? "Scroll to top" : "Scroll to bottom"}
           >
