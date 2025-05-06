@@ -347,6 +347,11 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
         }
         
         setSaveStatus({ success: true, error: null });
+        
+        // 在这里添加清除调用，确保表单关闭
+        setShowAddForm(false);
+        setEditingHomework(null);
+        
         return result.data;
       } catch (error: any) {
         if (!isMounted.current) return null; // 检查组件是否已卸载
@@ -364,9 +369,7 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
     onSuccess: (data) => {
       if (!isMounted.current) return; // 安全检查
       
-      // This should already be here but make sure it's present to close the form
-      setShowAddForm(false);
-      setEditingHomework(null);
+      // 这里不再需要设置表单状态，因为已经在 mutationFn 中处理了
       
       queryClient.invalidateQueries({ queryKey: ['homework', lectureId] });
       // 同时刷新讲座的作业状态查询
@@ -504,6 +507,12 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
   // 提交作业表单
   const handleFormSubmit = async (data: any) => {
     try {
+      // 防止重复提交
+      if (isSaving) {
+        console.log('[HomeworkPanel] Preventing duplicate submission while saving');
+        return;
+      }
+      
       // 确保有课程ID
       if (!effectiveCourseId) {
         const detectedId = initializeCourseId();

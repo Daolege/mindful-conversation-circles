@@ -14,16 +14,15 @@ interface HomeworkCardProps {
     options: any;
     image_url: string | null;
     lecture_id: string;
-    position?: number; // 添加位置字段
+    position?: number;
   };
   courseId: string; 
   lectureId: string;
   isSubmitted: boolean;
   onSubmitted?: () => void;
-  position?: number; // 添加外部传入的位置/序号
+  position?: number;
 }
 
-// 使用 memo 优化组件，避免不必要的重新渲染
 export const HomeworkCard = React.memo(({ 
   homework, 
   courseId, 
@@ -71,7 +70,7 @@ export const HomeworkCard = React.memo(({
         onClick={handleHeaderClick}
       >
         <div className="flex items-center gap-3">
-          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-semibold">
+          <div className="flex-shrink-0 bg-blue-100 text-blue-700 font-medium text-sm px-2.5 py-0.5 rounded">
             {displayPosition}
           </div>
           <div className="font-medium">{homework.title}</div>

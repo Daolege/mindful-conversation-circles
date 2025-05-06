@@ -154,16 +154,6 @@ export const HomeworkForm: React.FC<HomeworkFormProps> = ({
         <div className="space-y-2">
           <div className="flex justify-between items-center">
             <Label>选项</Label>
-            <Button 
-              type="button" 
-              variant="outline" 
-              size="sm" 
-              onClick={handleAddOption}
-              className="flex items-center"
-            >
-              <Plus className="h-3.5 w-3.5 mr-1" />
-              添加选项
-            </Button>
           </div>
           {options.map((option, index) => (
             <div key={index} className="flex space-x-2 items-center">
@@ -190,13 +180,29 @@ export const HomeworkForm: React.FC<HomeworkFormProps> = ({
         </div>
       )}
 
-      <div className="flex justify-end space-x-2">
-        <Button type="button" variant="ghost" onClick={onCancel}>
-          取消
-        </Button>
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? '提交中...' : '提交'}
-        </Button>
+      <div className="flex justify-between items-center space-x-2 pt-4">
+        <div>
+          {(type === 'single_choice' || type === 'multiple_choice') && (
+            <Button 
+              type="button" 
+              variant="outline" 
+              size="sm" 
+              onClick={handleAddOption}
+              className="flex items-center"
+            >
+              <Plus className="h-3.5 w-3.5 mr-1" />
+              添加选项
+            </Button>
+          )}
+        </div>
+        <div className="flex space-x-2">
+          <Button type="button" variant="ghost" onClick={onCancel}>
+            取消
+          </Button>
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? '提交中...' : '提交'}
+          </Button>
+        </div>
       </div>
     </form>
   );

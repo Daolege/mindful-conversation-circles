@@ -42,7 +42,7 @@ export function toast(props: ToastProps | string) {
     description: description,
     action: action,
     // 设置更短的默认持续时间，避免toast持续时间过长
-    duration: duration || 4000,
+    duration: duration || 3000,
     onDismiss: (id) => {
       // 当 toast 被关闭时，从活跃列表中移除
       // 使用两步类型转换: 先转换为unknown，再转换为目标类型

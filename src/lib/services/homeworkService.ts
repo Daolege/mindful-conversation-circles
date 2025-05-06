@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Homework } from "@/lib/types/homework";
 
@@ -36,7 +37,8 @@ export const getHomeworksByLectureId = async (lectureId: string): Promise<Homewo
     const { data, error, count } = await supabase
       .from('homework')
       .select('*', { count: 'exact' })
-      .eq('lecture_id', lectureId);
+      .eq('lecture_id', lectureId)
+      .order('position', { ascending: true });
     
     if (error) {
       console.error("Supabase error fetching homework:", error);
@@ -70,7 +72,7 @@ export const saveHomework = async (homeworkData: Homework): Promise<HomeworkResu
       course_id: homeworkData.course_id,
       course_id_type: typeof homeworkData.course_id,
       title: homeworkData.title,
-      position: homeworkData.position || 0 // 保留位置字段的处理，但在表单中不再展示
+      position: homeworkData.position || 0
     });
     
     // Validate course_id is a number
@@ -94,9 +96,10 @@ export const saveHomework = async (homeworkData: Homework): Promise<HomeworkResu
       title: homeworkData.title,
       type: homeworkData.type,
       options: homeworkData.options,
-      position: homeworkData.position || 0, // 保留位置字段，即使表单不再展示
+      position: homeworkData.position || 0,
       image_url: homeworkData.image_url || null,
-      is_required: homeworkData.is_required || false // 保留是否必填字段，即使表单不再展示
+      is_required: homeworkData.is_required || false,
+      description: homeworkData.description || null
     };
     
     const { id } = homeworkData;
