@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/authHooks';
@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { FileInput } from '@/components/course/FileInput';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2, Save, X } from 'lucide-react';
+import { dismissAllToasts } from '@/hooks/use-toast';
 
 interface HomeworkSubmissionFormProps {
   homework: {
@@ -40,6 +41,13 @@ export const HomeworkSubmissionForm: React.FC<HomeworkSubmissionFormProps> = ({
   const [fileUrl, setFileUrl] = useState<string | null>(null);
   const [selectedChoices, setSelectedChoices] = useState<string[]>([]);
   
+  // Clear toasts when component unmounts
+  useEffect(() => {
+    return () => {
+      dismissAllToasts();
+    };
+  }, []);
+  
   const handleChoiceChange = (choice: string) => {
     if (homework.type === 'single_choice') {
       setSelectedChoices([choice]);
@@ -66,6 +74,9 @@ export const HomeworkSubmissionForm: React.FC<HomeworkSubmissionFormProps> = ({
     }
     
     try {
+      // Clear any existing toasts
+      dismissAllToasts();
+      
       setSubmitting(true);
       
       // Format the answer based on homework type
@@ -90,122 +101,126 @@ export const HomeworkSubmissionForm: React.FC<HomeworkSubmissionFormProps> = ({
       // Ensure courseId is a number
       const numericCourseId = typeof courseId === 'string' ? parseInt(courseId, 10) : courseId;
       
-      // Submit the homework
-      const success = await submitHomework({
+      const submission = {
         user_id: user.id,
         homework_id: homework.id,
         lecture_id: lectureId,
         course_id: numericCourseId,
         answer: finalAnswer,
         file_url: finalFileUrl
-      });
+      };
+      
+      console.log('Submitting homework:', submission);
+      
+      const success = await submitHomework(submission);
       
       if (success) {
-        // Reset form and notify parent
-        setAnswer('');
-        setSelectedFile(null);
-        setFileUrl(null);
+        toast.success('作业提交成功');
         onSubmitSuccess();
+      } else {
+        toast.error('作业提交失败');
       }
     } catch (error) {
       console.error('Error submitting homework:', error);
-      toast.error('提交作业失败');
+      toast.error('作业提交失败，请重试');
     } finally {
       setSubmitting(false);
     }
   };
   
-  // Render different form based on homework type
-  const renderForm = () => {
-    switch (homework.type) {
-      case 'file':
-        return (
-          <div className="space-y-4">
-            <Label htmlFor="file-upload">上传文件</Label>
-            <FileInput onChange={handleFileChange} />
-            <div className="text-sm text-gray-500">
-              支持上传各类文档、图片等文件
-            </div>
-          </div>
-        );
-        
-      case 'single_choice':
-      case 'multiple_choice':
-        const choices = homework.options?.choices || [];
-        return (
-          <div className="space-y-4">
-            <div className="font-medium">
-              {homework.options?.question || '请选择答案'}
-            </div>
-            <div className="space-y-2">
-              {choices.map((choice: string, index: number) => (
-                <div key={index} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`choice-${index}`}
-                    checked={selectedChoices.includes(choice)}
-                    onCheckedChange={() => handleChoiceChange(choice)}
-                  />
-                  <Label htmlFor={`choice-${index}`} className="cursor-pointer">
-                    {choice}
-                  </Label>
-                </div>
-              ))}
-            </div>
-          </div>
-        );
-        
-      default:
-        return (
-          <div className="space-y-4">
-            <Label htmlFor="answer">你的答案</Label>
-            <Textarea
-              id="answer"
-              placeholder="请输入你的答案..."
-              value={answer}
-              onChange={(e) => setAnswer(e.target.value)}
-              rows={6}
-              className="resize-y"
-            />
-          </div>
-        );
+  const renderChoiceOptions = () => {
+    if (!homework.options || !homework.options.choices || !Array.isArray(homework.options.choices)) {
+      return null;
     }
+    
+    return (
+      <div className="space-y-3">
+        {homework.type === 'single_choice' && (
+          <p className="text-sm text-gray-500">请选择一个选项：</p>
+        )}
+        {homework.type === 'multiple_choice' && (
+          <p className="text-sm text-gray-500">可选择多个选项：</p>
+        )}
+        
+        {homework.options.choices.map((choice: string, index: number) => (
+          <div key={index} className="flex items-center space-x-2">
+            <Checkbox 
+              id={`choice-${index}`}
+              checked={selectedChoices.includes(choice)}
+              onCheckedChange={() => handleChoiceChange(choice)}
+            />
+            <Label 
+              htmlFor={`choice-${index}`}
+              className="text-sm cursor-pointer"
+            >
+              {choice}
+            </Label>
+          </div>
+        ))}
+      </div>
+    );
   };
   
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 p-4">
+    <form onSubmit={handleSubmit} className="space-y-4 p-4">
+      {/* Display homework description if available */}
       {homework.description && (
-        <div className="bg-gray-50 p-4 rounded-md">
-          <h3 className="font-medium mb-2">作业描述</h3>
-          <div dangerouslySetInnerHTML={{ __html: homework.description }} />
+        <div 
+          className="text-sm bg-gray-50 p-3 rounded-md" 
+          dangerouslySetInnerHTML={{ __html: homework.description }}
+        />
+      )}
+      
+      {/* Handle different homework types */}
+      {(homework.type === 'single_choice' || homework.type === 'multiple_choice') ? (
+        renderChoiceOptions()
+      ) : homework.type === 'file' ? (
+        <div className="space-y-3">
+          <Label>上传文件</Label>
+          <FileInput onChange={handleFileChange} />
+          <p className="text-xs text-gray-500">支持常见文档和图片格式</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          <Label htmlFor="answer">你的答案</Label>
+          <Textarea 
+            id="answer"
+            value={answer}
+            onChange={(e) => setAnswer(e.target.value)}
+            placeholder="请输入你的答案..."
+            className="min-h-[100px]"
+            required
+          />
         </div>
       )}
       
-      {renderForm()}
-      
-      <div className="flex justify-end space-x-2">
+      <div className="flex justify-end gap-2">
         {onCancel && (
           <Button 
-            type="button" 
-            variant="outline" 
+            type="button"
+            variant="outline"
+            size="sm"
             onClick={onCancel}
             disabled={submitting}
           >
-            <X className="h-4 w-4 mr-2" />
+            <X className="h-4 w-4 mr-1" />
             取消
           </Button>
         )}
+        
         <Button 
-          type="submit" 
-          disabled={submitting || (!answer && !selectedFile && selectedChoices.length === 0)}
+          type="submit"
+          size="sm"
+          disabled={submitting}
         >
           {submitting ? (
             <>
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
               提交中...
             </>
           ) : (
             <>
-              <Save className="h-4 w-4 mr-2" />
+              <Save className="h-4 w-4 mr-1" />
               提交作业
             </>
           )}

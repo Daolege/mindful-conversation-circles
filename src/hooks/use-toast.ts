@@ -91,13 +91,17 @@ export const dismissAllToasts = () => {
   // 先记录当前活跃的toast数量，用于调试
   console.log('Dismissing all toasts, active count:', activeToastIds.size);
   
-  // 立即调用sonner的dismiss方法
-  sonnerToast.dismiss();
-  
-  // 然后清除我们自己跟踪的activeToastIds集合
-  activeToastIds.clear();
-  
-  console.log('All toasts dismissed, remaining count:', activeToastIds.size);
+  try {
+    // 立即调用sonner的dismiss方法
+    sonnerToast.dismiss();
+    
+    // 然后清除我们自己跟踪的activeToastIds集合
+    activeToastIds.clear();
+    
+    console.log('All toasts dismissed, remaining count:', activeToastIds.size);
+  } catch (error) {
+    console.error('Error dismissing toasts:', error);
+  }
 };
 
 // 导出活跃的toast IDs集合，便于调试和管理

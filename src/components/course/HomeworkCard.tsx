@@ -36,6 +36,9 @@ export const HomeworkCard = React.memo(({
   const [isExpanded, setIsExpanded] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
+  // Ensure courseId is always a number
+  const numericCourseId = typeof courseId === 'string' ? parseInt(courseId, 10) : courseId;
+
   const handleHeaderClick = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -99,7 +102,7 @@ export const HomeworkCard = React.memo(({
           <div className="space-y-4 bg-white rounded-md border border-gray-100 shadow-sm">
             <HomeworkSubmissionForm 
               homework={homework}
-              courseId={courseId}
+              courseId={numericCourseId}
               lectureId={lectureId}
               onSubmitSuccess={handleSubmissionSuccess}
               onCancel={handleCancel}

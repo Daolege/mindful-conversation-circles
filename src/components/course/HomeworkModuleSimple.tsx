@@ -9,6 +9,7 @@ import { getHomeworkByLectureId, getHomeworkSubmissionsByUserAndLecture } from '
 import { Homework, HomeworkSubmission } from '@/lib/types/homework';
 import { toast } from 'sonner';
 import { trackCourseProgress } from '@/lib/services/courseNewLearnService';
+import { dismissAllToasts } from '@/hooks/use-toast';
 
 interface HomeworkModuleSimpleProps {
   courseId: string;
@@ -26,6 +27,14 @@ export const HomeworkModuleSimple: React.FC<HomeworkModuleSimpleProps> = ({
   const [submissions, setSubmissions] = useState<HomeworkSubmission[]>([]);
   const [loading, setLoading] = useState(true);
   const [allSubmitted, setAllSubmitted] = useState(false);
+  const [toastShown, setToastShown] = useState(false);
+  
+  // Clean up toast notifications when component unmounts
+  useEffect(() => {
+    return () => {
+      dismissAllToasts();
+    };
+  }, []);
   
   const loadHomeworkData = async () => {
     try {
@@ -39,8 +48,11 @@ export const HomeworkModuleSimple: React.FC<HomeworkModuleSimpleProps> = ({
         return;
       }
       
+      // Ensure courseId is a number for consistency
+      const numericCourseId = typeof courseId === 'string' ? parseInt(courseId, 10) : courseId;
+      
       // Load homework assignments for this lecture
-      const homeworkItems = await getHomeworkByLectureId(lectureId, courseId);
+      const homeworkItems = await getHomeworkByLectureId(lectureId, numericCourseId);
       console.log('Loaded homework items:', homeworkItems.length);
       
       // If there are no homework items, exit early
@@ -55,7 +67,7 @@ export const HomeworkModuleSimple: React.FC<HomeworkModuleSimpleProps> = ({
       const userSubmissions = await getHomeworkSubmissionsByUserAndLecture(
         user.id, 
         lectureId,
-        courseId
+        numericCourseId
       );
       console.log('Loaded user submissions:', userSubmissions.length);
       
@@ -77,17 +89,34 @@ export const HomeworkModuleSimple: React.FC<HomeworkModuleSimpleProps> = ({
       }
     } catch (error) {
       console.error('Error loading homework data:', error);
-      toast.error('加载作业数据失败');
+      // Only show toast once to avoid spam
+      if (!toastShown) {
+        toast.error('加载作业数据失败');
+        setToastShown(true);
+      }
     } finally {
       setLoading(false);
     }
   };
   
   useEffect(() => {
+    // Reset toast state when dependencies change
+    setToastShown(false);
+    
+    // Load homework data
     loadHomeworkData();
+    
+    // Clean up function
+    return () => {
+      // Ensure any lingering toast notifications are dismissed
+      dismissAllToasts();
+    };
   }, [courseId, lectureId, user?.id]);
   
   const handleSubmissionComplete = async () => {
+    // Dismiss any existing toasts before showing new ones
+    dismissAllToasts();
+    
     // Refresh submissions
     await loadHomeworkData();
     
@@ -142,7 +171,7 @@ export const HomeworkModuleSimple: React.FC<HomeworkModuleSimpleProps> = ({
               return null;
             }
             
-            // Ensure course_id is set on the homework object
+            // Ensure course_id is set on the homework object and is a number
             const hwWithCourseId = {
               ...homework,
               id: homework.id, // Explicitly include ID to satisfy the type constraint
@@ -154,7 +183,7 @@ export const HomeworkModuleSimple: React.FC<HomeworkModuleSimpleProps> = ({
               <HomeworkCard
                 key={homework.id}
                 homework={hwWithCourseId}
-                courseId={courseId}
+                courseId={typeof courseId === 'string' ? parseInt(courseId, 10) : courseId}
                 lectureId={lectureId}
                 isSubmitted={isHomeworkSubmitted(homework.id)}
                 onSubmitted={handleSubmissionComplete}
