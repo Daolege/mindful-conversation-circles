@@ -241,15 +241,15 @@ export function CourseSyllabus({
         </div>
       </ScrollArea>
       
-      {/* Centered floating scroll button with updated colors */}
+      {/* Centered floating scroll button with adjusted position and colors */}
       {showScrollButton && (
-        <div className="absolute bottom-4 left-0 right-0 flex justify-center z-10">
+        <div className="absolute -bottom-4 left-0 right-0 flex justify-center z-10">
           <Button
             size="icon"
             variant="secondary"
             className="rounded-full shadow-lg transition-all duration-300 z-10 w-10 h-10 
-                     bg-gray-200 border border-gray-300 
-                     hover:bg-gray-800 hover:text-white hover:scale-110"
+                     bg-gray-700 text-white border border-gray-600 
+                     hover:bg-gray-900 hover:scale-110"
             onClick={handleScrollAction}
             title={isAtBottom ? "Scroll to top" : "Scroll to bottom"}
           >
