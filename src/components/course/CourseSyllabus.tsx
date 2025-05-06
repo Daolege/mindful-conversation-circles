@@ -357,7 +357,14 @@ export function CourseSyllabus({
             maxHeight: containerHeight,
             minHeight: '500px',
             transition: 'max-height 0.3s ease-in-out',
-            overflow: 'auto'
+            overflow: 'auto',
+            // Add scrollbar-gutter to reserve space for the scrollbar and prevent width changes
+            scrollbarGutter: 'stable',
+            // Add width transition to smooth out any remaining width changes
+            width: 'calc(100% - 1px)', // Slight adjustment to ensure consistent width
+            transitionProperty: 'max-height, width',
+            transitionDuration: '0.3s',
+            transitionTimingFunction: 'ease-in-out',
           }}
         >
           <div className="space-y-3">
