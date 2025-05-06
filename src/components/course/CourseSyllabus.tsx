@@ -95,7 +95,7 @@ export function CourseSyllabus({
         ref={scrollAreaRef} 
         className="h-[70vh]"
       >
-        <ScrollArea.Viewport ref={scrollViewportRef}>
+        <div ref={scrollViewportRef} className="h-full w-full rounded-[inherit]">
           <div className="space-y-3 pr-4">
             {syllabusData.map((section, sectionIndex) => (
               <AnimatedCollapsible
@@ -220,7 +220,7 @@ export function CourseSyllabus({
               </AnimatedCollapsible>
             ))}
           </div>
-        </ScrollArea.Viewport>
+        </div>
       </ScrollArea>
       
       {/* Floating scroll button */}
