@@ -112,7 +112,7 @@ export const HomeworkCard = memo(({
       </CardHeader>
       
       <CardContent 
-        className={`transition-all duration-500 ease-in-out ${
+        className={`transition-all duration-500 ease-in-out overflow-hidden ${
           isExpanded && !isSubmitted ? 
             'opacity-100 pb-4' : 
             'max-h-0 opacity-0 p-0'

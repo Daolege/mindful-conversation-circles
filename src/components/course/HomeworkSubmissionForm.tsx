@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, memo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -358,7 +357,7 @@ export const HomeworkSubmissionForm: React.FC<HomeworkSubmissionFormProps> = ({
   );
 };
 
-// Single choice option card component
+// Single choice option card component - completely rewritten to properly handle clicks
 const SingleChoiceOptionCard = memo(({ 
   choiceId, 
   choice, 
@@ -372,12 +371,25 @@ const SingleChoiceOptionCard = memo(({
   value: string;
   index: number;
 }) => {
+  // Handle card click to trigger radio selection
+  const handleCardClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Find the radio input in this card and click it programmatically
+    const radioEl = document.getElementById(choiceId) as HTMLElement;
+    if (radioEl) {
+      radioEl.click();
+    }
+  };
+
   return (
     <Card 
       className={`
         border transition-all duration-300 hover:bg-gray-50 cursor-pointer p-3
         ${isSelected ? 'border-gray-400 bg-gray-50 shadow-md' : 'border-gray-200'}
       `}
+      onClick={handleCardClick}
       data-choice-index={index}
       data-choice-text={choice.substring(0, 20)}
       data-selected={isSelected ? 'true' : 'false'}
@@ -386,13 +398,18 @@ const SingleChoiceOptionCard = memo(({
       <div className="flex items-center space-x-2">
         <RadioGroupItem 
           id={choiceId} 
-          value={value} 
+          value={value}
           className="h-4 w-4" 
           data-selected={isSelected ? 'true' : 'false'}
         />
         <Label 
           htmlFor={choiceId}
           className="text-sm cursor-pointer flex-1"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleCardClick(e);
+          }}
         >
           {choice}
         </Label>
@@ -401,7 +418,7 @@ const SingleChoiceOptionCard = memo(({
   );
 });
 
-// Multiple choice option card component
+// Multiple choice option card component - unchanged
 const MultipleChoiceOptionCard = memo(({ 
   choiceId, 
   choice, 
