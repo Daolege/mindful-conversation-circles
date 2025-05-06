@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { ChevronDown, ChevronUp, Video, BookOpen, Lock, Check, Circle, ArrowDown, ArrowUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +17,7 @@ export function CourseSyllabus({
   const [hoveredLectureId, setHoveredLectureId] = useState(null);
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [isAtBottom, setIsAtBottom] = useState(false);
+  const [containerHeight, setContainerHeight] = useState('calc(100vh - 280px)');
   const scrollAreaRef = useRef(null);
   const viewportRef = useRef(null);
   const { t } = useTranslations();
@@ -29,30 +30,93 @@ export function CourseSyllabus({
   }, [syllabusData]);
 
   // Check if scroll is needed and detect position
-  useEffect(() => {
-    const checkScroll = () => {
-      if (!viewportRef.current) return;
-      
-      const viewport = viewportRef.current;
-      const { scrollHeight, clientHeight, scrollTop } = viewport;
-      const hasScroll = scrollHeight > clientHeight;
-      
-      console.log('Scroll check:', { 
-        scrollHeight, 
-        clientHeight, 
-        scrollTop,
-        hasScroll,
-        sectionsExpanded: Object.keys(expandedSections).length
-      });
-      
-      setShowScrollButton(hasScroll);
-      
-      // Check if we're at the bottom (with a 20px threshold)
-      const isBottom = scrollTop + clientHeight >= scrollHeight - 20;
-      setIsAtBottom(isBottom);
-    };
+  const checkScroll = useCallback(() => {
+    if (!viewportRef.current) return;
+    
+    const viewport = viewportRef.current;
+    const { scrollHeight, clientHeight, scrollTop } = viewport;
+    const hasScroll = scrollHeight > clientHeight;
+    
+    console.log('Scroll check:', { 
+      scrollHeight, 
+      clientHeight, 
+      scrollTop,
+      hasScroll,
+      sectionsExpanded: Object.keys(expandedSections).length
+    });
+    
+    setShowScrollButton(hasScroll);
+    
+    // Check if we're at the bottom (with a 20px threshold)
+    const isBottom = scrollTop + clientHeight >= scrollHeight - 20;
+    setIsAtBottom(isBottom);
+  }, [expandedSections]);
 
-    // Use setTimeout to ensure the DOM has updated after state changes
+  // Observe homework section size changes
+  useEffect(() => {
+    const homeworkSection = document.querySelector('.homework-module');
+    if (!homeworkSection) return;
+    
+    console.log('Setting up homework section observer');
+    
+    const resizeObserver = new ResizeObserver(entries => {
+      for (const entry of entries) {
+        const homeworkHeight = entry.contentRect.height;
+        console.log('Homework section height changed:', homeworkHeight);
+        
+        // Calculate available space and adjust syllabus height
+        const windowHeight = window.innerHeight;
+        const navbarHeight = 80; // Approximate navbar height
+        const headerHeight = 100; // Approximate header height
+        const otherElementsHeight = 100; // Other UI elements (padding, margins)
+        const videoSectionHeight = Math.min(500, windowHeight * 0.4); // Approximate video height
+        
+        // Calculate remaining space for syllabus
+        const availableHeight = windowHeight - navbarHeight - headerHeight - 
+                              homeworkHeight - otherElementsHeight - videoSectionHeight;
+        
+        // Ensure minimum height and set the container height
+        const newHeight = Math.max(300, availableHeight);
+        console.log('Calculated syllabus height:', newHeight);
+        setContainerHeight(`${newHeight}px`);
+        
+        // After height is updated, check if scroll is needed
+        setTimeout(checkScroll, 100);
+      }
+    });
+    
+    resizeObserver.observe(homeworkSection);
+    
+    // Add window resize handler
+    const handleResize = () => {
+      // Recalculate heights when window resizes
+      const homeworkHeight = homeworkSection.offsetHeight;
+      const windowHeight = window.innerHeight;
+      const navbarHeight = 80;
+      const headerHeight = 100;
+      const otherElementsHeight = 100;
+      const videoSectionHeight = Math.min(500, windowHeight * 0.4);
+      
+      const availableHeight = windowHeight - navbarHeight - headerHeight - 
+                            homeworkHeight - otherElementsHeight - videoSectionHeight;
+      
+      const newHeight = Math.max(300, availableHeight);
+      setContainerHeight(`${newHeight}px`);
+      
+      // Check scroll after resize
+      setTimeout(checkScroll, 100);
+    };
+    
+    window.addEventListener('resize', handleResize);
+    
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [checkScroll]);
+
+  // Use setTimeout to ensure the DOM has updated after state changes
+  useEffect(() => {
     const timer = setTimeout(() => {
       checkScroll();
     }, 100);
@@ -61,25 +125,32 @@ export function CourseSyllabus({
     const viewport = viewportRef.current;
     if (viewport) {
       viewport.addEventListener('scroll', checkScroll);
-      
-      // Also check when window resizes
-      window.addEventListener('resize', checkScroll);
     }
 
     return () => {
       if (viewport) {
         viewport.removeEventListener('scroll', checkScroll);
       }
-      window.removeEventListener('resize', checkScroll);
       clearTimeout(timer);
     };
-  }, [syllabusData, expandedSections]); // Add expandedSections as dependency
+  }, [syllabusData, expandedSections, checkScroll]);
+
+  // Get viewport reference from ScrollArea
+  const handleViewportRef = useCallback(node => {
+    if (node) {
+      viewportRef.current = node;
+      checkScroll();
+    }
+  }, [checkScroll]);
 
   const toggleSection = (sectionIndex) => {
     setExpandedSections(prev => ({
       ...prev,
       [sectionIndex]: !prev[sectionIndex]
     }));
+    
+    // Check scroll after toggling section (with delay to allow animation)
+    setTimeout(checkScroll, 500);
   };
 
   const handleScrollAction = () => {
@@ -108,11 +179,23 @@ export function CourseSyllabus({
         ref={scrollAreaRef} 
         className="flex-grow"
         scrollHideDelay={0}
+        onViewportChange={handleViewportRef}
       >
         <div 
-          ref={viewportRef} 
+          ref={node => {
+            // This is a backup in case onViewportChange doesn't work
+            if (node && !viewportRef.current) {
+              viewportRef.current = node;
+              checkScroll();
+            }
+          }}
           className="h-full w-full rounded-[inherit] pr-3"
-          style={{ maxHeight: 'calc(100vh - 280px)', minHeight: '300px', overflow: 'auto' }}
+          style={{
+            maxHeight: containerHeight,
+            minHeight: '200px',
+            transition: 'max-height 0.3s ease-in-out',
+            overflow: 'auto'
+          }}
         >
           <div className="space-y-3">
             {syllabusData.map((section, sectionIndex) => (
@@ -264,4 +347,3 @@ export function CourseSyllabus({
     </div>
   );
 }
-
