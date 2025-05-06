@@ -58,9 +58,15 @@ export const HomeworkForm: React.FC<HomeworkFormProps> = ({
         
         if (typeof initialData.options === 'object') {
           // 如果options是对象且包含choices数组
-          if (initialData.options.choices && Array.isArray(initialData.options.choices)) {
+          if (initialData.options && 
+              typeof initialData.options === 'object' && 
+              'choices' in initialData.options && 
+              Array.isArray(initialData.options.choices)) {
             console.log('HomeworkForm - 使用options.choices数组:', initialData.options.choices);
-            optionsArray = [...initialData.options.choices];
+            // 将非字符串值转换为字符串
+            optionsArray = initialData.options.choices.map(choice => 
+              String(choice)
+            );
             
             // 确保至少有最小数量选项
             while (optionsArray.length < 2) {
@@ -70,7 +76,10 @@ export const HomeworkForm: React.FC<HomeworkFormProps> = ({
           // 如果options本身是数组（兼容旧数据）
           else if (Array.isArray(initialData.options)) {
             console.log('HomeworkForm - 使用options数组:', initialData.options);
-            optionsArray = [...initialData.options];
+            // 将非字符串值转换为字符串
+            optionsArray = initialData.options.map(choice => 
+              String(choice)
+            );
             
             // 确保至少有最小数量选项
             while (optionsArray.length < 2) {

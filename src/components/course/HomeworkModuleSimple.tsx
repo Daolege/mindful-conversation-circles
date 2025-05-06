@@ -249,7 +249,7 @@ export const HomeworkModuleSimple: React.FC<HomeworkModuleSimpleProps> = ({
   }, [courseId, lectureId, activeToastId]);
 
   // Handle homework submission
-  const handleHomeworkSubmitted = () => {
+  const handleHomeworkSubmitted = useCallback(() => {
     // Update submission status
     if (homeworkList.length > 0) {
       const updatedSubmissions = { ...submittedHomework };
@@ -263,7 +263,7 @@ export const HomeworkModuleSimple: React.FC<HomeworkModuleSimpleProps> = ({
     if (onHomeworkSubmit) {
       onHomeworkSubmit();
     }
-  };
+  }, [homeworkList, submittedHomework, onHomeworkSubmit]);
 
   // If loading or error, show appropriate UI
   if (isLoading) {

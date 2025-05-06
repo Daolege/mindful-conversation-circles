@@ -130,9 +130,14 @@ const MenuBar = ({ editor, onImageUpload }) => {
       <Button
         size="sm"
         variant="ghost"
-        onClick={() => editor.chain().focus().toggleBold().run()}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          editor.chain().focus().toggleBold().run();
+        }}
         className={editor.isActive('bold') ? 'bg-gray-200' : ''}
         title="加粗"
+        type="button"
       >
         <Bold className="h-4 w-4" />
       </Button>
@@ -140,9 +145,14 @@ const MenuBar = ({ editor, onImageUpload }) => {
       <Button
         size="sm"
         variant="ghost"
-        onClick={() => editor.chain().focus().toggleItalic().run()}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          editor.chain().focus().toggleItalic().run();
+        }}
         className={editor.isActive('italic') ? 'bg-gray-200' : ''}
         title="斜体"
+        type="button"
       >
         <Italic className="h-4 w-4" />
       </Button>
@@ -150,9 +160,14 @@ const MenuBar = ({ editor, onImageUpload }) => {
       <Button
         size="sm"
         variant="ghost"
-        onClick={setLink}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setLink();
+        }}
         className={editor.isActive('link') ? 'bg-gray-200' : ''}
         title="添加链接"
+        type="button"
       >
         <LinkIcon className="h-4 w-4" />
       </Button>
@@ -160,12 +175,15 @@ const MenuBar = ({ editor, onImageUpload }) => {
       <Button
         size="sm"
         variant="ghost"
-        onClick={() => {
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
           console.log('点击无序列表按钮');
           editor.chain().focus().toggleBulletList().run();
         }}
         className={editor.isActive('bulletList') ? 'bg-gray-200' : ''}
         title="无序列表"
+        type="button"
       >
         <List className="h-4 w-4" />
       </Button>
@@ -173,12 +191,15 @@ const MenuBar = ({ editor, onImageUpload }) => {
       <Button
         size="sm"
         variant="ghost"
-        onClick={() => {
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
           console.log('点击有序列表按钮');
           editor.chain().focus().toggleOrderedList().run();
         }}
         className={editor.isActive('orderedList') ? 'bg-gray-200' : ''}
         title="有序列表"
+        type="button"
       >
         <ListOrdered className="h-4 w-4" />
       </Button>
@@ -186,9 +207,14 @@ const MenuBar = ({ editor, onImageUpload }) => {
       <Button
         size="sm"
         variant="ghost"
-        onClick={() => editor.chain().focus().toggleCodeBlock().run()}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          editor.chain().focus().toggleCodeBlock().run();
+        }}
         className={editor.isActive('codeBlock') ? 'bg-gray-200' : ''}
         title="代码块"
+        type="button"
       >
         <Code className="h-4 w-4" />
       </Button>
@@ -196,9 +222,14 @@ const MenuBar = ({ editor, onImageUpload }) => {
       <Button
         size="sm"
         variant="ghost"
-        onClick={() => editor.chain().focus().undo().run()}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          editor.chain().focus().undo().run();
+        }}
         title="撤销"
         disabled={!editor.can().undo()}
+        type="button"
       >
         <Undo className="h-4 w-4" />
       </Button>
@@ -206,9 +237,14 @@ const MenuBar = ({ editor, onImageUpload }) => {
       <Button
         size="sm"
         variant="ghost"
-        onClick={() => editor.chain().focus().redo().run()}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          editor.chain().focus().redo().run();
+        }}
         title="重做"
         disabled={!editor.can().redo()}
+        type="button"
       >
         <Redo className="h-4 w-4" />
       </Button>
@@ -218,7 +254,8 @@ const MenuBar = ({ editor, onImageUpload }) => {
           size="sm"
           variant="ghost"
           title="上传图片"
-          onClick={handleImageButtonClick} // 使用改进的点击处理函数
+          onClick={handleImageButtonClick}
+          type="button"
         >
           <ImageIcon className="h-4 w-4" />
         </Button>
@@ -291,6 +328,20 @@ const RichTextEditor = ({ value, onChange, placeholder }) => {
       attributes: {
         class: 'focus:outline-none prose-lists-in-editor',
       },
+      handleClick: (view, pos, event) => {
+        // 阻止编辑器点击事件冒泡到父级表单
+        event.stopPropagation();
+        return false;
+      },
+      handleKeyDown: (view, event) => {
+        // 阻止某些键盘事件冒泡（如果需要）
+        if (event.key === 'Enter' && event.ctrlKey) {
+          // 仅阻止Ctrl+Enter，允许普通Enter创建新行
+          event.stopPropagation();
+          return true;
+        }
+        return false;
+      }
     },
   });
   

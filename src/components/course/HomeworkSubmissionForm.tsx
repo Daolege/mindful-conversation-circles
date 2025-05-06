@@ -40,6 +40,27 @@ export const HomeworkSubmissionForm = ({
   const [isUploading, setIsUploading] = useState(false);
   const [activeToastId, setActiveToastId] = useState<string | number | null>(null);
   const [courseIdError, setCourseIdError] = useState<string | null>(null);
+  const [homeworkOptions, setHomeworkOptions] = useState<string[]>([]);
+
+  // 增加对作业选项的处理
+  useEffect(() => {
+    // 初始化作业选项
+    if (homework.options) {
+      let choices: string[] = [];
+      
+      // 处理不同格式的选项数据
+      if (typeof homework.options === 'object') {
+        if (homework.options.choices && Array.isArray(homework.options.choices)) {
+          choices = [...homework.options.choices];
+        } else if (Array.isArray(homework.options)) {
+          choices = [...homework.options];
+        }
+      }
+      
+      console.log('[HomeworkSubmissionForm] 处理后的作业选项:', choices);
+      setHomeworkOptions(choices);
+    }
+  }, [homework.options]);
 
   // Helper function to safely convert courseId to a number
   const getNumericCourseId = (courseIdString: string): number => {
@@ -225,7 +246,7 @@ export const HomeworkSubmissionForm = ({
       case 'single_choice':
         return (
           <div className="space-y-3">
-            {homework.options?.choices?.map((choice: string, index: number) => {
+            {homeworkOptions.map((choice: string, index: number) => {
               const isSelected = singleChoiceAnswer === choice;
               return (
                 <div
@@ -251,7 +272,7 @@ export const HomeworkSubmissionForm = ({
                     )}
                   </div>
                   <span className={`flex-grow ${isSelected ? 'text-knowledge-primary font-semibold' : 'text-grayscale-600'}`}>
-                    {choice.startsWith('<') ? 
+                    {choice && choice.startsWith && choice.startsWith('<') ? 
                       renderRichTextContent(choice) : 
                       choice}
                   </span>
@@ -264,7 +285,7 @@ export const HomeworkSubmissionForm = ({
       case 'multiple_choice':
         return (
           <div className="space-y-3">
-            {homework.options?.choices?.map((choice: string, index: number) => {
+            {homeworkOptions.map((choice: string, index: number) => {
               const isSelected = multipleChoiceAnswers.includes(choice);
               return (
                 <div 
@@ -290,7 +311,7 @@ export const HomeworkSubmissionForm = ({
                     )}
                   </div>
                   <Label className={`flex-grow cursor-pointer ${isSelected ? 'text-knowledge-primary font-semibold' : 'text-grayscale-600'}`}>
-                    {choice.startsWith('<') ? 
+                    {choice && choice.startsWith && choice.startsWith('<') ? 
                       renderRichTextContent(choice) : 
                       choice}
                   </Label>
@@ -351,7 +372,7 @@ export const HomeworkSubmissionForm = ({
       <div>
         {homework.options?.question && (
           <div className="mb-4">
-            {typeof homework.options.question === 'string' && homework.options.question.startsWith('<') ? 
+            {typeof homework.options.question === 'string' && homework.options.question.startsWith && homework.options.question.startsWith('<') ? 
               <div className="prose max-w-none">{renderRichTextContent(homework.options.question)}</div> : 
               <p className="whitespace-pre-wrap">{homework.options.question}</p>
             }
