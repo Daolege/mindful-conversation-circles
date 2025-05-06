@@ -178,7 +178,9 @@ export function CourseSyllabus({
         mutationObserverRef.current = new MutationObserver((mutations) => {
           const relevantMutation = mutations.some(mutation => {
             // Check if this mutation involves elements we care about
-            const targetHasRelevantClass = mutation.target.className && 
+            const targetHasRelevantClass = mutation.target.nodeType === Node.ELEMENT_NODE && 
+              mutation.target instanceof HTMLElement &&
+              mutation.target.className && 
               typeof mutation.target.className === 'string' && 
               (mutation.target.className.includes('homework') || 
                mutation.target.className.includes('editor') ||
