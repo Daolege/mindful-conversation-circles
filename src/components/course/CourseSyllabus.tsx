@@ -241,21 +241,25 @@ export function CourseSyllabus({
         </div>
       </ScrollArea>
       
-      {/* Floating scroll button - Enhanced visibility */}
+      {/* Centered floating scroll button with updated colors */}
       {showScrollButton && (
-        <Button
-          size="icon"
-          variant="secondary"
-          className="absolute bottom-4 right-2 rounded-full shadow-lg transition-all duration-300 hover:bg-gray-200 z-10 w-10 h-10 border border-gray-300 bg-white hover:scale-110"
-          onClick={handleScrollAction}
-          title={isAtBottom ? "Scroll to top" : "Scroll to bottom"}
-        >
-          {isAtBottom ? (
-            <ArrowUp className="h-5 w-5 text-gray-700" />
-          ) : (
-            <ArrowDown className="h-5 w-5 text-gray-700" />
-          )}
-        </Button>
+        <div className="absolute bottom-4 left-0 right-0 flex justify-center z-10">
+          <Button
+            size="icon"
+            variant="secondary"
+            className="rounded-full shadow-lg transition-all duration-300 z-10 w-10 h-10 
+                     bg-gray-200 border border-gray-300 
+                     hover:bg-gray-800 hover:text-white hover:scale-110"
+            onClick={handleScrollAction}
+            title={isAtBottom ? "Scroll to top" : "Scroll to bottom"}
+          >
+            {isAtBottom ? (
+              <ArrowUp className="h-5 w-5" />
+            ) : (
+              <ArrowDown className="h-5 w-5" />
+            )}
+          </Button>
+        </div>
       )}
     </div>
   );
