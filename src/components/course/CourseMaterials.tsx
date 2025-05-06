@@ -5,8 +5,19 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useTranslations } from '@/hooks/useTranslations';
 
-export function CourseMaterials({ materials, isLoading = false }) {
+interface CourseMaterialsProps {
+  materials: any;
+  isLoading?: boolean;
+  isVisible?: boolean; // Added isVisible prop
+}
+
+export function CourseMaterials({ materials, isLoading = false, isVisible = true }: CourseMaterialsProps) {
   const { t } = useTranslations();
+  
+  // If not visible, don't render
+  if (!isVisible) {
+    return null;
+  }
   
   if (isLoading) {
     return (

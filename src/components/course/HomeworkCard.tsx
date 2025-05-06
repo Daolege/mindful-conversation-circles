@@ -4,19 +4,21 @@ import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { HomeworkSubmissionForm } from "./HomeworkSubmissionForm";
 import { ChevronDown, ChevronUp } from "lucide-react";
+import { Homework } from '@/lib/types/homework';
 
 interface HomeworkCardProps {
   homework: {
     id: string;
     title: string;
-    description: string | null;
-    type: 'single_choice' | 'multiple_choice' | 'fill_blank';
-    options: any;
-    image_url: string | null;
+    description?: string | null;
+    type: string;  // Changed from specific union type to string
+    options?: any;
+    image_url?: string | null;
     lecture_id: string;
+    course_id: number;  // Added course_id as required
     position?: number;
   };
-  courseId: string; 
+  courseId: string | number; 
   lectureId: string;
   isSubmitted: boolean;
   onSubmitted?: () => void;

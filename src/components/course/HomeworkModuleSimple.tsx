@@ -135,17 +135,32 @@ export const HomeworkModuleSimple: React.FC<HomeworkModuleSimpleProps> = ({
         </div>
       ) : (
         <div className="space-y-4">
-          {homeworks.map((homework, index) => (
-            <HomeworkCard
-              key={homework.id}
-              homework={homework}
-              courseId={courseId}
-              lectureId={lectureId}
-              isSubmitted={isHomeworkSubmitted(homework.id || '')}
-              onSubmitted={handleSubmissionComplete}
-              position={index + 1}
-            />
-          ))}
+          {homeworks.map((homework, index) => {
+            // Ensure homework has the required id property
+            if (!homework.id) {
+              console.error('Homework missing ID:', homework);
+              return null;
+            }
+            
+            // Ensure course_id is set on the homework object
+            const hwWithCourseId = {
+              ...homework,
+              course_id: typeof homework.course_id === 'number' ? homework.course_id : 
+                typeof courseId === 'string' ? parseInt(courseId, 10) : courseId
+            };
+            
+            return (
+              <HomeworkCard
+                key={homework.id}
+                homework={hwWithCourseId}
+                courseId={courseId}
+                lectureId={lectureId}
+                isSubmitted={isHomeworkSubmitted(homework.id)}
+                onSubmitted={handleSubmissionComplete}
+                position={index + 1}
+              />
+            );
+          })}
         </div>
       )}
       
