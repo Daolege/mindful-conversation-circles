@@ -17,7 +17,7 @@ export function CourseSyllabus({
   const [hoveredLectureId, setHoveredLectureId] = useState(null);
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [isAtBottom, setIsAtBottom] = useState(false);
-  const [containerHeight, setContainerHeight] = useState('calc(100vh - 280px)');
+  const [containerHeight, setContainerHeight] = useState('auto');
   const scrollAreaRef = useRef(null);
   const viewportRef = useRef(null);
   const { t } = useTranslations();
@@ -90,7 +90,7 @@ export function CourseSyllabus({
     // Add window resize handler
     const handleResize = () => {
       // Recalculate heights when window resizes
-      const homeworkHeight = homeworkSection.offsetHeight;
+      const homeworkHeight = homeworkSection.getBoundingClientRect().height;
       const windowHeight = window.innerHeight;
       const navbarHeight = 80;
       const headerHeight = 100;
@@ -135,7 +135,7 @@ export function CourseSyllabus({
     };
   }, [syllabusData, expandedSections, checkScroll]);
 
-  // Get viewport reference from ScrollArea
+  // Set up viewport ref detection
   const handleViewportRef = useCallback(node => {
     if (node) {
       viewportRef.current = node;
@@ -179,12 +179,10 @@ export function CourseSyllabus({
         ref={scrollAreaRef} 
         className="flex-grow"
         scrollHideDelay={0}
-        onViewportChange={handleViewportRef}
       >
         <div 
           ref={node => {
-            // This is a backup in case onViewportChange doesn't work
-            if (node && !viewportRef.current) {
+            if (node) {
               viewportRef.current = node;
               checkScroll();
             }
