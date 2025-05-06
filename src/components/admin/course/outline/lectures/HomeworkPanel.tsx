@@ -450,7 +450,7 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
             const updatePromises = updates.map(update => 
               supabase
                 .from('homework')
-                .update({ position: update.position } as { position: number })
+                .update({ position: update.position } as any)
                 .eq('id', update.id)
             );
             
