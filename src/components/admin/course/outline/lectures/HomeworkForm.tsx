@@ -34,7 +34,14 @@ export const HomeworkForm: React.FC<HomeworkFormProps> = ({
   useEffect(() => {
     if (initialData) {
       setTitle(initialData.title || '');
+      
+      // 调试: 检查initialData.description
+      console.log('HomeworkForm - initialData.description:', initialData.description);
+      console.log('HomeworkForm - initialData.description 类型:', typeof initialData.description);
+      
+      // 确保description是字符串类型
       setDescription(initialData.description || '');
+      
       setType(initialData.type || 'single_choice');
       
       // 确保options是一个数组
@@ -63,6 +70,10 @@ export const HomeworkForm: React.FC<HomeworkFormProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // 再次检查description格式
+    console.log('提交前的description值:', description);
+    console.log('提交前的description类型:', typeof description);
+
     // 根据类型准备选项数据
     let formattedOptions;
     if (type === 'single_choice' || type === 'multiple_choice') {
@@ -81,7 +92,7 @@ export const HomeworkForm: React.FC<HomeworkFormProps> = ({
       lecture_id: lectureId,
       course_id: courseId,
       title,
-      description,
+      description, // 使用已清理的描述
       type,
       options: formattedOptions,
       image_url: imageUrl,
@@ -115,6 +126,13 @@ export const HomeworkForm: React.FC<HomeworkFormProps> = ({
     setOptions(newOptions);
   };
 
+  // 监听description变化
+  const handleDescriptionChange = (value: string) => {
+    console.log('描述字段已更改:', value);
+    console.log('描述字段类型:', typeof value);
+    setDescription(value);
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
@@ -132,7 +150,7 @@ export const HomeworkForm: React.FC<HomeworkFormProps> = ({
         <div className="mt-1">
           <RichTextEditor
             value={description}
-            onChange={setDescription}
+            onChange={handleDescriptionChange}
             placeholder="请输入作业的详细说明内容..."
           />
         </div>

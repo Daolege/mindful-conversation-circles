@@ -311,7 +311,8 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
           }
         }
         
-        console.log('[HomeworkPanel] Final save data with position:', homeworkData.position);
+        // 检查description值
+        console.log('[HomeworkPanel] Submitting description:', homeworkData.description);
         
         const result = await saveHomework(homeworkData);
         
@@ -334,6 +335,10 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
           throw result.error;
         }
         
+        // 保存成功，关闭表单，清除"正在保存"状态
+        setShowAddForm(false);
+        setEditingHomework(null);
+        
         clearToast('save');
         showToast('save', () => toast.success('作业保存成功', { duration: 3000 }));
         
@@ -347,10 +352,6 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
         }
         
         setSaveStatus({ success: true, error: null });
-        
-        // 在这里添加清除调用，确保表单关闭
-        setShowAddForm(false);
-        setEditingHomework(null);
         
         return result.data;
       } catch (error: any) {
@@ -369,7 +370,9 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
     onSuccess: (data) => {
       if (!isMounted.current) return; // 安全检查
       
-      // 这里不再需要设置表单状态，因为已经在 mutationFn 中处理了
+      // 保存成功后，立即关闭表单
+      setShowAddForm(false);
+      setEditingHomework(null);
       
       queryClient.invalidateQueries({ queryKey: ['homework', lectureId] });
       // 同时刷新讲座的作业状态查询
@@ -394,6 +397,12 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
           clearToast('save');
         }
       }, 5000);
+    },
+    onSettled: () => {
+      // 无论成功还是失败，都清除"正在保存"状态
+      if (courseEditor && typeof courseEditor.setIsSaving === 'function') {
+        courseEditor.setIsSaving(false);
+      }
     }
   });
   
@@ -521,11 +530,18 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
         }
       }
       
+      // 输出描述字段信息，帮助调试
+      console.log('[HomeworkPanel] 提交表单, 描述字段:', data.description);
+      
       // 确保course_id是数字类型
       const result = await saveHomeworkMutation({
         ...data,
         course_id: Number(effectiveCourseId)
       });
+      
+      // 保存成功后，确保表单关闭
+      setShowAddForm(false);
+      setEditingHomework(null);
       
       return result;
     } catch (error: any) {
@@ -537,6 +553,7 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
   // 编辑作业
   const handleEditHomework = (homework: Homework) => {
     console.log('[HomeworkPanel] Editing homework:', homework);
+    console.log('[HomeworkPanel] Homework description:', homework.description);
     setEditingHomework(homework);
     setShowAddForm(true);
   };
@@ -618,7 +635,7 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
             </h3>
             <HomeworkForm
               lectureId={lectureId}
-              courseId={Number(effectiveCourseId)}
+              courseId={effectiveCourseId || 0}
               initialData={editingHomework}
               onSubmit={handleFormSubmit}
               onCancel={handleCancel}
@@ -626,113 +643,94 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
             />
           </div>
         ) : (
-          <Button 
-            onClick={handleShowAddForm}
-            className="mb-4"
-          >
-            <Plus className="h-4 w-4 mr-1" />
-            添加作业
-          </Button>
-        )}
-        
-        {/* 加载状态 */}
-        {isLoading && (
-          <div className="flex justify-center my-8">
-            <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-          </div>
-        )}
-        
-        {/* 错误状态 */}
-        {error && !isLoading && (
-          <div className="bg-red-50 p-4 my-4 rounded-md border border-red-200">
-            <p className="text-red-800">加载作业失败: {(error as Error).message}</p>
+          <div className="mb-4">
             <Button 
               variant="outline" 
-              size="sm" 
-              className="mt-2 text-red-600 border-red-300"
-              onClick={handleRefreshHomework}
+              onClick={() => handleShowAddForm()}
             >
-              重试
+              <Plus className="h-4 w-4 mr-2" />
+              添加作业
             </Button>
           </div>
         )}
         
-        {/* 空状态 */}
-        {!isLoading && !error && (!homeworkList || homeworkList.length === 0) && (
-          <div className="text-center py-8 text-gray-500">
-            <p>暂无作业</p>
-            <p className="text-sm mt-1">点击"添加作业"按钮创建课时练习</p>
+        {/* 加载状态 */}
+        {isLoading ? (
+          <div className="py-8 text-center">
+            <Loader2 className="mx-auto h-6 w-6 animate-spin text-gray-400" />
+            <p className="mt-2 text-sm text-gray-500">加载作业中...</p>
           </div>
-        )}
-        
-        {/* 作业列表 - 使��拖拽排序 */}
-        {!isLoading && !error && homeworkList && homeworkList.length > 0 && (
-          <DragDropContext
-            onDragStart={() => setIsDragging(true)}
-            onDragEnd={handleDragEnd}
-          >
-            <Droppable droppableId="homework-list">
+        ) : error ? (
+          <div className="py-4 text-center">
+            <p className="text-red-500">加载作业失败: {(error as Error).message}</p>
+          </div>
+        ) : homeworkList && homeworkList.length > 0 ? (
+          <DragDropContext onDragEnd={handleDragEnd}>
+            <Droppable droppableId="homeworks-list">
               {(provided) => (
-                <div 
-                  className="space-y-4 mt-4"
+                <div
                   {...provided.droppableProps}
                   ref={provided.innerRef}
+                  className="space-y-4"
                 >
                   {homeworkList.map((homework, index) => (
-                    <Draggable 
-                      key={homework.id} 
-                      draggableId={homework.id} 
+                    <Draggable
+                      key={homework.id}
+                      draggableId={homework.id || `temp-${index}`}
                       index={index}
                     >
                       {(provided, snapshot) => (
                         <div
                           ref={provided.innerRef}
                           {...provided.draggableProps}
-                          className={`border rounded-md p-4 transition-shadow ${
-                            snapshot.isDragging 
-                              ? 'shadow-lg bg-gray-50' 
-                              : 'hover:shadow-md'
+                          className={`p-4 border rounded-md ${
+                            snapshot.isDragging ? 'bg-gray-50 shadow-lg' : 'bg-white'
                           }`}
-                          style={{
-                            ...provided.draggableProps.style
-                          }}
                         >
                           <div className="flex justify-between items-start">
-                            <div className="flex items-center gap-3">
-                              <div 
+                            <div className="flex-grow">
+                              <h3 className="font-medium text-gray-900">{homework.title}</h3>
+                              <div className="mt-1 text-sm text-gray-500 flex items-center space-x-2">
+                                <span className="px-2 py-1 rounded-full bg-gray-100 text-xs">
+                                  {homework.type === 'single_choice'
+                                    ? '单选题'
+                                    : homework.type === 'multiple_choice'
+                                    ? '多选题'
+                                    : '填空题'}
+                                </span>
+                                <span>#{index + 1}</span>
+                              </div>
+                              {homework.description && (
+                                <div className="mt-2 text-sm text-gray-600 line-clamp-2">
+                                  <div dangerouslySetInnerHTML={{ __html: homework.description }} />
+                                </div>
+                              )}
+                            </div>
+                            
+                            <div className="flex space-x-2 ml-4">
+                              <div
                                 {...provided.dragHandleProps}
-                                className="cursor-move p-1 hover:bg-gray-100 rounded"
+                                className="cursor-move p-1"
                               >
                                 <GripVertical className="h-5 w-5 text-gray-400" />
                               </div>
-                              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-semibold">
-                                {index + 1}
+                              <div className="flex space-x-1">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleEditHomework(homework)}
+                                >
+                                  编辑
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-red-600 hover:text-red-800 hover:bg-red-50"
+                                  onClick={() => handleDeleteHomework(homework.id as string)}
+                                >
+                                  删除
+                                </Button>
                               </div>
-                              <div>
-                                <h4 className="font-medium">{homework.title}</h4>
-                                <p className="text-sm text-gray-500">
-                                  {homework.type === 'single_choice' ? '单选题' :
-                                   homework.type === 'multiple_choice' ? '多选题' :
-                                   homework.type === 'fill_blank' ? '填空题' : '未知类型'}
-                                </p>
-                              </div>
-                            </div>
-                            <div className="flex space-x-2">
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                onClick={() => handleEditHomework(homework)}
-                              >
-                                编辑
-                              </Button>
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                                onClick={() => handleDeleteHomework(homework.id)}
-                              >
-                                删除
-                              </Button>
                             </div>
                           </div>
                         </div>
@@ -744,6 +742,10 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
               )}
             </Droppable>
           </DragDropContext>
+        ) : (
+          <div className="py-8 text-center border rounded-md bg-gray-50">
+            <p className="text-gray-500">暂无作业，点击"添加作业"按钮创建作业</p>
+          </div>
         )}
       </CardContent>
     </Card>

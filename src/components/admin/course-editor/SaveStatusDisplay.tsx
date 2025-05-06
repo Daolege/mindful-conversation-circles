@@ -25,9 +25,19 @@ const SaveStatusDisplay: React.FC<SaveStatusDisplayProps> = ({
   const isMounted = useRef(true);
   
   // Use either props or context values
-  const isSaving = saving !== undefined ? saving : courseEditor.isSaving;
-  const showSuccess = success !== undefined ? success : !isSaving && !courseEditor.saveError;
-  const showError = error !== undefined ? error : courseEditor.saveError;
+  const isSaving = saving !== undefined ? saving : courseEditor?.isSaving;
+  const showSuccess = success !== undefined ? success : !isSaving && !courseEditor?.saveError;
+  const showError = error !== undefined ? error : courseEditor?.saveError;
+  
+  // 添加debug日志
+  useEffect(() => {
+    console.log("[SaveStatusDisplay] Status updated:", {
+      isSaving,
+      showSuccess,
+      showError,
+      visible
+    });
+  }, [isSaving, showSuccess, showError, visible]);
   
   // Clean up on unmount
   useEffect(() => {
@@ -54,6 +64,7 @@ const SaveStatusDisplay: React.FC<SaveStatusDisplayProps> = ({
     // Handle saving state specifically
     if (isSaving) {
       setVisible(true);
+      console.log("[SaveStatusDisplay] Showing saving state");
       return;
     }
     
@@ -61,20 +72,26 @@ const SaveStatusDisplay: React.FC<SaveStatusDisplayProps> = ({
       setVisible(true);
       
       if (showSuccess && autoHideSuccess) {
+        console.log("[SaveStatusDisplay] Setting success auto-hide timer");
         // Store timer reference so we can clear it if needed
         timerRef.current = window.setTimeout(() => {
           if (isMounted.current) {
+            console.log("[SaveStatusDisplay] Auto-hiding success message");
             setVisible(false);
             timerRef.current = null;
           }
         }, hideDelay);
       }
     } else {
+      console.log("[SaveStatusDisplay] Hiding all messages");
       setVisible(false);
     }
   }, [showSuccess, showError, autoHideSuccess, hideDelay, isSaving]);
   
-  if (!visible) return null;
+  if (!visible) {
+    console.log("[SaveStatusDisplay] Not visible, returning null");
+    return null;
+  }
   
   if (isSaving) {
     console.log("[SaveStatusDisplay] Showing saving state");

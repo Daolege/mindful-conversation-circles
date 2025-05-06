@@ -1,13 +1,13 @@
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
 import Link from '@tiptap/extension-link';
 import Placeholder from '@tiptap/extension-placeholder';
 import { Button } from '@/components/ui/button';
-import { supabase } from '@/integrations/supabase/client';
-import { Input } from '@/components/ui/input';
+import { supabase } from "@/integrations/supabase/client";
+import { Input } from "@/components/ui/input";
 import { 
   Bold, Italic, Link as LinkIcon, Image as ImageIcon, 
   List, ListOrdered, Undo, Redo, Code 
@@ -187,8 +187,22 @@ const MenuBar = ({ editor, onImageUpload }) => {
 };
 
 const RichTextEditor = ({ value, onChange, placeholder }) => {
-  // Debugging
-  console.log('Initial content loaded into editor:', value);
+  // 调试内容
+  console.log('富文本编辑器初始内容:', value);
+  
+  // 修复空内容处理
+  const sanitizedValue = React.useMemo(() => {
+    // 如果值是null或undefined，返回空字符串
+    if (value === null || value === undefined) {
+      return '';
+    }
+    // 如果已经是字符串，原样返回
+    if (typeof value === 'string') {
+      return value;
+    }
+    // 其他情况尝试转换为字符串
+    return String(value);
+  }, [value]);
   
   const editor = useEditor({
     extensions: [
@@ -216,10 +230,10 @@ const RichTextEditor = ({ value, onChange, placeholder }) => {
         placeholder: placeholder || '输入内容...',
       }),
     ],
-    content: value,
+    content: sanitizedValue,
     onUpdate: ({ editor }) => {
       const html = editor.getHTML();
-      console.log('Editor content updated:', html);
+      console.log('编辑器内容已更新:', html);
       if (onChange) {
         onChange(html);
       }
@@ -230,6 +244,14 @@ const RichTextEditor = ({ value, onChange, placeholder }) => {
       },
     },
   });
+  
+  // 监听value变化，并更新编辑器内容
+  useEffect(() => {
+    if (editor && sanitizedValue !== editor.getHTML()) {
+      console.log('外部内容变化，更新编辑器:', sanitizedValue);
+      editor.commands.setContent(sanitizedValue);
+    }
+  }, [sanitizedValue, editor]);
 
   // Listen for list commands and log them
   React.useEffect(() => {
