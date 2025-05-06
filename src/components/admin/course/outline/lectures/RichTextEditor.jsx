@@ -119,7 +119,10 @@ const MenuBar = ({ editor, onImageUpload }) => {
       <Button
         size="sm"
         variant="ghost"
-        onClick={() => editor.chain().focus().toggleOrderedList().run()}
+        onClick={() => {
+          // 修复有序列表功能，确保正确应用格式
+          editor.chain().focus().toggleOrderedList().run();
+        }}
         className={editor.isActive('orderedList') ? 'bg-gray-200' : ''}
         title="有序列表"
       >

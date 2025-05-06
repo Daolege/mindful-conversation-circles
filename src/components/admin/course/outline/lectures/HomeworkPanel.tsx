@@ -364,8 +364,10 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
     onSuccess: (data) => {
       if (!isMounted.current) return; // 安全检查
       
+      // This should already be here but make sure it's present to close the form
       setShowAddForm(false);
       setEditingHomework(null);
+      
       queryClient.invalidateQueries({ queryKey: ['homework', lectureId] });
       // 同时刷新讲座的作业状态查询
       queryClient.invalidateQueries({ queryKey: ['lecture-homework', lectureId] });

@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Homework } from '@/lib/types/homework';
 import RichTextEditor from './RichTextEditor';
+import { Plus, Trash2 } from 'lucide-react';
 
 interface HomeworkFormProps {
   lectureId: string;
@@ -100,6 +101,18 @@ export const HomeworkForm: React.FC<HomeworkFormProps> = ({
     setOptions(newOptions);
   };
 
+  // 添加选项
+  const handleAddOption = () => {
+    setOptions([...options, '']);
+  };
+
+  // 删除选项
+  const handleRemoveOption = (index: number) => {
+    if (options.length <= 1) return; // 保持至少有一个选项
+    const newOptions = options.filter((_, i) => i !== index);
+    setOptions(newOptions);
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
@@ -139,15 +152,39 @@ export const HomeworkForm: React.FC<HomeworkFormProps> = ({
       {/* Options for multiple choice questions */}
       {(type === 'single_choice' || type === 'multiple_choice') && Array.isArray(options) && (
         <div className="space-y-2">
-          <Label>选项</Label>
+          <div className="flex justify-between items-center">
+            <Label>选项</Label>
+            <Button 
+              type="button" 
+              variant="outline" 
+              size="sm" 
+              onClick={handleAddOption}
+              className="flex items-center"
+            >
+              <Plus className="h-3.5 w-3.5 mr-1" />
+              添加选项
+            </Button>
+          </div>
           {options.map((option, index) => (
-            <div key={index} className="flex space-x-2">
+            <div key={index} className="flex space-x-2 items-center">
               <Input
                 type="text"
                 value={option}
                 onChange={(e) => handleOptionChange(index, e.target.value)}
                 placeholder={`选项 ${index + 1}`}
+                className="flex-grow"
               />
+              {options.length > 1 && (
+                <Button 
+                  type="button" 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={() => handleRemoveOption(index)}
+                  className="h-8 w-8 text-gray-500 hover:text-red-500"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              )}
             </div>
           ))}
         </div>
