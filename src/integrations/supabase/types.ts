@@ -878,6 +878,7 @@ export type Database = {
           is_required: boolean | null
           lecture_id: string
           options: Json | null
+          position: number | null
           title: string
           type: string
           updated_at: string | null
@@ -891,6 +892,7 @@ export type Database = {
           is_required?: boolean | null
           lecture_id: string
           options?: Json | null
+          position?: number | null
           title: string
           type: string
           updated_at?: string | null
@@ -904,6 +906,7 @@ export type Database = {
           is_required?: boolean | null
           lecture_id?: string
           options?: Json | null
+          position?: number | null
           title?: string
           type?: string
           updated_at?: string | null
@@ -1594,6 +1597,10 @@ export type Database = {
         Returns: undefined
       }
       fix_homework_constraints: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      fix_homework_order: {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
