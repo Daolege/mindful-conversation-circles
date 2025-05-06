@@ -1,10 +1,14 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '@/contexts/authHooks';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { HomeworkCard } from './HomeworkCard';
-import { supabase } from '@/integrations/supabase/client';
+import { FileCheck, Loader2, BookOpen } from 'lucide-react';
+import { getHomeworkByLectureId, getHomeworkSubmissionsByUserAndLecture } from '@/lib/services/homeworkService';
+import { Homework, HomeworkSubmission } from '@/lib/types/homework';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
-import { fixHomeworkPositions } from '@/lib/services/homeworkService';
+import { trackCourseProgress } from '@/lib/services/courseNewLearnService';
 
 interface HomeworkModuleSimpleProps {
   courseId: string;
@@ -17,295 +21,145 @@ export const HomeworkModuleSimple: React.FC<HomeworkModuleSimpleProps> = ({
   lectureId,
   onHomeworkSubmit
 }) => {
-  const [homeworkList, setHomeworkList] = useState<any[]>([]);
-  const [submittedHomework, setSubmittedHomework] = useState<Record<string, boolean>>({});
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [activeToastId, setActiveToastId] = useState<string | number | null>(null);
-
-  // Helper function to safely convert courseId to a number
-  const getNumericCourseId = (courseIdString: string): number | null => {
+  const { user } = useAuth();
+  const [homeworks, setHomeworks] = useState<Homework[]>([]);
+  const [submissions, setSubmissions] = useState<HomeworkSubmission[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [allSubmitted, setAllSubmitted] = useState(false);
+  
+  const loadHomeworkData = async () => {
     try {
-      const numericId = parseInt(courseIdString, 10);
-      if (isNaN(numericId) || numericId <= 0) {
-        console.error('[HomeworkModuleSimple] Invalid courseId:', courseIdString, 'parsed as', numericId);
-        return null;
+      setLoading(true);
+      
+      // Check if we have a user, lecture and course ID
+      if (!user?.id || !lectureId || !courseId) {
+        setHomeworks([]);
+        setSubmissions([]);
+        setLoading(false);
+        return;
       }
-      return numericId;
-    } catch (err) {
-      console.error('[HomeworkModuleSimple] Error parsing courseId:', err);
-      return null;
+      
+      // Load homework assignments for this lecture
+      const homeworkItems = await getHomeworkByLectureId(lectureId, courseId);
+      console.log('Loaded homework items:', homeworkItems.length);
+      
+      // If there are no homework items, exit early
+      if (homeworkItems.length === 0) {
+        setHomeworks([]);
+        setSubmissions([]);
+        setLoading(false);
+        return;
+      }
+      
+      // Load any existing submissions by this user
+      const userSubmissions = await getHomeworkSubmissionsByUserAndLecture(
+        user.id, 
+        lectureId,
+        courseId
+      );
+      console.log('Loaded user submissions:', userSubmissions.length);
+      
+      // Set state with the fetched data
+      setHomeworks(homeworkItems);
+      setSubmissions(userSubmissions);
+      
+      // Check if all required homework is already submitted
+      const requiredHomeworks = homeworkItems.filter(h => h.is_required);
+      if (requiredHomeworks.length === 0) {
+        // No required homework, all homework is optional
+        setAllSubmitted(userSubmissions.length >= homeworkItems.length);
+      } else {
+        // Check if all required homework is submitted
+        const allRequiredSubmitted = requiredHomeworks.every(hw => 
+          userSubmissions.some(sub => sub.homework_id === hw.id)
+        );
+        setAllSubmitted(allRequiredSubmitted);
+      }
+    } catch (error) {
+      console.error('Error loading homework data:', error);
+      toast.error('加载作业数据失败');
+    } finally {
+      setLoading(false);
     }
   };
-
-  // 改进的作业排序函数，处理所有可能的情况
-  const sortHomeworkByPosition = (homeworks: any[]) => {
-    return [...homeworks].sort((a, b) => {
-      // 检查是否存在position字段
-      const hasPositionA = 'position' in a && a.position !== null && a.position !== undefined;
-      const hasPositionB = 'position' in b && b.position !== null && b.position !== undefined;
-      
-      if (hasPositionA && hasPositionB) {
-        // 如果两个作业都有position字段，按position排序
-        return a.position - b.position;
-      } else if (hasPositionA) {
-        // 只有a有position，a排前面
-        return -1;
-      } else if (hasPositionB) {
-        // 只有b有position，b排前面
-        return 1;
-      }
-      
-      // 如果都没有position，按创建时间排序
-      if (a.created_at && b.created_at) {
-        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-      }
-      
-      // 最后兜底按ID排序
-      return (a.id || '').localeCompare(b.id || '');
-    });
-  };
-
-  // Fetch homework for the lecture
+  
   useEffect(() => {
-    const fetchHomework = async () => {
+    loadHomeworkData();
+  }, [courseId, lectureId, user?.id]);
+  
+  const handleSubmissionComplete = async () => {
+    // Refresh submissions
+    await loadHomeworkData();
+    
+    // Call parent callback if provided
+    onHomeworkSubmit?.();
+    
+    // Mark course progress as completed if all required homework is submitted
+    if (user?.id && allSubmitted) {
       try {
-        setIsLoading(true);
-        setError(null);
-        
-        // Clear any previous toast
-        if (activeToastId) {
-          toast.dismiss(activeToastId);
-          setActiveToastId(null);
-        }
-        
-        // 验证输入
-        if (!lectureId) {
-          throw new Error('无效的课时ID');
-        }
-        
-        const numericCourseId = getNumericCourseId(courseId);
-        if (numericCourseId === null) {
-          throw new Error('无效的课程ID: ' + courseId);
-        }
-        
-        console.log('[HomeworkModuleSimple] Fetching homework for lecture:', lectureId, 'courseId:', numericCourseId);
-        
-        // First try to fix homework constraints if needed
-        try {
-          await supabase.rpc('fix_homework_constraints');
-          
-          // 尝试修复作业排序，但要处理函数不存在的情况
-          try {
-            // 使用自定义类型断言绕过TypeScript检查
-            const rpcClient = supabase.rpc as any;
-            await rpcClient('fix_homework_order');
-          } catch (orderError) {
-            console.warn('[HomeworkModuleSimple] Error fixing homework order or function may not exist:', orderError);
-            // 尝试使用客户端逻辑修复作业顺序
-            try {
-              await fixHomeworkPositions(lectureId);
-            } catch (clientFixError) {
-              console.warn('[HomeworkModuleSimple] Client-side fix for homework positions failed:', clientFixError);
-              // 继续执行，不要中断流程
-            }
-          }
-        } catch (fixError) {
-          console.warn('[HomeworkModuleSimple] Error fixing homework constraints:', fixError);
-          // Continue with the rest of the process
-        }
-        
-        // 检查表中是否存在position字段
-        let orderByField = 'created_at';
-        try {
-          const { error: testError } = await supabase
-            .from('homework')
-            .select('position')
-            .limit(1);
-          
-          if (!testError) {
-            orderByField = 'position';
-          }
-        } catch (fieldError) {
-          console.warn('[HomeworkModuleSimple] Error checking for position field:', fieldError);
-          // 使用默认的created_at排序
-        }
-        
-        // 获取作业列表，添加更多的日志和错误处理
-        console.log(`[HomeworkModuleSimple] Fetching homework with orderBy: ${orderByField}`);
-        const { data: homeworkData, error: homeworkError } = await supabase
-          .from('homework')
-          .select('*')
-          .eq('lecture_id', lectureId)
-          .order(orderByField, { ascending: true });
-          
-        if (homeworkError) {
-          console.error('[HomeworkModuleSimple] Error fetching homework:', homeworkError);
-          throw homeworkError;
-        }
-        
-        console.log(`[HomeworkModuleSimple] Homework data (${homeworkData?.length || 0} items):`, homeworkData);
-        
-        // If no homework exists for this lecture, create a default one
-        if (!homeworkData || homeworkData.length === 0) {
-          try {
-            // Create a default homework for this lecture with the properly converted courseId
-            const defaultHomework: any = {
-              title: '课时练习',
-              type: 'fill_blank',
-              lecture_id: lectureId,
-              course_id: numericCourseId,
-              options: {
-                question: '请简要总结本节课的主要内容和您的收获：'
-              }
-            };
-            
-            // 检查表中是否存在position字段，如果存在则设置默认值
-            try {
-              const { error: testError } = await supabase
-                .from('homework')
-                .select('position')
-                .limit(1);
-              
-              if (!testError) {
-                defaultHomework.position = 1; // 设置默认位置
-              }
-            } catch (fieldError) {
-              console.warn('[HomeworkModuleSimple] Error checking for position field:', fieldError);
-              // 不设置position字段
-            }
-            
-            console.log('[HomeworkModuleSimple] Creating default homework:', defaultHomework);
-            
-            const { data: newHomework, error: createError } = await supabase
-              .from('homework')
-              .insert([defaultHomework])
-              .select();
-              
-            if (createError) {
-              console.error('[HomeworkModuleSimple] Error creating default homework:', createError);
-              throw createError;
-            }
-            
-            console.log('[HomeworkModuleSimple] Default homework created:', newHomework);
-            
-            if (newHomework && newHomework.length > 0) {
-              setHomeworkList(newHomework);
-            }
-          } catch (createErr: any) {
-            console.error('[HomeworkModuleSimple] Failed to create default homework:', createErr);
-            // Don't show error to user for this case, just log it
-          }
-        } else {
-          // 按位置排序作业，使用改进的排序函数处理所有可能的情况
-          const sortedHomework = sortHomeworkByPosition(homeworkData);
-          console.log('[HomeworkModuleSimple] Sorted homework:', sortedHomework);
-          setHomeworkList(sortedHomework);
-        }
-        
-        // Check submission status for each homework
-        if (homeworkData && homeworkData.length > 0) {
-          const { data: submissionsData, error: submissionsError } = await supabase
-            .from('homework_submissions')
-            .select('homework_id')
-            .eq('lecture_id', lectureId);
-            
-          if (submissionsError) {
-            console.error('[HomeworkModuleSimple] Error fetching submissions:', submissionsError);
-            // Don't throw here, still show homework list
-          }
-          
-          if (submissionsData && submissionsData.length > 0) {
-            console.log('[HomeworkModuleSimple] Submission data:', submissionsData);
-            
-            const submitted: Record<string, boolean> = {};
-            submissionsData.forEach((submission) => {
-              submitted[submission.homework_id] = true;
-            });
-            console.log('[HomeworkModuleSimple] Processed submission status:', submitted);
-            setSubmittedHomework(submitted);
-          }
-        }
-      } catch (err: any) {
-        console.error('[HomeworkModuleSimple] Error in homework module:', err);
-        setError(err.message || '加载作业失败');
-        const toastId = toast.error('加载作业失败: ' + (err.message || '未知错误'));
-        setActiveToastId(toastId);
-      } finally {
-        setIsLoading(false);
+        await trackCourseProgress(courseId, lectureId, user.id, true);
+      } catch (error) {
+        console.error('Error updating course progress:', error);
       }
-    };
-    
-    if (courseId && lectureId) {
-      fetchHomework();
     }
-    
-    // Cleanup function
-    return () => {
-      if (activeToastId) {
-        toast.dismiss(activeToastId);
-      }
-    };
-  }, [courseId, lectureId, activeToastId]);
-
-  // Handle homework submission
-  const handleHomeworkSubmitted = useCallback(() => {
-    // Update submission status
-    if (homeworkList.length > 0) {
-      const updatedSubmissions = { ...submittedHomework };
-      homeworkList.forEach((homework) => {
-        updatedSubmissions[homework.id] = true;
-      });
-      setSubmittedHomework(updatedSubmissions);
-    }
-    
-    // Call parent handler if provided
-    if (onHomeworkSubmit) {
-      onHomeworkSubmit();
-    }
-  }, [homeworkList, submittedHomework, onHomeworkSubmit]);
-
-  // If loading or error, show appropriate UI
-  if (isLoading) {
-    return (
-      <div className="my-6 p-6 bg-white rounded-lg shadow-sm">
-        <div className="flex justify-center">
-          <Loader2 className="h-6 w-6 animate-spin text-gray-500" />
-          <span className="ml-2 text-gray-500">加载作业中...</span>
-        </div>
-      </div>
-    );
+  };
+  
+  const isHomeworkSubmitted = (homeworkId: string) => {
+    return submissions.some(sub => sub.homework_id === homeworkId);
+  };
+  
+  // If there are no homework items, don't show anything
+  if (homeworks.length === 0 && !loading) {
+    return null;
   }
-
-  if (error) {
-    return (
-      <div className="my-6 p-6 bg-white rounded-lg shadow-sm border-l-4 border-red-500">
-        <p className="text-red-600">加载作业时发生错误：{error}</p>
-        <p className="text-gray-600 text-sm mt-2">您可以刷新页面再试一次。</p>
-      </div>
-    );
-  }
-
-  if (homeworkList.length === 0) {
-    return null; // Don't show anything if no homework
-  }
-
+  
   return (
-    <div className="my-6 space-y-4">
-      <h2 className="text-xl font-bold">课时作业</h2>
-      <div className="space-y-4">
-        {homeworkList.map((homework, index) => (
-          <HomeworkCard
-            key={homework.id}
-            homework={homework}
-            courseId={courseId}
-            lectureId={lectureId}
-            isSubmitted={!!submittedHomework[homework.id]}
-            onSubmitted={handleHomeworkSubmitted}
-            position={index + 1} // 添加位置编号，确保正确显示序号
-          />
-        ))}
+    <Card className="mt-6 p-6">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <BookOpen className="h-5 w-5" />
+          <h2 className="text-xl font-semibold">课程作业</h2>
+        </div>
+        
+        {allSubmitted && (
+          <div className="flex items-center text-green-600">
+            <FileCheck className="h-5 w-5 mr-2" />
+            <span>已完成所有必修作业</span>
+          </div>
+        )}
       </div>
-    </div>
+      
+      {loading ? (
+        <div className="flex justify-center p-8">
+          <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {homeworks.map((homework, index) => (
+            <HomeworkCard
+              key={homework.id}
+              homework={homework}
+              courseId={courseId}
+              lectureId={lectureId}
+              isSubmitted={isHomeworkSubmitted(homework.id || '')}
+              onSubmitted={handleSubmissionComplete}
+              position={index + 1}
+            />
+          ))}
+        </div>
+      )}
+      
+      {allSubmitted && onHomeworkSubmit && (
+        <div className="mt-6 text-center">
+          <Button 
+            variant="outline" 
+            className="bg-green-50 text-green-700 hover:bg-green-100"
+            onClick={onHomeworkSubmit}
+          >
+            继续学习下一章节
+          </Button>
+        </div>
+      )}
+    </Card>
   );
 };

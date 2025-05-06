@@ -1,8 +1,9 @@
 
 import React, { useState } from 'react';
-import { ChevronDown, ChevronUp, Video, BookOpen, Lock } from "lucide-react";
+import { ChevronDown, ChevronUp, Video, BookOpen, Lock, Check, Circle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useTranslations } from "@/hooks/useTranslations";
 
 export function CourseSyllabus({ 
   syllabusData, 
@@ -12,6 +13,7 @@ export function CourseSyllabus({
 }) {
   const [expandedSections, setExpandedSections] = useState({0: true});
   const [hoveredLectureId, setHoveredLectureId] = useState(null);
+  const { t } = useTranslations();
 
   const toggleSection = (sectionIndex) => {
     setExpandedSections(prev => ({
@@ -32,7 +34,7 @@ export function CourseSyllabus({
             <span className="font-medium text-gray-900">{section.title}</span>
             <div className="flex items-center gap-2">
               <Badge variant="outline" className="bg-white border-gray-200">
-                {section.lectures?.length || 0} 讲
+                {section.lectures?.length || 0} {t('courses:lessons')}
               </Badge>
               {expandedSections[sectionIndex] ? (
                 <ChevronUp className="h-4 w-4 text-gray-500" />
@@ -49,7 +51,8 @@ export function CourseSyllabus({
                 const isSelected = selectedLecture && selectedLecture.title === lecture.title;
                 const isHovered = hoveredLectureId === lectureKey;
                 const isCompleted = completedLectures?.[lecture.title];
-                const hasVideo = lecture.video_data || lecture.video_url;
+                const hasVideo = lecture.videoUrl || lecture.video_url;
+                const hasHomework = lecture.has_homework;
 
                 return (
                   <li
@@ -74,62 +77,60 @@ export function CourseSyllabus({
                     }}
                   >
                     <div className="flex items-center gap-3 w-full">
-                      <Video 
-                        className={`
-                          h-5 w-5 
-                          ${isSelected 
-                            ? 'text-black' 
-                            : isHovered 
-                              ? 'text-gray-700' 
-                              : 'text-gray-500 group-hover:text-gray-700'
-                          }
-                        `} 
-                      />
-                      <div className="flex-grow flex justify-between items-center">
-                        <div className="flex flex-col">
-                          <span 
-                            className={`
-                              ${isSelected 
-                                ? 'text-black font-semibold' 
-                                : isHovered 
-                                  ? 'text-gray-900' 
-                                  : 'text-gray-700 group-hover:text-gray-900'
-                              }
-                            `}
-                          >
-                            {lecture.title}
-                          </span>
-                          {/* 视频和作业状态指示器 */}
-                          {(hasVideo || lecture.has_homework) && (
-                            <div className="flex gap-2 mt-1">
-                              {hasVideo && (
-                                <div className="flex items-center text-xs text-gray-500">
-                                  <Video className="h-3 w-3 mr-1" />
-                                  视频
-                                </div>
-                              )}
-                              {lecture.has_homework && (
-                                <div className="flex items-center text-xs text-gray-500">
-                                  <BookOpen className="h-3 w-3 mr-1" />
-                                  作业
-                                </div>
-                              )}
+                      {/* Status indicator */}
+                      <div className="flex-shrink-0">
+                        {isCompleted ? (
+                          <Check className="h-5 w-5 text-green-600" />
+                        ) : (
+                          <Circle className="h-5 w-5 text-gray-400" />
+                        )}
+                      </div>
+                      
+                      <div className="flex-grow flex flex-col">
+                        <div 
+                          className={`
+                            ${isSelected ? 'text-black font-semibold' : 'text-gray-700'}
+                            line-clamp-2 text-sm
+                          `}
+                        >
+                          {lecture.title}
+                        </div>
+                        
+                        {/* 视频和作业状态指示器 */}
+                        <div className="flex gap-2 mt-1">
+                          {hasVideo && (
+                            <div className="flex items-center text-xs text-gray-500">
+                              <Video className="h-3 w-3 mr-1" />
+                              视频
+                            </div>
+                          )}
+                          {hasHomework && (
+                            <div className="flex items-center text-xs text-gray-500">
+                              <BookOpen className="h-3 w-3 mr-1" />
+                              作业
+                            </div>
+                          )}
+                          {lecture.requires_homework_completion && (
+                            <div className="text-xs text-amber-600">
+                              须提交作业
                             </div>
                           )}
                         </div>
-                        <div className="flex items-center gap-3">
-                          <span className="text-sm text-gray-500">
-                            {lecture.duration || '时长未知'}
+                      </div>
+                      
+                      <div className="flex flex-col items-end gap-1 ml-2">
+                        <span className="text-xs text-gray-500 whitespace-nowrap">
+                          {lecture.duration || '未知时长'}
+                        </span>
+                        
+                        {/* 免费标识或锁定图标 */}
+                        {lecture.is_free ? (
+                          <span className="text-xs px-1 py-0.5 bg-green-50 text-green-700 rounded whitespace-nowrap">
+                            免费
                           </span>
-                          {/* 免费标识或锁定图标 */}
-                          {lecture.is_free ? (
-                            <span className="text-xs px-2 py-0.5 bg-green-50 text-green-700 rounded">
-                              免费
-                            </span>
-                          ) : (
-                            <Lock size={14} className="text-gray-400" />
-                          )}
-                        </div>
+                        ) : (
+                          <Lock size={14} className="text-gray-400" />
+                        )}
                       </div>
                     </div>
                   </li>

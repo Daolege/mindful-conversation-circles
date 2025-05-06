@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { CourseWithDetails } from '@/lib/types/course-new';
+import { CourseWithDetails, CourseMaterial } from '@/lib/types/course-new';
 import { CourseSyllabusSection } from '@/lib/types/course';
 import { toast } from 'sonner';
 
@@ -37,47 +37,26 @@ export const getCourseNewById = async (id: number | string): Promise<{ data: Cou
 
     console.log(`[getCourseNewById] Successfully fetched course: ${courseData.title} (ID: ${courseData.id})`);
     console.log(`[getCourseNewById] Sections count: ${courseData.course_sections?.length || 0}`);
-    console.log(`[getCourseNewById] Raw course data:`, courseData);
     
     // Handle the response structure - map the database field names to our CourseWithDetails structure
     const transformedData: CourseWithDetails = {
       ...courseData,
       // Cast status to match the required type
       status: courseData.status as 'published' | 'draft' | 'archived',
-      // Properly handle the language field with detailed logging
-      language: (() => {
-        // Try to access language field first
-        const langValue = (courseData as any).language;
-        console.log(`[getCourseNewById] Language value from DB:`, langValue);
-        
-        // If not found, use category as fallback
-        if (!langValue && courseData.category) {
-          console.log(`[getCourseNewById] Using category as language fallback:`, courseData.category);
-          return courseData.category;
-        }
-        
-        // Default to 'zh' if neither exists
-        if (!langValue && !courseData.category) {
-          console.log(`[getCourseNewById] No language or category found, using default 'zh'`);
-          return 'zh';
-        }
-        
-        return langValue;
-      })(),
+      language: courseData.language || courseData.category || 'zh',
       category: courseData.category || 'zh', // Ensure backward compatibility
       sections: courseData.course_sections?.map(section => ({
         ...section,
         lectures: section.course_lectures?.map(lecture => ({
           ...lecture,
           // Handle the video_url field - might not exist in all lecture objects
-          video_url: (lecture as any).video_url || null
+          video_url: (lecture as any).video_url || null,
+          // Ensure has_homework is correctly identified by checking if there are any associated homework items
+          has_homework: lecture.requires_homework_completion || false
         })) || []
       })) || [],
       materials: courseData.course_materials || []
     };
-
-    console.log(`[getCourseNewById] Transformed language field:`, transformedData.language);
-    console.log(`[getCourseNewById] Transformed category field:`, transformedData.category);
 
     // Ensure we're returning a proper CourseWithDetails object
     return { 
@@ -105,7 +84,10 @@ export const convertNewCourseToSyllabusFormat = (course: CourseWithDetails): Cou
       id: lecture.id,
       title: lecture.title,
       duration: lecture.duration || '未知时长',
-      videoUrl: lecture.video_url || undefined
+      videoUrl: lecture.video_url || undefined,
+      has_homework: lecture.has_homework, 
+      is_free: lecture.is_free,
+      requires_homework_completion: lecture.requires_homework_completion
     })) || []
   }));
 };
@@ -178,5 +160,78 @@ export const getCourseProgress = async (
   } catch (error) {
     console.error('Error getting course progress:', error);
     return {};
+  }
+};
+
+/**
+ * Check if user has completed a prerequisite lecture
+ * This helps implement sequential learning requirement
+ */
+export const hasCompletedPrerequisites = async (
+  courseId: string | number,
+  userId: string,
+  currentLectureIndex: number,
+  sectionId: string
+): Promise<boolean> => {
+  try {
+    // If this is the first lecture in a section, no prerequisites
+    if (currentLectureIndex === 0) {
+      return true;
+    }
+    
+    // Get the course to find the previous lecture
+    const { data: course } = await getCourseNewById(courseId);
+    if (!course || !course.sections) {
+      return false;
+    }
+    
+    // Find the current section
+    const section = course.sections.find(s => s.id === sectionId);
+    if (!section || !section.lectures || section.lectures.length <= 1) {
+      return true; // No previous lectures to check
+    }
+    
+    // Get the previous lecture in this section
+    const previousLecture = section.lectures[currentLectureIndex - 1];
+    if (!previousLecture) {
+      return true;
+    }
+    
+    // Check if previous lecture requires homework completion
+    if (!previousLecture.requires_homework_completion) {
+      return true;
+    }
+    
+    // Get user progress
+    const progress = await getCourseProgress(courseId, userId);
+    
+    // Check if previous lecture is marked as completed
+    return !!progress[previousLecture.id];
+  } catch (error) {
+    console.error('Error checking lecture prerequisites:', error);
+    return false;
+  }
+};
+
+/**
+ * Get course materials with proper error handling
+ */
+export const getCourseMaterials = async (courseId: number | string): Promise<CourseMaterial[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('course_materials')
+      .select('*')
+      .eq('course_id', typeof courseId === 'string' ? parseInt(courseId, 10) : courseId)
+      .order('position', { ascending: true });
+      
+    if (error) {
+      console.error('Error fetching course materials:', error);
+      return [];
+    }
+    
+    return data || [];
+  } catch (error) {
+    console.error('Error in getCourseMaterials:', error);
+    return [];
   }
 };

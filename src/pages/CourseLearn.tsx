@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery } from "@tanstack/react-query";
 import { VideoPlayer } from "@/components/course/VideoPlayer";
 import { getCourseById } from "@/lib/services/courseService";
-import { getCourseNewById, convertNewCourseToSyllabusFormat } from "@/lib/services/courseNewLearnService";
+import { getCourseNewById, convertNewCourseToSyllabusFormat, trackCourseProgress, getCourseProgress, getCourseMaterials } from "@/lib/services/courseNewLearnService";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/authHooks";
 import Navbar from "@/components/Navbar";
@@ -23,26 +22,47 @@ import { CourseSyllabus } from "@/components/course/CourseSyllabus";
 import { CourseWithDetails } from "@/lib/types/course-new";
 import { DatabaseFixInitializer } from "@/components/course/DatabaseFixInitializer";
 import { useTranslations } from "@/hooks/useTranslations";
+import { hasCompletedRequiredHomework } from "@/lib/services/homeworkService";
+
+// Helper function to find lecture position within a section
+const findLecturePosition = (sections, lectureId) => {
+  for (const section of sections || []) {
+    for (let i = 0; i < (section.lectures || []).length; i++) {
+      if (section.lectures[i].id === lectureId) {
+        return { sectionId: section.id, position: i };
+      }
+    }
+  }
+  return null;
+};
 
 const CourseLearn = () => {
   const { courseId } = useParams();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const isNewCourse = searchParams.get('source') === 'new';
+  const initialLectureId = searchParams.get('lectureId'); // Support direct lecture selection
+  const isNewCourse = searchParams.get('source') === 'new' || true; // Default to new course format
   const { user } = useAuth();
   const { t } = useTranslations();
   const [selectedLecture, setSelectedLecture] = useState<{
     videoUrl?: string;
     title?: string;
+    id?: string;
+    sectionId?: string;
+    requires_homework_completion?: boolean;
   } | null>(null);
   const [showExitWarning, setShowExitWarning] = useState(false);
+  const [showLockWarning, setShowLockWarning] = useState(false);
+  const [lockedLectureId, setLockedLectureId] = useState<string | null>(null);
 
   console.log('CourseLearn component mounted:', {
     courseId,
     isNewCourse,
+    initialLectureId,
     currentRoute: window.location.pathname + window.location.search
   });
 
+  // Exit warning setup
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       e.preventDefault();
@@ -57,7 +77,18 @@ const CourseLearn = () => {
     };
   }, [t]);
 
-  // Query for standard course
+  // Query for new course format
+  const { 
+    data: newCourseResponse, 
+    isLoading: isLoadingNewCourse,
+    error: newCourseError
+  } = useQuery({
+    queryKey: ['learn-new-course', courseId],
+    queryFn: () => getCourseNewById(courseId || '0'),
+    enabled: !!courseId && isNewCourse,
+  });
+
+  // Query for standard course as fallback
   const { 
     data: courseResponse, 
     isLoading: isLoadingStandardCourse,
@@ -68,14 +99,13 @@ const CourseLearn = () => {
     enabled: !!courseId && !isNewCourse,
   });
 
-  // Query for new course format
-  const { 
-    data: newCourseResponse, 
-    isLoading: isLoadingNewCourse,
-    error: newCourseError
+  // Course materials query
+  const {
+    data: courseMaterials,
+    isLoading: isLoadingMaterials
   } = useQuery({
-    queryKey: ['learn-new-course', courseId],
-    queryFn: () => getCourseNewById(courseId || '0'),
+    queryKey: ['course-materials', courseId],
+    queryFn: () => getCourseMaterials(courseId || '0'),
     enabled: !!courseId && isNewCourse,
   });
 
@@ -100,29 +130,13 @@ const CourseLearn = () => {
     }
   }, [newCourseResponse, courseResponse, isLoadingNewCourse, isLoadingStandardCourse, newCourseError, standardCourseError, isNewCourse]);
 
+  // Track completed lectures
   const { data: completedLectures, refetch: refetchCompletedLectures } = useQuery({
     queryKey: ['completed-lectures', courseId, user?.id],
     queryFn: async () => {
       if (!courseId || !user?.id) return {};
       
-      const { data, error } = await supabase
-        .from('course_progress')
-        .select('lecture_id, completed')
-        .eq('course_id', parseInt(courseId || '0'))
-        .eq('user_id', user?.id);
-      
-      if (error) {
-        console.error('Error fetching completed lectures:', error);
-        return {};
-      }
-      
-      return data?.reduce((acc: Record<string, boolean>, curr) => {
-        // Skip if item is null or not valid
-        if (!curr) return acc;
-        
-        acc[curr.lecture_id] = curr.completed;
-        return acc;
-      }, {}) || {};
+      return getCourseProgress(courseId, user.id);
     },
     enabled: !!courseId && !!user?.id,
   });
@@ -162,6 +176,7 @@ const CourseLearn = () => {
     syllabusData: syllabusData.length
   });
 
+  // Initialize course progress 
   useEffect(() => {
     const initializeCourseProgress = async () => {
       if (!user?.id || !courseId || !syllabusData.length) return;
@@ -173,13 +188,13 @@ const CourseLearn = () => {
         for (const section of syllabusData) {
           if (section.lectures && Array.isArray(section.lectures)) {
             for (const lecture of section.lectures) {
-              if (lecture.title) {
+              if (lecture.id) {
                 await supabase
                   .from('course_progress')
                   .upsert([{
                     course_id: parseInt(courseId),
                     user_id: user.id,
-                    lecture_id: lecture.title,
+                    lecture_id: lecture.id,
                     completed: false,
                     progress_percent: 0,
                     last_watched_at: new Date().toISOString()
@@ -201,15 +216,16 @@ const CourseLearn = () => {
     initializeCourseProgress();
   }, [courseId, syllabusData, user?.id, refetchCompletedLectures]);
 
+  // Handle homework submission completion
   const handleHomeworkSubmit = async () => {
-    if (!selectedLecture?.title) return;
+    if (!selectedLecture?.id) return;
     
     try {
       const { error } = await supabase
         .from('course_progress')
         .upsert([{
           course_id: parseInt(courseId || '0'),
-          lecture_id: selectedLecture.title,
+          lecture_id: selectedLecture.id,
           user_id: user?.id,
           completed: true,
           last_watched_at: new Date().toISOString()
@@ -230,14 +246,39 @@ const CourseLearn = () => {
     }
   };
 
-  const handleLectureClick = async (lecture: { title: string; videoUrl?: string }) => {
+  // Handle lecture selection with learning control
+  const handleLectureClick = async (lecture) => {
     console.log('Lecture clicked:', lecture);
     
-    if (!user?.id || !courseId) return;
+    if (!user?.id || !courseId) {
+      toast.error('请先登录');
+      return;
+    }
+
+    // Find lecture position for sequential learning control
+    const position = findLecturePosition(course?.sections, lecture.id);
+    if (lecture.requires_homework_completion && position && position.position > 0) {
+      // Check if previous lecture is completed when homework is required
+      const prevLectureIndex = position.position - 1;
+      const section = course?.sections?.find(s => s.id === position.sectionId);
+      
+      if (section && section.lectures) {
+        const prevLecture = section.lectures[prevLectureIndex];
+        if (prevLecture && !completedLectures?.[prevLecture.id]) {
+          // Previous lecture not completed, show lock warning
+          setLockedLectureId(lecture.id);
+          setShowLockWarning(true);
+          return;
+        }
+      }
+    }
 
     setSelectedLecture({
-      videoUrl: lecture.videoUrl,
-      title: lecture.title
+      videoUrl: lecture.videoUrl || lecture.video_url,
+      title: lecture.title,
+      id: lecture.id,
+      sectionId: position?.sectionId,
+      requires_homework_completion: lecture.requires_homework_completion
     });
 
     try {
@@ -247,7 +288,7 @@ const CourseLearn = () => {
           {
             course_id: parseInt(courseId),
             user_id: user.id,
-            lecture_id: lecture.title,
+            lecture_id: lecture.id,
             last_watched_at: new Date().toISOString()
           }
         ], {
@@ -260,12 +301,27 @@ const CourseLearn = () => {
     }
   };
 
+  // Handle navigation back to courses list
   const handleGoBack = () => {
     navigate('/my-courses');
   };
 
+  // Auto-select first lecture if none selected
   useEffect(() => {
     if (!selectedLecture && syllabusData.length > 0) {
+      // If there's a specified lectureId in the URL, try to select that
+      if (initialLectureId) {
+        for (const section of syllabusData) {
+          const lecture = section.lectures?.find(l => l.id === initialLectureId);
+          if (lecture) {
+            console.log('Auto-selecting lecture from URL param:', lecture);
+            handleLectureClick(lecture);
+            return;
+          }
+        }
+      }
+      
+      // Otherwise select the first lecture
       const firstSection = syllabusData[0];
       if (firstSection?.lectures?.length > 0) {
         const firstLecture = firstSection.lectures[0];
@@ -273,7 +329,7 @@ const CourseLearn = () => {
         handleLectureClick(firstLecture);
       }
     }
-  }, [syllabusData, selectedLecture]);
+  }, [syllabusData, selectedLecture, initialLectureId]);
 
   if (isLoading) {
     return <CourseLoadingState />;
@@ -297,8 +353,8 @@ const CourseLearn = () => {
   }
 
   // Get materials based on course type
-  const materials = isNewCourse && newCourse ? 
-    newCourse.materials : 
+  const materials = isNewCourse ? 
+    courseMaterials || [] : 
     standardCourse?.materials as CourseMaterial[] | null;
 
   return (
@@ -320,13 +376,13 @@ const CourseLearn = () => {
                 videoUrl={selectedLecture?.videoUrl || videoUrl || undefined}
                 title={title}
                 courseId={courseId || ""}
-                lessonId={selectedLecture?.title || "intro"}
+                lessonId={selectedLecture?.id || "intro"}
               />
             </div>
-            {courseId && selectedLecture && selectedLecture.title && (
+            {courseId && selectedLecture && selectedLecture.id && (
               <HomeworkModule 
                 courseId={courseId} 
-                lectureId={selectedLecture.title}
+                lectureId={selectedLecture.id}
                 onHomeworkSubmit={handleHomeworkSubmit}
               />
             )}
@@ -359,6 +415,7 @@ const CourseLearn = () => {
       </main>
       <Footer />
 
+      {/* Exit warning dialog */}
       <Dialog open={showExitWarning} onOpenChange={setShowExitWarning}>
         <DialogContent>
           <DialogHeader>
@@ -373,6 +430,23 @@ const CourseLearn = () => {
             </Button>
             <Button onClick={() => navigate('/my-courses')}>
               {t('courses:confirmLeave')}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Locked lecture warning */}
+      <Dialog open={showLockWarning} onOpenChange={setShowLockWarning}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>课程锁定</DialogTitle>
+            <DialogDescription>
+              你需要先完成前面的章节和作业才能解锁此内容。请按顺序学习课程内容。
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-2 mt-4">
+            <Button onClick={() => setShowLockWarning(false)}>
+              我知道了
             </Button>
           </div>
         </DialogContent>

@@ -1,410 +1,214 @@
 
-import React, { useState, useEffect } from 'react';
-import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/authHooks";
-import { toast } from "sonner";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { useAuth } from '@/contexts/authHooks';
+import { submitHomework, uploadHomeworkFile } from '@/lib/services/homeworkService';
+import { toast } from 'sonner';
+import { Label } from '@/components/ui/label';
+import { FileInput } from '@/components/course/FileInput';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Loader2, Save, X } from 'lucide-react';
 
 interface HomeworkSubmissionFormProps {
   homework: {
     id: string;
     title: string;
-    type: 'single_choice' | 'multiple_choice' | 'fill_blank';
-    options: any;
-    image_url: string | null;
+    description?: string | null;
+    type: string;
+    options?: any;
     lecture_id: string;
+    course_id: number;
   };
-  courseId: string; 
+  courseId: string | number;
   lectureId: string;
   onSubmitSuccess: () => void;
-  onCancel: () => void;
+  onCancel?: () => void;
 }
 
-export const HomeworkSubmissionForm = ({ 
-  homework, 
+export const HomeworkSubmissionForm: React.FC<HomeworkSubmissionFormProps> = ({
+  homework,
   courseId,
   lectureId,
-  onSubmitSuccess, 
-  onCancel 
-}: HomeworkSubmissionFormProps) => {
+  onSubmitSuccess,
+  onCancel
+}) => {
   const { user } = useAuth();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [singleChoiceAnswer, setSingleChoiceAnswer] = useState<string | null>(null);
-  const [multipleChoiceAnswers, setMultipleChoiceAnswers] = useState<string[]>([]);
-  const [textAnswer, setTextAnswer] = useState('');
-  const [isFormValid, setIsFormValid] = useState(false);
+  const [answer, setAnswer] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
-  const [activeToastId, setActiveToastId] = useState<string | number | null>(null);
-  const [courseIdError, setCourseIdError] = useState<string | null>(null);
-  const [homeworkOptions, setHomeworkOptions] = useState<string[]>([]);
-
-  // 增加对作业选项的处理
-  useEffect(() => {
-    // 初始化作业选项
-    if (homework.options) {
-      let choices: string[] = [];
-      
-      // 处理不同格式的选项数据
-      if (typeof homework.options === 'object') {
-        if (homework.options.choices && Array.isArray(homework.options.choices)) {
-          choices = [...homework.options.choices];
-        } else if (Array.isArray(homework.options)) {
-          choices = [...homework.options];
-        }
-      }
-      
-      console.log('[HomeworkSubmissionForm] 处理后的作业选项:', choices);
-      setHomeworkOptions(choices);
-    }
-  }, [homework.options]);
-
-  // Helper function to safely convert courseId to a number
-  const getNumericCourseId = (courseIdString: string): number => {
-    try {
-      const numericId = parseInt(courseIdString);
-      if (isNaN(numericId) || numericId <= 0) {
-        setCourseIdError(`无效的课程ID: ${courseIdString}，转换结果: ${numericId}`);
-        console.error('[HomeworkSubmissionForm] Invalid courseId:', courseIdString, 'parsed as', numericId);
-        throw new Error(`无效的课程ID: ${courseIdString}`);
-      }
-      // Clear any previous error
-      setCourseIdError(null);
-      return numericId;
-    } catch (error) {
-      console.error('[HomeworkSubmissionForm] Error parsing courseId:', error);
-      const errorMsg = `解析课程ID时出错: ${error instanceof Error ? error.message : '未知错误'}`;
-      setCourseIdError(errorMsg);
-      throw new Error(errorMsg);
+  const [submitting, setSubmitting] = useState(false);
+  const [fileUrl, setFileUrl] = useState<string | null>(null);
+  const [selectedChoices, setSelectedChoices] = useState<string[]>([]);
+  
+  const handleChoiceChange = (choice: string) => {
+    if (homework.type === 'single_choice') {
+      setSelectedChoices([choice]);
+    } else {
+      // For multiple choice, toggle the selection
+      setSelectedChoices(prev => 
+        prev.includes(choice) 
+          ? prev.filter(c => c !== choice) 
+          : [...prev, choice]
+      );
     }
   };
-
-  useEffect(() => {
-    console.log('[HomeworkSubmissionForm] Current form state:', {
-      courseId, 
-      lectureId,
-      singleChoiceAnswer,
-      multipleChoiceAnswers: multipleChoiceAnswers.length,
-      textAnswer: textAnswer.length > 0 ? `${textAnswer.length} chars` : 'empty',
-      isFormValid
-    });
-  }, [courseId, lectureId, singleChoiceAnswer, multipleChoiceAnswers, textAnswer, isFormValid]);
-
-  useEffect(() => {
-    let valid = false;
-    
-    if (homework.type === 'single_choice') {
-      valid = singleChoiceAnswer !== null && singleChoiceAnswer !== '';
-    } else if (homework.type === 'multiple_choice') {
-      valid = multipleChoiceAnswers.length > 0;
-    } else if (homework.type === 'fill_blank') {
-      valid = textAnswer.trim().length > 0;
-    }
-    
-    setIsFormValid(valid);
-  }, [singleChoiceAnswer, multipleChoiceAnswers, textAnswer, homework.type]);
-
-  // Clear any active toast when component unmounts
-  useEffect(() => {
-    return () => {
-      if (activeToastId) {
-        toast.dismiss(activeToastId);
-      }
-    };
-  }, [activeToastId]);
-
+  
+  const handleFileChange = (file: File | null) => {
+    setSelectedFile(file);
+  };
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    e.stopPropagation();
     
     if (!user?.id) {
-      toast.error('您需要登录才能提交作业');
+      toast.error('请先登录');
       return;
     }
     
-    // Clear any previous toast
-    if (activeToastId) {
-      toast.dismiss(activeToastId);
-      setActiveToastId(null);
-    }
-    
-    setIsSubmitting(true);
-    let fileUrl = null;
-    
     try {
-      // First validate the course ID
-      let numericCourseId: number;
-      try {
-        numericCourseId = getNumericCourseId(courseId);
-        console.log('[HomeworkSubmissionForm] Validated courseId:', courseId, '→', numericCourseId);
-      } catch (idError) {
-        console.error('[HomeworkSubmissionForm] Course ID validation failed:', idError);
-        setActiveToastId(toast.error('无效的课程ID，请联系管理员'));
-        return;
-      }
+      setSubmitting(true);
       
-      if (selectedFile && homework.type === 'fill_blank') {
-        setIsUploading(true);
-        const fileExt = selectedFile.name.split('.').pop();
-        const filePath = `${user.id}/${homework.id}/${Math.random()}.${fileExt}`;
-        
-        const { error: uploadError, data } = await supabase.storage
-          .from('homework-submissions')
-          .upload(filePath, selectedFile);
-          
-        if (uploadError) {
-          throw uploadError;
+      // Format the answer based on homework type
+      let finalAnswer = answer;
+      let finalFileUrl = fileUrl;
+      
+      // Handle file upload if needed
+      if (selectedFile) {
+        finalFileUrl = await uploadHomeworkFile(selectedFile, user.id, homework.id);
+        if (!finalFileUrl) {
+          toast.error('文件上传失败');
+          setSubmitting(false);
+          return;
         }
-        
-        fileUrl = data.path;
-        setIsUploading(false);
       }
       
-      let answer: string | null = null;
-      
-      if (homework.type === 'single_choice') {
-        answer = singleChoiceAnswer;
-      } else if (homework.type === 'multiple_choice') {
-        answer = JSON.stringify(multipleChoiceAnswers);
-      } else if (homework.type === 'fill_blank') {
-        answer = textAnswer;
+      // For choice-based homework, use the selected choices as the answer
+      if (homework.type === 'single_choice' || homework.type === 'multiple_choice') {
+        finalAnswer = JSON.stringify(selectedChoices);
       }
       
-      console.log('[HomeworkSubmissionForm] 提交作业数据:', {
+      // Ensure courseId is a number
+      const numericCourseId = typeof courseId === 'string' ? parseInt(courseId, 10) : courseId;
+      
+      // Submit the homework
+      const success = await submitHomework({
         user_id: user.id,
         homework_id: homework.id,
-        course_id: numericCourseId,
         lecture_id: lectureId,
-        answer: answer
+        course_id: numericCourseId,
+        answer: finalAnswer,
+        file_url: finalFileUrl
       });
       
-      // Call fix_homework_constraints before submitting to ensure everything is okay
-      try {
-        await supabase.rpc('fix_homework_constraints');
-      } catch (fixError) {
-        console.warn('[HomeworkSubmissionForm] Error fixing homework constraints:', fixError);
-        // Continue with submission anyway
+      if (success) {
+        // Reset form and notify parent
+        setAnswer('');
+        setSelectedFile(null);
+        setFileUrl(null);
+        onSubmitSuccess();
       }
-      
-      const { error } = await supabase
-        .from('homework_submissions')
-        .insert([{
-          user_id: user.id,
-          homework_id: homework.id,
-          course_id: numericCourseId,
-          lecture_id: lectureId,
-          answer: answer,
-          file_url: fileUrl
-        }]);
-        
-      if (error) {
-        console.error('[HomeworkSubmissionForm] Supabase insert error:', error);
-        throw error;
-      }
-      
-      setActiveToastId(toast.success('作业提交成功'));
-      onSubmitSuccess();
-    } catch (error: any) {
-      console.error('[HomeworkSubmissionForm] Error submitting homework:', error);
-      const errorMessage = error.message || '未知错误';
-      setActiveToastId(toast.error('提交作业失败: ' + errorMessage));
+    } catch (error) {
+      console.error('Error submitting homework:', error);
+      toast.error('提交作业失败');
     } finally {
-      setIsSubmitting(false);
-      setIsUploading(false);
+      setSubmitting(false);
     }
   };
-
-  const handleSingleChoiceClick = (choice: string, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    console.log(`单选选项点击: ${choice}`);
-    setSingleChoiceAnswer(choice);
-  };
-
-  const handleMultipleChoiceChange = (choice: string) => {
-    setMultipleChoiceAnswers(prev => {
-      if (prev.includes(choice)) {
-        return prev.filter(item => item !== choice);
-      } 
-      else {
-        return [...prev, choice];
-      }
-    });
-  };
-
-  // 解析富文本内容
-  const renderRichTextContent = (content) => {
-    if (!content) return null;
-    return <div dangerouslySetInnerHTML={{ __html: content }} />;
-  };
-
-  const renderFormByType = () => {
+  
+  // Render different form based on homework type
+  const renderForm = () => {
     switch (homework.type) {
-      case 'single_choice':
-        return (
-          <div className="space-y-3">
-            {homeworkOptions.map((choice: string, index: number) => {
-              const isSelected = singleChoiceAnswer === choice;
-              return (
-                <div
-                  key={index}
-                  onClick={(e) => handleSingleChoiceClick(choice, e)}
-                  className={`flex items-center space-x-2 p-4 border rounded-md cursor-pointer transition-all 
-                    ${isSelected 
-                      ? 'bg-grayscale-100 border-grayscale-300 shadow-sm' 
-                      : 'border-grayscale-200 hover:bg-grayscale-50'
-                    }`}
-                  data-selected={isSelected ? "true" : "false"}
-                  role="button"
-                  tabIndex={0}
-                  aria-checked={isSelected}
-                >
-                  <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border 
-                    ${isSelected 
-                      ? 'border-knowledge-primary bg-knowledge-primary' 
-                      : 'border-grayscale-300'
-                    }`}>
-                    {isSelected && (
-                      <div className="h-2.5 w-2.5 rounded-full bg-white" />
-                    )}
-                  </div>
-                  <span className={`flex-grow ${isSelected ? 'text-knowledge-primary font-semibold' : 'text-grayscale-600'}`}>
-                    {choice && choice.startsWith && choice.startsWith('<') ? 
-                      renderRichTextContent(choice) : 
-                      choice}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        );
-        
-      case 'multiple_choice':
-        return (
-          <div className="space-y-3">
-            {homeworkOptions.map((choice: string, index: number) => {
-              const isSelected = multipleChoiceAnswers.includes(choice);
-              return (
-                <div 
-                  key={index} 
-                  className={`flex items-center space-x-2 p-3 border rounded-md cursor-pointer transition-all
-                    ${isSelected
-                      ? 'bg-grayscale-100 border-grayscale-300 shadow-sm'
-                      : 'border-grayscale-200 hover:bg-grayscale-50'
-                    }`}
-                  onClick={() => handleMultipleChoiceChange(choice)}
-                >
-                  <div 
-                    className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-sm border
-                      ${isSelected 
-                        ? 'bg-knowledge-primary border-knowledge-primary' 
-                        : 'bg-white border-grayscale-300'
-                      }`}
-                  >
-                    {isSelected && (
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5">
-                        <polyline points="20 6 9 17 4 12"></polyline>
-                      </svg>
-                    )}
-                  </div>
-                  <Label className={`flex-grow cursor-pointer ${isSelected ? 'text-knowledge-primary font-semibold' : 'text-grayscale-600'}`}>
-                    {choice && choice.startsWith && choice.startsWith('<') ? 
-                      renderRichTextContent(choice) : 
-                      choice}
-                  </Label>
-                </div>
-              );
-            })}
-          </div>
-        );
-        
-      case 'fill_blank':
+      case 'file':
         return (
           <div className="space-y-4">
-            {homework.image_url && (
-              <div className="rounded-lg overflow-hidden bg-gray-50">
-                <img 
-                  src={homework.image_url} 
-                  alt="题目图片" 
-                  className="w-full max-h-[400px] object-contain"
-                />
-              </div>
-            )}
-            <Textarea 
-              value={textAnswer}
-              onChange={(e) => setTextAnswer(e.target.value)}
-              className="min-h-[120px]"
-            />
+            <Label htmlFor="file-upload">上传文件</Label>
+            <FileInput onChange={handleFileChange} />
+            <div className="text-sm text-gray-500">
+              支持上传各类文档、图片等文件
+            </div>
+          </div>
+        );
+        
+      case 'single_choice':
+      case 'multiple_choice':
+        const choices = homework.options?.choices || [];
+        return (
+          <div className="space-y-4">
+            <div className="font-medium">
+              {homework.options?.question || '请选择答案'}
+            </div>
             <div className="space-y-2">
-              <Input
-                id="file-upload"
-                type="file"
-                onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
-                accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
-                className="cursor-pointer"
-              />
-              {selectedFile && (
-                <p className="text-sm text-gray-600">
-                  已选择文件: {selectedFile.name}
-                </p>
-              )}
+              {choices.map((choice: string, index: number) => (
+                <div key={index} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`choice-${index}`}
+                    checked={selectedChoices.includes(choice)}
+                    onCheckedChange={() => handleChoiceChange(choice)}
+                  />
+                  <Label htmlFor={`choice-${index}`} className="cursor-pointer">
+                    {choice}
+                  </Label>
+                </div>
+              ))}
             </div>
           </div>
         );
         
       default:
-        return <p>不支持的作业类型</p>;
+        return (
+          <div className="space-y-4">
+            <Label htmlFor="answer">你的答案</Label>
+            <Textarea
+              id="answer"
+              placeholder="请输入你的答案..."
+              value={answer}
+              onChange={(e) => setAnswer(e.target.value)}
+              rows={6}
+              className="resize-y"
+            />
+          </div>
+        );
     }
   };
-
+  
   return (
-    <form onSubmit={handleSubmit} className="space-y-6" onClick={(e) => e.stopPropagation()}>
-      {courseIdError && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-md text-red-700 text-sm">
-          <p>课程ID错误: {courseIdError}</p>
-          <p className="mt-1">请刷新页面或联系管理员。</p>
+    <form onSubmit={handleSubmit} className="space-y-6 p-4">
+      {homework.description && (
+        <div className="bg-gray-50 p-4 rounded-md">
+          <h3 className="font-medium mb-2">作业描述</h3>
+          <div dangerouslySetInnerHTML={{ __html: homework.description }} />
         </div>
       )}
       
-      <div>
-        {homework.options?.question && (
-          <div className="mb-4">
-            {typeof homework.options.question === 'string' && homework.options.question.startsWith && homework.options.question.startsWith('<') ? 
-              <div className="prose max-w-none">{renderRichTextContent(homework.options.question)}</div> : 
-              <p className="whitespace-pre-wrap">{homework.options.question}</p>
-            }
-          </div>
-        )}
-        
-        <div className="bg-white">
-          {renderFormByType()}
-        </div>
-      </div>
+      {renderForm()}
       
-      <div className="flex justify-end space-x-2 pt-3">
+      <div className="flex justify-end space-x-2">
+        {onCancel && (
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={onCancel}
+            disabled={submitting}
+          >
+            <X className="h-4 w-4 mr-2" />
+            取消
+          </Button>
+        )}
         <Button 
-          type="button" 
-          variant="outline"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            onCancel();
-          }}
-          disabled={isSubmitting || isUploading}
-          className="rounded-10 border border-black bg-white text-black hover:bg-black hover:text-white"
+          type="submit" 
+          disabled={submitting || (!answer && !selectedFile && selectedChoices.length === 0)}
         >
-          取消
-        </Button>
-        <Button 
-          type="submit"
-          disabled={!isFormValid || isSubmitting || isUploading || !!courseIdError}
-          className={`rounded-10 border border-black ${isFormValid ? 'bg-white text-black hover:bg-black hover:text-white' : 'bg-gray-200 text-gray-500'}`}
-          variant={isFormValid ? "outline" : "secondary"}
-        >
-          {isUploading ? '文件上传中...' : isSubmitting ? '提交中...' : '提交答案'}
+          {submitting ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              提交中...
+            </>
+          ) : (
+            <>
+              <Save className="h-4 w-4 mr-2" />
+              提交作业
+            </>
+          )}
         </Button>
       </div>
     </form>
