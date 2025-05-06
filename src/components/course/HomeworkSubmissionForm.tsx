@@ -11,7 +11,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2, Save, X } from 'lucide-react';
 import { dismissAllToasts } from '@/hooks/use-toast';
 import { Card } from '@/components/ui/card';
-import { RichTextEditor } from '@/components/admin/course/outline/lectures/RichTextEditor';
+import RichTextEditor from '@/components/admin/course/outline/lectures/RichTextEditor'; // 修改为默认导入
 
 interface HomeworkSubmissionFormProps {
   homework: {
