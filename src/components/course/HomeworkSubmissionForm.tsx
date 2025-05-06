@@ -19,9 +19,9 @@ interface HomeworkSubmissionFormProps {
     type: string;
     options?: any;
     lecture_id: string;
-    course_id: number;
+    course_id: number;  // Added course_id as required
   };
-  courseId: string | number;
+  courseId: string | number; 
   lectureId: string;
   onSubmitSuccess: () => void;
   onCancel?: () => void;
