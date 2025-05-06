@@ -18,7 +18,7 @@ export function CourseSyllabus({
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [isAtBottom, setIsAtBottom] = useState(false);
   const scrollAreaRef = useRef(null);
-  const scrollViewportRef = useRef(null);
+  const viewportRef = useRef(null);
   const { t } = useTranslations();
 
   // If there's no expanded sections yet, open the first one
@@ -31,11 +31,20 @@ export function CourseSyllabus({
   // Check if scroll is needed and detect position
   useEffect(() => {
     const checkScroll = () => {
-      const viewport = scrollViewportRef.current;
-      if (!viewport) return;
+      if (!viewportRef.current) return;
       
+      const viewport = viewportRef.current;
       const { scrollHeight, clientHeight, scrollTop } = viewport;
       const hasScroll = scrollHeight > clientHeight;
+      
+      console.log('Scroll check:', { 
+        scrollHeight, 
+        clientHeight, 
+        scrollTop,
+        hasScroll,
+        sectionsExpanded: Object.keys(expandedSections).length
+      });
+      
       setShowScrollButton(hasScroll);
       
       // Check if we're at the bottom (with a 20px threshold)
@@ -43,11 +52,13 @@ export function CourseSyllabus({
       setIsAtBottom(isBottom);
     };
 
-    // Initial check
-    checkScroll();
+    // Use setTimeout to ensure the DOM has updated after state changes
+    const timer = setTimeout(() => {
+      checkScroll();
+    }, 100);
     
-    // Add scroll event listener to the viewport
-    const viewport = scrollViewportRef.current;
+    // Add scroll event listener
+    const viewport = viewportRef.current;
     if (viewport) {
       viewport.addEventListener('scroll', checkScroll);
       
@@ -60,8 +71,9 @@ export function CourseSyllabus({
         viewport.removeEventListener('scroll', checkScroll);
       }
       window.removeEventListener('resize', checkScroll);
+      clearTimeout(timer);
     };
-  }, []);
+  }, [syllabusData, expandedSections]); // Add expandedSections as dependency
 
   const toggleSection = (sectionIndex) => {
     setExpandedSections(prev => ({
@@ -71,9 +83,10 @@ export function CourseSyllabus({
   };
 
   const handleScrollAction = () => {
-    const viewport = scrollViewportRef.current;
-    if (!viewport) return;
-
+    if (!viewportRef.current) return;
+    
+    const viewport = viewportRef.current;
+    
     if (isAtBottom) {
       // Scroll to top
       viewport.scrollTo({
@@ -90,13 +103,18 @@ export function CourseSyllabus({
   };
 
   return (
-    <div className="relative">
+    <div className="relative flex flex-col h-full">
       <ScrollArea 
         ref={scrollAreaRef} 
-        className="h-[70vh]"
+        className="flex-grow"
+        scrollHideDelay={0}
       >
-        <div ref={scrollViewportRef} className="h-full w-full rounded-[inherit]">
-          <div className="space-y-3 pr-4">
+        <div 
+          ref={viewportRef} 
+          className="h-full w-full rounded-[inherit] pr-3"
+          style={{ maxHeight: 'calc(100vh - 280px)', minHeight: '300px', overflow: 'auto' }}
+        >
+          <div className="space-y-3">
             {syllabusData.map((section, sectionIndex) => (
               <AnimatedCollapsible
                 key={sectionIndex}
@@ -223,18 +241,19 @@ export function CourseSyllabus({
         </div>
       </ScrollArea>
       
-      {/* Floating scroll button */}
+      {/* Floating scroll button - Enhanced visibility */}
       {showScrollButton && (
         <Button
           size="icon"
           variant="secondary"
-          className="absolute bottom-4 right-2 rounded-full shadow-lg transition-all duration-300 hover:bg-gray-200 z-10"
+          className="absolute bottom-4 right-2 rounded-full shadow-lg transition-all duration-300 hover:bg-gray-200 z-10 w-10 h-10 border border-gray-300 bg-white hover:scale-110"
           onClick={handleScrollAction}
+          title={isAtBottom ? "Scroll to top" : "Scroll to bottom"}
         >
           {isAtBottom ? (
-            <ArrowUp className="h-5 w-5" />
+            <ArrowUp className="h-5 w-5 text-gray-700" />
           ) : (
-            <ArrowDown className="h-5 w-5" />
+            <ArrowDown className="h-5 w-5 text-gray-700" />
           )}
         </Button>
       )}
