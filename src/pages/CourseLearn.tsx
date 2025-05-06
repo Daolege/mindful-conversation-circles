@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery } from "@tanstack/react-query";
@@ -436,8 +435,10 @@ const CourseLearn = () => {
           <div className="lg:col-span-1">
             <div className="bg-white rounded-lg shadow-sm">
               <Tabs defaultValue="syllabus" className="w-full">
-                <TabsList className="w-full grid grid-cols-2">
-                  <TabsTrigger value="syllabus">{t('courses:syllabus')}</TabsTrigger>
+                <TabsList className={`w-full ${hasMaterials ? 'grid grid-cols-2' : ''}`}>
+                  <TabsTrigger value="syllabus" className={hasMaterials ? '' : 'w-full'}>
+                    {t('courses:syllabus')}
+                  </TabsTrigger>
                   {hasMaterials && (
                     <TabsTrigger value="materials">{t('courses:courseMaterials')}</TabsTrigger>
                   )}

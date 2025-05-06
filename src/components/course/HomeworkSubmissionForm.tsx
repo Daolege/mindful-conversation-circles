@@ -11,6 +11,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2, Save, X } from 'lucide-react';
 import { dismissAllToasts } from '@/hooks/use-toast';
 import { Card } from '@/components/ui/card';
+import { RichTextEditor } from '@/components/admin/course/outline/lectures/RichTextEditor';
 
 interface HomeworkSubmissionFormProps {
   homework: {
@@ -64,6 +65,10 @@ export const HomeworkSubmissionForm: React.FC<HomeworkSubmissionFormProps> = ({
   
   const handleFileChange = (file: File | null) => {
     setSelectedFile(file);
+  };
+  
+  const handleRichTextChange = (content) => {
+    setAnswer(content);
   };
   
   const handleSubmit = async (e: React.FormEvent) => {
@@ -148,8 +153,8 @@ export const HomeworkSubmissionForm: React.FC<HomeworkSubmissionFormProps> = ({
             <Card 
               key={index} 
               className={`
-                border transition-all duration-200 hover:bg-gray-50 cursor-pointer p-3
-                ${selectedChoices.includes(choice) ? 'border-gray-400 bg-gray-50' : 'border-gray-200'}
+                border transition-all duration-300 hover:bg-gray-50 cursor-pointer p-3
+                ${selectedChoices.includes(choice) ? 'border-gray-400 bg-gray-50 shadow-md' : 'border-gray-200'}
               `}
               onClick={() => handleChoiceChange(choice)}
             >
@@ -175,11 +180,11 @@ export const HomeworkSubmissionForm: React.FC<HomeworkSubmissionFormProps> = ({
   };
   
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 p-4">
+    <form onSubmit={handleSubmit} className="space-y-4 p-4 max-h-[70vh] overflow-y-auto">
       {/* Display homework description if available */}
       {homework.description && (
         <div 
-          className="text-sm bg-gray-50 p-4 rounded-md shadow-inner" 
+          className="text-sm bg-gray-50 p-4 rounded-md shadow-inner mb-4" 
           dangerouslySetInnerHTML={{ __html: homework.description }}
         />
       )}
@@ -196,18 +201,19 @@ export const HomeworkSubmissionForm: React.FC<HomeworkSubmissionFormProps> = ({
       ) : (
         <div className="space-y-3">
           <Label htmlFor="answer">你的答案</Label>
-          <Textarea 
-            id="answer"
-            value={answer}
-            onChange={(e) => setAnswer(e.target.value)}
-            placeholder="请输入你的答案..."
-            className="min-h-[100px] border-gray-300"
-            required
-          />
+          {/* 使用富文本编辑器替代普通文本框 */}
+          <div className="min-h-[150px] border rounded-md overflow-hidden">
+            <RichTextEditor 
+              initialContent={answer}
+              onChange={handleRichTextChange}
+              placeholder="请输入你的答案..."
+              className="min-h-[150px]"
+            />
+          </div>
         </div>
       )}
       
-      <div className="flex justify-end gap-2">
+      <div className="flex justify-end gap-2 mt-6 sticky bottom-0 bg-white py-2 border-t">
         {onCancel && (
           <Button 
             type="button"

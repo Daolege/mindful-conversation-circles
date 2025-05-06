@@ -59,7 +59,7 @@ export const HomeworkCard = React.memo(({
 
   return (
     <Card 
-      className={`w-full border border-gray-200 shadow-sm transition-all duration-200 ${
+      className={`w-full border border-gray-200 shadow-sm transition-all duration-300 ${
         isHovered ? 'shadow-md transform translate-y-[-2px]' : ''
       }`}
       onMouseEnter={() => setIsHovered(true)}
@@ -79,7 +79,7 @@ export const HomeworkCard = React.memo(({
             {isSubmitted ? "已提交" : "未提交"}
           </Badge>
           {!isSubmitted && (
-            <div className="transition-transform duration-200">
+            <div className="transition-transform duration-300">
               {isExpanded ? <ChevronUp className="h-5 w-5 text-gray-500" /> : <ChevronDown className="h-5 w-5 text-gray-500" />}
             </div>
           )}
@@ -87,10 +87,10 @@ export const HomeworkCard = React.memo(({
       </CardHeader>
       
       <CardContent 
-        className={`overflow-hidden transition-all duration-300 ${
-          isExpanded && !isSubmitted ? 'max-h-[1000px]' : 'max-h-0'
+        className={`overflow-hidden transition-all duration-500 ease-in-out ${
+          isExpanded && !isSubmitted ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'
         }`}
-        style={{ padding: isExpanded && !isSubmitted ? '1rem' : '0', display: isExpanded && !isSubmitted ? 'block' : 'none' }}
+        style={{ padding: isExpanded && !isSubmitted ? '1rem' : '0' }}
       >
         {isExpanded && !isSubmitted && (
           <div className="space-y-4 bg-white rounded-md border border-gray-100 shadow-sm">

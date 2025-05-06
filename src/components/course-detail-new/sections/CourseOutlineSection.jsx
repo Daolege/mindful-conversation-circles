@@ -151,13 +151,17 @@ const CourseOutlineSection = ({
                 headerContent={
                   <div className="flex justify-between w-full items-center">
                     <span className="text-lg">{section.title}</span>
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs flex items-center justify-center min-w-[60px] py-1 px-2 bg-gray-200 text-gray-800 rounded">
                       {t('courses:lessons', { count: section.lectures?.length || 0 })}
                     </span>
                   </div>
                 }
                 onToggle={() => toggleSection(section.id)}
-                className="border-gray-200 hover:bg-gray-50 transition-colors shadow-sm hover:shadow-md"
+                className={`border-gray-300 hover:bg-gray-50 transition-colors ${
+                  openSectionIds[section.id] 
+                    ? 'bg-gray-100 shadow-md' 
+                    : 'shadow-sm hover:shadow-md'
+                }`}
               >
                 <ul className="space-y-3">
                   {section.lectures?.map((lecture, lectureIdx) => (
@@ -167,7 +171,7 @@ const CourseOutlineSection = ({
                         bg-white
                         transition-all duration-300 ease-in-out
                         shadow-sm hover:shadow-md
-                        hover:bg-gray-50"
+                        hover:bg-gray-50 hover:translate-x-1"
                     >
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-normal">{lecture.title}</span>
