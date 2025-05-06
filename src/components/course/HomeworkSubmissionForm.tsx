@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, memo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -223,7 +222,7 @@ export const HomeworkSubmissionForm: React.FC<HomeworkSubmissionFormProps> = ({
     } else if (homework.type === 'file') {
       return (
         <div className="space-y-3">
-          <Label>上传文件</Label>
+          <Label>上传文���</Label>
           <FileInput onChange={handleFileChange} />
           <p className="text-xs text-gray-500">支持常见文档和图片格式</p>
         </div>
@@ -255,8 +254,8 @@ export const HomeworkSubmissionForm: React.FC<HomeworkSubmissionFormProps> = ({
       data-homework-type={homework.type}
       data-homework-id={homework.id}
     >
-      {/* 内容区域，添加底部内边距为按钮栏腾出空间 */}
-      <div className="pb-16 overflow-y-auto max-h-[70vh]">
+      {/* 内容区域，增加最大高度以减少滚动需求，添加底部内边距为按钮栏腾出空间 */}
+      <div className="pb-16 overflow-y-auto max-h-[140vh]">
         {/* Display homework description if available */}
         {homework.description && (
           <div 

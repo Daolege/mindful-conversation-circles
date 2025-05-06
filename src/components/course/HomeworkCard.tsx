@@ -112,7 +112,7 @@ export const HomeworkCard = memo(({
           <div className="font-medium truncate">{homework.title}</div>
         </div>
         <div className="flex items-center gap-3 flex-shrink-0">
-          <Badge variant={isSubmitted ? "outline" : "outline"} className={`text-xs min-w-[60px] text-center ${isSubmitted ? "bg-gray-100 text-gray-700" : "border border-gray-300 text-gray-500"}`}>
+          <Badge variant={isSubmitted ? "outline" : "outline"} className={`text-xs min-w-[80px] text-center ${isSubmitted ? "bg-gray-100 text-gray-700" : "border border-gray-300 text-gray-500"}`}>
             {isSubmitted ? "已提交" : "未提交"}
           </Badge>
           {!isSubmitted && (
@@ -126,14 +126,14 @@ export const HomeworkCard = memo(({
       <CardContent 
         className={`overflow-hidden transition-all duration-500 ease-in-out ${
           isExpanded && !isSubmitted ? 
-            `max-h-[${hasOverflow ? '4000' : '2000'}px] opacity-100 pb-4` : 
+            `max-h-[${hasOverflow ? '2000' : '1000'}px] opacity-100 pb-4` : 
             'max-h-0 opacity-0 p-0'
         }`}
         onClick={handleContentClick}
         ref={handleContentRef}
       >
         {isExpanded && !isSubmitted && (
-          <div className="bg-white rounded-md border border-gray-100 shadow-sm max-h-[80vh] overflow-auto">
+          <div className="bg-white rounded-md border border-gray-100 shadow-sm max-h-[160vh] overflow-auto">
             <HomeworkSubmissionForm 
               homework={homework}
               courseId={numericCourseId}
