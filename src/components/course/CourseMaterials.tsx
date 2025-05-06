@@ -1,14 +1,15 @@
 
 import React from 'react';
-import { FileText, DownloadCloud, Loader2 } from 'lucide-react';
+import { FileText, DownloadCloud, Loader2, File, FileAudio, FileVideo, FileImage, FileArchive } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useTranslations } from '@/hooks/useTranslations';
+import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
 
 interface CourseMaterialsProps {
   materials: any;
   isLoading?: boolean;
-  isVisible?: boolean; // Added isVisible prop
+  isVisible?: boolean;
 }
 
 export function CourseMaterials({ materials, isLoading = false, isVisible = true }: CourseMaterialsProps) {
@@ -19,26 +20,66 @@ export function CourseMaterials({ materials, isLoading = false, isVisible = true
     return null;
   }
   
+  // 获取文件类型图标
+  const getFileIcon = (fileName) => {
+    const extension = fileName.split('.').pop()?.toLowerCase();
+    
+    switch(extension) {
+      case 'pdf':
+        return <FileText size={18} className="text-red-500" />;
+      case 'xlsx':
+      case 'xls':
+      case 'csv':
+        return <FileText size={18} className="text-green-600" />;
+      case 'pptx':
+      case 'ppt':
+        return <FileText size={18} className="text-orange-500" />;
+      case 'docx':
+      case 'doc':
+        return <FileText size={18} className="text-blue-600" />;
+      case 'zip':
+      case 'rar':
+        return <FileArchive size={18} className="text-purple-600" />;
+      case 'mp3':
+      case 'wav':
+      case 'ogg':
+        return <FileAudio size={18} className="text-indigo-500" />;
+      case 'mp4':
+      case 'avi':
+      case 'mov':
+        return <FileVideo size={18} className="text-pink-500" />;
+      case 'jpg':
+      case 'jpeg':
+      case 'png':
+      case 'gif':
+        return <FileImage size={18} className="text-yellow-500" />;
+      default:
+        return <File size={18} className="text-gray-600" />;
+    }
+  };
+  
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center p-8">
-        <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
-      </div>
+      <Card id="course-materials-section" className="shadow-sm animate-in fade-in duration-500">
+        <CardHeader className="pb-0">
+          <CardTitle className="text-xl flex items-center gap-2">
+            <File className="h-5 w-5" />
+            {t('courses:courseMaterials') || '课程附件'}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pt-4">
+          <div className="flex justify-center items-center p-8">
+            <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
+          </div>
+        </CardContent>
+      </Card>
     );
   }
-  
-  if (!materials || materials.length === 0) {
-    return (
-      <div className="text-center p-8 text-gray-500">
-        {t('courses:noMaterials')}
-      </div>
-    );
-  }
-  
-  // Process materials data
+
+  // 处理材料数据
   let processedMaterials = materials;
   
-  // Handle if materials is a JSON string
+  // 处理字符串形式的材料数据
   if (typeof materials === 'string') {
     try {
       processedMaterials = JSON.parse(materials);
@@ -48,40 +89,70 @@ export function CourseMaterials({ materials, isLoading = false, isVisible = true
     }
   }
   
-  // Handle if materials is not an array
+  // 处理非数组形式的材料数据
   if (!Array.isArray(processedMaterials)) {
     console.error('Materials is not an array:', processedMaterials);
     processedMaterials = [];
   }
+
+  // 如果没有材料，显示相应提示
+  if (processedMaterials.length === 0) {
+    return (
+      <Card id="course-materials-section" className="shadow-sm animate-in fade-in duration-500">
+        <CardHeader className="pb-0">
+          <CardTitle className="text-xl flex items-center gap-2">
+            <File className="h-5 w-5" />
+            {t('courses:courseMaterials') || '课程附件'}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pt-4">
+          <div className="text-center p-8 text-gray-500">
+            {t('courses:noMaterials') || '暂无课程资料'}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
   
   return (
-    <ScrollArea className="h-[500px]">
-      <ul className="space-y-2 p-1">
-        {processedMaterials.map((material, index) => (
-          <li key={material.id || index} className="border rounded-md hover:bg-gray-50 transition-colors">
-            <a 
-              href={material.url} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="p-4 flex items-start justify-between gap-4"
-            >
-              <div className="flex items-start gap-3">
-                <FileText className="h-6 w-6 text-blue-600 flex-shrink-0 mt-1" />
-                <div>
-                  <p className="font-medium">{material.name}</p>
-                  {material.description && (
-                    <p className="text-sm text-gray-500 mt-1">{material.description}</p>
-                  )}
+    <Card id="course-materials-section" className="hover:shadow-lg transition-shadow duration-500 shadow-sm animate-in fade-in duration-500">
+      <CardHeader className="pb-0">
+        <CardTitle className="text-xl flex items-center gap-2">
+          <File className="h-5 w-5" />
+          {t('courses:courseMaterials') || '课程附件'}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="pt-4">
+        <ScrollArea className="h-[450px]">
+          <ul className="space-y-3">
+            {processedMaterials.map((material, idx) => (
+              <li 
+                key={material.id || idx} 
+                className="flex justify-between items-center p-4 border rounded-lg hover:bg-gray-50 
+                  transition-all duration-300 ease-in-out 
+                  shadow-sm hover:shadow-md animate-in fade-in duration-300"
+                style={{ animationDelay: `${idx * 100}ms` }}
+              >
+                <div className="flex items-center gap-2">
+                  {getFileIcon(material.name)}
+                  <span className="font-medium">{material.name}</span>
                 </div>
-              </div>
-              <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800">
-                <DownloadCloud className="h-4 w-4 mr-2" />
-                {t('courses:download')}
-              </Button>
-            </a>
-          </li>
-        ))}
-      </ul>
-    </ScrollArea>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="text-gray-700 hover:bg-gray-100 text-xs py-2 px-3 h-8 flex items-center gap-1"
+                  asChild
+                >
+                  <a href={material.url} target="_blank" rel="noopener noreferrer">
+                    <DownloadCloud size={14} />
+                    {t('courses:download') || '下载'}
+                  </a>
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </ScrollArea>
+      </CardContent>
+    </Card>
   );
 }

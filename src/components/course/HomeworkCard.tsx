@@ -8,14 +8,14 @@ import { Homework } from '@/lib/types/homework';
 
 interface HomeworkCardProps {
   homework: {
-    id: string;  // Make this required to match actual usage
+    id: string;
     title: string;
     description?: string | null;
-    type: string;  // Changed from specific union type to string
+    type: string;
     options?: any;
     image_url?: string | null;
     lecture_id: string;
-    course_id: number;  // Added course_id as required
+    course_id: number;
     position?: number;
   };
   courseId: string | number; 
@@ -57,9 +57,6 @@ export const HomeworkCard = React.memo(({
     setIsExpanded(false);
   }, []);
 
-  // 确定显示的编号 - 优先使用外部传入的position，否则使用作业自身的position属性，最后使用默认值1
-  const displayPosition = position || homework.position || 1;
-
   return (
     <Card 
       className={`w-full border border-gray-200 shadow-sm transition-all duration-200 ${
@@ -71,22 +68,19 @@ export const HomeworkCard = React.memo(({
       <CardHeader 
         className={`flex flex-row items-center justify-between ${
           !isSubmitted ? 'cursor-pointer hover:bg-gray-50' : ''
-        }`}
+        } p-4`}
         onClick={handleHeaderClick}
       >
         <div className="flex items-center gap-3">
-          <div className="flex-shrink-0 bg-blue-100 text-blue-700 font-medium text-sm px-2.5 py-0.5 rounded">
-            {displayPosition}
-          </div>
           <div className="font-medium">{homework.title}</div>
         </div>
         <div className="flex items-center gap-3">
-          <Badge variant={isSubmitted ? "success" : "outline"} className="text-xs">
+          <Badge variant={isSubmitted ? "outline" : "outline"} className={`text-xs ${isSubmitted ? "bg-gray-100 text-gray-700" : "border border-gray-300 text-gray-500"}`}>
             {isSubmitted ? "已提交" : "未提交"}
           </Badge>
           {!isSubmitted && (
             <div className="transition-transform duration-200">
-              {isExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+              {isExpanded ? <ChevronUp className="h-5 w-5 text-gray-500" /> : <ChevronDown className="h-5 w-5 text-gray-500" />}
             </div>
           )}
         </div>
@@ -96,7 +90,7 @@ export const HomeworkCard = React.memo(({
         className={`overflow-hidden transition-all duration-300 ${
           isExpanded && !isSubmitted ? 'max-h-[1000px]' : 'max-h-0'
         }`}
-        style={{ display: isExpanded && !isSubmitted ? 'block' : 'none' }}
+        style={{ padding: isExpanded && !isSubmitted ? '1rem' : '0', display: isExpanded && !isSubmitted ? 'block' : 'none' }}
       >
         {isExpanded && !isSubmitted && (
           <div className="space-y-4 bg-white rounded-md border border-gray-100 shadow-sm">

@@ -398,6 +398,9 @@ const CourseLearn = () => {
   const materials = isNewCourse ? 
     courseMaterials || [] : 
     standardCourse?.materials as CourseMaterial[] | null;
+    
+  // Check if materials exist
+  const hasMaterials = materials && Array.isArray(materials) && materials.length > 0;
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -435,7 +438,9 @@ const CourseLearn = () => {
               <Tabs defaultValue="syllabus" className="w-full">
                 <TabsList className="w-full grid grid-cols-2">
                   <TabsTrigger value="syllabus">{t('courses:syllabus')}</TabsTrigger>
-                  <TabsTrigger value="materials">{t('courses:courseMaterials')}</TabsTrigger>
+                  {hasMaterials && (
+                    <TabsTrigger value="materials">{t('courses:courseMaterials')}</TabsTrigger>
+                  )}
                 </TabsList>
                 
                 <TabsContent value="syllabus" className="p-4">
@@ -447,9 +452,11 @@ const CourseLearn = () => {
                   />
                 </TabsContent>
                 
-                <TabsContent value="materials" className="p-4">
-                  <CourseMaterials materials={materials} />
-                </TabsContent>
+                {hasMaterials && (
+                  <TabsContent value="materials" className="p-4">
+                    <CourseMaterials materials={materials} />
+                  </TabsContent>
+                )}
               </Tabs>
             </div>
           </div>

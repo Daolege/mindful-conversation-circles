@@ -10,6 +10,7 @@ import { FileInput } from '@/components/course/FileInput';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2, Save, X } from 'lucide-react';
 import { dismissAllToasts } from '@/hooks/use-toast';
+import { Card } from '@/components/ui/card';
 
 interface HomeworkSubmissionFormProps {
   homework: {
@@ -19,7 +20,7 @@ interface HomeworkSubmissionFormProps {
     type: string;
     options?: any;
     lecture_id: string;
-    course_id: number;  // Added course_id as required
+    course_id: number;
   };
   courseId: string | number; 
   lectureId: string;
@@ -136,27 +137,39 @@ export const HomeworkSubmissionForm: React.FC<HomeworkSubmissionFormProps> = ({
     return (
       <div className="space-y-3">
         {homework.type === 'single_choice' && (
-          <p className="text-sm text-gray-500">请选择一个选项：</p>
+          <p className="text-sm text-gray-500 mb-2">请选择一个选项：</p>
         )}
         {homework.type === 'multiple_choice' && (
-          <p className="text-sm text-gray-500">可选择多个选项：</p>
+          <p className="text-sm text-gray-500 mb-2">可选择多个选项：</p>
         )}
         
-        {homework.options.choices.map((choice: string, index: number) => (
-          <div key={index} className="flex items-center space-x-2">
-            <Checkbox 
-              id={`choice-${index}`}
-              checked={selectedChoices.includes(choice)}
-              onCheckedChange={() => handleChoiceChange(choice)}
-            />
-            <Label 
-              htmlFor={`choice-${index}`}
-              className="text-sm cursor-pointer"
+        <div className="grid grid-cols-1 gap-2">
+          {homework.options.choices.map((choice: string, index: number) => (
+            <Card 
+              key={index} 
+              className={`
+                border transition-all duration-200 hover:bg-gray-50 cursor-pointer p-3
+                ${selectedChoices.includes(choice) ? 'border-gray-400 bg-gray-50' : 'border-gray-200'}
+              `}
+              onClick={() => handleChoiceChange(choice)}
             >
-              {choice}
-            </Label>
-          </div>
-        ))}
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id={`choice-${index}`}
+                  checked={selectedChoices.includes(choice)}
+                  onCheckedChange={() => handleChoiceChange(choice)}
+                  className="h-4 w-4"
+                />
+                <Label 
+                  htmlFor={`choice-${index}`}
+                  className="text-sm cursor-pointer flex-1"
+                >
+                  {choice}
+                </Label>
+              </div>
+            </Card>
+          ))}
+        </div>
       </div>
     );
   };
@@ -166,7 +179,7 @@ export const HomeworkSubmissionForm: React.FC<HomeworkSubmissionFormProps> = ({
       {/* Display homework description if available */}
       {homework.description && (
         <div 
-          className="text-sm bg-gray-50 p-3 rounded-md" 
+          className="text-sm bg-gray-50 p-4 rounded-md shadow-inner" 
           dangerouslySetInnerHTML={{ __html: homework.description }}
         />
       )}
@@ -188,7 +201,7 @@ export const HomeworkSubmissionForm: React.FC<HomeworkSubmissionFormProps> = ({
             value={answer}
             onChange={(e) => setAnswer(e.target.value)}
             placeholder="请输入你的答案..."
-            className="min-h-[100px]"
+            className="min-h-[100px] border-gray-300"
             required
           />
         </div>
@@ -202,6 +215,7 @@ export const HomeworkSubmissionForm: React.FC<HomeworkSubmissionFormProps> = ({
             size="sm"
             onClick={onCancel}
             disabled={submitting}
+            className="text-gray-700 border-gray-300"
           >
             <X className="h-4 w-4 mr-1" />
             取消
@@ -212,6 +226,7 @@ export const HomeworkSubmissionForm: React.FC<HomeworkSubmissionFormProps> = ({
           type="submit"
           size="sm"
           disabled={submitting}
+          className="bg-gray-800 hover:bg-gray-900 text-white"
         >
           {submitting ? (
             <>

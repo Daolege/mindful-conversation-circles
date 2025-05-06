@@ -1,9 +1,11 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ChevronDown, ChevronUp, Video, BookOpen, Lock, Check, Circle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useTranslations } from "@/hooks/useTranslations";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { AnimatedCollapsible } from '@/components/ui/animated-collapsible';
 
 export function CourseSyllabus({ 
   syllabusData, 
@@ -15,6 +17,13 @@ export function CourseSyllabus({
   const [hoveredLectureId, setHoveredLectureId] = useState(null);
   const { t } = useTranslations();
 
+  // If there's no expanded sections yet, open the first one
+  useEffect(() => {
+    if (syllabusData && syllabusData.length > 0 && Object.keys(expandedSections).length === 0) {
+      setExpandedSections({0: true});
+    }
+  }, [syllabusData]);
+
   const toggleSection = (sectionIndex) => {
     setExpandedSections(prev => ({
       ...prev,
@@ -23,30 +32,25 @@ export function CourseSyllabus({
   };
 
   return (
-    <div className="space-y-2">
-      {syllabusData.map((section, sectionIndex) => (
-        <div key={sectionIndex} className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <Button 
-            variant="ghost"
-            className="w-full rounded-none flex justify-between items-center px-4 py-3 hover:bg-gray-50 transition-colors"
-            onClick={() => toggleSection(sectionIndex)}
+    <ScrollArea className="h-[70vh] pr-4">
+      <div className="space-y-2">
+        {syllabusData.map((section, sectionIndex) => (
+          <AnimatedCollapsible
+            key={sectionIndex}
+            isOpen={!!expandedSections[sectionIndex]}
+            headerContent={
+              <div className="flex justify-between w-full items-center">
+                <span className="font-medium text-gray-900">{section.title}</span>
+                <Badge variant="outline" className="bg-white border-gray-200">
+                  {section.lectures?.length || 0} {t('courses:lessons')}
+                </Badge>
+              </div>
+            }
+            onToggle={() => toggleSection(sectionIndex)}
+            className="border-gray-200 hover:bg-gray-50 transition-colors shadow-sm hover:shadow-md"
           >
-            <span className="font-medium text-gray-900">{section.title}</span>
-            <div className="flex items-center gap-2">
-              <Badge variant="outline" className="bg-white border-gray-200">
-                {section.lectures?.length || 0} {t('courses:lessons')}
-              </Badge>
-              {expandedSections[sectionIndex] ? (
-                <ChevronUp className="h-4 w-4 text-gray-500" />
-              ) : (
-                <ChevronDown className="h-4 w-4 text-gray-500" />
-              )}
-            </div>
-          </Button>
-          
-          {expandedSections[sectionIndex] && section.lectures && Array.isArray(section.lectures) && (
-            <ul className="divide-y divide-gray-100">
-              {section.lectures.map((lecture, lectureIndex) => {
+            <ul className="space-y-2">
+              {section.lectures && Array.isArray(section.lectures) && section.lectures.map((lecture, lectureIndex) => {
                 const lectureKey = `${sectionIndex}-${lectureIndex}`;
                 const isSelected = selectedLecture && selectedLecture.id === lecture.id;
                 const isHovered = hoveredLectureId === lectureKey;
@@ -64,10 +68,11 @@ export function CourseSyllabus({
                     onMouseLeave={() => setHoveredLectureId(null)}
                     className={`
                       flex items-center justify-between p-4 cursor-pointer 
+                      border rounded-lg bg-white
                       transition-all duration-300 ease-in-out
-                      group relative
+                      shadow-sm hover:shadow-md
                       ${isSelected 
-                        ? 'bg-gray-100' 
+                        ? 'bg-gray-100 border-gray-300' 
                         : isHovered 
                           ? 'bg-gray-50' 
                           : 'hover:bg-gray-50'
@@ -76,7 +81,6 @@ export function CourseSyllabus({
                     `}
                     style={{
                       boxShadow: isSelected ? 'inset 4px 0 0 #262626' : 'none',
-                      fontWeight: isSelected ? '500' : 'normal',
                     }}
                   >
                     <div className="flex items-center gap-3 w-full">
@@ -142,9 +146,9 @@ export function CourseSyllabus({
                 );
               })}
             </ul>
-          )}
-        </div>
-      ))}
-    </div>
+          </AnimatedCollapsible>
+        ))}
+      </div>
+    </ScrollArea>
   );
 }

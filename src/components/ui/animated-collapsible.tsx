@@ -1,86 +1,48 @@
 
-import React, { useState, useRef, useEffect } from 'react';
-import { cn } from '@/lib/utils';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import React, { useState } from 'react';
+import { ChevronDown } from 'lucide-react';
 
 interface AnimatedCollapsibleProps {
-  isOpen: boolean;
   children: React.ReactNode;
-  className?: string;
-  contentClassName?: string;
   headerContent: React.ReactNode;
+  isOpen: boolean;
   onToggle: () => void;
-  showIcons?: boolean;
+  className?: string;
 }
 
-export function AnimatedCollapsible({
-  isOpen,
+export const AnimatedCollapsible: React.FC<AnimatedCollapsibleProps> = ({
   children,
-  className,
-  contentClassName,
   headerContent,
+  isOpen,
   onToggle,
-  showIcons = true
-}: AnimatedCollapsibleProps) {
-  const contentRef = useRef<HTMLDivElement>(null);
-  const [height, setHeight] = useState<number | undefined>(isOpen ? undefined : 0);
-
-  useEffect(() => {
-    if (!contentRef.current) return;
-    
-    const resizeObserver = new ResizeObserver(() => {
-      if (isOpen) {
-        setHeight(contentRef.current?.scrollHeight);
-      }
-    });
-
-    resizeObserver.observe(contentRef.current);
-    
-    return () => {
-      if (contentRef.current) {
-        resizeObserver.unobserve(contentRef.current);
-      }
-    };
-  }, [isOpen]);
-
-  useEffect(() => {
-    if (!isOpen) {
-      setHeight(0);
-    } else if (contentRef.current) {
-      setHeight(contentRef.current.scrollHeight);
-    }
-  }, [isOpen]);
-
+  className = ''
+}) => {
+  const [isHovered, setIsHovered] = useState(false);
+  
   return (
-    <div className={cn("border rounded-10 overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300", className)}>
-      <div 
-        className="p-5 bg-gray-50 flex items-center justify-between cursor-pointer hover:bg-gray-100 transition-all duration-300"
+    <div 
+      className={`border rounded-lg overflow-hidden ${className}`}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <button
         onClick={onToggle}
+        className={`w-full flex justify-between items-center p-4 text-left transition-colors ${
+          isHovered ? 'bg-gray-50' : 'bg-white'
+        }`}
       >
         {headerContent}
-        {showIcons && (
-          <div className="flex items-center">
-            {isOpen ? (
-              <ChevronUp className="h-5 w-5 text-gray-700 transition-transform duration-500 transform rotate-0" />
-            ) : (
-              <ChevronDown className="h-5 w-5 text-gray-700 transition-transform duration-500 transform rotate-0" />
-            )}
-          </div>
-        )}
-      </div>
-      
+        <ChevronDown className={`h-5 w-5 text-gray-500 transition-transform duration-300 ${isOpen ? 'transform rotate-180' : ''}`} />
+      </button>
       <div
-        ref={contentRef}
-        style={{ height: height !== undefined ? `${height}px` : 'auto' }}
-        className={cn(
-          "transition-all duration-500 ease-in-out overflow-hidden bg-white",
-          contentClassName
-        )}
+        className={`transition-all duration-300 overflow-hidden ${
+          isOpen ? 'max-h-[5000px] opacity-100' : 'max-h-0 opacity-0'
+        }`}
       >
-        <div className="p-5">
+        <div className="p-4 border-t">
           {children}
         </div>
       </div>
     </div>
   );
-}
+};
