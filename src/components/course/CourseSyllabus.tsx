@@ -48,11 +48,13 @@ export function CourseSyllabus({
             <ul className="divide-y divide-gray-100">
               {section.lectures.map((lecture, lectureIndex) => {
                 const lectureKey = `${sectionIndex}-${lectureIndex}`;
-                const isSelected = selectedLecture && selectedLecture.title === lecture.title;
+                const isSelected = selectedLecture && selectedLecture.id === lecture.id;
                 const isHovered = hoveredLectureId === lectureKey;
-                const isCompleted = completedLectures?.[lecture.title];
+                const isCompleted = completedLectures?.[lecture.id];
                 const hasVideo = lecture.videoUrl || lecture.video_url;
                 const hasHomework = lecture.has_homework;
+                const isPreviousLectureCompleted = lectureIndex === 0 || completedLectures?.[section.lectures[lectureIndex-1]?.id];
+                const isLocked = lectureIndex > 0 && !isPreviousLectureCompleted;
 
                 return (
                   <li
@@ -70,9 +72,10 @@ export function CourseSyllabus({
                           ? 'bg-gray-50' 
                           : 'hover:bg-gray-50'
                       }
+                      ${isLocked ? 'opacity-75' : ''}
                     `}
                     style={{
-                      boxShadow: isSelected ? 'inset 4px 0 0 #000' : 'none',
+                      boxShadow: isSelected ? 'inset 4px 0 0 #262626' : 'none',
                       fontWeight: isSelected ? '500' : 'normal',
                     }}
                   >
@@ -80,7 +83,9 @@ export function CourseSyllabus({
                       {/* Status indicator */}
                       <div className="flex-shrink-0">
                         {isCompleted ? (
-                          <Check className="h-5 w-5 text-green-600" />
+                          <Check className="h-5 w-5 text-gray-700" />
+                        ) : isLocked ? (
+                          <Lock className="h-5 w-5 text-gray-400" />
                         ) : (
                           <Circle className="h-5 w-5 text-gray-400" />
                         )}
@@ -125,12 +130,12 @@ export function CourseSyllabus({
                         
                         {/* 免费标识或锁定图标 */}
                         {lecture.is_free ? (
-                          <span className="text-xs px-1 py-0.5 bg-green-50 text-green-700 rounded whitespace-nowrap">
+                          <span className="text-xs px-1 py-0.5 bg-gray-100 text-gray-700 rounded whitespace-nowrap">
                             免费
                           </span>
-                        ) : (
+                        ) : isLocked ? (
                           <Lock size={14} className="text-gray-400" />
-                        )}
+                        ) : null}
                       </div>
                     </div>
                   </li>

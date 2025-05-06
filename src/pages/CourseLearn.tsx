@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery } from "@tanstack/react-query";
@@ -54,6 +55,7 @@ const CourseLearn = () => {
   const [showExitWarning, setShowExitWarning] = useState(false);
   const [showLockWarning, setShowLockWarning] = useState(false);
   const [lockedLectureId, setLockedLectureId] = useState<string | null>(null);
+  const [lockReason, setLockReason] = useState<string>('');
 
   console.log('CourseLearn component mounted:', {
     courseId,
@@ -246,6 +248,53 @@ const CourseLearn = () => {
     }
   };
 
+  // 检查用户是否可以访问该课时
+  const canAccessLecture = async (lecture, position) => {
+    // 始终允许访问第一个课时
+    if (position && position.position === 0) {
+      return true;
+    }
+
+    // 检查课程是否需要按顺序学习
+    const requiresSequential = course?.sequential_learning === true;
+    
+    if (!requiresSequential) {
+      return true; // 如果不需要按顺序学习，可以访问任何课时
+    }
+
+    // 如果需要按顺序学习，检查前一课时是否已完成
+    if (position && position.position > 0 && position.sectionId) {
+      const section = course?.sections?.find(s => s.id === position.sectionId);
+      if (section && section.lectures) {
+        const prevLecture = section.lectures[position.position - 1];
+        
+        // 检查前一课时的完成状态
+        const isPrevLectureCompleted = prevLecture && completedLectures?.[prevLecture.id];
+        
+        // 检查前一课时是否要求完成作业
+        if (prevLecture && prevLecture.requires_homework_completion) {
+          // 检查作业是否已完成
+          const hasCompletedHomework = await hasCompletedRequiredHomework(
+            user?.id || '', 
+            prevLecture.id
+          );
+          
+          if (!hasCompletedHomework) {
+            setLockReason('前一课时的作业尚未完成，请先完成作业。');
+            return false;
+          }
+        }
+        
+        if (!isPrevLectureCompleted) {
+          setLockReason('需要按顺序学习课程，请先完成前一课时。');
+          return false;
+        }
+      }
+    }
+    
+    return true;
+  };
+
   // Handle lecture selection with learning control
   const handleLectureClick = async (lecture) => {
     console.log('Lecture clicked:', lecture);
@@ -257,20 +306,13 @@ const CourseLearn = () => {
 
     // Find lecture position for sequential learning control
     const position = findLecturePosition(course?.sections, lecture.id);
-    if (lecture.requires_homework_completion && position && position.position > 0) {
-      // Check if previous lecture is completed when homework is required
-      const prevLectureIndex = position.position - 1;
-      const section = course?.sections?.find(s => s.id === position.sectionId);
-      
-      if (section && section.lectures) {
-        const prevLecture = section.lectures[prevLectureIndex];
-        if (prevLecture && !completedLectures?.[prevLecture.id]) {
-          // Previous lecture not completed, show lock warning
-          setLockedLectureId(lecture.id);
-          setShowLockWarning(true);
-          return;
-        }
-      }
+    
+    // 检查用户是否可以访问该课时
+    const canAccess = await canAccessLecture(lecture, position);
+    if (!canAccess) {
+      setLockedLectureId(lecture.id);
+      setShowLockWarning(true);
+      return;
     }
 
     setSelectedLecture({
@@ -441,7 +483,7 @@ const CourseLearn = () => {
           <DialogHeader>
             <DialogTitle>课程锁定</DialogTitle>
             <DialogDescription>
-              你需要先完成前面的章节和作业才能解锁此内容。请按顺序学习课程内容。
+              {lockReason || '你需要先完成前面的章节和作业才能解锁此内容。请按顺序学习课程内容。'}
             </DialogDescription>
           </DialogHeader>
           <div className="flex justify-end gap-2 mt-4">

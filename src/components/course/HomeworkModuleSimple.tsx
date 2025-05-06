@@ -290,17 +290,7 @@ export const HomeworkModuleSimple: React.FC<HomeworkModuleSimpleProps> = ({
         </div>
       )}
       
-      {allSubmitted && onHomeworkSubmit && (
-        <div className="mt-6 text-center">
-          <Button 
-            variant="outline" 
-            className="bg-green-50 text-green-700 hover:bg-green-100"
-            onClick={onHomeworkSubmit}
-          >
-            继续学习下一章节
-          </Button>
-        </div>
-      )}
+      {/* 移除"继续学习下一章节"按钮 */}
     </Card>
   );
 };
