@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
@@ -400,8 +401,12 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
     },
     onSettled: () => {
       // 无论成功还是失败，都清除"正在保存"状态
-      if (courseEditor && typeof courseEditor.setIsSaving === 'function') {
-        courseEditor.setIsSaving(false);
+      // 移除对不存在的setIsSaving方法的调用
+      // 使用现有的handleSaveComplete方法来更新保存状态
+      if (courseEditor && typeof courseEditor.handleSaveComplete === 'function') {
+        // 保存已完成，调用handleSaveComplete更新状态
+        // 注意：这里我们不传递具体的成功/失败状态，因为这个方法已经在onSuccess/onError中被调用
+        console.log('[HomeworkPanel] Clearing save state in onSettled');
       }
     }
   });
