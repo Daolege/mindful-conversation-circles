@@ -81,26 +81,50 @@ export function useToast() {
     dismissAll: () => {
       sonnerToast.dismiss();
       activeToastIds.clear();
-    },
-    // 其他可能需要的 sonner 方法
+    }
   };
 }
 
-// 添加一个全局函数用于在路由变化或页面卸载时清除所有toasts
+// 改进的全局函数用于在路由变化或页面卸载时清除所有toasts
 export const dismissAllToasts = () => {
-  // 先记录当前活跃的toast数量，用于调试
-  console.log('Dismissing all toasts, active count:', activeToastIds.size);
-  
   try {
-    // 立即调用sonner的dismiss方法
+    // 记录当前活跃的toast数量，用于调试
+    console.log('[dismissAllToasts] Dismissing all toasts, active count:', activeToastIds.size);
+    
+    // 先使用sonner的dismiss方法清除所有视觉toast
     sonnerToast.dismiss();
     
-    // 然后清除我们自己跟踪的activeToastIds集合
+    // 再清除内部跟踪的活跃ID集合
     activeToastIds.clear();
     
-    console.log('All toasts dismissed, remaining count:', activeToastIds.size);
+    // 兜底强制清理所有可能挂起的toast
+    for (let i = 0; i < 100; i++) {
+      try {
+        sonnerToast.dismiss(i);
+      } catch (e) {
+        // 忽略可能的错误
+      }
+    }
+    
+    console.log('[dismissAllToasts] All toasts dismissed, remaining count:', activeToastIds.size);
   } catch (error) {
-    console.error('Error dismissing toasts:', error);
+    console.error('[dismissAllToasts] Error dismissing toasts:', error);
+    // 如果出错，尝试更彻底的清理方式
+    try {
+      // 尝试通过直接操作DOM方式清除toast元素(兜底方案，通常不应该这样做)
+      const toastElements = document.querySelectorAll('[role="status"]');
+      toastElements.forEach(el => {
+        try {
+          if (el.parentElement) {
+            el.parentElement.removeChild(el);
+          }
+        } catch (e) {
+          // 忽略错误
+        }
+      });
+    } catch (e) {
+      // 完全忽略
+    }
   }
 };
 

@@ -28,6 +28,7 @@ export const HomeworkModuleSimple: React.FC<HomeworkModuleSimpleProps> = ({
   const [loading, setLoading] = useState(true);
   const [allSubmitted, setAllSubmitted] = useState(false);
   const [toastShown, setToastShown] = useState(false);
+  const [errorCount, setErrorCount] = useState(0); // 添加错误计数器
   
   // Clean up toast notifications when component unmounts
   useEffect(() => {
@@ -63,6 +64,19 @@ export const HomeworkModuleSimple: React.FC<HomeworkModuleSimpleProps> = ({
         return;
       }
       
+      // 改进：对作业进行多重排序，确保即使position有重复也能按创建时间排序
+      const sortedHomeworks = [...homeworkItems].sort((a, b) => {
+        // 首先按position排序
+        if (a.position !== b.position) {
+          return (a.position || 0) - (b.position || 0);
+        }
+        
+        // 如果position相同，按created_at排序
+        const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+        const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+        return dateA - dateB;
+      });
+      
       // Load any existing submissions by this user
       const userSubmissions = await getHomeworkSubmissionsByUserAndLecture(
         user.id, 
@@ -72,14 +86,14 @@ export const HomeworkModuleSimple: React.FC<HomeworkModuleSimpleProps> = ({
       console.log('Loaded user submissions:', userSubmissions.length);
       
       // Set state with the fetched data
-      setHomeworks(homeworkItems);
+      setHomeworks(sortedHomeworks); // 使用排序后的作业列表
       setSubmissions(userSubmissions);
       
       // Check if all required homework is already submitted
-      const requiredHomeworks = homeworkItems.filter(h => h.is_required);
+      const requiredHomeworks = sortedHomeworks.filter(h => h.is_required);
       if (requiredHomeworks.length === 0) {
         // No required homework, all homework is optional
-        setAllSubmitted(userSubmissions.length >= homeworkItems.length);
+        setAllSubmitted(userSubmissions.length >= sortedHomeworks.length);
       } else {
         // Check if all required homework is submitted
         const allRequiredSubmitted = requiredHomeworks.every(hw => 
@@ -87,12 +101,25 @@ export const HomeworkModuleSimple: React.FC<HomeworkModuleSimpleProps> = ({
         );
         setAllSubmitted(allRequiredSubmitted);
       }
+      
+      // 重置错误计数器
+      setErrorCount(0);
     } catch (error) {
       console.error('Error loading homework data:', error);
-      // Only show toast once to avoid spam
+      
+      // 增加错误计数
+      setErrorCount(prev => prev + 1);
+      
+      // 只有在第一次错误时显示toast
       if (!toastShown) {
         toast.error('加载作业数据失败');
         setToastShown(true);
+      }
+      
+      // 如果多次尝试失败，记录更详细的错误信息以帮助调试
+      if (errorCount >= 2) {
+        console.error('Multiple attempts to load homework failed:', error);
+        console.error('Context:', { courseId, lectureId, userId: user?.id });
       }
     } finally {
       setLoading(false);
@@ -136,6 +163,16 @@ export const HomeworkModuleSimple: React.FC<HomeworkModuleSimpleProps> = ({
   const isHomeworkSubmitted = (homeworkId: string) => {
     return submissions.some(sub => sub.homework_id === homeworkId);
   };
+  
+  // 改进：增加调试检查，确认是否所有作业都被正确显示
+  useEffect(() => {
+    if (homeworks.length > 0) {
+      console.log('[HomeworkModuleSimple] 作业加载状态:', {
+        total: homeworks.length,
+        positions: homeworks.map(hw => ({ id: hw.id, position: hw.position }))
+      });
+    }
+  }, [homeworks]);
   
   // If there are no homework items, don't show anything
   if (homeworks.length === 0 && !loading) {
@@ -187,7 +224,7 @@ export const HomeworkModuleSimple: React.FC<HomeworkModuleSimpleProps> = ({
                 lectureId={lectureId}
                 isSubmitted={isHomeworkSubmitted(homework.id)}
                 onSubmitted={handleSubmissionComplete}
-                position={index + 1}
+                position={index + 1} // 使用数组索引加1作为前端显示的位置
               />
             );
           })}
