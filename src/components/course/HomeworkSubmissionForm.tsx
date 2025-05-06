@@ -151,34 +151,33 @@ export const HomeworkSubmissionForm: React.FC<HomeworkSubmissionFormProps> = ({
         <div className="grid grid-cols-1 gap-2">
           {homework.options.choices.map((choice: string, index: number) => (
             <Card 
-              key={index} 
+              key={`${homework.id}-${index}-${choice.substring(0, 10)}`}
               className={`
                 border transition-all duration-300 hover:bg-gray-50 cursor-pointer p-3
                 ${selectedChoices.includes(choice) ? 'border-gray-400 bg-gray-50 shadow-md' : 'border-gray-200'}
               `}
               onClick={(e) => {
                 e.preventDefault(); // Prevent the default form behavior that causes page jumps
-                e.stopPropagation(); // Prevent event bubbling
-                handleChoiceChange(choice);
+                handleChoiceChange(choice); // Directly update the selection state
               }}
+              data-choice-index={index}
+              data-choice-text={choice.substring(0, 20)}
             >
-              <div 
-                className="flex items-center space-x-2" 
-                onClick={(e) => {
-                  // This prevents the event from bubbling up to the Card onClick handler
-                  // and causing duplicate state updates that lead to infinite loops
-                  e.stopPropagation();
-                }}
-              >
+              <div className="flex items-center space-x-2">
                 <Checkbox 
-                  id={`choice-${index}`}
+                  id={`choice-${homework.id}-${index}`}
                   checked={selectedChoices.includes(choice)}
                   onCheckedChange={() => handleChoiceChange(choice)}
                   className="h-4 w-4"
+                  onClick={(e) => {
+                    // This prevents the event from triggering the Card's onClick handler
+                    e.stopPropagation();
+                  }}
                 />
                 <Label 
-                  htmlFor={`choice-${index}`}
+                  htmlFor={`choice-${homework.id}-${index}`}
                   className="text-sm cursor-pointer flex-1"
+                  onClick={(e) => e.stopPropagation()}
                 >
                   {choice}
                 </Label>
