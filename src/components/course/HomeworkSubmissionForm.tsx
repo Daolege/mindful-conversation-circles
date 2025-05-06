@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, memo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/authHooks';
@@ -52,6 +52,7 @@ export const HomeworkSubmissionForm: React.FC<HomeworkSubmissionFormProps> = ({
   
   // Memoize the handleChoiceChange function to prevent unnecessary re-renders
   const handleChoiceChange = useCallback((choice: string) => {
+    console.log(`Choice changed: ${choice}, current selection:`, selectedChoices);
     setSelectedChoices(prev => {
       if (homework.type === 'single_choice') {
         return [choice]; // For single choice, replace the array with just this choice
@@ -62,13 +63,13 @@ export const HomeworkSubmissionForm: React.FC<HomeworkSubmissionFormProps> = ({
           : [...prev, choice];
       }
     });
-  }, [homework.type]);
+  }, [homework.type, selectedChoices]);
   
   const handleFileChange = (file: File | null) => {
     setSelectedFile(file);
   };
   
-  const handleRichTextChange = (content) => {
+  const handleRichTextChange = (content: string) => {
     setAnswer(content);
   };
   
@@ -136,7 +137,7 @@ export const HomeworkSubmissionForm: React.FC<HomeworkSubmissionFormProps> = ({
   };
   
   // Optimized render function for choice options to prevent excessive re-renders
-  const renderChoiceOptions = () => {
+  const renderChoiceOptions = useCallback(() => {
     if (!homework.options || !homework.options.choices || !Array.isArray(homework.options.choices)) {
       return null;
     }
@@ -152,7 +153,7 @@ export const HomeworkSubmissionForm: React.FC<HomeworkSubmissionFormProps> = ({
         
         <div className="grid grid-cols-1 gap-2">
           {homework.options.choices.map((choice: string, index: number) => {
-            // Create a stable unique ID for this choice
+            // Create a stable unique ID for this choice using homework ID and index
             const choiceId = `choice-${homework.id}-${index}`;
             const isSelected = selectedChoices.includes(choice);
             
@@ -164,31 +165,40 @@ export const HomeworkSubmissionForm: React.FC<HomeworkSubmissionFormProps> = ({
                   ${isSelected ? 'border-gray-400 bg-gray-50 shadow-md' : 'border-gray-200'}
                 `}
                 onClick={(e) => {
-                  // Prevent default form submission
+                  // Prevent default form submission and propagation
                   e.preventDefault();
+                  e.stopPropagation();
                   
-                  // Directly update the selection state
+                  // Update the selection state
                   handleChoiceChange(choice);
                 }}
                 data-choice-index={index}
                 data-choice-text={choice.substring(0, 20)}
+                data-selected={isSelected ? 'true' : 'false'}
               >
                 <div className="flex items-center space-x-2">
                   <Checkbox 
                     id={choiceId}
                     checked={isSelected}
-                    // Use onCheckedChange instead of onClick for controlled checkbox
-                    onCheckedChange={() => handleChoiceChange(choice)}
+                    onCheckedChange={() => {
+                      // Handle the checkbox state change
+                      handleChoiceChange(choice);
+                    }}
                     className="h-4 w-4"
                     onClick={(e) => {
-                      // Stop propagation to prevent the Card's onClick from firing
+                      // Stop propagation to prevent the Card's onClick from also firing
                       e.stopPropagation();
                     }}
                   />
                   <Label 
                     htmlFor={choiceId}
                     className="text-sm cursor-pointer flex-1"
-                    onClick={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                      // Stop propagation when clicking directly on the label
+                      e.stopPropagation();
+                      // Toggle this specific choice when clicking on the label
+                      handleChoiceChange(choice);
+                    }}
                   >
                     {choice}
                   </Label>
@@ -199,10 +209,48 @@ export const HomeworkSubmissionForm: React.FC<HomeworkSubmissionFormProps> = ({
         </div>
       </div>
     );
-  };
+  }, [homework.id, homework.options, homework.type, selectedChoices, handleChoiceChange]);
+  
+  // Memoize the form content for better performance
+  const formContent = useCallback(() => {
+    if ((homework.type === 'single_choice' || homework.type === 'multiple_choice')) {
+      return renderChoiceOptions();
+    } else if (homework.type === 'file') {
+      return (
+        <div className="space-y-3">
+          <Label>上传文件</Label>
+          <FileInput onChange={handleFileChange} />
+          <p className="text-xs text-gray-500">支持常见文档和图片格式</p>
+        </div>
+      );
+    } else {
+      return (
+        <div className="space-y-3">
+          <Label htmlFor="answer">你的答案</Label>
+          {/* 使用富文本编辑器替代普通文本框 */}
+          <div className="min-h-[150px] border rounded-md overflow-hidden">
+            <RichTextEditor 
+              initialContent={answer}
+              onChange={handleRichTextChange}
+              placeholder="请输入你的答案..."
+              className="min-h-[150px]"
+            />
+          </div>
+        </div>
+      );
+    }
+  }, [homework.type, answer, renderChoiceOptions]);
   
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 p-4 relative">
+    <form 
+      onSubmit={(e) => {
+        // Ensure the form submission is properly handled
+        handleSubmit(e);
+      }} 
+      className="space-y-4 p-4 relative"
+      data-homework-type={homework.type}
+      data-homework-id={homework.id}
+    >
       {/* 内容区域，添加底部内边距为按钮栏腾出空间 */}
       <div className="pb-16 overflow-y-auto max-h-[60vh]">
         {/* Display homework description if available */}
@@ -214,28 +262,7 @@ export const HomeworkSubmissionForm: React.FC<HomeworkSubmissionFormProps> = ({
         )}
         
         {/* Handle different homework types */}
-        {(homework.type === 'single_choice' || homework.type === 'multiple_choice') ? (
-          renderChoiceOptions()
-        ) : homework.type === 'file' ? (
-          <div className="space-y-3">
-            <Label>上传文件</Label>
-            <FileInput onChange={handleFileChange} />
-            <p className="text-xs text-gray-500">支持常见文档和图片格式</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            <Label htmlFor="answer">你的答案</Label>
-            {/* 使用富文本编辑器替代普通文本框 */}
-            <div className="min-h-[150px] border rounded-md overflow-hidden">
-              <RichTextEditor 
-                initialContent={answer}
-                onChange={handleRichTextChange}
-                placeholder="请输入你的答案..."
-                className="min-h-[150px]"
-              />
-            </div>
-          </div>
-        )}
+        {formContent()}
       </div>
       
       {/* 固定底部按钮栏，确保它始终在底部且不会被内容遮挡 */}
@@ -245,7 +272,10 @@ export const HomeworkSubmissionForm: React.FC<HomeworkSubmissionFormProps> = ({
             type="button"
             variant="outline"
             size="sm"
-            onClick={onCancel}
+            onClick={(e) => {
+              e.preventDefault(); // Prevent default button behavior
+              if (onCancel) onCancel();
+            }}
             disabled={submitting}
             className="text-gray-700 border-gray-300"
           >

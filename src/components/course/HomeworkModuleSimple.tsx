@@ -296,4 +296,4 @@ export const HomeworkModuleSimple: React.FC<HomeworkModuleSimpleProps> = ({
       )}
     </Card>
   );
-});
+};
