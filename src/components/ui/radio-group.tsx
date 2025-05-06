@@ -25,6 +25,7 @@ const RadioGroupItem = React.forwardRef<
 >(({ className, ...props }, ref) => {
   // Create a click handler that prevents event bubbling
   const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
   };
 

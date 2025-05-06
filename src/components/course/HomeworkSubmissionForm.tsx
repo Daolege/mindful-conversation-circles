@@ -8,10 +8,11 @@ import { toast } from 'sonner';
 import { Label } from '@/components/ui/label';
 import { FileInput } from '@/components/course/FileInput';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, Save, X } from 'lucide-react';
+import { Loader2, Save, X, AlertCircle } from 'lucide-react';
 import { dismissAllToasts } from '@/hooks/use-toast';
 import { Card } from '@/components/ui/card';
 import RichTextEditor from '@/components/admin/course/outline/lectures/RichTextEditor';
+import { useTranslations } from '@/hooks/useTranslations';
 
 interface HomeworkSubmissionFormProps {
   homework: {
@@ -37,11 +38,13 @@ export const HomeworkSubmissionForm: React.FC<HomeworkSubmissionFormProps> = ({
   onCancel
 }) => {
   const { user } = useAuth();
+  const { t } = useTranslations();
   const [answer, setAnswer] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [fileUrl, setFileUrl] = useState<string | null>(null);
   const [selectedChoices, setSelectedChoices] = useState<string[]>([]);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   
   // Clear toasts when component unmounts
   useEffect(() => {
@@ -70,17 +73,54 @@ export const HomeworkSubmissionForm: React.FC<HomeworkSubmissionFormProps> = ({
   
   const handleFileChange = (file: File | null) => {
     setSelectedFile(file);
+    setErrorMessage(null); // Clear any errors when the user makes changes
   };
   
   const handleRichTextChange = (content: string) => {
     setAnswer(content);
+    setErrorMessage(null); // Clear any errors when the user makes changes
+  };
+  
+  const validateSubmission = () => {
+    if (!user?.id) {
+      return t('errors:pleaseLoginFirst');
+    }
+    
+    // Validate based on homework type
+    if (homework.type === 'single_choice' && selectedChoices.length === 0) {
+      return '请选择一个选项';
+    }
+    
+    if (homework.type === 'multiple_choice' && selectedChoices.length === 0) {
+      return '请至少选择一个选项';
+    }
+    
+    if (homework.type === 'file' && !selectedFile) {
+      return '请上传一个文件';
+    }
+    
+    if (homework.type === 'text' && !answer.trim()) {
+      return '请输入你的答案';
+    }
+    
+    return null; // No validation errors
   };
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Clear any existing error messages
+    setErrorMessage(null);
+    
+    // Validate the submission
+    const validationError = validateSubmission();
+    if (validationError) {
+      setErrorMessage(validationError);
+      return;
+    }
+    
     if (!user?.id) {
-      toast.error('请先登录');
+      toast.error(t('errors:pleaseLoginFirst'));
       return;
     }
     
@@ -98,7 +138,7 @@ export const HomeworkSubmissionForm: React.FC<HomeworkSubmissionFormProps> = ({
       if (selectedFile) {
         finalFileUrl = await uploadHomeworkFile(selectedFile, user.id, homework.id);
         if (!finalFileUrl) {
-          toast.error('文件上传失败');
+          setErrorMessage('文件上传失败，请重试');
           setSubmitting(false);
           return;
         }
@@ -129,11 +169,11 @@ export const HomeworkSubmissionForm: React.FC<HomeworkSubmissionFormProps> = ({
         toast.success('作业提交成功');
         onSubmitSuccess();
       } else {
-        toast.error('作业提交失败');
+        setErrorMessage('作业提交失败，请重试');
       }
     } catch (error) {
       console.error('Error submitting homework:', error);
-      toast.error('作业提交失败，请重试');
+      setErrorMessage(`提交失败: ${(error as any)?.message || '未知错误'}`);
     } finally {
       setSubmitting(false);
     }
@@ -216,13 +256,21 @@ export const HomeworkSubmissionForm: React.FC<HomeworkSubmissionFormProps> = ({
       data-homework-id={homework.id}
     >
       {/* 内容区域，添加底部内边距为按钮栏腾出空间 */}
-      <div className="pb-16 overflow-y-auto max-h-[60vh]">
+      <div className="pb-16 overflow-y-auto max-h-[70vh]">
         {/* Display homework description if available */}
         {homework.description && (
           <div 
             className="text-sm bg-gray-50 p-4 rounded-md shadow-inner mb-4" 
             dangerouslySetInnerHTML={{ __html: homework.description }}
           />
+        )}
+        
+        {/* Error message display */}
+        {errorMessage && (
+          <div className="flex items-center gap-2 p-3 mb-4 bg-red-50 border border-red-100 rounded-md text-red-700 text-sm">
+            <AlertCircle className="h-4 w-4 flex-shrink-0" />
+            <span>{errorMessage}</span>
+          </div>
         )}
         
         {/* Handle different homework types */}
@@ -238,6 +286,7 @@ export const HomeworkSubmissionForm: React.FC<HomeworkSubmissionFormProps> = ({
             size="sm"
             onClick={(e) => {
               e.preventDefault(); // Prevent default button behavior
+              e.stopPropagation(); // Stop event propagation
               if (onCancel) onCancel();
             }}
             disabled={submitting}

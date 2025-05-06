@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/authHooks';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { HomeworkCard } from './HomeworkCard';
-import { FileCheck, Loader2, BookOpen, AlertTriangle } from 'lucide-react';
+import { Loader2, BookOpen, AlertTriangle } from 'lucide-react';
 import { getHomeworkByLectureId, getHomeworkSubmissionsByUserAndLecture } from '@/lib/services/homeworkService';
 import { Homework, HomeworkSubmission } from '@/lib/types/homework';
 import { toast } from 'sonner';
@@ -239,12 +239,7 @@ export const HomeworkModuleSimple: React.FC<HomeworkModuleSimpleProps> = ({
           <h2 className="text-xl font-semibold">课程作业</h2>
         </div>
         
-        {allSubmitted && (
-          <div className="flex items-center text-green-600">
-            <FileCheck className="h-5 w-5 mr-2" />
-            <span>已完成所有必修作业</span>
-          </div>
-        )}
+        {/* 删除"已完成所有必修作业"提示 */}
       </div>
       
       {loading ? (

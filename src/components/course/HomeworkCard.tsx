@@ -35,6 +35,7 @@ export const HomeworkCard = memo(({
 }: HomeworkCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const [hasOverflow, setHasOverflow] = useState(false);
 
   // Ensure courseId is always a number
   const numericCourseId = typeof courseId === 'string' ? parseInt(courseId, 10) : courseId;
@@ -79,6 +80,17 @@ export const HomeworkCard = memo(({
     e.stopPropagation();
   }, []);
 
+  // Check for content overflow and update state
+  const handleContentRef = useCallback((node: HTMLDivElement | null) => {
+    if (node) {
+      // We need a small delay to ensure the content is rendered
+      setTimeout(() => {
+        const hasVerticalScroll = node.scrollHeight > node.clientHeight;
+        setHasOverflow(hasVerticalScroll);
+      }, 50);
+    }
+  }, []);
+
   return (
     <Card 
       className={`w-full border border-gray-200 shadow-sm transition-all duration-300 ${
@@ -96,11 +108,11 @@ export const HomeworkCard = memo(({
         } p-4`}
         onClick={handleHeaderClick}
       >
-        <div className="flex items-center gap-3">
-          <div className="font-medium">{homework.title}</div>
+        <div className="flex items-center gap-3 flex-1 mr-4">
+          <div className="font-medium truncate">{homework.title}</div>
         </div>
-        <div className="flex items-center gap-3">
-          <Badge variant={isSubmitted ? "outline" : "outline"} className={`text-xs ${isSubmitted ? "bg-gray-100 text-gray-700" : "border border-gray-300 text-gray-500"}`}>
+        <div className="flex items-center gap-3 flex-shrink-0">
+          <Badge variant={isSubmitted ? "outline" : "outline"} className={`text-xs min-w-[60px] text-center ${isSubmitted ? "bg-gray-100 text-gray-700" : "border border-gray-300 text-gray-500"}`}>
             {isSubmitted ? "已提交" : "未提交"}
           </Badge>
           {!isSubmitted && (
@@ -113,12 +125,15 @@ export const HomeworkCard = memo(({
       
       <CardContent 
         className={`overflow-hidden transition-all duration-500 ease-in-out ${
-          isExpanded && !isSubmitted ? 'max-h-[2000px] opacity-100 pb-4' : 'max-h-0 opacity-0 p-0'
+          isExpanded && !isSubmitted ? 
+            `max-h-[${hasOverflow ? '4000' : '2000'}px] opacity-100 pb-4` : 
+            'max-h-0 opacity-0 p-0'
         }`}
         onClick={handleContentClick}
+        ref={handleContentRef}
       >
         {isExpanded && !isSubmitted && (
-          <div className="bg-white rounded-md border border-gray-100 shadow-sm">
+          <div className="bg-white rounded-md border border-gray-100 shadow-sm max-h-[80vh] overflow-auto">
             <HomeworkSubmissionForm 
               homework={homework}
               courseId={numericCourseId}
