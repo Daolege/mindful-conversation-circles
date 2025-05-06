@@ -117,4 +117,3 @@ SELECT fix_homework_constraints();
 UPDATE public.homework
 SET position = (ROW_NUMBER() OVER (ORDER BY created_at))
 WHERE lecture_id = 'e4e40b6a-99aa-494e-8da1-e86c1141b851';
-

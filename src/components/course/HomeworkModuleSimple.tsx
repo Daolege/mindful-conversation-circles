@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/authHooks';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { HomeworkCard } from './HomeworkCard';
-import { FileCheck, Loader2, BookOpen } from 'lucide-react';
+import { FileCheck, Loader2, BookOpen, AlertTriangle } from 'lucide-react';
 import { getHomeworkByLectureId, getHomeworkSubmissionsByUserAndLecture } from '@/lib/services/homeworkService';
 import { Homework, HomeworkSubmission } from '@/lib/types/homework';
 import { toast } from 'sonner';
@@ -29,6 +29,7 @@ export const HomeworkModuleSimple: React.FC<HomeworkModuleSimpleProps> = ({
   const [allSubmitted, setAllSubmitted] = useState(false);
   const [toastShown, setToastShown] = useState(false);
   const [errorCount, setErrorCount] = useState(0); // 添加错误计数器
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   
   // Clean up toast notifications when component unmounts
   useEffect(() => {
@@ -37,14 +38,51 @@ export const HomeworkModuleSimple: React.FC<HomeworkModuleSimpleProps> = ({
     };
   }, []);
   
+  // 改进的排序函数，增加多层次的排序依据
+  const sortHomeworks = (homeworkItems: Homework[]): Homework[] => {
+    if (!homeworkItems || homeworkItems.length === 0) return [];
+    
+    console.log('[HomeworkModuleSimple] 对作业进行多维度排序, 原始项目:', homeworkItems.length);
+    
+    // 检查是否所有作业都有有效的position
+    const hasValidPositions = homeworkItems.every(hw => 
+      typeof hw.position === 'number' && hw.position > 0
+    );
+    
+    return [...homeworkItems].sort((a, b) => {
+      // 1. 首先按position排序（如果有效）
+      if (hasValidPositions) {
+        const posA = typeof a.position === 'number' ? a.position : Number.MAX_SAFE_INTEGER;
+        const posB = typeof b.position === 'number' ? b.position : Number.MAX_SAFE_INTEGER;
+        if (posA !== posB) return posA - posB;
+      }
+      
+      // 2. 如果position相同或无效，按创建时间排序
+      const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+      const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+      if (dateA !== dateB) return dateA - dateB;
+      
+      // 3. 如果创建时间也相同，按ID排序确保稳定性
+      return (a.id || '').localeCompare(b.id || '');
+    });
+  };
+  
   const loadHomeworkData = async () => {
     try {
       setLoading(true);
+      setErrorMessage(null);
       
       // Check if we have a user, lecture and course ID
       if (!user?.id || !lectureId || !courseId) {
+        const missingParams = [];
+        if (!user?.id) missingParams.push('用户ID');
+        if (!lectureId) missingParams.push('课时ID');
+        if (!courseId) missingParams.push('课程ID');
+        
+        console.error(`[HomeworkModuleSimple] Missing params: ${missingParams.join(', ')}`);
         setHomeworks([]);
         setSubmissions([]);
+        setErrorMessage(`缺少必要参数: ${missingParams.join(', ')}`);
         setLoading(false);
         return;
       }
@@ -52,30 +90,46 @@ export const HomeworkModuleSimple: React.FC<HomeworkModuleSimpleProps> = ({
       // Ensure courseId is a number for consistency
       const numericCourseId = typeof courseId === 'string' ? parseInt(courseId, 10) : courseId;
       
+      // Detailed logging of parameters
+      console.log('[HomeworkModuleSimple] 加载作业数据', { 
+        userId: user.id, 
+        lectureId, 
+        courseId: numericCourseId,
+        courseIdType: typeof numericCourseId
+      });
+      
       // Load homework assignments for this lecture
       const homeworkItems = await getHomeworkByLectureId(lectureId, numericCourseId);
       console.log('Loaded homework items:', homeworkItems.length);
       
-      // If there are no homework items, exit early
-      if (homeworkItems.length === 0) {
-        setHomeworks([]);
-        setSubmissions([]);
-        setLoading(false);
-        return;
+      // 记录作业项的位置信息，帮助调试
+      if (homeworkItems.length > 0) {
+        console.log('[HomeworkModuleSimple] 获取到作业项目的位置数据:', 
+          homeworkItems.map(hw => ({ id: hw.id, position: hw.position, created_at: hw.created_at }))
+        );
       }
       
-      // 改进：对作业进行多重排序，确保即使position有重复也能按创建时间排序
-      const sortedHomeworks = [...homeworkItems].sort((a, b) => {
-        // 首先按position排序
-        if (a.position !== b.position) {
-          return (a.position || 0) - (b.position || 0);
+      // 重新检查position是否有重复或无效值
+      const positionCounts: Record<number, number> = {};
+      let hasPositionIssues = false;
+      
+      homeworkItems.forEach(hw => {
+        if (hw.position !== undefined && hw.position > 0) {
+          positionCounts[hw.position] = (positionCounts[hw.position] || 0) + 1;
+          if (positionCounts[hw.position] > 1) {
+            hasPositionIssues = true;
+          }
+        } else {
+          hasPositionIssues = true;
         }
-        
-        // 如果position相同，按created_at排序
-        const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
-        const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
-        return dateA - dateB;
       });
+      
+      if (hasPositionIssues) {
+        console.warn('[HomeworkModuleSimple] 发现作业position异常，将使用增强排序算法', positionCounts);
+      }
+      
+      // 对作业进行多重排序，确保即使position有问题也能正确显示
+      const sortedHomeworks = sortHomeworks(homeworkItems);
       
       // Load any existing submissions by this user
       const userSubmissions = await getHomeworkSubmissionsByUserAndLecture(
@@ -110,9 +164,12 @@ export const HomeworkModuleSimple: React.FC<HomeworkModuleSimpleProps> = ({
       // 增加错误计数
       setErrorCount(prev => prev + 1);
       
+      // 显示更详细的错误消息
+      setErrorMessage(`加载作业数据失败: ${(error as Error).message || '未知错误'}`);
+      
       // 只有在第一次错误时显示toast
       if (!toastShown) {
-        toast.error('加载作业数据失败');
+        toast.error('加载作业数据失败，请刷新页面重试');
         setToastShown(true);
       }
       
@@ -164,20 +221,10 @@ export const HomeworkModuleSimple: React.FC<HomeworkModuleSimpleProps> = ({
     return submissions.some(sub => sub.homework_id === homeworkId);
   };
   
-  // 改进：增加调试检查，确认是否所有作业都被正确显示
-  useEffect(() => {
-    if (homeworks.length > 0) {
-      console.log('[HomeworkModuleSimple] 作业加载状态:', {
-        total: homeworks.length,
-        positions: homeworks.map(hw => ({ id: hw.id, position: hw.position }))
-      });
-    }
-  }, [homeworks]);
-  
-  // If there are no homework items, don't show anything
-  if (homeworks.length === 0 && !loading) {
-    return null;
-  }
+  const handleRetryLoad = () => {
+    setToastShown(false);
+    loadHomeworkData();
+  };
   
   return (
     <Card className="mt-6 p-6">
@@ -198,6 +245,18 @@ export const HomeworkModuleSimple: React.FC<HomeworkModuleSimpleProps> = ({
       {loading ? (
         <div className="flex justify-center p-8">
           <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
+        </div>
+      ) : errorMessage ? (
+        <div className="bg-red-50 p-6 rounded-md border border-red-200 text-center">
+          <div className="flex justify-center mb-4">
+            <AlertTriangle className="h-8 w-8 text-red-500" />
+          </div>
+          <p className="text-red-800 mb-4">{errorMessage}</p>
+          <Button onClick={handleRetryLoad} variant="outline">重新加载</Button>
+        </div>
+      ) : homeworks.length === 0 ? (
+        <div className="bg-gray-50 p-6 rounded-md border border-gray-200 text-center">
+          <p className="text-gray-600">该课时暂无作业</p>
         </div>
       ) : (
         <div className="space-y-4">

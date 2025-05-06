@@ -230,7 +230,7 @@ export const debugHomeworkTable = async (): Promise<void> => {
   }
 };
 
-// Added missing function: Save Homework
+// Added missing function: Save Homework - with improved position handling
 export interface HomeworkSaveResult {
   data?: Homework | null;
   error?: Error | null;
@@ -253,6 +253,42 @@ export const saveHomework = async (homeworkData: Partial<Homework>): Promise<Hom
       homeworkData.course_id = parseInt(homeworkData.course_id, 10);
     }
     
+    // 确定position值 - 改进的position分配逻辑
+    let position = homeworkData.position;
+    
+    // 如果没有指定position，或者position无效，需要计算一个新值
+    if (position === undefined || position <= 0) {
+      try {
+        // 获取同一讲座下的所有作业
+        const { data: existingHomeworks } = await supabase
+          .from('homework')
+          .select('position')
+          .eq('lecture_id', homeworkData.lecture_id)
+          .order('position', { ascending: false });
+        
+        // 如果已有作业，position设为最大position + 1
+        if (existingHomeworks && existingHomeworks.length > 0) {
+          // 找出有效的最大position
+          const validPositions = existingHomeworks
+            .map(hw => typeof hw.position === 'number' ? hw.position : 0)
+            .filter(pos => pos > 0);
+          
+          position = validPositions.length > 0 
+            ? Math.max(...validPositions) + 1 
+            : 1;
+        } else {
+          // 如果没有现有作业，position设为1
+          position = 1;
+        }
+        
+        console.log(`[saveHomework] 为新作业分配position值: ${position}`);
+      } catch (error) {
+        console.error('[saveHomework] Error calculating position:', error);
+        // 如果计算失败，默认使用1
+        position = 1;
+      }
+    }
+    
     // Prepare a valid homework object with all required fields
     const validHomework: {
       lecture_id: string;
@@ -263,13 +299,14 @@ export const saveHomework = async (homeworkData: Partial<Homework>): Promise<Hom
       description?: string;
       options?: any;
       is_required?: boolean;
-      position?: number;
+      position: number;
       image_url?: string;
     } = {
       lecture_id: homeworkData.lecture_id,
       course_id: homeworkData.course_id,
       title: homeworkData.title || '未命名作业',
-      type: homeworkData.type || 'text'
+      type: homeworkData.type || 'text',
+      position: position
     };
     
     // Add optional fields if they exist
@@ -277,7 +314,6 @@ export const saveHomework = async (homeworkData: Partial<Homework>): Promise<Hom
     if (homeworkData.description) validHomework.description = homeworkData.description;
     if (homeworkData.options) validHomework.options = homeworkData.options;
     if (homeworkData.is_required !== undefined) validHomework.is_required = homeworkData.is_required;
-    if (homeworkData.position !== undefined) validHomework.position = homeworkData.position;
     if (homeworkData.image_url) validHomework.image_url = homeworkData.image_url;
     
     let result;
@@ -312,6 +348,14 @@ export const saveHomework = async (homeworkData: Partial<Homework>): Promise<Hom
         success: false,
         error: result.error
       };
+    }
+    
+    // 保存成功后，尝试执行一次位置修复
+    try {
+      await debugHomeworkTable();
+    } catch (fixError) {
+      console.warn('[saveHomework] Error running homework debug after save:', fixError);
+      // 不影响主流程的返回结果
     }
     
     return {
