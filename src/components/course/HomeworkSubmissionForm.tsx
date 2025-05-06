@@ -13,6 +13,7 @@ import { dismissAllToasts } from '@/hooks/use-toast';
 import { Card } from '@/components/ui/card';
 import RichTextEditor from '@/components/admin/course/outline/lectures/RichTextEditor';
 import { useTranslations } from '@/hooks/useTranslations';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 interface HomeworkSubmissionFormProps {
   homework: {
@@ -70,6 +71,12 @@ export const HomeworkSubmissionForm: React.FC<HomeworkSubmissionFormProps> = ({
       }
     });
   }, [homework.type]); // 仅依赖homework.type，不依赖于selectedChoices
+  
+  // Handle radio selection (for single choice)
+  const handleRadioChange = (value: string) => {
+    setSelectedChoices([value]);
+    setErrorMessage(null); // Clear any errors
+  };
   
   const handleFileChange = (file: File | null) => {
     setSelectedFile(file);
@@ -179,29 +186,23 @@ export const HomeworkSubmissionForm: React.FC<HomeworkSubmissionFormProps> = ({
     }
   };
   
-  // 完全重构的选项渲染函数，改进了事件处理
-  const renderChoiceOptions = useCallback(() => {
+  // 渲染多选题选项
+  const renderMultipleChoiceOptions = () => {
     if (!homework.options || !homework.options.choices || !Array.isArray(homework.options.choices)) {
       return null;
     }
     
     return (
       <div className="space-y-3">
-        {homework.type === 'single_choice' && (
-          <p className="text-sm text-gray-500 mb-2">请选择一个选项：</p>
-        )}
-        {homework.type === 'multiple_choice' && (
-          <p className="text-sm text-gray-500 mb-2">可选择多个选项：</p>
-        )}
+        <p className="text-sm text-gray-500 mb-2">可选择多个选项：</p>
         
         <div className="grid grid-cols-1 gap-2" data-homework-choices="container">
           {homework.options.choices.map((choice: string, index: number) => {
-            // 为此选项创建一个稳定的唯一ID
             const choiceId = `choice-${homework.id}-${index}`;
             const isSelected = selectedChoices.includes(choice);
             
             return (
-              <ChoiceOptionCard 
+              <MultipleChoiceOptionCard 
                 key={`choice-card-${homework.id}-${index}`}
                 choiceId={choiceId}
                 choice={choice}
@@ -214,12 +215,49 @@ export const HomeworkSubmissionForm: React.FC<HomeworkSubmissionFormProps> = ({
         </div>
       </div>
     );
-  }, [homework.id, homework.options, homework.type, selectedChoices, handleChoiceChange]);
+  };
   
-  // 缓存表单内容以提高性能
-  const formContent = useCallback(() => {
-    if ((homework.type === 'single_choice' || homework.type === 'multiple_choice')) {
-      return renderChoiceOptions();
+  // 渲染单选题选项
+  const renderSingleChoiceOptions = () => {
+    if (!homework.options || !homework.options.choices || !Array.isArray(homework.options.choices)) {
+      return null;
+    }
+    
+    return (
+      <div className="space-y-3">
+        <p className="text-sm text-gray-500 mb-2">请选择一个选项：</p>
+        
+        <RadioGroup 
+          value={selectedChoices[0] || ""} 
+          onValueChange={handleRadioChange}
+          className="grid grid-cols-1 gap-2" 
+          data-homework-choices="container"
+        >
+          {homework.options.choices.map((choice: string, index: number) => {
+            const choiceId = `choice-${homework.id}-${index}`;
+            
+            return (
+              <SingleChoiceOptionCard 
+                key={`choice-card-${homework.id}-${index}`}
+                choiceId={choiceId}
+                choice={choice}
+                isSelected={selectedChoices[0] === choice}
+                value={choice}
+                index={index}
+              />
+            );
+          })}
+        </RadioGroup>
+      </div>
+    );
+  };
+  
+  // 根据作业类型渲染不同的表单
+  const renderFormContent = () => {
+    if (homework.type === 'single_choice') {
+      return renderSingleChoiceOptions();
+    } else if (homework.type === 'multiple_choice') {
+      return renderMultipleChoiceOptions();
     } else if (homework.type === 'file') {
       return (
         <div className="space-y-3">
@@ -243,7 +281,7 @@ export const HomeworkSubmissionForm: React.FC<HomeworkSubmissionFormProps> = ({
         </div>
       );
     }
-  }, [homework.type, answer, renderChoiceOptions]);
+  };
   
   return (
     <form 
@@ -274,7 +312,7 @@ export const HomeworkSubmissionForm: React.FC<HomeworkSubmissionFormProps> = ({
         )}
         
         {/* 处理不同的作业类型 */}
-        {formContent()}
+        {renderFormContent()}
       </div>
       
       {/* 固定底部按钮栏，确保它始终在底部且不会被内容遮挡 */}
@@ -320,8 +358,51 @@ export const HomeworkSubmissionForm: React.FC<HomeworkSubmissionFormProps> = ({
   );
 };
 
-// 提取的选项卡片组件，以改进隔离性并防止事件冒泡问题
-const ChoiceOptionCard = memo(({ 
+// Single choice option card component
+const SingleChoiceOptionCard = memo(({ 
+  choiceId, 
+  choice, 
+  isSelected,
+  value,
+  index
+}: { 
+  choiceId: string;
+  choice: string;
+  isSelected: boolean;
+  value: string;
+  index: number;
+}) => {
+  return (
+    <Card 
+      className={`
+        border transition-all duration-300 hover:bg-gray-50 cursor-pointer p-3
+        ${isSelected ? 'border-gray-400 bg-gray-50 shadow-md' : 'border-gray-200'}
+      `}
+      data-choice-index={index}
+      data-choice-text={choice.substring(0, 20)}
+      data-selected={isSelected ? 'true' : 'false'}
+      data-testid={`choice-option-${index}`}
+    >
+      <div className="flex items-center space-x-2">
+        <RadioGroupItem 
+          id={choiceId} 
+          value={value} 
+          className="h-4 w-4" 
+          data-selected={isSelected ? 'true' : 'false'}
+        />
+        <Label 
+          htmlFor={choiceId}
+          className="text-sm cursor-pointer flex-1"
+        >
+          {choice}
+        </Label>
+      </div>
+    </Card>
+  );
+});
+
+// Multiple choice option card component
+const MultipleChoiceOptionCard = memo(({ 
   choiceId, 
   choice, 
   isSelected, 
@@ -390,4 +471,6 @@ const ChoiceOptionCard = memo(({
   );
 });
 
-ChoiceOptionCard.displayName = 'ChoiceOptionCard';
+// Set display names for all components
+SingleChoiceOptionCard.displayName = 'SingleChoiceOptionCard';
+MultipleChoiceOptionCard.displayName = 'MultipleChoiceOptionCard';

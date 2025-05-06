@@ -35,7 +35,6 @@ export const HomeworkCard = memo(({
 }: HomeworkCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
-  const [hasOverflow, setHasOverflow] = useState(false);
 
   // 确保courseId始终为数字类型
   const numericCourseId = typeof courseId === 'string' ? parseInt(courseId, 10) : courseId;
@@ -80,17 +79,6 @@ export const HomeworkCard = memo(({
     e.stopPropagation();
   }, []);
 
-  // 检查内容溢出并更新状态
-  const handleContentRef = useCallback((node: HTMLDivElement | null) => {
-    if (node) {
-      // 需要小延迟以确保内容已渲染
-      setTimeout(() => {
-        const hasVerticalScroll = node.scrollHeight > node.clientHeight;
-        setHasOverflow(hasVerticalScroll);
-      }, 50);
-    }
-  }, []);
-
   return (
     <Card 
       className={`w-full border border-gray-200 shadow-sm transition-all duration-300 ${
@@ -124,13 +112,12 @@ export const HomeworkCard = memo(({
       </CardHeader>
       
       <CardContent 
-        className={`overflow-hidden transition-all duration-500 ease-in-out ${
+        className={`transition-all duration-500 ease-in-out ${
           isExpanded && !isSubmitted ? 
             'opacity-100 pb-4' : 
             'max-h-0 opacity-0 p-0'
         }`}
         onClick={handleContentClick}
-        ref={handleContentRef}
       >
         {isExpanded && !isSubmitted && (
           <div className="bg-white rounded-md border border-gray-100 shadow-sm">
