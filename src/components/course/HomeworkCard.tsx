@@ -1,5 +1,5 @@
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, memo } from 'react';
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { HomeworkSubmissionForm } from "./HomeworkSubmissionForm";
@@ -25,7 +25,7 @@ interface HomeworkCardProps {
   position?: number;
 }
 
-export const HomeworkCard = React.memo(({ 
+export const HomeworkCard = memo(({ 
   homework, 
   courseId, 
   lectureId, 
@@ -39,22 +39,37 @@ export const HomeworkCard = React.memo(({
   // Ensure courseId is always a number
   const numericCourseId = typeof courseId === 'string' ? parseInt(courseId, 10) : courseId;
 
+  // Use useCallback to memoize event handler functions
   const handleHeaderClick = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
+    // Only allow expansion if not already submitted
     if (!isSubmitted) {
+      e.preventDefault();
+      e.stopPropagation();
       setIsExpanded(prev => !prev);
     }
   }, [isSubmitted]);
 
   const handleSubmissionSuccess = useCallback(() => {
     setIsExpanded(false);
-    onSubmitted?.();
+    if (onSubmitted) {
+      // Schedule this for the next tick to avoid state updates during render
+      setTimeout(() => {
+        onSubmitted();
+      }, 0);
+    }
   }, [onSubmitted]);
 
   const handleCancel = useCallback(() => {
     setIsExpanded(false);
+  }, []);
+
+  // Control hover state
+  const handleMouseEnter = useCallback(() => {
+    setIsHovered(true);
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    setIsHovered(false);
   }, []);
 
   return (
@@ -62,8 +77,10 @@ export const HomeworkCard = React.memo(({
       className={`w-full border border-gray-200 shadow-sm transition-all duration-300 ${
         isHovered ? 'shadow-md transform translate-y-[-2px]' : ''
       }`}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      data-homework-id={homework.id}
+      data-position={position}
     >
       <CardHeader 
         className={`flex flex-row items-center justify-between ${

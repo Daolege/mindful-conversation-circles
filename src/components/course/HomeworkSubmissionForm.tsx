@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/authHooks';
@@ -11,7 +11,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2, Save, X } from 'lucide-react';
 import { dismissAllToasts } from '@/hooks/use-toast';
 import { Card } from '@/components/ui/card';
-import RichTextEditor from '@/components/admin/course/outline/lectures/RichTextEditor'; // 修改为默认导入
+import RichTextEditor from '@/components/admin/course/outline/lectures/RichTextEditor';
 
 interface HomeworkSubmissionFormProps {
   homework: {
@@ -50,18 +50,19 @@ export const HomeworkSubmissionForm: React.FC<HomeworkSubmissionFormProps> = ({
     };
   }, []);
   
-  const handleChoiceChange = (choice: string) => {
-    if (homework.type === 'single_choice') {
-      setSelectedChoices([choice]);
-    } else {
-      // For multiple choice, toggle the selection
-      setSelectedChoices(prev => 
-        prev.includes(choice) 
+  // Memoize the handleChoiceChange function to prevent unnecessary re-renders
+  const handleChoiceChange = useCallback((choice: string) => {
+    setSelectedChoices(prev => {
+      if (homework.type === 'single_choice') {
+        return [choice]; // For single choice, replace the array with just this choice
+      } else {
+        // For multiple choice, toggle the selection
+        return prev.includes(choice) 
           ? prev.filter(c => c !== choice) 
-          : [...prev, choice]
-      );
-    }
-  };
+          : [...prev, choice];
+      }
+    });
+  }, [homework.type]);
   
   const handleFileChange = (file: File | null) => {
     setSelectedFile(file);
@@ -134,6 +135,7 @@ export const HomeworkSubmissionForm: React.FC<HomeworkSubmissionFormProps> = ({
     }
   };
   
+  // Optimized render function for choice options to prevent excessive re-renders
   const renderChoiceOptions = () => {
     if (!homework.options || !homework.options.choices || !Array.isArray(homework.options.choices)) {
       return null;
@@ -149,41 +151,51 @@ export const HomeworkSubmissionForm: React.FC<HomeworkSubmissionFormProps> = ({
         )}
         
         <div className="grid grid-cols-1 gap-2">
-          {homework.options.choices.map((choice: string, index: number) => (
-            <Card 
-              key={`${homework.id}-${index}-${choice.substring(0, 10)}`}
-              className={`
-                border transition-all duration-300 hover:bg-gray-50 cursor-pointer p-3
-                ${selectedChoices.includes(choice) ? 'border-gray-400 bg-gray-50 shadow-md' : 'border-gray-200'}
-              `}
-              onClick={(e) => {
-                e.preventDefault(); // Prevent the default form behavior that causes page jumps
-                handleChoiceChange(choice); // Directly update the selection state
-              }}
-              data-choice-index={index}
-              data-choice-text={choice.substring(0, 20)}
-            >
-              <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id={`choice-${homework.id}-${index}`}
-                  checked={selectedChoices.includes(choice)}
-                  onCheckedChange={() => handleChoiceChange(choice)}
-                  className="h-4 w-4"
-                  onClick={(e) => {
-                    // This prevents the event from triggering the Card's onClick handler
-                    e.stopPropagation();
-                  }}
-                />
-                <Label 
-                  htmlFor={`choice-${homework.id}-${index}`}
-                  className="text-sm cursor-pointer flex-1"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {choice}
-                </Label>
-              </div>
-            </Card>
-          ))}
+          {homework.options.choices.map((choice: string, index: number) => {
+            // Create a stable unique ID for this choice
+            const choiceId = `choice-${homework.id}-${index}`;
+            const isSelected = selectedChoices.includes(choice);
+            
+            return (
+              <Card 
+                key={`choice-card-${homework.id}-${index}`}
+                className={`
+                  border transition-all duration-300 hover:bg-gray-50 cursor-pointer p-3
+                  ${isSelected ? 'border-gray-400 bg-gray-50 shadow-md' : 'border-gray-200'}
+                `}
+                onClick={(e) => {
+                  // Prevent default form submission
+                  e.preventDefault();
+                  
+                  // Directly update the selection state
+                  handleChoiceChange(choice);
+                }}
+                data-choice-index={index}
+                data-choice-text={choice.substring(0, 20)}
+              >
+                <div className="flex items-center space-x-2">
+                  <Checkbox 
+                    id={choiceId}
+                    checked={isSelected}
+                    // Use onCheckedChange instead of onClick for controlled checkbox
+                    onCheckedChange={() => handleChoiceChange(choice)}
+                    className="h-4 w-4"
+                    onClick={(e) => {
+                      // Stop propagation to prevent the Card's onClick from firing
+                      e.stopPropagation();
+                    }}
+                  />
+                  <Label 
+                    htmlFor={choiceId}
+                    className="text-sm cursor-pointer flex-1"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {choice}
+                  </Label>
+                </div>
+              </Card>
+            );
+          })}
         </div>
       </div>
     );

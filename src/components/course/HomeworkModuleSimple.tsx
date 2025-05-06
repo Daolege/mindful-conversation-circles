@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/authHooks';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,7 +12,7 @@ import { trackCourseProgress } from '@/lib/services/courseNewLearnService';
 import { dismissAllToasts } from '@/hooks/use-toast';
 
 interface HomeworkModuleSimpleProps {
-  courseId: string | number; // Changed to accept both string and number
+  courseId: string | number;
   lectureId: string;
   onHomeworkSubmit?: () => void;
 }
@@ -28,7 +28,7 @@ export const HomeworkModuleSimple: React.FC<HomeworkModuleSimpleProps> = ({
   const [loading, setLoading] = useState(true);
   const [allSubmitted, setAllSubmitted] = useState(false);
   const [toastShown, setToastShown] = useState(false);
-  const [errorCount, setErrorCount] = useState(0); // 添加错误计数器
+  const [errorCount, setErrorCount] = useState(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   
   // Clean up toast notifications when component unmounts
@@ -39,7 +39,7 @@ export const HomeworkModuleSimple: React.FC<HomeworkModuleSimpleProps> = ({
   }, []);
   
   // 改进的排序函数，增加多层次的排序依据
-  const sortHomeworks = (homeworkItems: Homework[]): Homework[] => {
+  const sortHomeworks = useCallback((homeworkItems: Homework[]): Homework[] => {
     if (!homeworkItems || homeworkItems.length === 0) return [];
     
     console.log('[HomeworkModuleSimple] 对作业进行多维度排序, 原始项目:', homeworkItems.length);
@@ -65,9 +65,9 @@ export const HomeworkModuleSimple: React.FC<HomeworkModuleSimpleProps> = ({
       // 3. 如果创建时间也相同，按ID排序确保稳定性
       return (a.id || '').localeCompare(b.id || '');
     });
-  };
+  }, []);
   
-  const loadHomeworkData = async () => {
+  const loadHomeworkData = useCallback(async () => {
     try {
       setLoading(true);
       setErrorMessage(null);
@@ -181,7 +181,7 @@ export const HomeworkModuleSimple: React.FC<HomeworkModuleSimpleProps> = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [courseId, lectureId, user?.id, sortHomeworks, errorCount, toastShown]);
   
   useEffect(() => {
     // Reset toast state when dependencies change
@@ -195,9 +195,9 @@ export const HomeworkModuleSimple: React.FC<HomeworkModuleSimpleProps> = ({
       // Ensure any lingering toast notifications are dismissed
       dismissAllToasts();
     };
-  }, [courseId, lectureId, user?.id]);
+  }, [courseId, lectureId, user?.id, loadHomeworkData]);
   
-  const handleSubmissionComplete = async () => {
+  const handleSubmissionComplete = useCallback(async () => {
     // Dismiss any existing toasts before showing new ones
     dismissAllToasts();
     
@@ -205,7 +205,12 @@ export const HomeworkModuleSimple: React.FC<HomeworkModuleSimpleProps> = ({
     await loadHomeworkData();
     
     // Call parent callback if provided
-    onHomeworkSubmit?.();
+    if (onHomeworkSubmit) {
+      // Use setTimeout to ensure we don't update state during rendering
+      setTimeout(() => {
+        onHomeworkSubmit();
+      }, 0);
+    }
     
     // Mark course progress as completed if all required homework is submitted
     if (user?.id && allSubmitted) {
@@ -215,16 +220,16 @@ export const HomeworkModuleSimple: React.FC<HomeworkModuleSimpleProps> = ({
         console.error('Error updating course progress:', error);
       }
     }
-  };
+  }, [loadHomeworkData, onHomeworkSubmit, courseId, lectureId, user?.id, allSubmitted]);
   
-  const isHomeworkSubmitted = (homeworkId: string) => {
+  const isHomeworkSubmitted = useCallback((homeworkId: string) => {
     return submissions.some(sub => sub.homework_id === homeworkId);
-  };
+  }, [submissions]);
   
-  const handleRetryLoad = () => {
+  const handleRetryLoad = useCallback(() => {
     setToastShown(false);
     loadHomeworkData();
-  };
+  }, [loadHomeworkData]);
   
   return (
     <Card className="mt-6 p-6">
@@ -277,7 +282,7 @@ export const HomeworkModuleSimple: React.FC<HomeworkModuleSimpleProps> = ({
             
             return (
               <HomeworkCard
-                key={homework.id}
+                key={`homework-${homework.id}-${index}`}
                 homework={hwWithCourseId}
                 courseId={typeof courseId === 'string' ? parseInt(courseId, 10) : courseId}
                 lectureId={lectureId}
@@ -289,8 +294,6 @@ export const HomeworkModuleSimple: React.FC<HomeworkModuleSimpleProps> = ({
           })}
         </div>
       )}
-      
-      {/* 移除"继续学习下一章节"按钮 */}
     </Card>
   );
-};
+});
