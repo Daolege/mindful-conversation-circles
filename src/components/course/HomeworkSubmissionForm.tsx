@@ -180,40 +180,44 @@ export const HomeworkSubmissionForm: React.FC<HomeworkSubmissionFormProps> = ({
   };
   
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 p-4 max-h-[70vh] overflow-y-auto">
-      {/* Display homework description if available */}
-      {homework.description && (
-        <div 
-          className="text-sm bg-gray-50 p-4 rounded-md shadow-inner mb-4" 
-          dangerouslySetInnerHTML={{ __html: homework.description }}
-        />
-      )}
-      
-      {/* Handle different homework types */}
-      {(homework.type === 'single_choice' || homework.type === 'multiple_choice') ? (
-        renderChoiceOptions()
-      ) : homework.type === 'file' ? (
-        <div className="space-y-3">
-          <Label>上传文件</Label>
-          <FileInput onChange={handleFileChange} />
-          <p className="text-xs text-gray-500">支持常见文档和图片格式</p>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          <Label htmlFor="answer">你的答案</Label>
-          {/* 使用富文本编辑器替代普通文本框 */}
-          <div className="min-h-[150px] border rounded-md overflow-hidden">
-            <RichTextEditor 
-              initialContent={answer}
-              onChange={handleRichTextChange}
-              placeholder="请输入你的答案..."
-              className="min-h-[150px]"
-            />
+    <form onSubmit={handleSubmit} className="space-y-4 p-4 relative">
+      {/* 内容区域，添加底部内边距为按钮栏腾出空间 */}
+      <div className="pb-16 overflow-y-auto max-h-[60vh]">
+        {/* Display homework description if available */}
+        {homework.description && (
+          <div 
+            className="text-sm bg-gray-50 p-4 rounded-md shadow-inner mb-4" 
+            dangerouslySetInnerHTML={{ __html: homework.description }}
+          />
+        )}
+        
+        {/* Handle different homework types */}
+        {(homework.type === 'single_choice' || homework.type === 'multiple_choice') ? (
+          renderChoiceOptions()
+        ) : homework.type === 'file' ? (
+          <div className="space-y-3">
+            <Label>上传文件</Label>
+            <FileInput onChange={handleFileChange} />
+            <p className="text-xs text-gray-500">支持常见文档和图片格式</p>
           </div>
-        </div>
-      )}
+        ) : (
+          <div className="space-y-3">
+            <Label htmlFor="answer">你的答案</Label>
+            {/* 使用富文本编辑器替代普通文本框 */}
+            <div className="min-h-[150px] border rounded-md overflow-hidden">
+              <RichTextEditor 
+                initialContent={answer}
+                onChange={handleRichTextChange}
+                placeholder="请输入你的答案..."
+                className="min-h-[150px]"
+              />
+            </div>
+          </div>
+        )}
+      </div>
       
-      <div className="flex justify-end gap-2 mt-6 sticky bottom-0 bg-white py-2 border-t">
+      {/* 固定底部按钮栏，确保它始终在底部且不会被内容遮挡 */}
+      <div className="flex justify-end gap-2 absolute bottom-0 left-0 right-0 bg-white p-4 border-t shadow-sm z-10">
         {onCancel && (
           <Button 
             type="button"

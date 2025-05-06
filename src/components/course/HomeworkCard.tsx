@@ -88,12 +88,11 @@ export const HomeworkCard = React.memo(({
       
       <CardContent 
         className={`overflow-hidden transition-all duration-500 ease-in-out ${
-          isExpanded && !isSubmitted ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'
+          isExpanded && !isSubmitted ? 'max-h-[2000px] opacity-100 pb-4' : 'max-h-0 opacity-0 p-0'
         }`}
-        style={{ padding: isExpanded && !isSubmitted ? '1rem' : '0' }}
       >
         {isExpanded && !isSubmitted && (
-          <div className="space-y-4 bg-white rounded-md border border-gray-100 shadow-sm">
+          <div className="bg-white rounded-md border border-gray-100 shadow-sm">
             <HomeworkSubmissionForm 
               homework={homework}
               courseId={numericCourseId}
