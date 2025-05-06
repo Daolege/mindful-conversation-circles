@@ -24,7 +24,7 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
   const [editingHomework, setEditingHomework] = useState<Homework | null>(null);
   const params = useParams();
   const [effectiveCourseId, setEffectiveCourseId] = useState<number | null>(null);
-  const [saveStatus, setSaveStatus<{success: boolean; error: string | null}>({
+  const [saveStatus, setSaveStatus] = useState<{success: boolean; error: string | null}>({
     success: false,
     error: null
   });
@@ -32,7 +32,7 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
   const queryClient = useQueryClient();
   
   // 使用Map来管理活跃的toast，按操作类型分类
-  const [activeToasts, setActiveToasts<Record<string, string>>({
+  const [activeToasts, setActiveToasts] = useState<Record<string, string>>({
     save: '',
     delete: '',
     refresh: '',
