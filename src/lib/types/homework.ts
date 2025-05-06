@@ -8,7 +8,11 @@ export interface Homework {
   title: string;
   description?: string;
   type: string;
-  options?: Json;
+  options?: Json | {
+    choices?: string[];
+    question?: string;
+    [key: string]: any;
+  };
   is_required?: boolean;
   created_at?: string;
   updated_at?: string;

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -36,7 +37,19 @@ export const HomeworkForm: React.FC<HomeworkFormProps> = ({
       setTitle(initialData.title || '');
       setDescription(initialData.description || '');
       setType(initialData.type || 'single_choice');
-      setOptions(initialData.options as string[] || ['', '', '', '']);
+      
+      // 确保options是一个数组
+      const homeworkOptions = initialData.options as any;
+      if (Array.isArray(homeworkOptions)) {
+        setOptions(homeworkOptions);
+      } else if (homeworkOptions && homeworkOptions.choices && Array.isArray(homeworkOptions.choices)) {
+        // 对于使用{choices: []}格式存储的选项
+        setOptions(homeworkOptions.choices);
+      } else {
+        // 默认设置为空数组
+        setOptions(['', '', '', '']);
+      }
+      
       setImageUrl(initialData.image_url || '');
       setIsRequired(initialData.is_required || false);
       setPosition(initialData.position || 1);
@@ -55,6 +68,19 @@ export const HomeworkForm: React.FC<HomeworkFormProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // 根据类型准备选项数据
+    let formattedOptions;
+    if (type === 'single_choice' || type === 'multiple_choice') {
+      // 只保留非空选项
+      const filteredOptions = options.filter(opt => opt.trim() !== '');
+      formattedOptions = {
+        choices: filteredOptions
+      };
+    } else {
+      // 对于填空题，可以添加其他选项格式
+      formattedOptions = {};
+    }
+
     const data: Homework = {
       id: initialData?.id,
       lecture_id: lectureId,
@@ -62,7 +88,7 @@ export const HomeworkForm: React.FC<HomeworkFormProps> = ({
       title,
       description,
       type,
-      options,
+      options: formattedOptions,
       image_url: imageUrl,
       is_required: isRequired,
       position: position
@@ -117,7 +143,7 @@ export const HomeworkForm: React.FC<HomeworkFormProps> = ({
       </div>
 
       {/* Options for multiple choice questions */}
-      {type === 'single_choice' || type === 'multiple_choice' ? (
+      {(type === 'single_choice' || type === 'multiple_choice') && Array.isArray(options) && (
         <div className="space-y-2">
           <Label>选项</Label>
           {options.map((option, index) => (
@@ -131,7 +157,7 @@ export const HomeworkForm: React.FC<HomeworkFormProps> = ({
             </div>
           ))}
         </div>
-      ) : null}
+      )}
 
       <div>
         <Label htmlFor="imageUrl">图片 URL</Label>
