@@ -158,7 +158,14 @@ export const HomeworkSubmissionForm: React.FC<HomeworkSubmissionFormProps> = ({
               `}
               onClick={() => handleChoiceChange(choice)}
             >
-              <div className="flex items-center space-x-2">
+              <div 
+                className="flex items-center space-x-2" 
+                onClick={(e) => {
+                  // This prevents the event from bubbling up to the Card onClick handler
+                  // and causing duplicate state updates that lead to infinite loops
+                  e.stopPropagation();
+                }}
+              >
                 <Checkbox 
                   id={`choice-${index}`}
                   checked={selectedChoices.includes(choice)}
