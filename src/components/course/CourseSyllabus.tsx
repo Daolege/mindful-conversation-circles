@@ -104,12 +104,12 @@ export function CourseSyllabus({
                 headerContent={
                   <div className="flex justify-between w-full items-center">
                     <span className="font-medium text-gray-900">{section.title}</span>
-                    <Badge variant="outline" className={`${
+                    <Badge variant="outline" className={`flex items-center justify-center min-w-[42px] py-1 ${
                       expandedSections[sectionIndex] 
-                        ? "bg-gray-200 text-gray-800" 
+                        ? "bg-gray-800 text-white" 
                         : "bg-white border-gray-200"
                     }`}>
-                      {section.lectures?.length || 0} {t('courses:lessons')}
+                      {section.lectures?.length || 0}
                     </Badge>
                   </div>
                 }
