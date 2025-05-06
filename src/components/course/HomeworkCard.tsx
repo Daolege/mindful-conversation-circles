@@ -37,12 +37,12 @@ export const HomeworkCard = memo(({
   const [isHovered, setIsHovered] = useState(false);
   const [hasOverflow, setHasOverflow] = useState(false);
 
-  // Ensure courseId is always a number
+  // 确保courseId始终为数字类型
   const numericCourseId = typeof courseId === 'string' ? parseInt(courseId, 10) : courseId;
 
-  // Use useCallback to memoize event handler functions
+  // 使用useCallback缓存事件处理函数
   const handleHeaderClick = useCallback((e: React.MouseEvent) => {
-    // Only expand if not already submitted and prevent event bubbling
+    // 仅在未提交时展开，并防止事件冒泡
     if (!isSubmitted) {
       e.preventDefault();
       e.stopPropagation();
@@ -51,10 +51,10 @@ export const HomeworkCard = memo(({
   }, [isSubmitted]);
 
   const handleSubmissionSuccess = useCallback(() => {
-    // Close the form and notify parent
+    // 关闭表单并通知父组件
     setIsExpanded(false);
     if (onSubmitted) {
-      // Use a timeout to avoid state updates during render
+      // 使用超时避免渲染期间的状态更新
       setTimeout(() => {
         onSubmitted();
       }, 10);
@@ -65,7 +65,7 @@ export const HomeworkCard = memo(({
     setIsExpanded(false);
   }, []);
 
-  // Control hover state
+  // 控制悬停状态
   const handleMouseEnter = useCallback(() => {
     setIsHovered(true);
   }, []);
@@ -74,16 +74,16 @@ export const HomeworkCard = memo(({
     setIsHovered(false);
   }, []);
 
-  // Prevent event bubbling for the content area
+  // 防止内容区域的事件冒泡
   const handleContentClick = useCallback((e: React.MouseEvent) => {
-    // Stop propagation to parent elements
+    // 阻止向父元素传播
     e.stopPropagation();
   }, []);
 
-  // Check for content overflow and update state
+  // 检查内容溢出并更新状态
   const handleContentRef = useCallback((node: HTMLDivElement | null) => {
     if (node) {
-      // We need a small delay to ensure the content is rendered
+      // 需要小延迟以确保内容已渲染
       setTimeout(() => {
         const hasVerticalScroll = node.scrollHeight > node.clientHeight;
         setHasOverflow(hasVerticalScroll);

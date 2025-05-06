@@ -46,39 +46,39 @@ export const HomeworkSubmissionForm: React.FC<HomeworkSubmissionFormProps> = ({
   const [selectedChoices, setSelectedChoices] = useState<string[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   
-  // Clear toasts when component unmounts
+  // 组件卸载时清除toast提示
   useEffect(() => {
     return () => {
       dismissAllToasts();
     };
   }, []);
   
-  // Safe choice change handler using functional updates
+  // 安全的选项变更处理函数，使用函数式更新
   const handleChoiceChange = useCallback((choice: string) => {
-    // Use a functional update to avoid dependency on selectedChoices
+    // 使用函数式更新来避免依赖selectedChoices
     setSelectedChoices(prevChoices => {
       console.log(`Choice changed: ${choice}, current selection:`, prevChoices);
       
       if (homework.type === 'single_choice') {
-        // For single choice, always return an array with just this choice
+        // 对于单选题，总是返回一个只包含此选项的数组
         return [choice];
       } else {
-        // For multiple choice, toggle the selection
+        // 对于多选题，切换选择
         return prevChoices.includes(choice) 
           ? prevChoices.filter(c => c !== choice) 
           : [...prevChoices, choice];
       }
     });
-  }, [homework.type]); // Only depend on homework.type, not on selectedChoices
+  }, [homework.type]); // 仅依赖homework.type，不依赖于selectedChoices
   
   const handleFileChange = (file: File | null) => {
     setSelectedFile(file);
-    setErrorMessage(null); // Clear any errors when the user makes changes
+    setErrorMessage(null); // 用户做出更改时清除任何错误
   };
   
   const handleRichTextChange = (content: string) => {
     setAnswer(content);
-    setErrorMessage(null); // Clear any errors when the user makes changes
+    setErrorMessage(null); // 用户做出更改时清除任何错误
   };
   
   const validateSubmission = () => {
@@ -86,7 +86,7 @@ export const HomeworkSubmissionForm: React.FC<HomeworkSubmissionFormProps> = ({
       return t('errors:pleaseLoginFirst');
     }
     
-    // Validate based on homework type
+    // 根据作业类型验证
     if (homework.type === 'single_choice' && selectedChoices.length === 0) {
       return '请选择一个选项';
     }
@@ -103,16 +103,16 @@ export const HomeworkSubmissionForm: React.FC<HomeworkSubmissionFormProps> = ({
       return '请输入你的答案';
     }
     
-    return null; // No validation errors
+    return null; // 无验证错误
   };
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Clear any existing error messages
+    // 清除任何现有的错误消息
     setErrorMessage(null);
     
-    // Validate the submission
+    // 验证提交
     const validationError = validateSubmission();
     if (validationError) {
       setErrorMessage(validationError);
@@ -125,16 +125,16 @@ export const HomeworkSubmissionForm: React.FC<HomeworkSubmissionFormProps> = ({
     }
     
     try {
-      // Clear any existing toasts
+      // 清除任何现有的toast提示
       dismissAllToasts();
       
       setSubmitting(true);
       
-      // Format the answer based on homework type
+      // 根据作业类型格式化答案
       let finalAnswer = answer;
       let finalFileUrl = fileUrl;
       
-      // Handle file upload if needed
+      // 如果需要，处理文件上传
       if (selectedFile) {
         finalFileUrl = await uploadHomeworkFile(selectedFile, user.id, homework.id);
         if (!finalFileUrl) {
@@ -144,12 +144,12 @@ export const HomeworkSubmissionForm: React.FC<HomeworkSubmissionFormProps> = ({
         }
       }
       
-      // For choice-based homework, use the selected choices as the answer
+      // 对于选择题，使用选定的选项作为答案
       if (homework.type === 'single_choice' || homework.type === 'multiple_choice') {
         finalAnswer = JSON.stringify(selectedChoices);
       }
       
-      // Ensure courseId is a number
+      // 确保courseId为数字
       const numericCourseId = typeof courseId === 'string' ? parseInt(courseId, 10) : courseId;
       
       const submission = {
@@ -179,7 +179,7 @@ export const HomeworkSubmissionForm: React.FC<HomeworkSubmissionFormProps> = ({
     }
   };
   
-  // Completely refactored render function for choice options with improved event handling
+  // 完全重构的选项渲染函数，改进了事件处理
   const renderChoiceOptions = useCallback(() => {
     if (!homework.options || !homework.options.choices || !Array.isArray(homework.options.choices)) {
       return null;
@@ -196,7 +196,7 @@ export const HomeworkSubmissionForm: React.FC<HomeworkSubmissionFormProps> = ({
         
         <div className="grid grid-cols-1 gap-2" data-homework-choices="container">
           {homework.options.choices.map((choice: string, index: number) => {
-            // Create a stable unique ID for this choice
+            // 为此选项创建一个稳定的唯一ID
             const choiceId = `choice-${homework.id}-${index}`;
             const isSelected = selectedChoices.includes(choice);
             
@@ -216,7 +216,7 @@ export const HomeworkSubmissionForm: React.FC<HomeworkSubmissionFormProps> = ({
     );
   }, [homework.id, homework.options, homework.type, selectedChoices, handleChoiceChange]);
   
-  // Memoize the form content for better performance
+  // 缓存表单内容以提高性能
   const formContent = useCallback(() => {
     if ((homework.type === 'single_choice' || homework.type === 'multiple_choice')) {
       return renderChoiceOptions();
@@ -248,16 +248,16 @@ export const HomeworkSubmissionForm: React.FC<HomeworkSubmissionFormProps> = ({
   return (
     <form 
       onSubmit={(e) => {
-        // Ensure the form submission is properly handled
+        // 确保表单提交被正确处理
         handleSubmit(e);
       }} 
       className="space-y-4 p-4 relative"
       data-homework-type={homework.type}
       data-homework-id={homework.id}
     >
-      {/* 内容区域，移除固定高度限制，使其根据内容自动调整高度 */}
+      {/* 内容区域，不设置固定高度，让其根据内容自动调整 */}
       <div className="pb-16">
-        {/* Display homework description if available */}
+        {/* 显示作业描述（如果有） */}
         {homework.description && (
           <div 
             className="text-sm bg-gray-50 p-4 rounded-md shadow-inner mb-4" 
@@ -265,7 +265,7 @@ export const HomeworkSubmissionForm: React.FC<HomeworkSubmissionFormProps> = ({
           />
         )}
         
-        {/* Error message display */}
+        {/* 错误消息显示 */}
         {errorMessage && (
           <div className="flex items-center gap-2 p-3 mb-4 bg-red-50 border border-red-100 rounded-md text-red-700 text-sm">
             <AlertCircle className="h-4 w-4 flex-shrink-0" />
@@ -273,7 +273,7 @@ export const HomeworkSubmissionForm: React.FC<HomeworkSubmissionFormProps> = ({
           </div>
         )}
         
-        {/* Handle different homework types */}
+        {/* 处理不同的作业类型 */}
         {formContent()}
       </div>
       
@@ -285,8 +285,8 @@ export const HomeworkSubmissionForm: React.FC<HomeworkSubmissionFormProps> = ({
             variant="outline"
             size="sm"
             onClick={(e) => {
-              e.preventDefault(); // Prevent default button behavior
-              e.stopPropagation(); // Stop event propagation
+              e.preventDefault(); // 阻止默认按钮行为
+              e.stopPropagation(); // 阻止事件传播
               if (onCancel) onCancel();
             }}
             disabled={submitting}
@@ -320,7 +320,7 @@ export const HomeworkSubmissionForm: React.FC<HomeworkSubmissionFormProps> = ({
   );
 };
 
-// Extracted choice option card component to improve isolation and prevent event bubbling issues
+// 提取的选项卡片组件，以改进隔离性并防止事件冒泡问题
 const ChoiceOptionCard = memo(({ 
   choiceId, 
   choice, 
@@ -334,20 +334,20 @@ const ChoiceOptionCard = memo(({
   onSelect: () => void;
   index: number;
 }) => {
-  // Handle card click with proper event prevention
+  // 处理卡片点击，正确阻止事件
   const handleCardClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     onSelect();
   };
   
-  // Handle checkbox click with proper event prevention
+  // 处理复选框点击，正确阻止事件
   const handleCheckboxClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     onSelect();
   };
   
-  // Handle label click with proper event prevention
+  // 处理标签点击，正确阻止事件
   const handleLabelClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     onSelect();
@@ -370,8 +370,8 @@ const ChoiceOptionCard = memo(({
           id={choiceId}
           checked={isSelected}
           onCheckedChange={() => {
-            // This will only be triggered by keyboard/accessibility interactions
-            // since we're handling click events separately
+            // 这只会被键盘/辅助功能交互触发
+            // 因为我们单独处理点击事件
             onSelect();
           }}
           className="h-4 w-4"
