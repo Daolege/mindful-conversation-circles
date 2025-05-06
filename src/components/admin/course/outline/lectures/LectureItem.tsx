@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -85,8 +84,15 @@ export const LectureItem = ({
     queryFn: async () => {
       try {
         console.log('Fetching homework data for lecture:', id);
-        const result = await getHomeworksByLectureId(id);
-        return result;
+        const result = await getHomeworksByLectureId(id, courseId);
+        
+        // Handle both old and new return formats
+        if (Array.isArray(result)) {
+          return { success: true, data: result, error: null };
+        } else {
+          // Already has the right format
+          return result;
+        }
       } catch (err) {
         console.error('Error fetching homework data:', err);
         return { success: false, data: [], error: err };
@@ -97,9 +103,9 @@ export const LectureItem = ({
   
   // 当homework数据加载完成后，更新hasHomework状态
   useEffect(() => {
-    if (homeworkData && homeworkData.data) {
-      const hasHomeworkItems = Array.isArray(homeworkData.data) && homeworkData.data.length > 0;
-      console.log(`Lecture ${id} has ${homeworkData.data.length} homework items`);
+    if (homeworkData) {
+      const hasHomeworkItems = homeworkData.data && Array.isArray(homeworkData.data) && homeworkData.data.length > 0;
+      console.log(`Lecture ${id} has ${homeworkData.data ? homeworkData.data.length : 0} homework items`);
       setHasHomework(hasHomeworkItems);
     }
   }, [homeworkData, id]);

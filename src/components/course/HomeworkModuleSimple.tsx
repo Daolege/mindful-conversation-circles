@@ -145,6 +145,7 @@ export const HomeworkModuleSimple: React.FC<HomeworkModuleSimpleProps> = ({
             // Ensure course_id is set on the homework object
             const hwWithCourseId = {
               ...homework,
+              id: homework.id, // Explicitly include ID to satisfy the type constraint
               course_id: typeof homework.course_id === 'number' ? homework.course_id : 
                 typeof courseId === 'string' ? parseInt(courseId, 10) : courseId
             };

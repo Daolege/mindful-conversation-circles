@@ -3,19 +3,26 @@ import { Homework, HomeworkSubmission } from '@/lib/types/homework';
 import { toast } from 'sonner';
 
 // Get homework items by lecture ID
-export const getHomeworkByLectureId = async (lectureId: string, courseId: number | string): Promise<Homework[]> => {
+export const getHomeworkByLectureId = async (lectureId: string, courseId?: number | string): Promise<Homework[]> => {
   try {
-    console.log(`[getHomeworkByLectureId] Fetching homework for lecture: ${lectureId}, course: ${courseId}`);
+    console.log(`[getHomeworkByLectureId] Fetching homework for lecture: ${lectureId}, course: ${courseId || 'not specified'}`);
     
-    // Ensure courseId is a number
-    const courseIdNum = typeof courseId === 'string' ? parseInt(courseId, 10) : courseId;
-    
-    const { data, error } = await supabase
+    let query = supabase
       .from('homework')
       .select('*')
-      .eq('lecture_id', lectureId)
-      .eq('course_id', courseIdNum)
-      .order('position', { ascending: true });
+      .eq('lecture_id', lectureId);
+    
+    // Add course_id filter if provided
+    if (courseId !== undefined) {
+      // Ensure courseId is a number
+      const courseIdNum = typeof courseId === 'string' ? parseInt(courseId, 10) : courseId;
+      query = query.eq('course_id', courseIdNum);
+    }
+    
+    // Order by position
+    query = query.order('position', { ascending: true });
+    
+    const { data, error } = await query;
     
     if (error) {
       console.error('Error fetching homework:', error);
@@ -31,34 +38,32 @@ export const getHomeworkByLectureId = async (lectureId: string, courseId: number
 };
 
 // Alias for getHomeworkByLectureId for backward compatibility
-export const getHomeworksByLectureId = getHomeworkByLectureId;
-
-// Get homework submissions by user and lecture
-export const getHomeworkSubmissionsByUserAndLecture = async (
-  userId: string, 
-  lectureId: string,
-  courseId: number | string
-): Promise<HomeworkSubmission[]> => {
+export const getHomeworksByLectureId = async (lectureId: string, courseId?: number | string): Promise<Homework[] | { success: boolean; data: Homework[]; error: any }> => {
   try {
-    // Ensure courseId is a number
-    const courseIdNum = typeof courseId === 'string' ? parseInt(courseId, 10) : courseId;
+    // For backward compatibility, support both return formats
+    const homeworks = await getHomeworkByLectureId(lectureId, courseId);
     
-    const { data, error } = await supabase
-      .from('homework_submissions')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('lecture_id', lectureId)
-      .eq('course_id', courseIdNum);
-    
-    if (error) {
-      console.error('Error fetching homework submissions:', error);
-      throw error;
+    // If the caller expects the old format with success/data/error, provide it
+    if (typeof courseId === 'undefined') {
+      return {
+        success: true,
+        data: homeworks,
+        error: null
+      };
     }
     
-    return data || [];
+    // Otherwise return just the array
+    return homeworks;
   } catch (error) {
-    console.error('Error in getHomeworkSubmissionsByUserAndLecture:', error);
-    toast.error('获取作业提交记录失败');
+    // If error and old format expected
+    if (typeof courseId === 'undefined') {
+      return {
+        success: false,
+        data: [],
+        error
+      };
+    }
+    // Otherwise just return empty array
     return [];
   }
 };
@@ -77,13 +82,33 @@ export const submitHomework = async (submission: Partial<HomeworkSubmission>): P
       submission.course_id = parseInt(submission.course_id, 10);
     }
     
+    // Prepare a valid submission object with all required fields
+    const validSubmission: {
+      user_id: string;
+      homework_id: string;
+      lecture_id: string;
+      course_id: number;
+      answer?: string;
+      file_url?: string;
+      submitted_at?: string;
+    } = {
+      user_id: submission.user_id,
+      homework_id: submission.homework_id,
+      lecture_id: submission.lecture_id,
+      course_id: submission.course_id,
+    };
+    
+    // Add optional fields
+    if (submission.answer) validSubmission.answer = submission.answer;
+    if (submission.file_url) validSubmission.file_url = submission.file_url;
+    
+    // Add submission date
+    validSubmission.submitted_at = new Date().toISOString();
+    
     // Fix: Changed to directly insert an object, not an array
     const { error } = await supabase
       .from('homework_submissions')
-      .insert({
-        ...submission,
-        submitted_at: new Date().toISOString()
-      });
+      .insert(validSubmission);
     
     if (error) {
       console.error('Error submitting homework:', error);
@@ -158,6 +183,36 @@ export const uploadHomeworkFile = async (file: File, userId: string, homeworkId:
   }
 };
 
+// Get homework submissions by user and lecture
+export const getHomeworkSubmissionsByUserAndLecture = async (
+  userId: string, 
+  lectureId: string,
+  courseId: number | string
+): Promise<HomeworkSubmission[]> => {
+  try {
+    // Ensure courseId is a number
+    const courseIdNum = typeof courseId === 'string' ? parseInt(courseId, 10) : courseId;
+    
+    const { data, error } = await supabase
+      .from('homework_submissions')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('lecture_id', lectureId)
+      .eq('course_id', courseIdNum);
+    
+    if (error) {
+      console.error('Error fetching homework submissions:', error);
+      throw error;
+    }
+    
+    return data || [];
+  } catch (error) {
+    console.error('Error in getHomeworkSubmissionsByUserAndLecture:', error);
+    toast.error('获取作业提交记录失败');
+    return [];
+  }
+};
+
 // Added missing function: Debug Homework Table
 export const debugHomeworkTable = async (): Promise<void> => {
   try {
@@ -198,6 +253,33 @@ export const saveHomework = async (homeworkData: Partial<Homework>): Promise<Hom
       homeworkData.course_id = parseInt(homeworkData.course_id, 10);
     }
     
+    // Prepare a valid homework object with all required fields
+    const validHomework: {
+      lecture_id: string;
+      course_id: number;
+      title: string;
+      type: string;
+      id?: string;
+      description?: string;
+      options?: any;
+      is_required?: boolean;
+      position?: number;
+      image_url?: string;
+    } = {
+      lecture_id: homeworkData.lecture_id,
+      course_id: homeworkData.course_id,
+      title: homeworkData.title || '未命名作业',
+      type: homeworkData.type || 'text'
+    };
+    
+    // Add optional fields if they exist
+    if (homeworkData.id) validHomework.id = homeworkData.id;
+    if (homeworkData.description) validHomework.description = homeworkData.description;
+    if (homeworkData.options) validHomework.options = homeworkData.options;
+    if (homeworkData.is_required !== undefined) validHomework.is_required = homeworkData.is_required;
+    if (homeworkData.position !== undefined) validHomework.position = homeworkData.position;
+    if (homeworkData.image_url) validHomework.image_url = homeworkData.image_url;
+    
     let result;
     
     // If there's an ID, update existing homework
@@ -205,7 +287,7 @@ export const saveHomework = async (homeworkData: Partial<Homework>): Promise<Hom
       result = await supabase
         .from('homework')
         .update({
-          ...homeworkData,
+          ...validHomework,
           updated_at: new Date().toISOString()
         })
         .eq('id', homeworkData.id)
@@ -216,7 +298,7 @@ export const saveHomework = async (homeworkData: Partial<Homework>): Promise<Hom
       result = await supabase
         .from('homework')
         .insert({
-          ...homeworkData,
+          ...validHomework,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })

@@ -183,17 +183,28 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
       await debugHomeworkTable();
       
       // 获取此课时的作业，按position排序
-      const result = await getHomeworksByLectureId(lectureId);
+      const result = await getHomeworksByLectureId(lectureId, effectiveCourseId);
+      
+      // Handle both old and new return formats
+      let homeworkData: Homework[] = [];
+      let fetchError = null;
+      
+      if (Array.isArray(result)) {
+        homeworkData = result;
+      } else if (result && typeof result === 'object') {
+        homeworkData = result.data || [];
+        fetchError = result.error;
+      }
       
       console.log('[HomeworkPanel] Homework fetch result:', {
-        success: !result.error,
-        count: result.data?.length || 0,
-        error: result.error?.message
+        success: !fetchError,
+        count: homeworkData?.length || 0,
+        error: fetchError?.message
       });
 
       // 返回数据，如果存在position字段则按position排序
-      const sortedData = result.data ? 
-        [...result.data].sort((a, b) => {
+      const sortedData = homeworkData ? 
+        [...homeworkData].sort((a, b) => {
           // 如果存在position字段，按position排序
           if (a.position !== undefined && b.position !== undefined) {
             return a.position - b.position;

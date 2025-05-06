@@ -8,7 +8,7 @@ import { Homework } from '@/lib/types/homework';
 
 interface HomeworkCardProps {
   homework: {
-    id: string;
+    id: string;  // Make this required to match actual usage
     title: string;
     description?: string | null;
     type: string;  // Changed from specific union type to string
