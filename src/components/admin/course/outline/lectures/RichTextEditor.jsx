@@ -21,8 +21,12 @@ const MenuBar = ({ editor, onImageUpload }) => {
     return null;
   }
 
-  // 处理图片上传
+  // 改进的图片上传处理函数，防止事件冒泡
   const handleImageUpload = async (e) => {
+    // 防止事件冒泡，阻止表单提交
+    e.preventDefault();
+    e.stopPropagation();
+    
     const file = e.target.files?.[0];
     if (!file) return;
     
@@ -36,17 +40,33 @@ const MenuBar = ({ editor, onImageUpload }) => {
       const fileExt = file.name.split('.').pop();
       const filePath = `homework-images/${Date.now()}.${fileExt}`;
       
+      // 显示上传中状态
+      const uploadingMessage = editor.view.dom.parentNode.querySelector('.upload-status') || 
+        (() => {
+          const statusEl = document.createElement('div');
+          statusEl.className = 'upload-status text-sm text-blue-500 p-2';
+          statusEl.textContent = '正在上传图片...';
+          editor.view.dom.parentNode.appendChild(statusEl);
+          return statusEl;
+        })();
+      
       const { error, data } = await supabase.storage
         .from('homework-content')
         .upload(filePath, file);
         
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
       
       // 获取公共URL
       const { data: { publicUrl } } = supabase.storage
         .from('homework-content')
         .getPublicUrl(filePath);
-        
+      
+      // 显示上传成功状态
+      uploadingMessage.textContent = '图片上传成功';
+      uploadingMessage.className = 'upload-status text-sm text-green-500 p-2';
+      
       // 插入图片到编辑器
       editor.chain().focus().setImage({ src: publicUrl }).run();
       
@@ -54,10 +74,38 @@ const MenuBar = ({ editor, onImageUpload }) => {
       if (onImageUpload) {
         onImageUpload(publicUrl);
       }
+      
+      // 2秒后移除状态消息
+      setTimeout(() => {
+        uploadingMessage.remove();
+      }, 2000);
+      
     } catch (error) {
       console.error('图片上传失败:', error);
       alert('图片上传失败: ' + (error.message || '未知错误'));
+      
+      // 显示上传失败状态
+      const uploadingMessage = editor.view.dom.parentNode.querySelector('.upload-status');
+      if (uploadingMessage) {
+        uploadingMessage.textContent = '图片上传失败';
+        uploadingMessage.className = 'upload-status text-sm text-red-500 p-2';
+        
+        // 2秒后移除状态消息
+        setTimeout(() => {
+          uploadingMessage.remove();
+        }, 2000);
+      }
     }
+    
+    // 重置文件输入，允许再次选择同一文件
+    e.target.value = '';
+  };
+
+  // 改进的图片按钮点击处理函数
+  const handleImageButtonClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    document.getElementById('image-upload').click();
   };
 
   // 添加链接
@@ -170,7 +218,7 @@ const MenuBar = ({ editor, onImageUpload }) => {
           size="sm"
           variant="ghost"
           title="上传图片"
-          onClick={() => document.getElementById('image-upload').click()}
+          onClick={handleImageButtonClick} // 使用改进的点击处理函数
         >
           <ImageIcon className="h-4 w-4" />
         </Button>
@@ -180,6 +228,7 @@ const MenuBar = ({ editor, onImageUpload }) => {
           accept="image/*"
           onChange={handleImageUpload}
           className="hidden"
+          onClick={(e) => e.stopPropagation()} // 防止点击事件冒泡
         />
       </div>
     </div>
@@ -253,7 +302,7 @@ const RichTextEditor = ({ value, onChange, placeholder }) => {
     }
   }, [sanitizedValue, editor]);
 
-  // Listen for list commands and log them
+  // 监听列表命令并记录日志
   React.useEffect(() => {
     if (editor) {
       const originalToggleBulletList = editor.commands.toggleBulletList;
@@ -271,12 +320,18 @@ const RichTextEditor = ({ value, onChange, placeholder }) => {
     }
   }, [editor]);
 
+  // 阻止编辑器内部事件冒泡到父级表单
+  const handleEditorClick = (e) => {
+    e.stopPropagation();
+  };
+
   return (
-    <div className="border rounded-md">
+    <div className="border rounded-md" onClick={handleEditorClick}>
       <MenuBar editor={editor} />
       <EditorContent 
         editor={editor} 
         className="p-3 min-h-[150px] prose max-w-none editor-content" 
+        onClick={handleEditorClick}
       />
     </div>
   );

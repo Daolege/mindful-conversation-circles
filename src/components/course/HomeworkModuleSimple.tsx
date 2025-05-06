@@ -38,24 +38,31 @@ export const HomeworkModuleSimple: React.FC<HomeworkModuleSimpleProps> = ({
     }
   };
 
-  // 按位置字段排序作业 - 兼容position字段可能不存在的情况
+  // 改进的作业排序函数，处理所有可能的情况
   const sortHomeworkByPosition = (homeworks: any[]) => {
     return [...homeworks].sort((a, b) => {
       // 检查是否存在position字段
-      const hasPosition = 'position' in a && 'position' in b;
+      const hasPositionA = 'position' in a && a.position !== null && a.position !== undefined;
+      const hasPositionB = 'position' in b && b.position !== null && b.position !== undefined;
       
-      if (hasPosition && a.position !== undefined && b.position !== undefined) {
-        // 如果有位置字段，优先按位置排序
+      if (hasPositionA && hasPositionB) {
+        // 如果两个作业都有position字段，按position排序
         return a.position - b.position;
+      } else if (hasPositionA) {
+        // 只有a有position，a排前面
+        return -1;
+      } else if (hasPositionB) {
+        // 只有b有position，b排前面
+        return 1;
       }
       
-      // 否则按创建时间排序
+      // 如果都没有position，按创建时间排序
       if (a.created_at && b.created_at) {
         return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
       }
       
       // 最后兜底按ID排序
-      return a.id.localeCompare(b.id);
+      return (a.id || '').localeCompare(b.id || '');
     });
   };
 
@@ -124,6 +131,8 @@ export const HomeworkModuleSimple: React.FC<HomeworkModuleSimpleProps> = ({
           // 使用默认的created_at排序
         }
         
+        // 获取作业列表，添加更多的日志和错误处理
+        console.log(`[HomeworkModuleSimple] Fetching homework with orderBy: ${orderByField}`);
         const { data: homeworkData, error: homeworkError } = await supabase
           .from('homework')
           .select('*')
@@ -135,7 +144,7 @@ export const HomeworkModuleSimple: React.FC<HomeworkModuleSimpleProps> = ({
           throw homeworkError;
         }
         
-        console.log('[HomeworkModuleSimple] Homework data:', homeworkData);
+        console.log(`[HomeworkModuleSimple] Homework data (${homeworkData?.length || 0} items):`, homeworkData);
         
         // If no homework exists for this lecture, create a default one
         if (!homeworkData || homeworkData.length === 0) {
@@ -188,8 +197,10 @@ export const HomeworkModuleSimple: React.FC<HomeworkModuleSimpleProps> = ({
             // Don't show error to user for this case, just log it
           }
         } else {
-          // 按位置排序作业，兼容position字段可能不存在的情况
-          setHomeworkList(sortHomeworkByPosition(homeworkData));
+          // 按位置排序作业，使用改进的排序函数处理所有可能的情况
+          const sortedHomework = sortHomeworkByPosition(homeworkData);
+          console.log('[HomeworkModuleSimple] Sorted homework:', sortedHomework);
+          setHomeworkList(sortedHomework);
         }
         
         // Check submission status for each homework
@@ -205,10 +216,13 @@ export const HomeworkModuleSimple: React.FC<HomeworkModuleSimpleProps> = ({
           }
           
           if (submissionsData && submissionsData.length > 0) {
+            console.log('[HomeworkModuleSimple] Submission data:', submissionsData);
+            
             const submitted: Record<string, boolean> = {};
             submissionsData.forEach((submission) => {
               submitted[submission.homework_id] = true;
             });
+            console.log('[HomeworkModuleSimple] Processed submission status:', submitted);
             setSubmittedHomework(submitted);
           }
         }

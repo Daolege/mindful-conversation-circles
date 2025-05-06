@@ -30,49 +30,84 @@ export const HomeworkForm: React.FC<HomeworkFormProps> = ({
   const [type, setType] = useState('single_choice');
   const [options, setOptions] = useState<string[]>(['', '', '', '']);
   const [imageUrl, setImageUrl] = useState('');
+  const [formInitialized, setFormInitialized] = useState(false);
 
+  // 改进的初始化逻辑，正确处理选项数据
   useEffect(() => {
     if (initialData) {
-      setTitle(initialData.title || '');
+      console.log('HomeworkForm - 初始化数据:', initialData);
       
-      // 调试: 检查initialData.description
-      console.log('HomeworkForm - initialData.description:', initialData.description);
-      console.log('HomeworkForm - initialData.description 类型:', typeof initialData.description);
+      // 设置基本字段
+      setTitle(initialData.title || '');
       
       // 确保description是字符串类型
       setDescription(initialData.description || '');
       
+      // 确保type字段一致
       setType(initialData.type || 'single_choice');
       
-      // 确保options是一个数组
-      const homeworkOptions = initialData.options as any;
-      if (Array.isArray(homeworkOptions)) {
-        setOptions(homeworkOptions);
-      } else if (homeworkOptions && homeworkOptions.choices && Array.isArray(homeworkOptions.choices)) {
-        // 对于使用{choices: []}格式存储的选项
-        setOptions(homeworkOptions.choices);
-      } else {
-        // 默认设置为空数组
-        setOptions(['', '', '', '']);
+      // 初始化图片URL
+      setImageUrl(initialData.image_url || '');
+      
+      // 改进的选项处理逻辑，处理多种可能的数据格式
+      let optionsArray = ['', '', '', ''];
+      
+      // 检查options是否存在且不为null
+      if (initialData.options) {
+        console.log('HomeworkForm - 原始选项数据:', initialData.options, 'type:', typeof initialData.options);
+        
+        if (typeof initialData.options === 'object') {
+          // 如果options是对象且包含choices数组
+          if (initialData.options.choices && Array.isArray(initialData.options.choices)) {
+            console.log('HomeworkForm - 使用options.choices数组:', initialData.options.choices);
+            optionsArray = [...initialData.options.choices];
+            
+            // 确保至少有最小数量选项
+            while (optionsArray.length < 2) {
+              optionsArray.push('');
+            }
+          } 
+          // 如果options本身是数组（兼容旧数据）
+          else if (Array.isArray(initialData.options)) {
+            console.log('HomeworkForm - 使用options数组:', initialData.options);
+            optionsArray = [...initialData.options];
+            
+            // 确保至少有最小数量选项
+            while (optionsArray.length < 2) {
+              optionsArray.push('');
+            }
+          }
+        }
       }
       
-      setImageUrl(initialData.image_url || '');
+      // 设置处理好的选项数组
+      setOptions(optionsArray);
+      
+      // 标记表单已初始化
+      setFormInitialized(true);
+      console.log('HomeworkForm - 初始化完成', {type, options: optionsArray});
     } else {
-      // Reset form fields when adding a new homework
+      // 重置表单字段
       setTitle('');
       setDescription('');
       setType('single_choice');
       setOptions(['', '', '', '']);
       setImageUrl('');
+      setFormInitialized(true);
     }
   }, [initialData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // 再次检查description格式
-    console.log('提交前的description值:', description);
-    console.log('提交前的description类型:', typeof description);
+    // 调试日志
+    console.log('提交前的表单数据:', {
+      title,
+      description,
+      type,
+      options,
+      imageUrl
+    });
 
     // 根据类型准备选项数据
     let formattedOptions;
@@ -82,17 +117,24 @@ export const HomeworkForm: React.FC<HomeworkFormProps> = ({
       formattedOptions = {
         choices: filteredOptions
       };
-    } else {
+    } else if (type === 'fill_blank') {
       // 对于填空题，可以添加其他选项格式
+      formattedOptions = {
+        question: options[0] || '请填写你的答案：'
+      };
+    } else {
+      // 默认空选项
       formattedOptions = {};
     }
+
+    console.log('格式化后的选项:', formattedOptions);
 
     const data: Homework = {
       id: initialData?.id,
       lecture_id: lectureId,
       course_id: courseId,
       title,
-      description, // 使用已清理的描述
+      description, 
       type,
       options: formattedOptions,
       image_url: imageUrl,
@@ -101,6 +143,7 @@ export const HomeworkForm: React.FC<HomeworkFormProps> = ({
     };
 
     try {
+      console.log('准备提交的作业数据:', data);
       await onSubmit(data);
     } catch (error) {
       console.error("Form submission failed:", error);
@@ -128,10 +171,19 @@ export const HomeworkForm: React.FC<HomeworkFormProps> = ({
 
   // 监听description变化
   const handleDescriptionChange = (value: string) => {
-    console.log('描述字段已更改:', value);
-    console.log('描述字段类型:', typeof value);
+    console.log('描述内容已更改:', value);
     setDescription(value);
   };
+
+  // 如果表单尚未初始化完成，显示加载状态
+  if (!formInitialized && initialData) {
+    return (
+      <div className="flex justify-center items-center p-4">
+        <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-gray-500"></div>
+        <span className="ml-2">加载作业数据...</span>
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">

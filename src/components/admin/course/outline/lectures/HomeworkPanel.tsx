@@ -411,7 +411,7 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
     }
   });
   
-  // 删除作业
+  // 改进的删除作业功能，确保完全删除
   const { mutateAsync: deleteHomeworkMutation, isPending: isDeleting } = useMutation({
     mutationFn: async (homeworkId: string) => {
       if (!isMounted.current) return null; // 安全检查
@@ -420,6 +420,9 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
       const toastId = showToast('delete', () => toast.loading('正在删除作业...', { duration: 10000 }));
       
       try {
+        console.log('[HomeworkPanel] 删除作业ID:', homeworkId);
+        
+        // 执行删除操作
         const result = await deleteHomework(homeworkId);
         
         if (!isMounted.current) return null; // 检查组件是否已卸载
@@ -430,11 +433,18 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
           throw result.error;
         }
         
+        console.log('[HomeworkPanel] 作业删除成功');
+        
+        // 立即刷新作业列表以获取最新数据
+        await refetchHomework();
+        
         clearToast('delete');
         showToast('delete', () => toast.success('作业删除成功', { duration: 3000 }));
         return true;
       } catch (error: any) {
         if (!isMounted.current) return null; // 检查组件是否已卸载
+        
+        console.error('[HomeworkPanel] 删除作业失败:', error);
         
         clearToast('delete');
         showToast('delete', () => toast.error('删除失败: ' + (error?.message || '未知错误'), { duration: 5000 }));
@@ -444,41 +454,10 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
     onSuccess: () => {
       if (!isMounted.current) return; // 安全检查
       
+      // 重新加载作业列表
       queryClient.invalidateQueries({ queryKey: ['homework', lectureId] });
       // 同时刷新讲座的作业状态查询
       queryClient.invalidateQueries({ queryKey: ['lecture-homework', lectureId] });
-      
-      // 删除成功后，更新其他作业的位置，保持连续
-      if (homeworkList && homeworkList.length > 1) {
-        // 重新获取作业列表并重置位置
-        refetchHomework().then(({ data }) => {
-          if (data && data.length > 0) {
-            // 重新编号
-            const renumbered = data.map((item, index) => ({
-              ...item,
-              position: index + 1
-            }));
-            
-            // 批量更新位置
-            const updates = renumbered.map((item) => ({
-              id: item.id,
-              position: item.position
-            }));
-            
-            // 并行执行所有更新
-            const updatePromises = updates.map(update => 
-              supabase
-                .from('homework')
-                .update({ position: update.position } as any)
-                .eq('id', update.id)
-            );
-            
-            Promise.all(updatePromises).catch(err => {
-              console.error('更新作业位置失败:', err);
-            });
-          }
-        });
-      }
       
       // 3秒后清除成功提示
       setTimeout(() => {
@@ -570,14 +549,30 @@ export const HomeworkPanel = ({ lectureId, courseId }: HomeworkPanelProps) => {
     setEditingHomework(null);
   };
   
-  // 删除作业
+  // 改进的删除作业函数，添加二次确认
   const handleDeleteHomework = async (homeworkId: string) => {
     if (!window.confirm('确定删除此作业？此操作无法撤销。')) {
       return;
     }
     
+    console.log('[HomeworkPanel] 用户确认删除作业：', homeworkId);
+    
     try {
+      // 首先获取要删除的作业在列表中的索引
+      const homeworkIndex = homeworkList.findIndex(hw => hw.id === homeworkId);
+      if (homeworkIndex === -1) {
+        throw new Error('找不到要删除的作业');
+      }
+      
+      // 执行删除操作
       await deleteHomeworkMutation(homeworkId);
+      
+      // 删除后，从本地列表中移除，保持UI响应
+      const updatedList = homeworkList.filter(hw => hw.id !== homeworkId);
+      setHomeworkList(updatedList);
+      
+      console.log('[HomeworkPanel] 作业已从列表中移除，剩余作业:', updatedList.length);
+      
     } catch (error) {
       console.error('[HomeworkPanel] Error deleting homework:', error);
     }

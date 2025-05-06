@@ -90,8 +90,19 @@ export const saveHomework = async (homeworkData: Homework): Promise<HomeworkResu
       course_id: homeworkData.course_id,
       course_id_type: typeof homeworkData.course_id,
       title: homeworkData.title,
-      position: homeworkData.position
+      type: homeworkData.type,
+      position: homeworkData.position,
+      options_type: typeof homeworkData.options
     });
+    
+    // 验证必填字段
+    if (!homeworkData.title) {
+      throw new Error("标题不能为空");
+    }
+    
+    if (!homeworkData.type) {
+      throw new Error("必须选择作业类型");
+    }
     
     // Validate course_id is a number
     if (typeof homeworkData.course_id !== 'number' || isNaN(homeworkData.course_id)) {
@@ -141,6 +152,8 @@ export const saveHomework = async (homeworkData: Homework): Promise<HomeworkResu
       dataToSave.position = homeworkData.position;
     }
     
+    console.log("Prepared data to save:", dataToSave);
+    
     const { id } = homeworkData;
     let result;
     
@@ -181,7 +194,7 @@ export const saveHomework = async (homeworkData: Homework): Promise<HomeworkResu
   }
 };
 
-// Delete homework
+// Delete homework with improved error handling
 export const deleteHomework = async (homeworkId: string): Promise<HomeworkResult> => {
   try {
     console.log("Deleting homework ID:", homeworkId);
@@ -190,17 +203,42 @@ export const deleteHomework = async (homeworkId: string): Promise<HomeworkResult
       throw new Error("Invalid homework ID");
     }
     
-    const { error } = await supabase
+    // 首先获取作业信息，以备后续重新排序使用
+    const { data: homeworkData, error: fetchError } = await supabase
+      .from('homework')
+      .select('lecture_id, position')
+      .eq('id', homeworkId)
+      .single();
+    
+    if (fetchError) {
+      console.error("Error fetching homework before deletion:", fetchError);
+      // 继续尝试删除，即使获取失败
+    }
+    
+    const lectureId = homeworkData?.lecture_id;
+    
+    // 执行删除操作
+    const { error: deleteError } = await supabase
       .from('homework')
       .delete()
       .eq('id', homeworkId);
     
-    if (error) {
-      console.error("Supabase error deleting homework:", error);
-      throw error;
+    if (deleteError) {
+      console.error("Supabase error deleting homework:", deleteError);
+      throw deleteError;
     }
     
     console.log("Homework deleted successfully");
+    
+    // 如果有lecture_id，尝试重新排序其他作业
+    if (lectureId) {
+      try {
+        await fixHomeworkPositions(lectureId);
+      } catch (fixError) {
+        console.warn("Error fixing homework positions after deletion:", fixError);
+        // 不中断流程，删除已经成功
+      }
+    }
     
     return { success: true };
   } catch (error) {
@@ -255,19 +293,25 @@ export const fixHomeworkPositions = async (lectureId: string): Promise<HomeworkR
       return { success: true, data: [] };
     }
     
+    console.log(`Found ${data.length} homework items to reposition`);
+    
     // 重新排序
     const updates = data.map((item, index) => ({
       id: item.id,
       position: index + 1
     }));
     
+    console.log("New position assignments:", updates);
+    
     // 批量更新位置
-    for (const update of updates) {
-      await supabase
+    const updatePromises = updates.map(update => 
+      supabase
         .from('homework')
         .update({ position: update.position })
-        .eq('id', update.id);
-    }
+        .eq('id', update.id)
+    );
+    
+    await Promise.all(updatePromises);
     
     console.log(`Fixed positions for ${updates.length} homework items`);
     
