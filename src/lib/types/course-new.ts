@@ -44,7 +44,7 @@ export interface CourseWithDetails extends Omit<Course, 'language'> {
   status?: 'published' | 'draft' | 'archived';
   thumbnail_url?: string;
   language?: string; // Make language optional in CourseWithDetails
-  sequential_learning?: boolean; // 添加顺序学习控制字段
+  sequential_learning?: boolean; // 顺序学习控制字段
 }
 
 // Add the CourseNew interface for admin components

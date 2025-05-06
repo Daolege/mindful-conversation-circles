@@ -135,7 +135,14 @@ export async function hasCompletedRequiredHomework(
 
 // Create a new homework submission
 export async function createHomeworkSubmission(
-  submission: Partial<HomeworkSubmission>
+  submission: {
+    user_id: string;
+    homework_id: string;
+    lecture_id: string;
+    course_id: number; // 确保这是必填字段
+    answer?: string;
+    file_url?: string;
+  }
 ): Promise<{ data: HomeworkSubmission | null; error: Error | null }> {
   try {
     // 确保提交时间被记录
@@ -143,11 +150,6 @@ export async function createHomeworkSubmission(
       ...submission,
       submitted_at: new Date().toISOString()
     };
-
-    // 确保course_id是必填的
-    if (!submissionWithTimestamp.course_id) {
-      throw new Error("Course ID is required for homework submission");
-    }
 
     const { data, error } = await supabase
       .from('homework_submissions')
@@ -223,14 +225,20 @@ export async function uploadHomeworkFile(
 
 // 添加保存作业的函数
 export async function saveHomework(
-  homeworkData: Partial<Homework>
+  homeworkData: {
+    id?: string;
+    lecture_id: string;
+    course_id: number; // 确保course_id始终作为必填字段
+    title: string;
+    type: string;
+    description?: string;
+    options?: any;
+    is_required?: boolean;
+    position?: number;
+    image_url?: string;
+  }
 ): Promise<{ data: Homework | null; error: Error | null }> {
   try {
-    // 确保必填字段存在
-    if (!homeworkData.lecture_id || !homeworkData.course_id || !homeworkData.title || !homeworkData.type) {
-      throw new Error("Missing required homework fields");
-    }
-    
     // 如果有ID是更新，没有则创建
     if (homeworkData.id) {
       // 更新现有作业
