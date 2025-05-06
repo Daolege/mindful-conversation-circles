@@ -30,7 +30,7 @@ export const HomeworkModule: React.FC<HomeworkModuleProps> = (props) => {
   };
   
   return (
-    <div className="homework-module animate-fade-in">
+    <div className="homework-module animate-fade-in" data-testid="homework-module">
       {/* Always include the database fixer to ensure homework tables are properly set up */}
       <DatabaseFixInitializer />
       

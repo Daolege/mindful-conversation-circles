@@ -41,7 +41,7 @@ export const HomeworkCard = memo(({
 
   // Use useCallback to memoize event handler functions
   const handleHeaderClick = useCallback((e: React.MouseEvent) => {
-    // Only allow expansion if not already submitted
+    // Only expand if not already submitted and prevent event bubbling
     if (!isSubmitted) {
       e.preventDefault();
       e.stopPropagation();
@@ -50,12 +50,13 @@ export const HomeworkCard = memo(({
   }, [isSubmitted]);
 
   const handleSubmissionSuccess = useCallback(() => {
+    // Close the form and notify parent
     setIsExpanded(false);
     if (onSubmitted) {
-      // Schedule this for the next tick to avoid state updates during render
+      // Use a timeout to avoid state updates during render
       setTimeout(() => {
         onSubmitted();
-      }, 0);
+      }, 10);
     }
   }, [onSubmitted]);
 
@@ -72,6 +73,12 @@ export const HomeworkCard = memo(({
     setIsHovered(false);
   }, []);
 
+  // Prevent event bubbling for the content area
+  const handleContentClick = useCallback((e: React.MouseEvent) => {
+    // Stop propagation to parent elements
+    e.stopPropagation();
+  }, []);
+
   return (
     <Card 
       className={`w-full border border-gray-200 shadow-sm transition-all duration-300 ${
@@ -81,6 +88,7 @@ export const HomeworkCard = memo(({
       onMouseLeave={handleMouseLeave}
       data-homework-id={homework.id}
       data-position={position}
+      data-testid={`homework-card-${homework.id}`}
     >
       <CardHeader 
         className={`flex flex-row items-center justify-between ${
@@ -107,6 +115,7 @@ export const HomeworkCard = memo(({
         className={`overflow-hidden transition-all duration-500 ease-in-out ${
           isExpanded && !isSubmitted ? 'max-h-[2000px] opacity-100 pb-4' : 'max-h-0 opacity-0 p-0'
         }`}
+        onClick={handleContentClick}
       >
         {isExpanded && !isSubmitted && (
           <div className="bg-white rounded-md border border-gray-100 shadow-sm">

@@ -50,20 +50,23 @@ export const HomeworkSubmissionForm: React.FC<HomeworkSubmissionFormProps> = ({
     };
   }, []);
   
-  // Memoize the handleChoiceChange function to prevent unnecessary re-renders
+  // Safe choice change handler using functional updates
   const handleChoiceChange = useCallback((choice: string) => {
-    console.log(`Choice changed: ${choice}, current selection:`, selectedChoices);
-    setSelectedChoices(prev => {
+    // Use a functional update to avoid dependency on selectedChoices
+    setSelectedChoices(prevChoices => {
+      console.log(`Choice changed: ${choice}, current selection:`, prevChoices);
+      
       if (homework.type === 'single_choice') {
-        return [choice]; // For single choice, replace the array with just this choice
+        // For single choice, always return an array with just this choice
+        return [choice];
       } else {
         // For multiple choice, toggle the selection
-        return prev.includes(choice) 
-          ? prev.filter(c => c !== choice) 
-          : [...prev, choice];
+        return prevChoices.includes(choice) 
+          ? prevChoices.filter(c => c !== choice) 
+          : [...prevChoices, choice];
       }
     });
-  }, [homework.type, selectedChoices]);
+  }, [homework.type]); // Only depend on homework.type, not on selectedChoices
   
   const handleFileChange = (file: File | null) => {
     setSelectedFile(file);
@@ -136,7 +139,7 @@ export const HomeworkSubmissionForm: React.FC<HomeworkSubmissionFormProps> = ({
     }
   };
   
-  // Optimized render function for choice options to prevent excessive re-renders
+  // Completely refactored render function for choice options with improved event handling
   const renderChoiceOptions = useCallback(() => {
     if (!homework.options || !homework.options.choices || !Array.isArray(homework.options.choices)) {
       return null;
@@ -151,59 +154,21 @@ export const HomeworkSubmissionForm: React.FC<HomeworkSubmissionFormProps> = ({
           <p className="text-sm text-gray-500 mb-2">可选择多个选项：</p>
         )}
         
-        <div className="grid grid-cols-1 gap-2">
+        <div className="grid grid-cols-1 gap-2" data-homework-choices="container">
           {homework.options.choices.map((choice: string, index: number) => {
-            // Create a stable unique ID for this choice using homework ID and index
+            // Create a stable unique ID for this choice
             const choiceId = `choice-${homework.id}-${index}`;
             const isSelected = selectedChoices.includes(choice);
             
             return (
-              <Card 
+              <ChoiceOptionCard 
                 key={`choice-card-${homework.id}-${index}`}
-                className={`
-                  border transition-all duration-300 hover:bg-gray-50 cursor-pointer p-3
-                  ${isSelected ? 'border-gray-400 bg-gray-50 shadow-md' : 'border-gray-200'}
-                `}
-                onClick={(e) => {
-                  // Prevent default form submission and propagation
-                  e.preventDefault();
-                  e.stopPropagation();
-                  
-                  // Update the selection state
-                  handleChoiceChange(choice);
-                }}
-                data-choice-index={index}
-                data-choice-text={choice.substring(0, 20)}
-                data-selected={isSelected ? 'true' : 'false'}
-              >
-                <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id={choiceId}
-                    checked={isSelected}
-                    onCheckedChange={() => {
-                      // Handle the checkbox state change
-                      handleChoiceChange(choice);
-                    }}
-                    className="h-4 w-4"
-                    onClick={(e) => {
-                      // Stop propagation to prevent the Card's onClick from also firing
-                      e.stopPropagation();
-                    }}
-                  />
-                  <Label 
-                    htmlFor={choiceId}
-                    className="text-sm cursor-pointer flex-1"
-                    onClick={(e) => {
-                      // Stop propagation when clicking directly on the label
-                      e.stopPropagation();
-                      // Toggle this specific choice when clicking on the label
-                      handleChoiceChange(choice);
-                    }}
-                  >
-                    {choice}
-                  </Label>
-                </div>
-              </Card>
+                choiceId={choiceId}
+                choice={choice}
+                isSelected={isSelected}
+                onSelect={() => handleChoiceChange(choice)}
+                index={index}
+              />
             );
           })}
         </div>
@@ -227,7 +192,6 @@ export const HomeworkSubmissionForm: React.FC<HomeworkSubmissionFormProps> = ({
       return (
         <div className="space-y-3">
           <Label htmlFor="answer">你的答案</Label>
-          {/* 使用富文本编辑器替代普通文本框 */}
           <div className="min-h-[150px] border rounded-md overflow-hidden">
             <RichTextEditor 
               initialContent={answer}
@@ -306,3 +270,75 @@ export const HomeworkSubmissionForm: React.FC<HomeworkSubmissionFormProps> = ({
     </form>
   );
 };
+
+// Extracted choice option card component to improve isolation and prevent event bubbling issues
+const ChoiceOptionCard = memo(({ 
+  choiceId, 
+  choice, 
+  isSelected, 
+  onSelect,
+  index
+}: { 
+  choiceId: string;
+  choice: string;
+  isSelected: boolean;
+  onSelect: () => void;
+  index: number;
+}) => {
+  // Handle card click with proper event prevention
+  const handleCardClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onSelect();
+  };
+  
+  // Handle checkbox click with proper event prevention
+  const handleCheckboxClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onSelect();
+  };
+  
+  // Handle label click with proper event prevention
+  const handleLabelClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onSelect();
+  };
+
+  return (
+    <Card 
+      className={`
+        border transition-all duration-300 hover:bg-gray-50 cursor-pointer p-3
+        ${isSelected ? 'border-gray-400 bg-gray-50 shadow-md' : 'border-gray-200'}
+      `}
+      onClick={handleCardClick}
+      data-choice-index={index}
+      data-choice-text={choice.substring(0, 20)}
+      data-selected={isSelected ? 'true' : 'false'}
+      data-testid={`choice-option-${index}`}
+    >
+      <div className="flex items-center space-x-2">
+        <Checkbox 
+          id={choiceId}
+          checked={isSelected}
+          onCheckedChange={() => {
+            // This will only be triggered by keyboard/accessibility interactions
+            // since we're handling click events separately
+            onSelect();
+          }}
+          className="h-4 w-4"
+          onClick={handleCheckboxClick}
+          data-selected={isSelected ? 'true' : 'false'}
+        />
+        <Label 
+          htmlFor={choiceId}
+          className="text-sm cursor-pointer flex-1"
+          onClick={handleLabelClick}
+        >
+          {choice}
+        </Label>
+      </div>
+    </Card>
+  );
+});
+
+ChoiceOptionCard.displayName = 'ChoiceOptionCard';
