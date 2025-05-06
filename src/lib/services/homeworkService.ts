@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Homework, HomeworkSubmission } from '@/lib/types/homework';
 
@@ -145,6 +144,14 @@ export async function createHomeworkSubmission(
   }
 ): Promise<{ data: HomeworkSubmission | null; error: Error | null }> {
   try {
+    // 验证必填字段
+    if (!submission.course_id) {
+      return { 
+        data: null, 
+        error: new Error('课程ID是必填字段') 
+      };
+    }
+    
     // 确保提交时间被记录
     const submissionWithTimestamp = {
       ...submission,
@@ -239,6 +246,14 @@ export async function saveHomework(
   }
 ): Promise<{ data: Homework | null; error: Error | null }> {
   try {
+    // 验证必填字段
+    if (!homeworkData.course_id) {
+      return { 
+        data: null, 
+        error: new Error('课程ID是必填字段') 
+      };
+    }
+    
     // 如果有ID是更新，没有则创建
     if (homeworkData.id) {
       // 更新现有作业
