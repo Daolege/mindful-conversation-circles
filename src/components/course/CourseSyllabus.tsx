@@ -54,65 +54,74 @@ export function CourseSyllabus({
 
   // Observe homework section size changes
   useEffect(() => {
-    const homeworkSection = document.querySelector('.homework-module');
-    if (!homeworkSection) return;
-    
-    console.log('Setting up homework section observer');
-    
-    const resizeObserver = new ResizeObserver(entries => {
-      for (const entry of entries) {
-        const homeworkHeight = entry.contentRect.height;
-        console.log('Homework section height changed:', homeworkHeight);
-        
-        // Calculate available space and adjust syllabus height
-        const windowHeight = window.innerHeight;
-        const navbarHeight = 80; // Approximate navbar height
-        const headerHeight = 100; // Approximate header height
-        const otherElementsHeight = 100; // Other UI elements (padding, margins)
-        const videoSectionHeight = Math.min(500, windowHeight * 0.4); // Approximate video height
-        
-        // Calculate remaining space for syllabus
-        const availableHeight = windowHeight - navbarHeight - headerHeight - 
-                              homeworkHeight - otherElementsHeight - videoSectionHeight;
-        
-        // Ensure minimum height and set the container height
-        const newHeight = Math.max(300, availableHeight);
-        console.log('Calculated syllabus height:', newHeight);
-        setContainerHeight(`${newHeight}px`);
-        
-        // After height is updated, check if scroll is needed
-        setTimeout(checkScroll, 100);
+    // Find the homework section after component mounting
+    setTimeout(() => {
+      const homeworkSection = document.querySelector('.homework-module');
+      if (!homeworkSection) {
+        console.log('No homework section found');
+        return;
       }
-    });
-    
-    resizeObserver.observe(homeworkSection);
-    
-    // Add window resize handler
-    const handleResize = () => {
-      // Recalculate heights when window resizes
-      const homeworkHeight = homeworkSection.getBoundingClientRect().height;
-      const windowHeight = window.innerHeight;
-      const navbarHeight = 80;
-      const headerHeight = 100;
-      const otherElementsHeight = 100;
-      const videoSectionHeight = Math.min(500, windowHeight * 0.4);
       
-      const availableHeight = windowHeight - navbarHeight - headerHeight - 
-                            homeworkHeight - otherElementsHeight - videoSectionHeight;
+      console.log('Found homework section:', homeworkSection);
       
-      const newHeight = Math.max(300, availableHeight);
-      setContainerHeight(`${newHeight}px`);
+      const resizeObserver = new ResizeObserver(entries => {
+        for (const entry of entries) {
+          const homeworkHeight = entry.contentRect.height;
+          console.log('Homework section height changed:', homeworkHeight);
+          
+          // Get the right column containing the syllabus
+          const rightColumn = document.querySelector('.lg\\:col-span-1');
+          if (!rightColumn) {
+            console.log('Could not find right column');
+            return;
+          }
+          
+          const rightColumnRect = rightColumn.getBoundingClientRect();
+          console.log('Right column height:', rightColumnRect.height);
+          
+          // If homework module exists, match its height (minus padding/margins)
+          const leftColumn = document.querySelector('.lg\\:col-span-2');
+          if (leftColumn) {
+            const leftColumnRect = leftColumn.getBoundingClientRect();
+            console.log('Left column height:', leftColumnRect.height);
+            
+            // Calculate the available height minus some padding
+            const targetHeight = Math.max(400, homeworkHeight); // Min height 400px
+            
+            // Set the container height to match homework module
+            setContainerHeight(`${targetHeight}px`);
+            console.log('Setting syllabus height to:', targetHeight);
+          }
+          
+          // After height is updated, check if scroll is needed
+          setTimeout(checkScroll, 100);
+        }
+      });
       
-      // Check scroll after resize
-      setTimeout(checkScroll, 100);
-    };
-    
-    window.addEventListener('resize', handleResize);
-    
-    return () => {
-      resizeObserver.disconnect();
-      window.removeEventListener('resize', handleResize);
-    };
+      resizeObserver.observe(homeworkSection);
+      
+      // Add window resize handler
+      const handleResize = () => {
+        // Get updated homework height
+        const updatedHomeworkHeight = homeworkSection.getBoundingClientRect().height;
+        const targetHeight = Math.max(400, updatedHomeworkHeight);
+        setContainerHeight(`${targetHeight}px`);
+        console.log('Window resized, setting height to:', targetHeight);
+        
+        // Check scroll after resize
+        setTimeout(checkScroll, 100);
+      };
+      
+      window.addEventListener('resize', handleResize);
+      
+      // Initial size check
+      handleResize();
+      
+      return () => {
+        resizeObserver.disconnect();
+        window.removeEventListener('resize', handleResize);
+      };
+    }, 500); // Delay slightly to ensure DOM is ready
   }, [checkScroll]);
 
   // Use setTimeout to ensure the DOM has updated after state changes
@@ -134,14 +143,6 @@ export function CourseSyllabus({
       clearTimeout(timer);
     };
   }, [syllabusData, expandedSections, checkScroll]);
-
-  // Set up viewport ref detection
-  const handleViewportRef = useCallback(node => {
-    if (node) {
-      viewportRef.current = node;
-      checkScroll();
-    }
-  }, [checkScroll]);
 
   const toggleSection = (sectionIndex) => {
     setExpandedSections(prev => ({
@@ -190,7 +191,7 @@ export function CourseSyllabus({
           className="h-full w-full rounded-[inherit] pr-3"
           style={{
             maxHeight: containerHeight,
-            minHeight: '200px',
+            minHeight: '400px',
             transition: 'max-height 0.3s ease-in-out',
             overflow: 'auto'
           }}
