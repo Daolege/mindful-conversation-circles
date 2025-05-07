@@ -36,7 +36,7 @@ export const StudentsList: React.FC<StudentsListProps> = ({
         .from('homework_submissions')
         .select(`
           id,
-          content,
+          answer,
           created_at,
           updated_at,
           status,
@@ -45,7 +45,7 @@ export const StudentsList: React.FC<StudentsListProps> = ({
             description
           )
         `)
-        .eq('profile_id', studentId)
+        .eq('user_id', studentId)
         .eq('lecture_id', lectureId)
         .single();
         
@@ -134,8 +134,8 @@ export const StudentsList: React.FC<StudentsListProps> = ({
         <CardContent>
           {data.submission ? (
             <div className="border rounded-lg p-4 bg-gray-50">
-              {data.submission.content ? (
-                <div dangerouslySetInnerHTML={{ __html: data.submission.content }} />
+              {data.submission.answer ? (
+                <div dangerouslySetInnerHTML={{ __html: data.submission.answer }} />
               ) : (
                 <div className="text-gray-500">（提交内容为空）</div>
               )}

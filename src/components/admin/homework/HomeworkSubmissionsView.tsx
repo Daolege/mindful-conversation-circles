@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -338,19 +337,14 @@ export const HomeworkSubmissionsView = () => {
             
             <TabsContent value="not-submitted">
               <NotSubmittedStudentsList 
-                students={studentsWithoutSubmission || []}
-                isLoading={isLoadingNotSubmitted}
-                onViewStudent={handleViewStudent}
-                lectureTitle={selectedLectureId ? lectureMap[selectedLectureId] : undefined}
+                courseId={courseIdNumber}
+                lectureId={selectedLectureId || ''}
               />
             </TabsContent>
             
             <TabsContent value="stats">
               <HomeworkStatsDashboard 
-                stats={homeworkStats as HomeworkStats}
-                isLoading={isLoadingStats}
-                courseTitle={`课程 ${courseId}`}
-                lectureMap={lectureMap}
+                courseId={courseIdNumber}
               />
             </TabsContent>
             
@@ -390,7 +384,7 @@ export const HomeworkSubmissionsView = () => {
           <DialogHeader>
             <DialogTitle>导出作业PDF</DialogTitle>
             <DialogDescription>
-              自定义导出PDF文档的内容和格式
+              自定义导出PDF文档���内容和格式
             </DialogDescription>
           </DialogHeader>
           <PdfExportService

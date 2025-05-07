@@ -28,12 +28,12 @@ export const HomeworkSubmissionsList: React.FC<HomeworkSubmissionsListProps> = (
         .from('homework_submissions')
         .select(`
           id,
-          content,
+          answer,
           created_at,
           updated_at,
           status,
-          profile_id,
-          profiles (
+          user_id,
+          profiles:user_id (
             full_name,
             email
           )
@@ -133,7 +133,7 @@ export const HomeworkSubmissionsList: React.FC<HomeworkSubmissionsListProps> = (
                       <Button 
                         variant="outline" 
                         size="sm"
-                        onClick={() => onSelectStudent(submission.profile_id)}
+                        onClick={() => onSelectStudent(submission.user_id)}
                       >
                         查看作业
                       </Button>

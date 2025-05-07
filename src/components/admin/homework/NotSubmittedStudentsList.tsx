@@ -22,8 +22,8 @@ export const NotSubmittedStudentsList: React.FC<NotSubmittedStudentsListProps> =
       const { data: enrolledStudents, error: enrolledError } = await supabase
         .from('course_enrollments')
         .select(`
-          profile_id,
-          profiles (
+          user_id,
+          profiles:user_id (
             id,
             full_name,
             email
@@ -39,7 +39,7 @@ export const NotSubmittedStudentsList: React.FC<NotSubmittedStudentsListProps> =
       // 2. Get students who submitted homework
       const { data: submittedStudents, error: submittedError } = await supabase
         .from('homework_submissions')
-        .select('profile_id')
+        .select('user_id')
         .eq('lecture_id', lectureId);
         
       if (submittedError) {
@@ -48,10 +48,10 @@ export const NotSubmittedStudentsList: React.FC<NotSubmittedStudentsListProps> =
       }
       
       // 3. Filter out students who have submitted
-      const submittedIds = new Set(submittedStudents.map(s => s.profile_id));
+      const submittedIds = new Set(submittedStudents.map(s => s.user_id));
       
       return enrolledStudents
-        .filter(enrollment => !submittedIds.has(enrollment.profile_id))
+        .filter(enrollment => !submittedIds.has(enrollment.user_id))
         .map(enrollment => enrollment.profiles);
     },
     enabled: !!courseId && !!lectureId,
