@@ -40,7 +40,7 @@ export interface CourseLecture {
   id: string;
   title: string;
   position: number;
-  requires_homework_completion?: boolean; // Added to match the expected type
+  requires_homework_completion?: boolean; // This should be optional to match the imported type
 }
 
 export interface HomeworkStats {
@@ -105,11 +105,30 @@ export const getHomeworkSubmissionsByCourseId = async (courseId: number): Promis
     if (error) throw error;
 
     // Transform data to include user information
-    return (data || []).map(item => ({
-      ...item,
-      user_name: item.profiles?.full_name || '未知用户',
-      user_email: item.profiles?.email || ''
-    }));
+    const submissions = (data || []).map(item => {
+      // Make sure item has the expected properties before spreading
+      return {
+        id: item.id,
+        homework_id: item.homework_id,
+        user_id: item.user_id,
+        lecture_id: item.lecture_id,
+        course_id: item.course_id,
+        content: item.content,
+        answer: item.answer,
+        file_url: item.file_url,
+        status: item.status,
+        score: item.score,
+        feedback: item.feedback,
+        submitted_at: item.submitted_at,
+        created_at: item.created_at,
+        reviewed_at: item.reviewed_at,
+        user_name: item.profiles?.full_name || '未知用户',
+        user_email: item.profiles?.email || '',
+        homework: item.homework
+      };
+    });
+    
+    return submissions;
   } catch (error) {
     console.error('Error fetching homework submissions:', error);
     return [];
@@ -151,11 +170,29 @@ export const getHomeworkSubmissionsByLectureId = async (lectureId: string): Prom
 
     if (error) throw error;
 
-    return (data || []).map(item => ({
-      ...item,
-      user_name: item.profiles?.full_name || '未知用户',
-      user_email: item.profiles?.email || ''
-    }));
+    const submissions = (data || []).map(item => {
+      return {
+        id: item.id,
+        homework_id: item.homework_id,
+        user_id: item.user_id,
+        lecture_id: item.lecture_id,
+        course_id: item.course_id,
+        content: item.content,
+        answer: item.answer,
+        file_url: item.file_url,
+        status: item.status,
+        score: item.score,
+        feedback: item.feedback,
+        submitted_at: item.submitted_at,
+        created_at: item.created_at,
+        reviewed_at: item.reviewed_at,
+        user_name: item.profiles?.full_name || '未知用户',
+        user_email: item.profiles?.email || '',
+        homework: item.homework
+      };
+    });
+    
+    return submissions;
   } catch (error) {
     console.error('Error fetching homework submissions by lecture:', error);
     return [];
@@ -204,11 +241,29 @@ export const getHomeworkSubmissionsByStudentId = async (studentId: string, cours
 
     if (error) throw error;
 
-    return (data || []).map(item => ({
-      ...item,
-      user_name: item.profiles?.full_name || '未知用户',
-      user_email: item.profiles?.email || ''
-    }));
+    const submissions = (data || []).map(item => {
+      return {
+        id: item.id,
+        homework_id: item.homework_id,
+        user_id: item.user_id,
+        lecture_id: item.lecture_id,
+        course_id: item.course_id,
+        content: item.content,
+        answer: item.answer,
+        file_url: item.file_url,
+        status: item.status,
+        score: item.score,
+        feedback: item.feedback,
+        submitted_at: item.submitted_at,
+        created_at: item.created_at,
+        reviewed_at: item.reviewed_at,
+        user_name: item.profiles?.full_name || '未知用户',
+        user_email: item.profiles?.email || '',
+        homework: item.homework
+      };
+    });
+    
+    return submissions;
   } catch (error) {
     console.error('Error fetching student homework submissions:', error);
     return [];
@@ -255,9 +310,23 @@ export const getHomeworkSubmissionById = async (submissionId: string): Promise<H
     }
 
     const result = {
-      ...data,
+      id: data.id,
+      homework_id: data.homework_id,
+      user_id: data.user_id,
+      lecture_id: data.lecture_id,
+      course_id: data.course_id,
+      content: data.content,
+      answer: data.answer,
+      file_url: data.file_url,
+      status: data.status,
+      score: data.score,
+      feedback: data.feedback,
+      submitted_at: data.submitted_at,
+      created_at: data.created_at,
+      reviewed_at: data.reviewed_at,
       user_name: data.profiles?.full_name || '未知用户',
-      user_email: data.profiles?.email || ''
+      user_email: data.profiles?.email || '',
+      homework: data.homework
     };
     
     return result as HomeworkSubmission;
@@ -287,10 +356,20 @@ export const getCourseStructureForHomework = async (courseId: number): Promise<C
     if (error) throw error;
     
     // Sort lectures within each section by position
-    return (data || []).map(section => ({
-      ...section,
-      lectures: (section.lectures || []).sort((a: CourseLecture, b: CourseLecture) => a.position - b.position)
+    const sections = (data || []).map(section => ({
+      id: section.id,
+      title: section.title,
+      position: section.position,
+      lectures: (section.lectures || []).map(lecture => ({
+        id: lecture.id,
+        title: lecture.title,
+        position: lecture.position,
+        // Set requires_homework_completion to undefined or false as a default value
+        requires_homework_completion: lecture.requires_homework_completion || false
+      })).sort((a, b) => a.position - b.position)
     })).sort((a, b) => a.position - b.position);
+    
+    return sections;
   } catch (error) {
     console.error('Error fetching course structure:', error);
     return [];
