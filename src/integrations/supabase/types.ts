@@ -925,30 +925,45 @@ export type Database = {
         Row: {
           answer: string | null
           course_id: number
+          created_at: string | null
+          feedback: string | null
           file_url: string | null
           homework_id: string
           id: string
           lecture_id: string
+          reviewed_at: string | null
+          score: number | null
+          status: string | null
           submitted_at: string | null
           user_id: string
         }
         Insert: {
           answer?: string | null
           course_id: number
+          created_at?: string | null
+          feedback?: string | null
           file_url?: string | null
           homework_id: string
           id?: string
           lecture_id: string
+          reviewed_at?: string | null
+          score?: number | null
+          status?: string | null
           submitted_at?: string | null
           user_id: string
         }
         Update: {
           answer?: string | null
           course_id?: number
+          created_at?: string | null
+          feedback?: string | null
           file_url?: string | null
           homework_id?: string
           id?: string
           lecture_id?: string
+          reviewed_at?: string | null
+          score?: number | null
+          status?: string | null
           submitted_at?: string | null
           user_id?: string
         }

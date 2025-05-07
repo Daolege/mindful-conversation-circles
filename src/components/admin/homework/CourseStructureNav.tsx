@@ -1,115 +1,172 @@
 
-import { useState } from 'react';
+import React, { useState } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
-  ChevronRight, 
   ChevronDown, 
-  FileText, 
-  Layers
+  ChevronRight, 
+  BookOpen, 
+  FileText,
+  CheckCircle,
+  AlertCircle,
+  Clock
 } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
+
+interface CourseSection {
+  id: string;
+  title: string;
+  position: number;
+  lectures: CourseLecture[];
+}
+
+interface CourseLecture {
+  id: string;
+  title: string;
+  position: number;
+  requires_homework_completion: boolean;
+}
 
 interface CourseStructureNavProps {
-  sections: any[];
+  sections: CourseSection[];
   isLoading: boolean;
   selectedLectureId: string | null;
   onLectureSelect: (lectureId: string) => void;
   onViewAll: () => void;
+  submissionStats?: Record<string, { 
+    total: number; 
+    pending: number; 
+    reviewed: number; 
+    rejected: number;
+  }>;
 }
 
-export function CourseStructureNav({ 
-  sections, 
-  onLectureSelect, 
+export const CourseStructureNav: React.FC<CourseStructureNavProps> = ({
+  sections,
+  isLoading,
   selectedLectureId,
+  onLectureSelect,
   onViewAll,
-  isLoading
-}: CourseStructureNavProps) {
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
+  submissionStats = {}
+}) => {
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
   
-  // 切换章节展开/折叠
   const toggleSection = (sectionId: string) => {
-    const newExpandedSections = new Set(expandedSections);
-    if (newExpandedSections.has(sectionId)) {
-      newExpandedSections.delete(sectionId);
-    } else {
-      newExpandedSections.add(sectionId);
-    }
-    setExpandedSections(newExpandedSections);
+    setExpandedSections(prev => ({
+      ...prev,
+      [sectionId]: !prev[sectionId]
+    }));
   };
   
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className="p-4">
+          <div className="space-y-2">
+            <Skeleton className="h-8 w-full" />
+            <Skeleton className="h-8 w-full" />
+            <Skeleton className="h-8 w-full" />
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+  
   return (
-    <div className="bg-white rounded-lg shadow-sm p-4">
-      <h3 className="font-semibold mb-4">课程章节</h3>
-      <div className="space-y-4">
-        <Button
-          variant="ghost"
-          className={`w-full justify-start text-left pl-2 ${!selectedLectureId ? 'bg-gray-100' : ''}`}
+    <Card>
+      <CardContent className="p-4">
+        <div className="font-semibold text-lg mb-4">课程结构</div>
+        
+        <Button 
+          variant={selectedLectureId === null ? "default" : "outline"}
+          className="w-full justify-start mb-4"
           onClick={onViewAll}
         >
-          <Layers className="h-4 w-4 mr-2" />
-          查看所有作业提交
+          <FileText className="mr-2 h-4 w-4" /> 查看所有作业提交
         </Button>
         
-        {isLoading ? (
-          <div className="p-4 text-center">加载中...</div>
-        ) : (
-          <div className="space-y-1">
-            {sections.map((section) => (
-              <div key={section.id} className="space-y-1">
-                {/* 章节标题 */}
-                <div
-                  className="flex items-center px-2 py-1.5 hover:bg-gray-100 rounded-md cursor-pointer text-sm"
-                  onClick={() => toggleSection(section.id)}
-                >
-                  {expandedSections.has(section.id) ? (
-                    <ChevronDown className="h-4 w-4 mr-1 flex-shrink-0" />
-                  ) : (
-                    <ChevronRight className="h-4 w-4 mr-1 flex-shrink-0" />
-                  )}
-                  <span className="font-medium truncate">{section.title}</span>
-                  {(section.lectures?.length || 0) > 0 && (
-                    <span className="ml-auto text-xs text-gray-500">
-                      {section.lectures?.length || 0}个课时
-                    </span>
-                  )}
+        <div className="space-y-2">
+          {sections.length === 0 && (
+            <div className="text-sm text-muted-foreground p-2">
+              此课程没有章节
+            </div>
+          )}
+          
+          {sections.map(section => (
+            <div key={section.id} className="space-y-1">
+              <div
+                className="flex items-center justify-between p-2 hover:bg-accent rounded-md cursor-pointer"
+                onClick={() => toggleSection(section.id)}
+              >
+                <div className="flex items-center">
+                  <BookOpen className="mr-2 h-4 w-4" />
+                  <span>{section.title}</span>
                 </div>
-                
-                {/* 课时列表 */}
-                {expandedSections.has(section.id) && (section.lectures || []).length > 0 && (
-                  <div className="ml-6 space-y-1">
-                    {(section.lectures || []).map((lecture: any) => (
-                      <Button
-                        key={lecture.id}
-                        variant="ghost"
-                        size="sm"
-                        className={`w-full justify-start pl-2 h-auto py-1 text-left ${
-                          selectedLectureId === lecture.id ? 'bg-gray-100' : ''
-                        }`}
-                        onClick={() => onLectureSelect(lecture.id)}
-                      >
-                        <FileText className="h-3.5 w-3.5 mr-1.5" />
-                        <span className="truncate text-sm">{lecture.title}</span>
-                        {(lecture.submission_count && lecture.submission_count > 0) ? (
-                          <span className="ml-auto text-xs bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded-full">
-                            {lecture.submission_count}
-                          </span>
-                        ) : null}
-                      </Button>
-                    ))}
-                  </div>
+                {expandedSections[section.id] ? (
+                  <ChevronDown className="h-4 w-4" />
+                ) : (
+                  <ChevronRight className="h-4 w-4" />
                 )}
               </div>
-            ))}
-            
-            {sections.length === 0 && (
-              <div className="text-center py-4 text-gray-500 text-sm">
-                此课程尚未添加章节和课时
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-    </div>
+              
+              {expandedSections[section.id] && (
+                <div className="ml-6 space-y-1 border-l pl-2 pt-1">
+                  {section.lectures && section.lectures.length > 0 ? (
+                    section.lectures.map(lecture => {
+                      const stats = submissionStats[lecture.id] || { total: 0, pending: 0, reviewed: 0, rejected: 0 };
+                      return (
+                        <Button
+                          key={lecture.id}
+                          variant={selectedLectureId === lecture.id ? "default" : "ghost"}
+                          className="w-full justify-start h-auto py-2"
+                          onClick={() => onLectureSelect(lecture.id)}
+                        >
+                          <div className="flex flex-col items-start">
+                            <div className="flex items-center">
+                              <FileText className="mr-2 h-4 w-4" /> 
+                              <span className="text-sm">{lecture.title}</span>
+                            </div>
+                            
+                            {stats.total > 0 && (
+                              <div className="flex mt-1 gap-2">
+                                <Badge variant="outline" className="text-xs flex items-center">
+                                  <span className="mr-1">{stats.total}</span>提交
+                                </Badge>
+                                {stats.pending > 0 && (
+                                  <Badge variant="outline" className="bg-amber-50 text-xs flex items-center">
+                                    <Clock className="mr-1 h-3 w-3" /> {stats.pending}
+                                  </Badge>
+                                )}
+                                {stats.reviewed > 0 && (
+                                  <Badge variant="outline" className="bg-green-50 text-xs flex items-center">
+                                    <CheckCircle className="mr-1 h-3 w-3" /> {stats.reviewed}
+                                  </Badge>
+                                )}
+                                {stats.rejected > 0 && (
+                                  <Badge variant="outline" className="bg-red-50 text-xs flex items-center">
+                                    <AlertCircle className="mr-1 h-3 w-3" /> {stats.rejected}
+                                  </Badge>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </Button>
+                      );
+                    })
+                  ) : (
+                    <div className="text-sm text-muted-foreground p-2">
+                      此章节没有小节
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
   );
-}
+};
 
 export default CourseStructureNav;
