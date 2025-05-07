@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Homework } from '@/lib/types/homework';
 
@@ -107,18 +108,18 @@ export const getHomeworkSubmissionsByCourseId = async (courseId: number): Promis
       
       // Make sure item has the expected properties before mapping
       return {
-        id: item.id,
-        homework_id: item.homework_id,
-        user_id: item.user_id,
-        lecture_id: item.lecture_id,
-        course_id: item.course_id,
+        id: item.id || '',
+        homework_id: item.homework_id || '',
+        user_id: item.user_id || '',
+        lecture_id: item.lecture_id || '',
+        course_id: item.course_id || 0,
         content: item.content,
         answer: item.answer,
         file_url: item.file_url,
-        status: item.status,
+        status: (item.status as 'pending' | 'reviewed' | 'rejected') || 'pending',
         score: item.score,
         feedback: item.feedback,
-        submitted_at: item.submitted_at,
+        submitted_at: item.submitted_at || new Date().toISOString(),
         created_at: item.created_at,
         reviewed_at: item.reviewed_at,
         user_name: item.profiles?.full_name || '未知用户',
