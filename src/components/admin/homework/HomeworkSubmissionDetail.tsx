@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -154,13 +153,23 @@ export const HomeworkSubmissionDetail: React.FC<HomeworkSubmissionDetailProps> =
     ? formatDistanceToNow(new Date(submission.created_at), { addSuffix: true })
     : '未知时间';
 
-  // Determine if the answer is likely rich text content by checking for HTML tags
-  const isRichText = submission.answer && 
-                     (submission.answer.includes('<') || 
-                     submission.answer.includes('&lt;') ||
-                     submission.answer.includes('<img') ||
-                     submission.answer.includes('<p>') ||
-                     submission.answer.includes('<div>'));
+  // Improved logic to detect rich text content
+  const isRichText = submission && (
+    submission.answer?.includes('<') || 
+    submission.answer?.includes('&lt;') ||
+    submission.content?.includes('<') ||
+    submission.content?.includes('&lt;') ||
+    submission.answer?.includes('src=') ||
+    submission.content?.includes('src=') ||
+    submission.answer?.includes('<img') ||
+    submission.content?.includes('<img')
+  );
+
+  console.log('Submission content type:', isRichText ? 'Rich text' : 'Plain text');
+  if (isRichText) {
+    console.log('Rich text content sample:', 
+      (submission?.content || submission?.answer || '').substring(0, 100) + '...');
+  }
 
   return (
     <div className="space-y-6">
