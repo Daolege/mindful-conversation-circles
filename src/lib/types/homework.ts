@@ -27,6 +27,20 @@ export interface HomeworkSubmission {
   lecture_id: string;
   course_id: number;
   answer?: string;
+  content?: string; // Make content optional since it might not exist in the database
   file_url?: string;
+  status?: 'pending' | 'reviewed' | 'rejected';
+  score?: number;
+  feedback?: string;
   submitted_at?: string;
+  created_at?: string;
+  reviewed_at?: string;
+  user_name?: string;
+  user_email?: string;
+  homework?: {
+    id: string;
+    title: string;
+    type: string;
+    description?: string;
+  };
 }

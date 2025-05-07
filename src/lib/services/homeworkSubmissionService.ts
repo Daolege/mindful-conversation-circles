@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Homework } from '@/lib/types/homework';
 
@@ -7,7 +8,7 @@ export interface HomeworkSubmission {
   user_id: string;
   lecture_id: string;
   course_id: number;
-  content?: string;
+  content?: string; // Made optional to match database structure
   answer?: string;
   file_url?: string;
   status: 'pending' | 'reviewed' | 'rejected';
