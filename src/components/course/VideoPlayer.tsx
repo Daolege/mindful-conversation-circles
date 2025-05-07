@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import {
   Play,
@@ -18,6 +19,8 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { Slider } from "@/components/ui/slider";
 
 interface VideoPlayerProps {
   videoUrl?: string;
@@ -39,9 +42,11 @@ export const VideoPlayer = ({ videoUrl, title, courseId, lessonId }: VideoPlayer
   const [hoverProgress, setHoverProgress] = useState<number | null>(null);
   const progressBarRef = useRef<HTMLDivElement>(null);
   const progressTooltipRef = useRef<HTMLDivElement>(null);
+  const [volume, setVolume] = useState(1);
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const controlsTimeout = useRef<NodeJS.Timeout | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const updateLastWatchedTime = async () => {
     try {
@@ -92,6 +97,18 @@ export const VideoPlayer = ({ videoUrl, title, courseId, lessonId }: VideoPlayer
     };
   }, [courseId, lessonId, user?.id]);
 
+  // Handle fullscreen change detection
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullScreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    };
+  }, []);
+
   const togglePlay = () => {
     if (videoRef.current) {
       if (isPlaying) {
@@ -104,29 +121,28 @@ export const VideoPlayer = ({ videoUrl, title, courseId, lessonId }: VideoPlayer
   };
 
   const toggleFullScreen = () => {
-    if (videoRef.current) {
-      if (!isFullScreen) {
-        if (videoRef.current.requestFullscreen) {
-          videoRef.current.requestFullscreen();
-        } else if ((videoRef.current as any).mozRequestFullScreen) {
-          (videoRef.current as any).mozRequestFullScreen();
-        } else if ((videoRef.current as any).webkitRequestFullscreen) {
-          (videoRef.current as any).webkitRequestFullscreen();
-        } else if ((videoRef.current as any).msRequestFullscreen) {
-          (videoRef.current as any).msRequestFullscreen();
-        }
-      } else {
-        if (document.exitFullscreen) {
-          document.exitFullscreen();
-        } else if ((document as any).mozCancelFullScreen) {
-          (document as any).mozCancelFullScreen();
-        } else if ((document as any).webkitExitFullscreen) {
-          (document as any).webkitExitFullscreen();
-        } else if ((document as any).msExitFullscreen) {
-          (document as any).msExitFullscreen();
-        }
+    if (!containerRef.current) return;
+    
+    if (!isFullScreen) {
+      if (containerRef.current.requestFullscreen) {
+        containerRef.current.requestFullscreen();
+      } else if ((containerRef.current as any).mozRequestFullScreen) {
+        (containerRef.current as any).mozRequestFullScreen();
+      } else if ((containerRef.current as any).webkitRequestFullscreen) {
+        (containerRef.current as any).webkitRequestFullscreen();
+      } else if ((containerRef.current as any).msRequestFullscreen) {
+        (containerRef.current as any).msRequestFullscreen();
       }
-      setIsFullScreen(!isFullScreen);
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      } else if ((document as any).mozCancelFullScreen) {
+        (document as any).mozCancelFullScreen();
+      } else if ((document as any).webkitExitFullscreen) {
+        (document as any).webkitExitFullscreen();
+      } else if ((document as any).msExitFullscreen) {
+        (document as any).msExitFullscreen();
+      }
     }
   };
 
@@ -171,6 +187,14 @@ export const VideoPlayer = ({ videoUrl, title, courseId, lessonId }: VideoPlayer
     setIsSettingsOpen(false);
   };
 
+  const handleVolumeChange = (value: number[]) => {
+    const newVolume = value[0];
+    setVolume(newVolume);
+    if (videoRef.current) {
+      videoRef.current.volume = newVolume;
+    }
+  };
+
   const formatTime = (time: number) => {
     const minutes = Math.floor(time / 60);
     const seconds = Math.floor(time % 60);
@@ -205,7 +229,8 @@ export const VideoPlayer = ({ videoUrl, title, courseId, lessonId }: VideoPlayer
 
   return (
     <div
-      className="relative w-full aspect-video bg-white shadow-lg rounded-lg overflow-hidden group"
+      ref={containerRef}
+      className="relative w-full aspect-video bg-black overflow-hidden rounded-xl group"
       onMouseEnter={() => setShowControls(true)}
       onMouseMove={() => setShowControls(true)}
       onMouseLeave={() => !isSettingsOpen && isPlaying && setShowControls(false)}
@@ -223,25 +248,28 @@ export const VideoPlayer = ({ videoUrl, title, courseId, lessonId }: VideoPlayer
       />
       
       {!isPlaying && !showControls && (
-        <div className="absolute inset-0 flex items-center justify-center cursor-pointer">
-          <div className="rounded-full bg-white/30 p-5 backdrop-blur-sm transition-all duration-200 hover:bg-white/40 hover:scale-105">
-            <Play className="h-14 w-14 text-gray-800 drop-shadow-md" />
+        <div className="absolute inset-0 flex items-center justify-center cursor-pointer z-10">
+          <div className="rounded-full bg-white/20 backdrop-blur-sm p-6 transition-all duration-300 hover:bg-white/30 hover:scale-105 shadow-xl">
+            <Play className="h-16 w-16 text-white drop-shadow-xl" />
           </div>
         </div>
       )}
       
       {(showControls || loading) && (
-        <div className="absolute bottom-0 left-0 w-full bg-white/30 backdrop-blur-md text-gray-800 animate-fade-in transition-all duration-300 video-controls">
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent pt-16 pb-2 px-3 animate-fade-in duration-300 video-controls z-20">
           <div 
             ref={progressBarRef}
-            className="relative h-2 bg-gray-300 cursor-pointer"
+            className="relative h-2 bg-white/20 cursor-pointer rounded-full mb-3 overflow-hidden"
             onClick={handleProgressClick}
             onMouseMove={handleProgressHover}
             onMouseLeave={() => setHoverProgress(null)}
           >
-            {/* Progress bar */}
+            {/* Progress bar background */}
+            <div className="absolute inset-0 bg-white/20 rounded-full"></div>
+            
+            {/* Current progress */}
             <div 
-              className="absolute top-0 left-0 h-full bg-blue-500 transition-all duration-100"
+              className="absolute top-0 left-0 h-full bg-white rounded-full transition-all duration-100"
               style={{ width: `${(currentTime / duration) * 100}%` }}
             />
             
@@ -249,12 +277,12 @@ export const VideoPlayer = ({ videoUrl, title, courseId, lessonId }: VideoPlayer
             {hoverProgress !== null && (
               <>
                 <div 
-                  className="absolute top-0 h-full bg-blue-300 opacity-50"
+                  className="absolute top-0 h-full bg-white/50 rounded-full"
                   style={{ width: `${hoverProgress}%` }}
                 />
                 <div 
                   ref={progressTooltipRef}
-                  className="absolute -top-8 transform -translate-x-1/2 bg-white shadow-md rounded px-2 py-1 text-xs font-medium"
+                  className="absolute -top-8 transform -translate-x-1/2 bg-white text-black shadow-lg rounded-md px-2 py-1 text-xs font-medium z-30"
                 >
                   {getHoveredTime()}
                 </div>
@@ -263,51 +291,71 @@ export const VideoPlayer = ({ videoUrl, title, courseId, lessonId }: VideoPlayer
             
             {/* Progress indicator */}
             <div 
-              className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-blue-600 rounded-full border-2 border-white shadow-md transition-all duration-100"
+              className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-white rounded-full shadow-xl transition-all duration-100 scale-0 group-hover:scale-100"
               style={{ left: `${(currentTime / duration) * 100}%`, transform: 'translate(-50%, -50%)' }}
             />
           </div>
           
-          <div className="flex items-center justify-between p-3">
-            <div className="flex items-center gap-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
               <Button 
                 onClick={(e) => {
                   e.stopPropagation();
                   togglePlay();
                 }} 
                 variant="ghost" 
-                className="p-1 h-auto rounded-full hover:bg-black/10 transition-all duration-200"
+                className="p-1 h-auto rounded-full hover:bg-white/10 transition-all duration-200"
               >
                 {loading ? (
-                  <Loader2 className="h-6 w-6 animate-spin text-gray-800" />
+                  <Loader2 className="h-7 w-7 animate-spin text-white" />
                 ) : (
                   isPlaying ? 
-                    <Pause className="h-6 w-6 text-gray-800" /> : 
-                    <Play className="h-6 w-6 text-gray-800" />
+                    <Pause className="h-7 w-7 text-white" /> : 
+                    <Play className="h-7 w-7 text-white" />
                 )}
               </Button>
-              <div className="text-sm font-medium text-gray-800">
+              
+              <div className="hidden sm:block w-24 mr-4">
+                <Slider
+                  defaultValue={[1]}
+                  value={[volume]}
+                  min={0}
+                  max={1}
+                  step={0.01}
+                  onValueChange={handleVolumeChange}
+                  className="h-1"
+                />
+              </div>
+              
+              <div className="text-sm font-medium text-white/90">
                 {formatTime(currentTime)} / {formatTime(duration)}
               </div>
             </div>
             
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-4">
               <div className="relative">
                 <DropdownMenu open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
                   <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                     <Button 
                       variant="ghost" 
-                      className="p-1 h-auto rounded-full hover:bg-black/10"
+                      className="p-1 h-auto rounded-full hover:bg-white/10"
                     >
-                      <Settings className="h-6 w-6 text-gray-800" />
+                      <Settings className="h-6 w-6 text-white" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="bg-white/95 backdrop-blur-md border border-gray-200 shadow-lg rounded-md min-w-[140px]">
-                    <div className="py-2 px-3 text-sm font-medium border-b border-gray-200">播放速度</div>
+                  <DropdownMenuContent 
+                    align="end" 
+                    className="bg-black/90 backdrop-blur-xl border border-white/20 shadow-2xl rounded-xl min-w-[140px]"
+                  >
+                    <div className="py-2 px-3 text-sm font-medium text-white/80 border-b border-white/10">播放速度</div>
                     {[1.0, 1.25, 1.5, 1.75, 2.0, 2.25, 2.5, 3.0].map((rate) => (
                       <DropdownMenuItem
                         key={rate}
-                        className={`px-3 py-2 text-sm cursor-pointer ${playbackRate === rate ? 'bg-blue-50 text-blue-600 font-medium' : ''}`}
+                        className={`px-3 py-2 text-sm cursor-pointer text-white/80 ${
+                          playbackRate === rate 
+                            ? 'bg-white/10 text-white font-medium' 
+                            : 'hover:bg-white/5'
+                        }`}
                         onClick={(e) => {
                           e.stopPropagation();
                           handlePlaybackRateChange(rate);
@@ -326,11 +374,11 @@ export const VideoPlayer = ({ videoUrl, title, courseId, lessonId }: VideoPlayer
                   toggleFullScreen();
                 }} 
                 variant="ghost" 
-                className="p-1 h-auto rounded-full hover:bg-black/10"
+                className="p-1 h-auto rounded-full hover:bg-white/10"
               >
                 {isFullScreen ? 
-                  <Minimize className="h-6 w-6 text-gray-800" /> : 
-                  <Maximize className="h-6 w-6 text-gray-800" />
+                  <Minimize className="h-6 w-6 text-white" /> : 
+                  <Maximize className="h-6 w-6 text-white" />
                 }
               </Button>
             </div>
@@ -340,8 +388,15 @@ export const VideoPlayer = ({ videoUrl, title, courseId, lessonId }: VideoPlayer
       
       {/* Current playback rate indicator */}
       {showControls && playbackRate !== 1.0 && (
-        <div className="absolute top-3 right-3 px-2 py-1 bg-white/80 backdrop-blur-sm rounded text-sm font-medium text-gray-800">
+        <div className="absolute top-3 right-3 px-2 py-1 bg-black/60 backdrop-blur-sm rounded-md text-sm font-medium text-white">
           {playbackRate}x
+        </div>
+      )}
+      
+      {/* Video title - show when controls are visible */}
+      {showControls && title && (
+        <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/60 to-transparent px-4 py-3 text-white font-medium">
+          {title}
         </div>
       )}
     </div>
