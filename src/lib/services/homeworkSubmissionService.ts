@@ -38,7 +38,7 @@ export interface CourseLecture {
   id: string;
   title: string;
   position: number;
-  requires_homework_completion?: boolean; // Making this optional to resolve the type conflict
+  requires_homework_completion: boolean;
 }
 
 export interface HomeworkStats {
@@ -101,13 +101,15 @@ export const getHomeworkSubmissionsByCourseId = async (courseId: number): Promis
       .order('submitted_at', { ascending: false });
 
     if (error) throw error;
+    
+    if (!data) return [];
 
     // Transform data to include user information with proper type checking
-    const submissions = (data || []).map(item => {
+    const submissions = data.map(item => {
       if (!item) return null;
       
       // Make sure item has the expected properties before mapping
-      return {
+      const submission: HomeworkSubmission = {
         id: item.id || '',
         homework_id: item.homework_id || '',
         user_id: item.user_id || '',
@@ -125,7 +127,9 @@ export const getHomeworkSubmissionsByCourseId = async (courseId: number): Promis
         user_name: item.profiles?.full_name || '未知用户',
         user_email: item.profiles?.email || '',
         homework: item.homework
-      } as HomeworkSubmission;
+      };
+      
+      return submission;
     }).filter(Boolean) as HomeworkSubmission[];
     
     return submissions;
@@ -169,29 +173,33 @@ export const getHomeworkSubmissionsByLectureId = async (lectureId: string): Prom
       .order('submitted_at', { ascending: false });
 
     if (error) throw error;
+    
+    if (!data) return [];
 
-    const submissions = (data || []).map(item => {
+    const submissions = data.map(item => {
       if (!item) return null;
       
-      return {
-        id: item.id,
-        homework_id: item.homework_id,
-        user_id: item.user_id,
-        lecture_id: item.lecture_id,
-        course_id: item.course_id,
+      const submission: HomeworkSubmission = {
+        id: item.id || '',
+        homework_id: item.homework_id || '',
+        user_id: item.user_id || '',
+        lecture_id: item.lecture_id || '',
+        course_id: item.course_id || 0,
         content: item.content,
         answer: item.answer,
         file_url: item.file_url,
-        status: item.status,
+        status: (item.status as 'pending' | 'reviewed' | 'rejected') || 'pending',
         score: item.score,
         feedback: item.feedback,
-        submitted_at: item.submitted_at,
+        submitted_at: item.submitted_at || new Date().toISOString(),
         created_at: item.created_at,
         reviewed_at: item.reviewed_at,
         user_name: item.profiles?.full_name || '未知用户',
         user_email: item.profiles?.email || '',
         homework: item.homework
-      } as HomeworkSubmission;
+      };
+      
+      return submission;
     }).filter(Boolean) as HomeworkSubmission[];
     
     return submissions;
@@ -242,29 +250,33 @@ export const getHomeworkSubmissionsByStudentId = async (studentId: string, cours
     const { data, error } = await query;
 
     if (error) throw error;
+    
+    if (!data) return [];
 
-    const submissions = (data || []).map(item => {
+    const submissions = data.map(item => {
       if (!item) return null;
       
-      return {
-        id: item.id,
-        homework_id: item.homework_id,
-        user_id: item.user_id,
-        lecture_id: item.lecture_id,
-        course_id: item.course_id,
+      const submission: HomeworkSubmission = {
+        id: item.id || '',
+        homework_id: item.homework_id || '',
+        user_id: item.user_id || '',
+        lecture_id: item.lecture_id || '',
+        course_id: item.course_id || 0,
         content: item.content,
         answer: item.answer,
         file_url: item.file_url,
-        status: item.status,
+        status: (item.status as 'pending' | 'reviewed' | 'rejected') || 'pending',
         score: item.score,
         feedback: item.feedback,
-        submitted_at: item.submitted_at,
+        submitted_at: item.submitted_at || new Date().toISOString(),
         created_at: item.created_at,
         reviewed_at: item.reviewed_at,
         user_name: item.profiles?.full_name || '未知用户',
         user_email: item.profiles?.email || '',
         homework: item.homework
-      } as HomeworkSubmission;
+      };
+      
+      return submission;
     }).filter(Boolean) as HomeworkSubmission[];
     
     return submissions;
