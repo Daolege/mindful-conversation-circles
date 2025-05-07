@@ -9,7 +9,9 @@ import { HomeworkSubmissionsList } from './HomeworkSubmissionsList';
 import StudentsList from './StudentsList';
 import { HomeworkStatsDashboard } from './HomeworkStatsDashboard';
 import { NotSubmittedStudentsList } from './NotSubmittedStudentsList';
+import { EnrollmentSubmissionStats } from './EnrollmentSubmissionStats';
 import { getCourseStructureForHomework, HomeworkStats } from '@/lib/services/homeworkSubmissionService';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface HomeworkReviewSystemProps {
   courseId: number;
@@ -20,6 +22,7 @@ export const HomeworkReviewSystem: React.FC<HomeworkReviewSystemProps> = ({ cour
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
   const [sectionTitle, setSectionTitle] = useState<string>('');
   const [lectureTitle, setLectureTitle] = useState<string>('');
+  const [activeTab, setActiveTab] = useState<string>('overview');
   
   // 1. Fetch course structure data (sections and lectures)
   const { data: courseStructure, isLoading: isLoadingStructure } = useQuery({
@@ -161,32 +164,65 @@ export const HomeworkReviewSystem: React.FC<HomeworkReviewSystemProps> = ({ cour
         
         {/* Main content area */}
         <div className="lg:col-span-3">
-          {!selectedLectureId ? (
-            /* Course-level overview dashboard when no lecture is selected */
-            <div className="bg-white rounded-lg border p-6">
-              <h2 className="text-xl font-semibold mb-4">课程作业概览</h2>
-              <p className="text-gray-500 mb-6">请从左侧选择一个小节来查看相关的作业提交。</p>
-              <HomeworkStatsDashboard courseId={courseId} />
-            </div>
-          ) : selectedLectureId && !selectedStudentId ? (
-            /* Lecture selected but no student selected - show submission lists */
-            <div className="space-y-6">
-              <HomeworkSubmissionsList 
-                lectureId={selectedLectureId} 
-                onSelectStudent={handleSelectStudent} 
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="w-full">
+              <TabsTrigger value="overview">课程概览</TabsTrigger>
+              <TabsTrigger value="submissions" disabled={!selectedLectureId}>作业列表</TabsTrigger>
+              <TabsTrigger value="not-submitted" disabled={!selectedLectureId}>未提交</TabsTrigger>
+              <TabsTrigger value="student-stats">学生统计</TabsTrigger>
+              {selectedStudentId && (
+                <TabsTrigger value="student">学生详情</TabsTrigger>
+              )}
+            </TabsList>
+            
+            <TabsContent value="overview">
+              <div className="bg-white rounded-lg border p-6">
+                <h2 className="text-xl font-semibold mb-4">课程作业概览</h2>
+                {!selectedLectureId ? (
+                  <HomeworkStatsDashboard courseId={courseId} />
+                ) : (
+                  <div>
+                    <p className="text-gray-600">当前查看：{sectionTitle} - {lectureTitle}</p>
+                    <p className="text-gray-500 mt-2 mb-6">请选择上方选项卡查看此小节的作业提交情况。</p>
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="submissions">
+              {selectedLectureId && (
+                <HomeworkSubmissionsList 
+                  lectureId={selectedLectureId} 
+                  onSelectStudent={handleSelectStudent} 
+                />
+              )}
+            </TabsContent>
+            
+            <TabsContent value="not-submitted">
+              {selectedLectureId && (
+                <NotSubmittedStudentsList 
+                  courseId={courseId} 
+                  lectureId={selectedLectureId} 
+                />
+              )}
+            </TabsContent>
+            
+            <TabsContent value="student-stats">
+              <EnrollmentSubmissionStats 
+                courseId={courseId}
+                lectureId={selectedLectureId}
               />
-              <NotSubmittedStudentsList 
-                courseId={courseId} 
-                lectureId={selectedLectureId} 
-              />
-            </div>
-          ) : (
-            /* Both lecture and student selected - show student submissions */
-            <StudentsList
-              studentId={selectedStudentId!}
-              lectureId={selectedLectureId!}
-            />
-          )}
+            </TabsContent>
+            
+            <TabsContent value="student">
+              {selectedStudentId && (
+                <StudentsList
+                  studentId={selectedStudentId}
+                  lectureId={selectedLectureId!}
+                />
+              )}
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
     </div>
