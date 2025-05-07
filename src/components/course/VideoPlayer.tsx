@@ -6,6 +6,8 @@ import {
   Maximize,
   Minimize,
   Settings,
+  Volume2,
+  VolumeX,
   Loader2
 } from "lucide-react";
 import { useAuth } from "@/contexts/authHooks";
@@ -43,6 +45,7 @@ export const VideoPlayer = ({ videoUrl, title, courseId, lessonId }: VideoPlayer
   const progressBarRef = useRef<HTMLDivElement>(null);
   const progressTooltipRef = useRef<HTMLDivElement>(null);
   const [volume, setVolume] = useState(1);
+  const [isMuted, setIsMuted] = useState(false);
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const controlsTimeout = useRef<NodeJS.Timeout | null>(null);
@@ -190,8 +193,26 @@ export const VideoPlayer = ({ videoUrl, title, courseId, lessonId }: VideoPlayer
   const handleVolumeChange = (value: number[]) => {
     const newVolume = value[0];
     setVolume(newVolume);
+    
     if (videoRef.current) {
       videoRef.current.volume = newVolume;
+      setIsMuted(newVolume === 0);
+    }
+  };
+
+  const toggleMute = () => {
+    if (videoRef.current) {
+      const newMuted = !isMuted;
+      setIsMuted(newMuted);
+      videoRef.current.muted = newMuted;
+      
+      if (newMuted) {
+        videoRef.current.volume = 0;
+        setVolume(0);
+      } else {
+        videoRef.current.volume = 1;
+        setVolume(1);
+      }
     }
   };
 
@@ -226,6 +247,12 @@ export const VideoPlayer = ({ videoUrl, title, courseId, lessonId }: VideoPlayer
     if (hoverProgress === null || !duration) return "0:00";
     return formatTime((hoverProgress / 100) * duration);
   };
+  
+  // Video thumbnail preview on hover (placeholder for future improvement)
+  const getPreviewTimePosition = () => {
+    if (hoverProgress === null) return 0;
+    return (hoverProgress / 100) * duration;
+  };
 
   return (
     <div
@@ -247,25 +274,27 @@ export const VideoPlayer = ({ videoUrl, title, courseId, lessonId }: VideoPlayer
         playsInline
       />
       
+      {/* Large play button overlay when paused and not showing controls */}
       {!isPlaying && !showControls && (
         <div className="absolute inset-0 flex items-center justify-center cursor-pointer z-10">
-          <div className="rounded-full bg-white/20 backdrop-blur-sm p-6 transition-all duration-300 hover:bg-white/30 hover:scale-105 shadow-xl">
-            <Play className="h-16 w-16 text-white drop-shadow-xl" />
+          <div className="bg-black/30 backdrop-blur-md rounded-full p-6 shadow-lg flex items-center justify-center transition-transform duration-300 ease-in-out transform hover:scale-110">
+            <Play className="h-16 w-16 text-white fill-white/10" strokeWidth={1.5} />
           </div>
         </div>
       )}
       
+      {/* Video controls overlay */}
       {(showControls || loading) && (
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent pt-16 pb-2 px-3 animate-fade-in duration-300 video-controls z-20">
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent pt-20 pb-2 px-4 animate-fade-in duration-300 video-controls z-20">
           <div 
             ref={progressBarRef}
-            className="relative h-2 bg-white/20 cursor-pointer rounded-full mb-3 overflow-hidden"
+            className="relative h-2.5 bg-white/20 cursor-pointer rounded-full mb-3 overflow-hidden group/progress"
             onClick={handleProgressClick}
             onMouseMove={handleProgressHover}
             onMouseLeave={() => setHoverProgress(null)}
           >
             {/* Progress bar background */}
-            <div className="absolute inset-0 bg-white/20 rounded-full"></div>
+            <div className="absolute inset-0 rounded-full"></div>
             
             {/* Current progress */}
             <div 
@@ -282,7 +311,7 @@ export const VideoPlayer = ({ videoUrl, title, courseId, lessonId }: VideoPlayer
                 />
                 <div 
                   ref={progressTooltipRef}
-                  className="absolute -top-8 transform -translate-x-1/2 bg-white text-black shadow-lg rounded-md px-2 py-1 text-xs font-medium z-30"
+                  className="absolute -top-9 transform -translate-x-1/2 bg-black/80 backdrop-blur-md text-white shadow-xl rounded-md px-2.5 py-1.5 text-xs font-medium z-30"
                 >
                   {getHoveredTime()}
                 </div>
@@ -291,13 +320,13 @@ export const VideoPlayer = ({ videoUrl, title, courseId, lessonId }: VideoPlayer
             
             {/* Progress indicator */}
             <div 
-              className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-white rounded-full shadow-xl transition-all duration-100 scale-0 group-hover:scale-100"
+              className="absolute top-1/2 -translate-y-1/2 w-3.5 h-3.5 bg-white rounded-full shadow-xl transition-all duration-100 opacity-0 scale-0 group-hover/progress:opacity-100 group-hover/progress:scale-100"
               style={{ left: `${(currentTime / duration) * 100}%`, transform: 'translate(-50%, -50%)' }}
             />
           </div>
           
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
               <Button 
                 onClick={(e) => {
                   e.stopPropagation();
@@ -307,24 +336,41 @@ export const VideoPlayer = ({ videoUrl, title, courseId, lessonId }: VideoPlayer
                 className="p-1 h-auto rounded-full hover:bg-white/10 transition-all duration-200"
               >
                 {loading ? (
-                  <Loader2 className="h-7 w-7 animate-spin text-white" />
+                  <Loader2 className="h-6 w-6 animate-spin text-white" />
                 ) : (
                   isPlaying ? 
-                    <Pause className="h-7 w-7 text-white" /> : 
-                    <Play className="h-7 w-7 text-white" />
+                    <Pause className="h-6 w-6 text-white" /> : 
+                    <Play className="h-6 w-6 text-white" />
                 )}
               </Button>
               
-              <div className="hidden sm:block w-24 mr-4">
-                <Slider
-                  defaultValue={[1]}
-                  value={[volume]}
-                  min={0}
-                  max={1}
-                  step={0.01}
-                  onValueChange={handleVolumeChange}
-                  className="h-1"
-                />
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleMute();
+                  }}
+                  variant="ghost"
+                  className="p-1 h-auto rounded-full hover:bg-white/10 hidden sm:block"
+                >
+                  {isMuted ? (
+                    <VolumeX className="h-5 w-5 text-white" />
+                  ) : (
+                    <Volume2 className="h-5 w-5 text-white" />
+                  )}
+                </Button>
+                
+                <div className="hidden sm:block w-24">
+                  <Slider
+                    defaultValue={[1]}
+                    value={[volume]}
+                    min={0}
+                    max={1}
+                    step={0.01}
+                    onValueChange={handleVolumeChange}
+                    className="h-1"
+                  />
+                </div>
               </div>
               
               <div className="text-sm font-medium text-white/90">
@@ -332,7 +378,7 @@ export const VideoPlayer = ({ videoUrl, title, courseId, lessonId }: VideoPlayer
               </div>
             </div>
             
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
               <div className="relative">
                 <DropdownMenu open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
                   <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
@@ -340,12 +386,12 @@ export const VideoPlayer = ({ videoUrl, title, courseId, lessonId }: VideoPlayer
                       variant="ghost" 
                       className="p-1 h-auto rounded-full hover:bg-white/10"
                     >
-                      <Settings className="h-6 w-6 text-white" />
+                      <Settings className="h-5 w-5 text-white" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent 
                     align="end" 
-                    className="bg-black/90 backdrop-blur-xl border border-white/20 shadow-2xl rounded-xl min-w-[140px]"
+                    className="bg-black/90 backdrop-blur-xl border border-white/20 shadow-2xl rounded-lg min-w-[140px]"
                   >
                     <div className="py-2 px-3 text-sm font-medium text-white/80 border-b border-white/10">播放速度</div>
                     {[1.0, 1.25, 1.5, 1.75, 2.0, 2.25, 2.5, 3.0].map((rate) => (
@@ -377,8 +423,8 @@ export const VideoPlayer = ({ videoUrl, title, courseId, lessonId }: VideoPlayer
                 className="p-1 h-auto rounded-full hover:bg-white/10"
               >
                 {isFullScreen ? 
-                  <Minimize className="h-6 w-6 text-white" /> : 
-                  <Maximize className="h-6 w-6 text-white" />
+                  <Minimize className="h-5 w-5 text-white" /> : 
+                  <Maximize className="h-5 w-5 text-white" />
                 }
               </Button>
             </div>
@@ -388,15 +434,22 @@ export const VideoPlayer = ({ videoUrl, title, courseId, lessonId }: VideoPlayer
       
       {/* Current playback rate indicator */}
       {showControls && playbackRate !== 1.0 && (
-        <div className="absolute top-3 right-3 px-2 py-1 bg-black/60 backdrop-blur-sm rounded-md text-sm font-medium text-white">
+        <div className="absolute top-3 right-3 px-2 py-1 bg-black/60 backdrop-blur-sm rounded-md text-xs font-medium text-white">
           {playbackRate}x
         </div>
       )}
       
       {/* Video title - show when controls are visible */}
       {showControls && title && (
-        <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/60 to-transparent px-4 py-3 text-white font-medium">
+        <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/70 to-transparent px-4 py-3 text-white font-medium">
           {title}
+        </div>
+      )}
+      
+      {/* Loading overlay */}
+      {loading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/30 backdrop-blur-sm z-30">
+          <Loader2 className="h-12 w-12 animate-spin text-white" />
         </div>
       )}
     </div>
