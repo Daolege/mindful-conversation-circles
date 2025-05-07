@@ -34,6 +34,20 @@ import {
   HomeworkStats
 } from '@/lib/services/homeworkSubmissionService';
 
+// Define a local type for the CourseSection that matches exactly what's used in this component
+// This removes any type mismatches between imported and local types
+type LocalCourseSection = {
+  id: string;
+  title: string;
+  position: number;
+  lectures: {
+    id: string;
+    title: string;
+    position: number;
+    requires_homework_completion?: boolean;
+  }[];
+};
+
 export const HomeworkSubmissionsView = () => {
   const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
@@ -66,13 +80,16 @@ export const HomeworkSubmissionsView = () => {
 
   // Fetch course structure for navigation
   const { 
-    data: sections, 
+    data: courseSections, 
     isLoading: isLoadingStructure 
   } = useQuery({
     queryKey: ['course-structure-homework', courseIdNumber],
     queryFn: () => getCourseStructureForHomework(courseIdNumber),
     enabled: !!courseIdNumber && courseIdNumber > 0,
   });
+  
+  // Cast the data to the local type to fix the type compatibility issue
+  const sections = courseSections as LocalCourseSection[] | undefined;
 
   // Fetch all submissions for the course
   const { 

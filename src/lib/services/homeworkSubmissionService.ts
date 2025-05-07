@@ -1,6 +1,3 @@
-
-// Update this file to correctly handle the data structure for homework submissions
-
 import { supabase } from "@/integrations/supabase/client";
 import { Homework } from '@/lib/types/homework';
 
@@ -40,7 +37,7 @@ export interface CourseLecture {
   id: string;
   title: string;
   position: number;
-  requires_homework_completion?: boolean; // This should be optional to match the imported type
+  requires_homework_completion?: boolean; // Making this optional to resolve the type conflict
 }
 
 export interface HomeworkStats {
@@ -106,6 +103,8 @@ export const getHomeworkSubmissionsByCourseId = async (courseId: number): Promis
 
     // Transform data to include user information
     const submissions = (data || []).map(item => {
+      if (!item) return null;
+      
       // Make sure item has the expected properties before spreading
       return {
         id: item.id,
@@ -125,8 +124,8 @@ export const getHomeworkSubmissionsByCourseId = async (courseId: number): Promis
         user_name: item.profiles?.full_name || '未知用户',
         user_email: item.profiles?.email || '',
         homework: item.homework
-      };
-    });
+      } as HomeworkSubmission;
+    }).filter(Boolean) as HomeworkSubmission[];
     
     return submissions;
   } catch (error) {
@@ -171,6 +170,8 @@ export const getHomeworkSubmissionsByLectureId = async (lectureId: string): Prom
     if (error) throw error;
 
     const submissions = (data || []).map(item => {
+      if (!item) return null;
+      
       return {
         id: item.id,
         homework_id: item.homework_id,
@@ -189,8 +190,8 @@ export const getHomeworkSubmissionsByLectureId = async (lectureId: string): Prom
         user_name: item.profiles?.full_name || '未知用户',
         user_email: item.profiles?.email || '',
         homework: item.homework
-      };
-    });
+      } as HomeworkSubmission;
+    }).filter(Boolean) as HomeworkSubmission[];
     
     return submissions;
   } catch (error) {
@@ -242,6 +243,8 @@ export const getHomeworkSubmissionsByStudentId = async (studentId: string, cours
     if (error) throw error;
 
     const submissions = (data || []).map(item => {
+      if (!item) return null;
+      
       return {
         id: item.id,
         homework_id: item.homework_id,
@@ -260,8 +263,8 @@ export const getHomeworkSubmissionsByStudentId = async (studentId: string, cours
         user_name: item.profiles?.full_name || '未知用户',
         user_email: item.profiles?.email || '',
         homework: item.homework
-      };
-    });
+      } as HomeworkSubmission;
+    }).filter(Boolean) as HomeworkSubmission[];
     
     return submissions;
   } catch (error) {
@@ -327,9 +330,9 @@ export const getHomeworkSubmissionById = async (submissionId: string): Promise<H
       user_name: data.profiles?.full_name || '未知用户',
       user_email: data.profiles?.email || '',
       homework: data.homework
-    };
+    } as HomeworkSubmission;
     
-    return result as HomeworkSubmission;
+    return result;
   } catch (error) {
     console.error('Error fetching submission details:', error);
     throw error;
@@ -347,7 +350,8 @@ export const getCourseStructureForHomework = async (courseId: number): Promise<C
         lectures:course_lectures(
           id,
           title,
-          position
+          position,
+          requires_homework_completion
         )
       `)
       .eq('course_id', courseId)
