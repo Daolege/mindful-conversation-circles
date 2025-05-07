@@ -1,31 +1,5 @@
-
 import { supabase } from "@/integrations/supabase/client";
-import { Homework } from '@/lib/types/homework';
-
-export interface HomeworkSubmission {
-  id: string;
-  homework_id: string;
-  user_id: string;
-  lecture_id: string;
-  course_id: number;
-  content?: string; // Made optional to match database structure
-  answer?: string;
-  file_url?: string;
-  status: 'pending' | 'reviewed' | 'rejected';
-  score?: number;
-  feedback?: string;
-  submitted_at: string;
-  created_at?: string;
-  reviewed_at?: string;
-  user_name?: string;
-  user_email?: string;
-  homework?: {
-    id: string;
-    title: string;
-    type: string;
-    description?: string;
-  };
-}
+import { Homework, HomeworkSubmission } from '@/lib/types/homework';
 
 export interface CourseSection {
   id: string;
@@ -77,7 +51,6 @@ export const getHomeworkSubmissionsByCourseId = async (courseId: number): Promis
         user_id,
         lecture_id,
         course_id,
-        content,
         answer,
         file_url,
         status,
@@ -117,7 +90,6 @@ export const getHomeworkSubmissionsByCourseId = async (courseId: number): Promis
         user_id: itemObj.user_id || '',
         lecture_id: itemObj.lecture_id || '',
         course_id: itemObj.course_id || 0,
-        content: itemObj.content,
         answer: itemObj.answer,
         file_url: itemObj.file_url,
         status: (itemObj.status as 'pending' | 'reviewed' | 'rejected') || 'pending',
@@ -151,7 +123,6 @@ export const getHomeworkSubmissionsByLectureId = async (lectureId: string): Prom
         user_id,
         lecture_id,
         course_id,
-        content,
         answer,
         file_url,
         status,
@@ -190,7 +161,6 @@ export const getHomeworkSubmissionsByLectureId = async (lectureId: string): Prom
         user_id: itemObj.user_id || '',
         lecture_id: itemObj.lecture_id || '',
         course_id: itemObj.course_id || 0,
-        content: itemObj.content,
         answer: itemObj.answer,
         file_url: itemObj.file_url,
         status: (itemObj.status as 'pending' | 'reviewed' | 'rejected') || 'pending',
@@ -224,7 +194,6 @@ export const getHomeworkSubmissionsByStudentId = async (studentId: string, cours
         user_id,
         lecture_id,
         course_id,
-        content,
         answer,
         file_url,
         status,
@@ -270,7 +239,6 @@ export const getHomeworkSubmissionsByStudentId = async (studentId: string, cours
         user_id: itemObj.user_id || '',
         lecture_id: itemObj.lecture_id || '',
         course_id: itemObj.course_id || 0,
-        content: itemObj.content,
         answer: itemObj.answer,
         file_url: itemObj.file_url,
         status: (itemObj.status as 'pending' | 'reviewed' | 'rejected') || 'pending',
@@ -304,7 +272,6 @@ export const getHomeworkSubmissionById = async (submissionId: string): Promise<H
         user_id,
         lecture_id,
         course_id,
-        content,
         answer,
         file_url,
         status,
@@ -340,7 +307,6 @@ export const getHomeworkSubmissionById = async (submissionId: string): Promise<H
       user_id: data.user_id,
       lecture_id: data.lecture_id,
       course_id: data.course_id,
-      content: data.content,
       answer: data.answer,
       file_url: data.file_url,
       status: data.status as 'pending' | 'reviewed' | 'rejected',

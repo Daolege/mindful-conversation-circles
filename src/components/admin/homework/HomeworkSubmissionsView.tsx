@@ -30,21 +30,11 @@ import {
   batchUpdateHomeworkFeedback,
   HomeworkSubmission,
   HomeworkStats,
-  CourseSection
+  CourseSection as HomeworkCourseSection
 } from '@/lib/services/homeworkSubmissionService';
 
-// Define a local type for the CourseSection that matches exactly what's used in this component
-interface CourseSection {
-  id: string;
-  title: string;
-  position: number;
-  lectures: {
-    id: string;
-    title: string;
-    position: number;
-    requires_homework_completion: boolean;
-  }[];
-}
+// Define a local type that uses the existing type but renames it to avoid conflict
+type LocalCourseSection = HomeworkCourseSection;
 
 export const HomeworkSubmissionsView = () => {
   const { courseId } = useParams<{ courseId: string }>();
@@ -87,7 +77,7 @@ export const HomeworkSubmissionsView = () => {
   });
   
   // Transform the fetched data to ensure it matches the expected local type
-  const sections: CourseSection[] = React.useMemo(() => {
+  const sections: LocalCourseSection[] = React.useMemo(() => {
     if (!courseSectionsData) return [];
     
     return courseSectionsData.map(section => ({
