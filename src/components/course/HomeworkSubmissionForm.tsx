@@ -195,7 +195,7 @@ export const HomeworkSubmissionForm: React.FC<HomeworkSubmissionFormProps> = ({
       <div className="space-y-3">
         <p className="text-sm text-gray-500 mb-2">可选择多个选项：</p>
         
-        <div className="grid grid-cols-1 gap-2" data-homework-choices="container">
+        <div className="grid grid-cols-1 gap-3" data-homework-choices="container">
           {homework.options.choices.map((choice: string, index: number) => {
             const choiceId = `choice-${homework.id}-${index}`;
             const isSelected = selectedChoices.includes(choice);
@@ -229,7 +229,7 @@ export const HomeworkSubmissionForm: React.FC<HomeworkSubmissionFormProps> = ({
         <RadioGroup 
           value={selectedChoices[0] || ""} 
           onValueChange={handleRadioChange}
-          className="grid grid-cols-1 gap-2" 
+          className="grid grid-cols-1 gap-3" 
           data-homework-choices="container"
         >
           {homework.options.choices.map((choice: string, index: number) => {
@@ -357,7 +357,7 @@ export const HomeworkSubmissionForm: React.FC<HomeworkSubmissionFormProps> = ({
   );
 };
 
-// Single choice option card component - completely rewritten to properly handle clicks
+// Single choice option card component - enhanced styling and interaction
 const SingleChoiceOptionCard = memo(({ 
   choiceId, 
   choice, 
@@ -386,8 +386,9 @@ const SingleChoiceOptionCard = memo(({
   return (
     <Card 
       className={`
-        border transition-all duration-300 hover:bg-gray-50 cursor-pointer p-3
-        ${isSelected ? 'border-gray-400 bg-gray-50 shadow-md' : 'border-gray-200'}
+        border transition-all duration-300 hover:bg-gray-50 cursor-pointer
+        ${isSelected ? 'border-primary bg-primary/5 shadow-sm' : 'border-gray-200'}
+        group relative overflow-hidden
       `}
       onClick={handleCardClick}
       data-choice-index={index}
@@ -395,16 +396,16 @@ const SingleChoiceOptionCard = memo(({
       data-selected={isSelected ? 'true' : 'false'}
       data-testid={`choice-option-${index}`}
     >
-      <div className="flex items-center space-x-2">
+      <div className="flex items-center p-3.5 pr-4">
         <RadioGroupItem 
           id={choiceId} 
           value={value}
-          className="h-4 w-4" 
+          className="h-4 w-4 flex-shrink-0 mr-3" 
           data-selected={isSelected ? 'true' : 'false'}
         />
         <Label 
           htmlFor={choiceId}
-          className="text-sm cursor-pointer flex-1"
+          className="text-sm cursor-pointer flex-1 leading-relaxed"
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -414,11 +415,14 @@ const SingleChoiceOptionCard = memo(({
           {choice}
         </Label>
       </div>
+      {isSelected && (
+        <div className="absolute inset-y-0 left-0 w-1 bg-primary" aria-hidden="true" />
+      )}
     </Card>
   );
 });
 
-// Multiple choice option card component - unchanged
+// Multiple choice option card component - enhanced styling for consistency
 const MultipleChoiceOptionCard = memo(({ 
   choiceId, 
   choice, 
@@ -454,8 +458,9 @@ const MultipleChoiceOptionCard = memo(({
   return (
     <Card 
       className={`
-        border transition-all duration-300 hover:bg-gray-50 cursor-pointer p-3
-        ${isSelected ? 'border-gray-400 bg-gray-50 shadow-md' : 'border-gray-200'}
+        border transition-all duration-300 hover:bg-gray-50 cursor-pointer
+        ${isSelected ? 'border-primary bg-primary/5 shadow-sm' : 'border-gray-200'}
+        group relative overflow-hidden
       `}
       onClick={handleCardClick}
       data-choice-index={index}
@@ -463,7 +468,7 @@ const MultipleChoiceOptionCard = memo(({
       data-selected={isSelected ? 'true' : 'false'}
       data-testid={`choice-option-${index}`}
     >
-      <div className="flex items-center space-x-2">
+      <div className="flex items-center p-3.5 pr-4">
         <Checkbox 
           id={choiceId}
           checked={isSelected}
@@ -472,18 +477,21 @@ const MultipleChoiceOptionCard = memo(({
             // 因为我们单独处理点击事件
             onSelect();
           }}
-          className="h-4 w-4"
+          className="h-4 w-4 flex-shrink-0 mr-3"
           onClick={handleCheckboxClick}
           data-selected={isSelected ? 'true' : 'false'}
         />
         <Label 
           htmlFor={choiceId}
-          className="text-sm cursor-pointer flex-1"
+          className="text-sm cursor-pointer flex-1 leading-relaxed"
           onClick={handleLabelClick}
         >
           {choice}
         </Label>
       </div>
+      {isSelected && (
+        <div className="absolute inset-y-0 left-0 w-1 bg-primary" aria-hidden="true" />
+      )}
     </Card>
   );
 });

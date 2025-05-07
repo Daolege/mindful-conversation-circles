@@ -82,8 +82,8 @@ export const HomeworkCard = memo(({
   return (
     <Card 
       className={`w-full border border-gray-200 shadow-sm transition-all duration-300 ${
-        isHovered ? 'shadow-md transform translate-y-[-2px]' : ''
-      }`}
+        isHovered ? 'shadow-md translate-y-[-2px]' : ''
+      } rounded-lg overflow-hidden`}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       data-homework-id={homework.id}
@@ -93,34 +93,44 @@ export const HomeworkCard = memo(({
       <CardHeader 
         className={`flex flex-row items-center justify-between ${
           !isSubmitted ? 'cursor-pointer hover:bg-gray-50' : ''
-        } p-4`}
+        } p-4 border-b border-gray-100`}
         onClick={handleHeaderClick}
       >
         <div className="flex items-center gap-3 flex-1 mr-4">
           <div className="font-medium truncate">{homework.title}</div>
         </div>
         <div className="flex items-center gap-3 flex-shrink-0">
-          <Badge variant={isSubmitted ? "outline" : "outline"} className={`text-xs min-w-[80px] text-center ${isSubmitted ? "bg-gray-100 text-gray-700" : "border border-gray-300 text-gray-500"}`}>
+          <Badge 
+            variant={isSubmitted ? "outline" : "outline"} 
+            className={`text-xs min-w-[80px] text-center ${
+              isSubmitted ? 
+                "bg-green-50 text-green-700 border-green-200" : 
+                "bg-gray-50 text-gray-600 border-gray-200"
+            }`}
+          >
             {isSubmitted ? "已提交" : "未提交"}
           </Badge>
           {!isSubmitted && (
             <div className="transition-transform duration-300">
-              {isExpanded ? <ChevronUp className="h-5 w-5 text-gray-500" /> : <ChevronDown className="h-5 w-5 text-gray-500" />}
+              {isExpanded ? 
+                <ChevronUp className="h-5 w-5 text-gray-500" /> : 
+                <ChevronDown className="h-5 w-5 text-gray-500" />
+              }
             </div>
           )}
         </div>
       </CardHeader>
       
       <CardContent 
-        className={`transition-all duration-500 ease-in-out overflow-hidden ${
+        className={`transition-all duration-300 ease-in-out overflow-hidden ${
           isExpanded && !isSubmitted ? 
-            'opacity-100 pb-4' : 
+            'max-h-[2000px] opacity-100 pb-4' : 
             'max-h-0 opacity-0 p-0'
         }`}
         onClick={handleContentClick}
       >
         {isExpanded && !isSubmitted && (
-          <div className="bg-white rounded-md border border-gray-100 shadow-sm">
+          <div className="bg-white rounded-md">
             <HomeworkSubmissionForm 
               homework={homework}
               courseId={numericCourseId}
