@@ -101,11 +101,11 @@ export const getHomeworkSubmissionsByCourseId = async (courseId: number): Promis
 
     if (error) throw error;
 
-    // Transform data to include user information
+    // Transform data to include user information with proper type checking
     const submissions = (data || []).map(item => {
       if (!item) return null;
       
-      // Make sure item has the expected properties before spreading
+      // Make sure item has the expected properties before mapping
       return {
         id: item.id,
         homework_id: item.homework_id,
@@ -312,7 +312,7 @@ export const getHomeworkSubmissionById = async (submissionId: string): Promise<H
       throw new Error('Submission not found');
     }
 
-    const result = {
+    const result: HomeworkSubmission = {
       id: data.id,
       homework_id: data.homework_id,
       user_id: data.user_id,
@@ -321,7 +321,7 @@ export const getHomeworkSubmissionById = async (submissionId: string): Promise<H
       content: data.content,
       answer: data.answer,
       file_url: data.file_url,
-      status: data.status,
+      status: data.status as 'pending' | 'reviewed' | 'rejected',
       score: data.score,
       feedback: data.feedback,
       submitted_at: data.submitted_at,
@@ -330,7 +330,7 @@ export const getHomeworkSubmissionById = async (submissionId: string): Promise<H
       user_name: data.profiles?.full_name || '未知用户',
       user_email: data.profiles?.email || '',
       homework: data.homework
-    } as HomeworkSubmission;
+    };
     
     return result;
   } catch (error) {

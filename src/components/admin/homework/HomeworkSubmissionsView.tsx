@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -30,23 +29,24 @@ import {
   getHomeworkCompletionStats,
   batchUpdateHomeworkFeedback,
   HomeworkSubmission,
-  CourseSection,
   HomeworkStats
 } from '@/lib/services/homeworkSubmissionService';
 
-// Define a local type for the CourseSection that matches exactly what's used in this component
-// This removes any type mismatches between imported and local types
-type LocalCourseSection = {
+// Define a more compatible type for CourseLecture
+interface CourseLecture {
   id: string;
   title: string;
   position: number;
-  lectures: {
-    id: string;
-    title: string;
-    position: number;
-    requires_homework_completion?: boolean;
-  }[];
-};
+  requires_homework_completion: boolean;
+}
+
+// Define a local type for the CourseSection that matches exactly what's used in this component
+interface CourseSection {
+  id: string;
+  title: string;
+  position: number;
+  lectures: CourseLecture[];
+}
 
 export const HomeworkSubmissionsView = () => {
   const { courseId } = useParams<{ courseId: string }>();
@@ -80,7 +80,7 @@ export const HomeworkSubmissionsView = () => {
 
   // Fetch course structure for navigation
   const { 
-    data: courseSections, 
+    data: courseSectionsData, 
     isLoading: isLoadingStructure 
   } = useQuery({
     queryKey: ['course-structure-homework', courseIdNumber],
@@ -88,8 +88,22 @@ export const HomeworkSubmissionsView = () => {
     enabled: !!courseIdNumber && courseIdNumber > 0,
   });
   
-  // Cast the data to the local type to fix the type compatibility issue
-  const sections = courseSections as LocalCourseSection[] | undefined;
+  // Transform the fetched data to match our local type definition
+  const sections: CourseSection[] = React.useMemo(() => {
+    if (!courseSectionsData) return [];
+    
+    return courseSectionsData.map(section => ({
+      id: section.id,
+      title: section.title,
+      position: section.position,
+      lectures: section.lectures.map(lecture => ({
+        id: lecture.id,
+        title: lecture.title,
+        position: lecture.position,
+        requires_homework_completion: lecture.requires_homework_completion || false
+      }))
+    }));
+  }, [courseSectionsData]);
 
   // Fetch all submissions for the course
   const { 
@@ -285,7 +299,7 @@ export const HomeworkSubmissionsView = () => {
         {/* Course Structure Navigation */}
         <div className="col-span-12 lg:col-span-3">
           <CourseStructureNav 
-            sections={sections || []}
+            sections={sections}
             isLoading={isLoadingStructure}
             selectedLectureId={selectedLectureId}
             onLectureSelect={handleLectureSelect}
