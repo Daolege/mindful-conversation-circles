@@ -18,17 +18,14 @@ export const NotSubmittedStudentsList: React.FC<NotSubmittedStudentsListProps> =
   const { data: notSubmittedStudents, isLoading } = useQuery({
     queryKey: ['not-submitted-students', courseId, lectureId],
     queryFn: async () => {
-      // 1. Get all enrolled students using course_enrollments
+      // 1. Get all enrolled students using a direct join with profiles
       const { data: enrolledStudents, error: enrolledError } = await supabase
         .from('course_enrollments')
         .select(`
           user_id,
-          user:user_id (
-            id,
-            profiles:id (
-              full_name,
-              email
-            )
+          profiles!inner(
+            full_name,
+            email
           )
         `)
         .eq('course_id', courseId);
@@ -55,17 +52,10 @@ export const NotSubmittedStudentsList: React.FC<NotSubmittedStudentsListProps> =
       return (enrolledStudents || [])
         .filter(enrollment => !submittedIds.has(enrollment.user_id))
         .map(enrollment => {
-          if (enrollment.user?.profiles) {
-            return {
-              id: enrollment.user_id,
-              full_name: enrollment.user.profiles.full_name,
-              email: enrollment.user.profiles.email
-            };
-          }
           return {
             id: enrollment.user_id,
-            full_name: '未知学生',
-            email: ''
+            full_name: enrollment.profiles?.full_name || '未知学生',
+            email: enrollment.profiles?.email || ''
           };
         });
     },

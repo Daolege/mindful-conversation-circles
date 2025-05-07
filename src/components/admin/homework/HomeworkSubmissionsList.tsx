@@ -33,7 +33,7 @@ export const HomeworkSubmissionsList: React.FC<HomeworkSubmissionsListProps> = (
           submitted_at,
           status,
           user_id,
-          profiles:user_id (
+          user:profiles!user_id(
             full_name,
             email
           )
@@ -57,8 +57,8 @@ export const HomeworkSubmissionsList: React.FC<HomeworkSubmissionsListProps> = (
     if (!searchTerm) return true;
     
     const searchLower = searchTerm.toLowerCase();
-    const fullName = submission.profiles?.full_name?.toLowerCase() || '';
-    const email = submission.profiles?.email?.toLowerCase() || '';
+    const fullName = submission.user?.full_name?.toLowerCase() || '';
+    const email = submission.user?.email?.toLowerCase() || '';
     
     return fullName.includes(searchLower) || email.includes(searchLower);
   });
@@ -118,8 +118,8 @@ export const HomeworkSubmissionsList: React.FC<HomeworkSubmissionsListProps> = (
                       <div className="flex items-center">
                         <User className="h-4 w-4 mr-2 text-gray-400" />
                         <div>
-                          <div>{submission.profiles?.full_name || '未知学生'}</div>
-                          <div className="text-xs text-gray-500">{submission.profiles?.email || ''}</div>
+                          <div>{submission.user?.full_name || '未知学生'}</div>
+                          <div className="text-xs text-gray-500">{submission.user?.email || ''}</div>
                         </div>
                       </div>
                     </td>
