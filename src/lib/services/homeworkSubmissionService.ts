@@ -30,7 +30,6 @@ export const getHomeworkSubmissionById = async (id: string): Promise<HomeworkSub
       lecture_id,
       course_id,
       answer,
-      content,
       file_url,
       status,
       score,
@@ -62,7 +61,6 @@ export const getHomeworkSubmissionById = async (id: string): Promise<HomeworkSub
     lecture_id: data.lecture_id,
     course_id: data.course_id,
     answer: data.answer,
-    content: data.content,
     file_url: data.file_url,
     status: (data.status as "pending" | "reviewed" | "rejected") || "pending",
     score: data.score,
@@ -71,8 +69,8 @@ export const getHomeworkSubmissionById = async (id: string): Promise<HomeworkSub
     created_at: data.created_at,
     reviewed_at: data.reviewed_at,
     homework: data.homework,
-    user_name: data.profiles?.full_name,
-    user_email: data.profiles?.email
+    user_name: data.profiles?.full_name || "用户名不详",
+    user_email: data.profiles?.email || ""
   };
 
   return submission;
@@ -185,7 +183,6 @@ export const getHomeworkSubmissionsByStudentId = async (
       lecture_id,
       course_id,
       answer,
-      content,
       file_url,
       status,
       score,
@@ -222,7 +219,6 @@ export const getHomeworkSubmissionsByStudentId = async (
     lecture_id: item.lecture_id, 
     course_id: item.course_id,
     answer: item.answer,
-    content: item.content,
     file_url: item.file_url,
     status: (item.status as "pending" | "reviewed" | "rejected") || "pending",
     score: item.score,
