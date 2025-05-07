@@ -67,7 +67,6 @@ export const StudentsList: React.FC<StudentsListProps> = ({ studentId, lectureId
           id,
           homework_id,
           answer,
-          content,
           file_url,
           status,
           score,
@@ -197,7 +196,7 @@ export const StudentsList: React.FC<StudentsListProps> = ({ studentId, lectureId
                     <div className="mt-4">
                       <strong>学生答案：</strong>
                       <div className="mt-2 p-3 bg-gray-50 rounded-md whitespace-pre-wrap">
-                        {item.submission.answer || item.submission.content || '无文本内容'}
+                        {item.submission.answer || '无文本内容'}
                       </div>
                       
                       {item.submission.file_url && (

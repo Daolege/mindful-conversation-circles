@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { HomeworkSubmission, HomeworkStats } from '@/lib/types/homework';
+import { HomeworkSubmission } from '@/lib/types/homework';
 
 export interface CourseSection {
   id: string;
@@ -10,8 +10,15 @@ export interface CourseSection {
     id: string;
     title: string;
     position: number;
-    requires_homework_completion?: boolean;
+    requires_homework_completion: boolean;
   }[];
+}
+
+export interface HomeworkStats {
+  enrolledStudents: number;
+  totalSubmissions: number;
+  homeworkLectures: number;
+  recentSubmissions: number;
 }
 
 export const getHomeworkSubmissionById = async (id: string): Promise<HomeworkSubmission> => {
@@ -52,7 +59,8 @@ export const getHomeworkSubmissionById = async (id: string): Promise<HomeworkSub
   const submission: HomeworkSubmission = {
     ...data,
     user_name: data.profiles?.full_name,
-    user_email: data.profiles?.email
+    user_email: data.profiles?.email,
+    status: (data.status as "pending" | "reviewed" | "rejected") || "pending"
   };
 
   return submission;
@@ -105,8 +113,9 @@ export const getHomeworkSubmissionsByCourseId = async (courseId: number): Promis
 
   return data.map(item => ({
     ...item,
-    user_name: item.profiles?.full_name,
-    user_email: item.profiles?.email
+    user_name: item.profiles?.full_name || "用户名不详",
+    user_email: item.profiles?.email || "",
+    status: (item.status as "pending" | "reviewed" | "rejected") || "pending"
   }));
 };
 
@@ -133,8 +142,9 @@ export const getHomeworkSubmissionsByLectureId = async (lectureId: string): Prom
 
   return data.map(item => ({
     ...item,
-    user_name: item.profiles?.full_name,
-    user_email: item.profiles?.email
+    user_name: item.profiles?.full_name || "用户名不详",
+    user_email: item.profiles?.email || "",
+    status: (item.status as "pending" | "reviewed" | "rejected") || "pending"
   }));
 };
 
@@ -179,8 +189,9 @@ export const getHomeworkSubmissionsByStudentId = async (
 
   return data.map(item => ({
     ...item,
-    user_name: userData?.full_name,
-    user_email: userData?.email
+    user_name: userData?.full_name || "用户名不详",
+    user_email: userData?.email || "",
+    status: (item.status as "pending" | "reviewed" | "rejected") || "pending"
   }));
 };
 
@@ -313,6 +324,9 @@ export const getCourseStructureForHomework = async (courseId: number): Promise<C
 
   return data.map(section => ({
     ...section,
-    lectures: section.course_lectures || []
+    lectures: (section.course_lectures || []).map(lecture => ({
+      ...lecture,
+      requires_homework_completion: lecture.requires_homework_completion || false
+    }))
   }));
 };

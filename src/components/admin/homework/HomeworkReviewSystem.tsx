@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Loader2, FileDown } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import HomeworkBreadcrumb from './HomeworkBreadcrumb';
 import CourseOutlineNavigation from './CourseOutlineNavigation';
@@ -9,6 +9,7 @@ import { HomeworkSubmissionsList } from './HomeworkSubmissionsList';
 import StudentsList from './StudentsList';
 import { HomeworkStatsDashboard } from './HomeworkStatsDashboard';
 import { NotSubmittedStudentsList } from './NotSubmittedStudentsList';
+import { getCourseStructureForHomework, HomeworkStats } from '@/lib/services/homeworkSubmissionService';
 
 interface HomeworkReviewSystemProps {
   courseId: number;
@@ -23,35 +24,7 @@ export const HomeworkReviewSystem: React.FC<HomeworkReviewSystemProps> = ({ cour
   // 1. Fetch course structure data (sections and lectures)
   const { data: courseStructure, isLoading: isLoadingStructure } = useQuery({
     queryKey: ['homework-course-structure', courseId],
-    queryFn: async () => {
-      const { data: sections, error: sectionsError } = await supabase
-        .from('course_sections')
-        .select(`
-          id,
-          title,
-          position,
-          course_lectures (
-            id,
-            title,
-            position,
-            requires_homework_completion
-          )
-        `)
-        .eq('course_id', courseId)
-        .order('position', { ascending: true });
-        
-      if (sectionsError) {
-        console.error('Error fetching course sections:', sectionsError);
-        return { sections: [] };
-      }
-      
-      return { 
-        sections: sections.map(section => ({
-          ...section,
-          lectures: section.course_lectures
-        }))
-      };
-    },
+    queryFn: () => getCourseStructureForHomework(courseId),
     enabled: !!courseId,
     staleTime: 5 * 60 * 1000,
   });
@@ -101,8 +74,8 @@ export const HomeworkReviewSystem: React.FC<HomeworkReviewSystemProps> = ({ cour
     setSelectedStudentId(null);
     
     // Find lecture and section titles
-    if (courseStructure?.sections) {
-      for (const section of courseStructure.sections) {
+    if (courseStructure) {
+      for (const section of courseStructure) {
         const lecture = section.lectures.find(lec => lec.id === lectureId);
         if (lecture) {
           setSectionTitle(section.title);
@@ -169,7 +142,7 @@ export const HomeworkReviewSystem: React.FC<HomeworkReviewSystemProps> = ({ cour
         sectionTitle={sectionTitle}
         lectureTitle={lectureTitle}
         studentId={selectedStudentId}
-        studentName={studentProfile?.full_name}
+        studentName={studentProfile?.full_name || '用户名不详'}
         onClearLecture={handleClearLecture}
         onClearStudent={handleClearStudent}
       />
@@ -178,10 +151,11 @@ export const HomeworkReviewSystem: React.FC<HomeworkReviewSystemProps> = ({ cour
         {/* Left sidebar: Course structure navigation */}
         <div className="lg:col-span-1">
           <CourseOutlineNavigation
-            sections={courseStructure?.sections || []}
+            sections={courseStructure || []}
             selectedLectureId={selectedLectureId}
             onSelectLecture={handleSelectLecture}
             submissionStats={submissionStats}
+            isLoading={isLoadingStructure}
           />
         </div>
         
