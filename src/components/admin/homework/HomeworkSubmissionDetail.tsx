@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getHomeworkSubmissionById, updateHomeworkFeedback } from '@/lib/services/homeworkSubmissionService';
@@ -53,12 +53,16 @@ export const HomeworkSubmissionDetail: React.FC<HomeworkSubmissionDetailProps> =
   const { data: submission, isLoading, error } = useQuery({
     queryKey: ['homework-submission', submissionId],
     queryFn: () => getHomeworkSubmissionById(submissionId || ''),
-    enabled: !!submissionId,
-    onSuccess: (data) => {
-      setFeedback(data.feedback || '');
-      setScore(data.score || null);
-    }
+    enabled: !!submissionId
   });
+
+  // Use effect to set initial values when data loads
+  useEffect(() => {
+    if (submission) {
+      setFeedback(submission.feedback || '');
+      setScore(submission.score || null);
+    }
+  }, [submission]);
 
   const updateFeedbackMutation = useMutation({
     mutationFn: ({ id, feedback, status, score }: 
@@ -230,7 +234,7 @@ export const HomeworkSubmissionDetail: React.FC<HomeworkSubmissionDetailProps> =
               <div className="bg-muted p-4 rounded-lg whitespace-pre-wrap">
                 <p className="font-medium">{submission.homework.title}</p>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  {submission.homework.description || '无详细描述'}
+                  {submission.homework?.description || '无详细描述'}
                 </p>
               </div>
             </div>

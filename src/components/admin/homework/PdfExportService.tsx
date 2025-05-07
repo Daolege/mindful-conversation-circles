@@ -129,9 +129,10 @@ export const PdfExportService: React.FC<PdfExportServiceProps> = ({
           yOffset += 7;
           
           doc.setFontSize(10);
-          if (submission.homework.description) {
+          const homeworkDescription = submission.homework?.description || '';
+          if (homeworkDescription) {
             // 如果描述太长，拆分成多行
-            const descriptionLines = doc.splitTextToSize(submission.homework.description, 150);
+            const descriptionLines = doc.splitTextToSize(homeworkDescription, 150);
             doc.text(descriptionLines, 25, yOffset);
             yOffset += descriptionLines.length * 5 + 5;
           } else {
