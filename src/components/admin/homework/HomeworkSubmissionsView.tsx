@@ -29,7 +29,9 @@ import {
   getStudentsWithoutSubmission,
   getHomeworkCompletionStats,
   batchUpdateHomeworkFeedback,
-  HomeworkSubmission
+  HomeworkSubmission,
+  CourseSection,
+  HomeworkStats
 } from '@/lib/services/homeworkSubmissionService';
 
 export const HomeworkSubmissionsView = () => {
@@ -325,7 +327,7 @@ export const HomeworkSubmissionsView = () => {
             
             <TabsContent value="stats">
               <HomeworkStatsDashboard 
-                stats={homeworkStats}
+                stats={homeworkStats as HomeworkStats}
                 isLoading={isLoadingStats}
                 courseTitle={`课程 ${courseId}`}
                 lectureMap={lectureMap}

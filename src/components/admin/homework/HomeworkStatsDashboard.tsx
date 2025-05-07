@@ -1,177 +1,261 @@
 
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
-import { Badge } from '@/components/ui/badge';
-import { 
-  CheckCircle, 
-  XCircle, 
-  Clock, 
-  Users, 
-  FileText,
-  BarChart3,
-} from 'lucide-react';
-import { Skeleton } from '@/components/ui/skeleton';
-
-interface HomeworkStats {
-  total_enrolled: number;
-  unique_submitters: number;
-  completion_rate: number;
-  reviewed_submissions: number;
-  pending_submissions: number;
-  rejected_submissions: number;
-  lecture_stats: {
-    lecture_id: string;
-    total_homework: number;
-    unique_submitters: number;
-    completion_rate: number;
-  }[];
-}
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { Loader2 } from 'lucide-react';
+import { HomeworkStats } from '@/lib/services/homeworkSubmissionService';
 
 interface HomeworkStatsDashboardProps {
   stats?: HomeworkStats;
   isLoading: boolean;
-  courseTitle?: string;
-  lectureMap?: Record<string, string>;
+  courseTitle: string;
+  lectureMap: Record<string, string>;
 }
 
 export const HomeworkStatsDashboard: React.FC<HomeworkStatsDashboardProps> = ({
   stats,
   isLoading,
-  courseTitle = '课程',
-  lectureMap = {}
+  courseTitle,
+  lectureMap
 }) => {
+  const [activeTab, setActiveTab] = React.useState('overview');
+
+  // Format lecture stats for the chart
+  const lectureChartData = React.useMemo(() => {
+    if (!stats) return [];
+    
+    return stats.lectureStats.map(stat => ({
+      name: lectureMap[stat.lecture_id] || stat.lecture_title || '未知课时',
+      total: stat.total,
+      reviewed: stat.reviewed,
+      pending: stat.pending,
+      rejected: stat.rejected,
+      completionRate: parseFloat(stat.completion_rate)
+    }));
+  }, [stats, lectureMap]);
+
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-        <Skeleton className="h-[150px] w-full" />
-        <Skeleton className="h-[150px] w-full" />
-        <Skeleton className="h-[150px] w-full" />
-      </div>
-    );
-  }
-
-  if (!stats) {
-    return (
-      <Card>
-        <CardContent className="p-6">
-          <div className="text-center">
-            <BarChart3 className="h-12 w-12 mx-auto text-muted-foreground" />
-            <h3 className="mt-2 text-lg font-medium">暂无统计数据</h3>
-            <p className="text-muted-foreground">还没有收集到足够的数据生成统计信息</p>
-          </div>
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle>作业统计</CardTitle>
+          <CardDescription>{courseTitle} 的作业提交统计</CardDescription>
+        </CardHeader>
+        <CardContent className="h-[400px] flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
         </CardContent>
       </Card>
     );
   }
 
+  if (!stats) {
+    return (
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle>作业统计</CardTitle>
+          <CardDescription>{courseTitle} 的作业提交统计</CardDescription>
+        </CardHeader>
+        <CardContent className="h-[400px] flex items-center justify-center">
+          <div className="text-center text-gray-500">没有作业提交数据</div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const { overallStats } = stats;
+  
+  const completionRate = parseFloat(overallStats.completionRate);
+  const barColors = {
+    reviewed: '#10b981', // green
+    pending: '#f59e0b', // amber
+    rejected: '#ef4444', // red
+  };
+
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center">
-              <Users className="mr-2 h-4 w-4" />
-              提交率
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {stats.completion_rate.toFixed(1)}%
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle>作业统计</CardTitle>
+        <CardDescription>{courseTitle} 的作业提交统计</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="mb-6">
+            <TabsTrigger value="overview">总览</TabsTrigger>
+            <TabsTrigger value="lectures">课时详情</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="overview" className="space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <Card>
+                <CardHeader className="py-4">
+                  <CardDescription>学生人数</CardDescription>
+                  <CardTitle className="text-3xl">{overallStats.totalStudents}</CardTitle>
+                </CardHeader>
+              </Card>
+              <Card>
+                <CardHeader className="py-4">
+                  <CardDescription>作业提交数</CardDescription>
+                  <CardTitle className="text-3xl">{overallStats.totalSubmissions}</CardTitle>
+                </CardHeader>
+              </Card>
+              <Card>
+                <CardHeader className="py-4">
+                  <CardDescription>已审核作业</CardDescription>
+                  <CardTitle className="text-3xl">{overallStats.reviewedSubmissions}</CardTitle>
+                </CardHeader>
+              </Card>
+              <Card>
+                <CardHeader className="py-4">
+                  <CardDescription>作业完成率</CardDescription>
+                  <CardTitle className="text-3xl">{overallStats.completionRate}%</CardTitle>
+                </CardHeader>
+              </Card>
             </div>
-            <Progress 
-              value={stats.completion_rate} 
-              className="h-2 mt-2" 
-            />
-            <p className="text-xs text-muted-foreground mt-2">
-              {stats.unique_submitters} / {stats.total_enrolled} 名学生已提交作业
-            </p>
-          </CardContent>
-        </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center">
-              <FileText className="mr-2 h-4 w-4" />
-              作业状态
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-2 mt-1">
-              <Badge variant="outline" className="flex items-center gap-1 bg-green-50">
-                <CheckCircle className="h-3 w-3" />
-                已通过: {stats.reviewed_submissions}
-              </Badge>
-              <Badge variant="outline" className="flex items-center gap-1 bg-amber-50">
-                <Clock className="h-3 w-3" />
-                待审核: {stats.pending_submissions}
-              </Badge>
-              <Badge variant="outline" className="flex items-center gap-1 bg-red-50">
-                <XCircle className="h-3 w-3" />
-                未通过: {stats.rejected_submissions}
-              </Badge>
-            </div>
-            <div className="flex mt-3">
-              <div className="h-2 bg-green-500" style={{ width: `${stats.reviewed_submissions / (stats.reviewed_submissions + stats.pending_submissions + stats.rejected_submissions) * 100}%` }}></div>
-              <div className="h-2 bg-amber-500" style={{ width: `${stats.pending_submissions / (stats.reviewed_submissions + stats.pending_submissions + stats.rejected_submissions) * 100}%` }}></div>
-              <div className="h-2 bg-red-500" style={{ width: `${stats.rejected_submissions / (stats.reviewed_submissions + stats.pending_submissions + stats.rejected_submissions) * 100}%` }}></div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center">
-              <BarChart3 className="mr-2 h-4 w-4" />
-              课程概览
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {courseTitle}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              总共有 {stats.lecture_stats.length} 个章节包含作业
-            </p>
-            <div className="text-sm mt-2">
-              <span className="font-medium">总作业提交: </span>
-              {stats.reviewed_submissions + stats.pending_submissions + stats.rejected_submissions}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {stats.lecture_stats.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>章节作业完成情况</CardTitle>
-            <CardDescription>
-              按章节查看作业提交情况
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {stats.lecture_stats.map((lectureStat) => (
-                <div key={lectureStat.lecture_id} className="flex flex-col">
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="text-sm font-medium">
-                      {lectureMap[lectureStat.lecture_id] || `讲座 ${lectureStat.lecture_id.substring(0, 6)}...`}
-                    </span>
-                    <span className="text-sm text-muted-foreground">
-                      {lectureStat.completion_rate.toFixed(1)}%
-                    </span>
+            <Card>
+              <CardHeader>
+                <CardTitle>作业完成状态</CardTitle>
+                <CardDescription>全部作业的完成状态分布</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 rounded-full bg-green-500"></div>
+                        <span>已通过</span>
+                      </div>
+                      <span>{overallStats.reviewedSubmissions} ({overallStats.totalSubmissions > 0 ? 
+                        (overallStats.reviewedSubmissions / overallStats.totalSubmissions * 100).toFixed(1) : 0}%)</span>
+                    </div>
+                    <Progress value={overallStats.totalSubmissions > 0 ? 
+                      (overallStats.reviewedSubmissions / overallStats.totalSubmissions * 100) : 0} 
+                      className="h-2 bg-gray-100" 
+                    />
                   </div>
-                  <Progress value={lectureStat.completion_rate} className="h-2" />
-                  <span className="text-xs text-muted-foreground mt-1">
-                    {lectureStat.unique_submitters} / {stats.total_enrolled} 名学生已提交
-                  </span>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 rounded-full bg-amber-500"></div>
+                        <span>待审核</span>
+                      </div>
+                      <span>{overallStats.pendingSubmissions} ({overallStats.totalSubmissions > 0 ? 
+                        (overallStats.pendingSubmissions / overallStats.totalSubmissions * 100).toFixed(1) : 0}%)</span>
+                    </div>
+                    <Progress value={overallStats.totalSubmissions > 0 ? 
+                      (overallStats.pendingSubmissions / overallStats.totalSubmissions * 100) : 0} 
+                      className="h-2 bg-gray-100" 
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 rounded-full bg-red-500"></div>
+                        <span>未通过</span>
+                      </div>
+                      <span>{overallStats.rejectedSubmissions} ({overallStats.totalSubmissions > 0 ? 
+                        (overallStats.rejectedSubmissions / overallStats.totalSubmissions * 100).toFixed(1) : 0}%)</span>
+                    </div>
+                    <Progress value={overallStats.totalSubmissions > 0 ? 
+                      (overallStats.rejectedSubmissions / overallStats.totalSubmissions * 100) : 0} 
+                      className="h-2 bg-gray-100" 
+                    />
+                  </div>
                 </div>
-              ))}
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="lectures">
+            <div className="space-y-8">
+              <Card>
+                <CardHeader>
+                  <CardTitle>课时作业提交情况</CardTitle>
+                  <CardDescription>按课时查看作业提交与审核状态</CardDescription>
+                </CardHeader>
+                <CardContent className="h-[500px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={lectureChartData}
+                      margin={{
+                        top: 20,
+                        right: 30,
+                        left: 20,
+                        bottom: 100,
+                      }}
+                      barSize={20}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                      <XAxis 
+                        dataKey="name" 
+                        angle={-45} 
+                        textAnchor="end"
+                        tick={{ fontSize: 12 }}
+                        height={80}
+                      />
+                      <YAxis />
+                      <Tooltip />
+                      <Bar dataKey="reviewed" name="已通过" stackId="a">
+                        {lectureChartData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={barColors.reviewed} />
+                        ))}
+                      </Bar>
+                      <Bar dataKey="pending" name="待审核" stackId="a">
+                        {lectureChartData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={barColors.pending} />
+                        ))}
+                      </Bar>
+                      <Bar dataKey="rejected" name="未通过" stackId="a">
+                        {lectureChartData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={barColors.rejected} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {stats.lectureStats.map((lectureStat) => (
+                  <Card key={lectureStat.lecture_id}>
+                    <CardHeader className="py-4">
+                      <CardTitle>{lectureMap[lectureStat.lecture_id] || lectureStat.lecture_title}</CardTitle>
+                      <CardDescription>
+                        来自 {lectureStat.section_title} 单元 - 完成率: {lectureStat.completion_rate}%
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-sm space-y-2">
+                        <div className="flex justify-between">
+                          <span>总提交:</span>
+                          <span className="font-medium">{lectureStat.total}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>已通过:</span>
+                          <span className="font-medium text-green-600">{lectureStat.reviewed}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>待审核:</span>
+                          <span className="font-medium text-amber-600">{lectureStat.pending}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>未通过:</span>
+                          <span className="font-medium text-red-600">{lectureStat.rejected}</span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
             </div>
-          </CardContent>
-        </Card>
-      )}
-    </div>
+          </TabsContent>
+        </Tabs>
+      </CardContent>
+    </Card>
   );
 };
 

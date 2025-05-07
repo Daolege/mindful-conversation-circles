@@ -42,9 +42,30 @@ export interface CourseLecture {
   position: number;
 }
 
-interface SubmissionWithUserDetails extends HomeworkSubmission {
-  user_name: string;
-  user_email: string;
+export interface HomeworkStats {
+  lectureStats: Array<{
+    lecture_id: string;
+    lecture_title: string;
+    section_id: string; 
+    section_title: string;
+    total: number;
+    reviewed: number;
+    pending: number;
+    rejected: number;
+    completion_rate: string;
+  }>;
+  overallStats: {
+    totalStudents: number;
+    totalSubmissions: number;
+    reviewedSubmissions: number;
+    pendingSubmissions: number;
+    rejectedSubmissions: number;
+    completionRate: string;
+    total_enrolled?: number;
+    unique_submitters?: number;
+    completion_rate?: string;
+    reviewed_submissions?: number;
+  };
 }
 
 export const getHomeworkSubmissionsByCourseId = async (courseId: number): Promise<HomeworkSubmission[]> => {
@@ -193,7 +214,7 @@ export const getHomeworkSubmissionsByStudentId = async (studentId: string, cours
   }
 };
 
-export const getHomeworkSubmissionById = async (submissionId: string): Promise<SubmissionWithUserDetails> => {
+export const getHomeworkSubmissionById = async (submissionId: string): Promise<HomeworkSubmission> => {
   try {
     const { data, error } = await supabase
       .from('homework_submissions')
@@ -228,11 +249,13 @@ export const getHomeworkSubmissionById = async (submissionId: string): Promise<S
 
     if (error) throw error;
 
-    return {
+    const result = {
       ...data,
       user_name: data.profiles?.full_name || '未知用户',
       user_email: data.profiles?.email || ''
     };
+    
+    return result as HomeworkSubmission;
   } catch (error) {
     console.error('Error fetching submission details:', error);
     throw error;
@@ -261,7 +284,7 @@ export const getCourseStructureForHomework = async (courseId: number): Promise<C
     // Sort lectures within each section by position
     return data.map(section => ({
       ...section,
-      lectures: section.lectures.sort((a, b) => a.position - b.position)
+      lectures: section.lectures.sort((a: CourseLecture, b: CourseLecture) => a.position - b.position)
     })).sort((a, b) => a.position - b.position);
   } catch (error) {
     console.error('Error fetching course structure:', error);
@@ -295,7 +318,7 @@ export const getStudentsWithoutSubmission = async (lectureId: string, courseId: 
     
     // If there are no homeworks for this lecture, all students technically haven't submitted
     if (!homeworks || homeworks.length === 0) {
-      return enrollees.map(enrollee => ({
+      return (enrollees || []).map((enrollee: any) => ({
         user_id: enrollee.user_id,
         user_name: enrollee.profiles?.full_name || '未知用户',
         user_email: enrollee.profiles?.email || ''
@@ -312,12 +335,12 @@ export const getStudentsWithoutSubmission = async (lectureId: string, courseId: 
     if (submissionsError) throw submissionsError;
     
     // Find users who haven't submitted
-    const submittedUserIds = submissions.map(sub => sub.user_id);
-    const nonSubmitters = enrollees.filter(enrollee => 
+    const submittedUserIds = (submissions || []).map((sub: any) => sub.user_id);
+    const nonSubmitters = (enrollees || []).filter((enrollee: any) => 
       !submittedUserIds.includes(enrollee.user_id)
     );
     
-    return nonSubmitters.map(enrollee => ({
+    return nonSubmitters.map((enrollee: any) => ({
       user_id: enrollee.user_id,
       user_name: enrollee.profiles?.full_name || '未知用户',
       user_email: enrollee.profiles?.email || ''
@@ -328,7 +351,7 @@ export const getStudentsWithoutSubmission = async (lectureId: string, courseId: 
   }
 };
 
-export const getHomeworkCompletionStats = async (courseId: number) => {
+export const getHomeworkCompletionStats = async (courseId: number): Promise<HomeworkStats> => {
   try {
     // Get all lectures in the course
     const { data: lectures, error: lectureError } = await supabase
@@ -356,12 +379,12 @@ export const getHomeworkCompletionStats = async (courseId: number) => {
     if (submissionError) throw submissionError;
     
     // Process stats by lecture
-    const lectureStats = lectures.map(lecture => {
-      const lectureSubmissions = submissions.filter(s => s.lecture_id === lecture.id);
+    const lectureStats = (lectures || []).map((lecture: any) => {
+      const lectureSubmissions = (submissions || []).filter((s: any) => s.lecture_id === lecture.id);
       const totalSubmissions = lectureSubmissions.length;
-      const reviewedSubmissions = lectureSubmissions.filter(s => s.status === 'reviewed').length;
-      const pendingSubmissions = lectureSubmissions.filter(s => s.status === 'pending').length;
-      const rejectedSubmissions = lectureSubmissions.filter(s => s.status === 'rejected').length;
+      const reviewedSubmissions = lectureSubmissions.filter((s: any) => s.status === 'reviewed').length;
+      const pendingSubmissions = lectureSubmissions.filter((s: any) => s.status === 'pending').length;
+      const rejectedSubmissions = lectureSubmissions.filter((s: any) => s.status === 'rejected').length;
       
       return {
         lecture_id: lecture.id,
@@ -387,10 +410,10 @@ export const getHomeworkCompletionStats = async (courseId: number) => {
     const studentCount = count || 0;
     
     // Calculate overall stats
-    const totalSubmissions = submissions.length;
-    const reviewedSubmissions = submissions.filter(s => s.status === 'reviewed').length;
-    const pendingSubmissions = submissions.filter(s => s.status === 'pending').length;
-    const rejectedSubmissions = submissions.filter(s => s.status === 'rejected').length;
+    const totalSubmissions = (submissions || []).length;
+    const reviewedSubmissions = (submissions || []).filter((s: any) => s.status === 'reviewed').length;
+    const pendingSubmissions = (submissions || []).filter((s: any) => s.status === 'pending').length;
+    const rejectedSubmissions = (submissions || []).filter((s: any) => s.status === 'rejected').length;
     
     return {
       lectureStats,
@@ -402,7 +425,13 @@ export const getHomeworkCompletionStats = async (courseId: number) => {
         rejectedSubmissions,
         completionRate: totalSubmissions > 0 
           ? (reviewedSubmissions / totalSubmissions * 100).toFixed(1) 
-          : '0'
+          : '0',
+        total_enrolled: studentCount,
+        unique_submitters: new Set((submissions || []).map((s: any) => s.user_id)).size,
+        completion_rate: totalSubmissions > 0 
+          ? (reviewedSubmissions / totalSubmissions * 100).toFixed(1) 
+          : '0',
+        reviewed_submissions: reviewedSubmissions
       }
     };
   } catch (error) {
@@ -415,7 +444,11 @@ export const getHomeworkCompletionStats = async (courseId: number) => {
         reviewedSubmissions: 0,
         pendingSubmissions: 0,
         rejectedSubmissions: 0,
-        completionRate: '0'
+        completionRate: '0',
+        total_enrolled: 0,
+        unique_submitters: 0,
+        completion_rate: '0',
+        reviewed_submissions: 0
       }
     };
   }
