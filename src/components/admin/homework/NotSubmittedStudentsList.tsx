@@ -65,7 +65,7 @@ export const NotSubmittedStudentsList: React.FC<NotSubmittedStudentsListProps> =
       return (studentProfiles || []).map(profile => {
         return {
           id: profile.id,
-          full_name: profile.full_name || '未知学生',
+          full_name: profile.full_name || '用户名不详',
           email: profile.email || ''
         };
       });
@@ -107,7 +107,7 @@ export const NotSubmittedStudentsList: React.FC<NotSubmittedStudentsListProps> =
               >
                 <User className="h-4 w-4 mr-3 text-amber-600" />
                 <div>
-                  <div className="font-medium text-gray-900">{student.full_name || '未知学生'}</div>
+                  <div className="font-medium text-gray-900">{student.full_name || '用户名不详'}</div>
                   <div className="text-xs text-gray-500">{student.email || ''}</div>
                 </div>
               </div>

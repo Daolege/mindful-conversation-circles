@@ -2,83 +2,103 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, User, Calendar, FileText } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Loader2, FileText, FileCheck, FileX } from 'lucide-react';
+import { HomeworkSubmission } from '@/lib/types/homework';
 import { supabase } from '@/integrations/supabase/client';
-import { format } from 'date-fns';
 
 interface StudentsListProps {
   studentId: string;
   lectureId: string;
 }
 
-export const StudentsList: React.FC<StudentsListProps> = ({
-  studentId,
-  lectureId
-}) => {
-  // Fetch student submission details
-  const { data, isLoading } = useQuery({
-    queryKey: ['student-homework', studentId, lectureId],
+export const StudentsList: React.FC<StudentsListProps> = ({ studentId, lectureId }) => {
+  const [activeTab, setActiveTab] = React.useState('submitted');
+  
+  // Fetch student profile
+  const { data: studentProfile, isLoading: isLoadingProfile } = useQuery({
+    queryKey: ['student-profile', studentId],
     queryFn: async () => {
-      // Get student details
-      const { data: studentData, error: studentError } = await supabase
+      const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select('full_name, email')
         .eq('id', studentId)
         .single();
         
-      if (studentError) {
-        console.error('Error fetching student details:', studentError);
+      if (error) {
+        console.error('Error fetching student profile:', error);
         return null;
       }
       
-      // Get homework submission
-      const { data: submissionData, error: submissionError } = await supabase
+      return data;
+    },
+    enabled: !!studentId,
+  });
+
+  // Fetch homework assignments for this lecture
+  const { data: homeworkAssignments, isLoading: isLoadingHomework } = useQuery({
+    queryKey: ['lecture-homework', lectureId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('homework')
+        .select('id, title, description, type')
+        .eq('lecture_id', lectureId)
+        .order('position', { ascending: true });
+        
+      if (error) {
+        console.error('Error fetching homework assignments:', error);
+        return [];
+      }
+      
+      return data;
+    },
+    enabled: !!lectureId,
+  });
+
+  // Fetch student submissions for this lecture
+  const { data: submissions, isLoading: isLoadingSubmissions } = useQuery({
+    queryKey: ['student-lecture-submissions', studentId, lectureId],
+    queryFn: async () => {
+      const { data, error } = await supabase
         .from('homework_submissions')
         .select(`
           id,
+          homework_id,
           answer,
+          content,
+          file_url,
+          status,
+          score,
+          feedback,
           created_at,
-          submitted_at,
-          status
+          submitted_at
         `)
         .eq('user_id', studentId)
-        .eq('lecture_id', lectureId)
-        .single();
+        .eq('lecture_id', lectureId);
         
-      if (submissionError && submissionError.code !== 'PGRST116') {
-        // PGRST116 means no rows returned, which is ok
-        console.error('Error fetching homework submission:', submissionError);
+      if (error) {
+        console.error('Error fetching student submissions:', error);
+        return [];
       }
       
-      // Get lecture details if needed
-      let lectureData = null;
-      if (submissionData) {
-        const { data: lecture, error: lectureError } = await supabase
-          .from('course_lectures')
-          .select('title, description')
-          .eq('id', lectureId)
-          .single();
-          
-        if (!lectureError) {
-          lectureData = lecture;
-        }
-      }
+      // Map submissions by homework_id for easy lookup
+      const submissionsMap = (data || []).reduce((map, submission) => {
+        map[submission.homework_id] = submission;
+        return map;
+      }, {} as Record<string, any>);
       
-      return {
-        student: studentData,
-        submission: submissionData || null,
-        lecture: lectureData
-      };
+      return submissionsMap;
     },
     enabled: !!studentId && !!lectureId,
-    staleTime: 5 * 60 * 1000
   });
   
-  if (isLoading) {
+  if (isLoadingProfile || isLoadingHomework || isLoadingSubmissions) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>学生作业详情</CardTitle>
+          <CardTitle>学生作业</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex justify-center p-8">
@@ -89,76 +109,156 @@ export const StudentsList: React.FC<StudentsListProps> = ({
     );
   }
   
-  if (!data || !data.student) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>学生作业详情</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-6 text-gray-500">
-            无法加载学生信息
-          </div>
-        </CardContent>
-      </Card>
-    );
+  const userName = studentProfile?.full_name || '用户名不详';
+  const userEmail = studentProfile?.email || '';
+  
+  // Group homework into submitted and not submitted
+  const submittedHomework: any[] = [];
+  const notSubmittedHomework: any[] = [];
+  
+  if (homeworkAssignments) {
+    homeworkAssignments.forEach(homework => {
+      if (submissions && submissions[homework.id]) {
+        submittedHomework.push({
+          ...homework,
+          submission: submissions[homework.id]
+        });
+      } else {
+        notSubmittedHomework.push(homework);
+      }
+    });
   }
   
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return <Badge variant="outline">待审核</Badge>;
+      case 'reviewed':
+        return <Badge variant="success">已通过</Badge>;
+      case 'rejected':
+        return <Badge variant="destructive">未通过</Badge>;
+      default:
+        return <Badge variant="outline">未知状态</Badge>;
+    }
+  };
+  
   return (
-    <div className="space-y-6">
-      {/* Student info card */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <User className="h-5 w-5" />
-            学生信息
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <div className="text-sm text-gray-500">姓名</div>
-              <div className="font-medium">{data.student.full_name || '未知'}</div>
-            </div>
-            <div>
-              <div className="text-sm text-gray-500">邮箱</div>
-              <div className="font-medium">{data.student.email || '未知'}</div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-      
-      {/* Homework submission card */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <FileText className="h-5 w-5" />
-            作业提交内容
-          </CardTitle>
-          {data.submission && (
-            <div className="text-sm text-gray-500 flex items-center mt-2">
-              <Calendar className="h-4 w-4 mr-1" />
-              提交于: {format(new Date(data.submission.created_at), 'yyyy-MM-dd HH:mm:ss')}
-            </div>
-          )}
-        </CardHeader>
-        <CardContent>
-          {data.submission ? (
-            <div className="border rounded-lg p-4 bg-gray-50">
-              {data.submission.answer ? (
-                <div dangerouslySetInnerHTML={{ __html: data.submission.answer }} />
-              ) : (
-                <div className="text-gray-500">（提交内容为空）</div>
-              )}
-            </div>
-          ) : (
-            <div className="text-center py-6 text-gray-500">
-              该学生尚未提交作业
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center">
+          <span className="text-lg">学生作业：{userName}</span>
+          {userEmail && <span className="ml-2 text-sm text-gray-500">({userEmail})</span>}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="mb-4">
+            <TabsTrigger value="submitted" className="flex items-center gap-2">
+              <FileCheck className="h-4 w-4" /> 
+              已提交 ({submittedHomework.length})
+            </TabsTrigger>
+            <TabsTrigger value="not-submitted" className="flex items-center gap-2">
+              <FileX className="h-4 w-4" /> 
+              未提交 ({notSubmittedHomework.length})
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="submitted">
+            {submittedHomework.length > 0 ? (
+              <div className="space-y-6">
+                {submittedHomework.map(item => (
+                  <div key={item.id} className="border rounded-lg p-4">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="text-lg font-medium">{item.title}</h3>
+                        {getStatusBadge(item.submission.status)}
+                        {typeof item.submission.score === 'number' && (
+                          <Badge variant="outline" className="ml-2">
+                            {item.submission.score}分
+                          </Badge>
+                        )}
+                      </div>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => window.open(`/admin/courses-new/${lectureId}/homework/submission/${item.submission.id}`, '_blank')}
+                      >
+                        查看详情
+                      </Button>
+                    </div>
+                    
+                    {item.description && (
+                      <div className="mt-2 text-sm text-gray-600">
+                        <strong>题目描述：</strong>
+                        <p>{item.description}</p>
+                      </div>
+                    )}
+                    
+                    <div className="mt-4">
+                      <strong>学生答案：</strong>
+                      <div className="mt-2 p-3 bg-gray-50 rounded-md whitespace-pre-wrap">
+                        {item.submission.answer || item.submission.content || '无文本内容'}
+                      </div>
+                      
+                      {item.submission.file_url && (
+                        <div className="mt-2">
+                          <a 
+                            href={item.submission.file_url} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:underline flex items-center"
+                          >
+                            <FileText className="h-4 w-4 mr-1" />
+                            查看附件
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {item.submission.feedback && (
+                      <div className="mt-4">
+                        <strong>老师反馈：</strong>
+                        <div className="mt-2 p-3 bg-blue-50 rounded-md">
+                          {item.submission.feedback}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center p-8 text-gray-500">
+                该学生未提交任何作业
+              </div>
+            )}
+          </TabsContent>
+          
+          <TabsContent value="not-submitted">
+            {notSubmittedHomework.length > 0 ? (
+              <div className="space-y-4">
+                {notSubmittedHomework.map(homework => (
+                  <div key={homework.id} className="border border-amber-200 bg-amber-50 rounded-lg p-4">
+                    <h3 className="text-lg font-medium">{homework.title}</h3>
+                    {homework.description && (
+                      <div className="mt-2 text-sm text-gray-600">
+                        <p>{homework.description}</p>
+                      </div>
+                    )}
+                    <Badge variant="outline" className="mt-2 text-amber-600 border-amber-300">
+                      未提交
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center p-8 text-gray-500">
+                该学生已提交所有作业
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
+      </CardContent>
+    </Card>
   );
 };
 

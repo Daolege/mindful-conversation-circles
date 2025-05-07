@@ -1,9 +1,10 @@
+
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Loader2, Search, Calendar, FileUp, FileDown, User } from 'lucide-react';
+import { Loader2, Search, Calendar, FileUp, User } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 
@@ -52,7 +53,7 @@ export const HomeworkSubmissionsList: React.FC<HomeworkSubmissionsListProps> = (
           
         return {
           ...submission,
-          user: profileData || { full_name: '未知学生', email: '' }
+          user: profileData || { full_name: '用户名不详', email: '' }
         };
       }));
       
@@ -102,7 +103,7 @@ export const HomeworkSubmissionsList: React.FC<HomeworkSubmissionsListProps> = (
           <div className="relative">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
             <Input
-              placeholder="搜索学生姓名或邮箱..."
+              placeholder="搜索用户名或邮箱..."
               className="pl-8"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -128,7 +129,7 @@ export const HomeworkSubmissionsList: React.FC<HomeworkSubmissionsListProps> = (
                       <div className="flex items-center">
                         <User className="h-4 w-4 mr-2 text-gray-400" />
                         <div>
-                          <div>{submission.user?.full_name || '未知学生'}</div>
+                          <div>{submission.user?.full_name || '用户名不详'}</div>
                           <div className="text-xs text-gray-500">{submission.user?.email || ''}</div>
                         </div>
                       </div>

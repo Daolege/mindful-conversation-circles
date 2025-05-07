@@ -1,137 +1,106 @@
 
 import React from 'react';
-import { ChevronRight, Home } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
+import { ChevronRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { 
+  Breadcrumb, 
+  BreadcrumbItem, 
+  BreadcrumbLink, 
+  BreadcrumbList, 
+  BreadcrumbSeparator 
+} from '@/components/ui/breadcrumb';
 
 interface HomeworkBreadcrumbProps {
   courseId: number;
   sectionTitle?: string;
   lectureTitle?: string;
   studentId?: string | null;
-  onClearLecture: () => void;
-  onClearStudent: () => void;
+  studentName?: string;
+  onClearLecture?: () => void;
+  onClearStudent?: () => void;
 }
 
-export const HomeworkBreadcrumb: React.FC<HomeworkBreadcrumbProps> = ({
+const HomeworkBreadcrumb: React.FC<HomeworkBreadcrumbProps> = ({
   courseId,
-  sectionTitle = '',
-  lectureTitle = '',
+  sectionTitle,
+  lectureTitle,
   studentId,
+  studentName,
   onClearLecture,
   onClearStudent
 }) => {
-  // Fetch course info if needed
-  const { data: courseInfo } = useQuery({
-    queryKey: ['course-info', courseId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('courses')
-        .select('title')
-        .eq('id', courseId)
-        .single();
-        
-      if (error) {
-        console.error('Error fetching course info:', error);
-        return null;
-      }
-      
-      return data;
-    },
-    enabled: !!courseId,
-    staleTime: 5 * 60 * 1000
-  });
-
-  // Fetch student name if a student is selected
-  const { data: studentInfo } = useQuery({
-    queryKey: ['student-info', studentId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('full_name, email')
-        .eq('id', studentId)
-        .single();
-        
-      if (error) {
-        console.error('Error fetching student info:', error);
-        return null;
-      }
-      
-      return data;
-    },
-    enabled: !!studentId,
-    staleTime: 5 * 60 * 1000
-  });
-
-  const courseTitle = courseInfo?.title || `课程 #${courseId}`;
-  
   return (
-    <nav className="flex">
-      <ol className="flex items-center flex-wrap text-sm">
-        <li className="flex items-center">
-          <Link to="/admin?tab=courses-new" className="text-blue-600 hover:text-blue-800 flex items-center">
-            <Home className="h-4 w-4 mr-1" />
-            <span>课程管理</span>
-          </Link>
-        </li>
+    <Breadcrumb>
+      <BreadcrumbList className="text-gray-600">
+        <BreadcrumbItem>
+          <BreadcrumbLink href="/admin?tab=courses-new">
+            课程管理
+          </BreadcrumbLink>
+        </BreadcrumbItem>
         
-        <li className="mx-2 text-gray-400">
+        <BreadcrumbSeparator>
           <ChevronRight className="h-4 w-4" />
-        </li>
+        </BreadcrumbSeparator>
         
-        <li>
-          <span className="font-medium" title={courseTitle}>
-            {courseTitle.length > 20 ? courseTitle.substring(0, 20) + '...' : courseTitle}
-          </span>
-        </li>
+        <BreadcrumbItem>
+          <BreadcrumbLink href={`/admin/courses-new/${courseId}`}>
+            课程 {courseId}
+          </BreadcrumbLink>
+        </BreadcrumbItem>
         
-        {sectionTitle && lectureTitle && (
+        <BreadcrumbSeparator>
+          <ChevronRight className="h-4 w-4" />
+        </BreadcrumbSeparator>
+        
+        <BreadcrumbItem>
+          {!lectureTitle ? (
+            <span className="text-gray-600 font-medium">作业管理</span>
+          ) : (
+            <Button 
+              variant="link" 
+              className="p-0 h-auto text-gray-600"
+              onClick={onClearLecture}
+            >
+              作业管理
+            </Button>
+          )}
+        </BreadcrumbItem>
+        
+        {lectureTitle && (
           <>
-            <li className="mx-2 text-gray-400">
+            <BreadcrumbSeparator>
               <ChevronRight className="h-4 w-4" />
-            </li>
+            </BreadcrumbSeparator>
             
-            <li>
-              <button 
-                onClick={onClearLecture}
-                className="text-blue-600 hover:text-blue-800"
-                title={sectionTitle}
-              >
-                {sectionTitle.length > 20 ? sectionTitle.substring(0, 20) + '...' : sectionTitle}
-              </button>
-            </li>
-            
-            <li className="mx-2 text-gray-400">
-              <ChevronRight className="h-4 w-4" />
-            </li>
-            
-            <li>
-              <span className="font-medium" title={lectureTitle}>
-                {lectureTitle.length > 20 ? lectureTitle.substring(0, 20) + '...' : lectureTitle}
-              </span>
-            </li>
+            <BreadcrumbItem>
+              {!studentId ? (
+                <span className="text-gray-600 font-medium">{sectionTitle} - {lectureTitle}</span>
+              ) : (
+                <Button 
+                  variant="link" 
+                  className="p-0 h-auto text-gray-600"
+                  onClick={onClearStudent}
+                >
+                  {sectionTitle} - {lectureTitle}
+                </Button>
+              )}
+            </BreadcrumbItem>
           </>
         )}
         
-        {studentId && studentInfo && (
+        {studentId && studentName && (
           <>
-            <li className="mx-2 text-gray-400">
+            <BreadcrumbSeparator>
               <ChevronRight className="h-4 w-4" />
-            </li>
+            </BreadcrumbSeparator>
             
-            <li>
-              <button 
-                onClick={onClearStudent}
-                className="text-blue-600 hover:text-blue-800"
-              >
-                {studentInfo.full_name || '未知学生'}
-              </button>
-            </li>
+            <BreadcrumbItem>
+              <span className="text-gray-600 font-medium">学生提交: {studentName}</span>
+            </BreadcrumbItem>
           </>
         )}
-      </ol>
-    </nav>
+      </BreadcrumbList>
+    </Breadcrumb>
   );
 };
 

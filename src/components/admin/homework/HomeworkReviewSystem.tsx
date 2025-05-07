@@ -4,9 +4,9 @@ import { useQuery } from '@tanstack/react-query';
 import { Loader2, FileDown } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import HomeworkBreadcrumb from './HomeworkBreadcrumb';
-import CourseStructureNavigation from './CourseStructureNavigation';
+import CourseOutlineNavigation from './CourseOutlineNavigation';
 import { HomeworkSubmissionsList } from './HomeworkSubmissionsList';
-import { StudentsList } from './StudentsList';
+import StudentsList from './StudentsList';
 import { HomeworkStatsDashboard } from './HomeworkStatsDashboard';
 import { NotSubmittedStudentsList } from './NotSubmittedStudentsList';
 
@@ -56,6 +56,45 @@ export const HomeworkReviewSystem: React.FC<HomeworkReviewSystemProps> = ({ cour
     staleTime: 5 * 60 * 1000,
   });
 
+  // Get all homework submissions to generate stats for navigation
+  const { data: allSubmissions } = useQuery({
+    queryKey: ['all-homework-submissions', courseId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('homework_submissions')
+        .select('id, lecture_id, status')
+        .eq('course_id', courseId);
+        
+      if (error) {
+        console.error('Error fetching all submissions:', error);
+        return [];
+      }
+      
+      return data || [];
+    },
+    enabled: !!courseId,
+  });
+
+  // Calculate submission statistics for navigation
+  const submissionStats = React.useMemo(() => {
+    const stats: Record<string, { total: number; pending: number; reviewed: number; rejected: number }> = {};
+    
+    const submissions = allSubmissions || [];
+    submissions.forEach(submission => {
+      if (!stats[submission.lecture_id]) {
+        stats[submission.lecture_id] = { total: 0, pending: 0, reviewed: 0, rejected: 0 };
+      }
+      
+      stats[submission.lecture_id].total++;
+      
+      if (submission.status === 'pending') stats[submission.lecture_id].pending++;
+      else if (submission.status === 'reviewed') stats[submission.lecture_id].reviewed++;
+      else if (submission.status === 'rejected') stats[submission.lecture_id].rejected++;
+    });
+    
+    return stats;
+  }, [allSubmissions]);
+
   // Handle lecture selection
   const handleSelectLecture = (lectureId: string) => {
     setSelectedLectureId(lectureId);
@@ -92,6 +131,28 @@ export const HomeworkReviewSystem: React.FC<HomeworkReviewSystemProps> = ({ cour
     setSelectedStudentId(null);
   };
   
+  // Get student name for breadcrumb
+  const { data: studentProfile } = useQuery({
+    queryKey: ['student-profile-for-breadcrumb', selectedStudentId],
+    queryFn: async () => {
+      if (!selectedStudentId) return null;
+      
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', selectedStudentId)
+        .single();
+        
+      if (error) {
+        console.error('Error fetching student profile:', error);
+        return null;
+      }
+      
+      return data;
+    },
+    enabled: !!selectedStudentId,
+  });
+  
   if (isLoadingStructure) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -108,6 +169,7 @@ export const HomeworkReviewSystem: React.FC<HomeworkReviewSystemProps> = ({ cour
         sectionTitle={sectionTitle}
         lectureTitle={lectureTitle}
         studentId={selectedStudentId}
+        studentName={studentProfile?.full_name}
         onClearLecture={handleClearLecture}
         onClearStudent={handleClearStudent}
       />
@@ -115,10 +177,11 @@ export const HomeworkReviewSystem: React.FC<HomeworkReviewSystemProps> = ({ cour
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Left sidebar: Course structure navigation */}
         <div className="lg:col-span-1">
-          <CourseStructureNavigation 
+          <CourseOutlineNavigation
             sections={courseStructure?.sections || []}
             selectedLectureId={selectedLectureId}
             onSelectLecture={handleSelectLecture}
+            submissionStats={submissionStats}
           />
         </div>
         
@@ -145,12 +208,10 @@ export const HomeworkReviewSystem: React.FC<HomeworkReviewSystemProps> = ({ cour
             </div>
           ) : (
             /* Both lecture and student selected - show student submissions */
-            <div>
-              <StudentsList 
-                studentId={selectedStudentId!} 
-                lectureId={selectedLectureId!}
-              />
-            </div>
+            <StudentsList
+              studentId={selectedStudentId!}
+              lectureId={selectedLectureId!}
+            />
           )}
         </div>
       </div>
