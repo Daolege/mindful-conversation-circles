@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -23,8 +23,8 @@ export const HomeworkSubmissionsList: React.FC<HomeworkSubmissionsListProps> = (
   const { data: submissions, isLoading } = useQuery({
     queryKey: ['homework-submissions', lectureId],
     queryFn: async () => {
-      // Join homework_submissions with profiles to get student information
-      const { data, error } = await supabase
+      // First fetch the homework submissions
+      const { data: submissionsData, error: submissionsError } = await supabase
         .from('homework_submissions')
         .select(`
           id,
@@ -32,21 +32,32 @@ export const HomeworkSubmissionsList: React.FC<HomeworkSubmissionsListProps> = (
           created_at,
           submitted_at,
           status,
-          user_id,
-          user:profiles!user_id(
-            full_name,
-            email
-          )
+          user_id
         `)
         .eq('lecture_id', lectureId)
         .order('created_at', { ascending: false });
         
-      if (error) {
-        console.error('Error fetching homework submissions:', error);
+      if (submissionsError) {
+        console.error('Error fetching homework submissions:', submissionsError);
         return [];
       }
       
-      return data || [];
+      // For each submission, fetch the user profile data separately
+      const submissionsWithUserData = await Promise.all((submissionsData || []).map(async (submission) => {
+        // Get user profile data
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('full_name, email')
+          .eq('id', submission.user_id)
+          .single();
+          
+        return {
+          ...submission,
+          user: profileData || { full_name: '未知学生', email: '' }
+        };
+      }));
+      
+      return submissionsWithUserData || [];
     },
     enabled: !!lectureId,
     staleTime: 5 * 60 * 1000

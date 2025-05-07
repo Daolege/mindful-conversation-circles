@@ -18,16 +18,10 @@ export const NotSubmittedStudentsList: React.FC<NotSubmittedStudentsListProps> =
   const { data: notSubmittedStudents, isLoading } = useQuery({
     queryKey: ['not-submitted-students', courseId, lectureId],
     queryFn: async () => {
-      // 1. Get all enrolled students using a direct join with profiles
+      // 1. Get all enrolled students
       const { data: enrolledStudents, error: enrolledError } = await supabase
         .from('course_enrollments')
-        .select(`
-          user_id,
-          profiles!inner(
-            full_name,
-            email
-          )
-        `)
+        .select('user_id')
         .eq('course_id', courseId);
         
       if (enrolledError) {
@@ -48,16 +42,33 @@ export const NotSubmittedStudentsList: React.FC<NotSubmittedStudentsListProps> =
       
       // 3. Filter out students who have submitted
       const submittedIds = new Set(submittedStudents?.map(s => s.user_id) || []);
-      
-      return (enrolledStudents || [])
+      const notSubmittedUserIds = (enrolledStudents || [])
         .filter(enrollment => !submittedIds.has(enrollment.user_id))
-        .map(enrollment => {
-          return {
-            id: enrollment.user_id,
-            full_name: enrollment.profiles?.full_name || '未知学生',
-            email: enrollment.profiles?.email || ''
-          };
-        });
+        .map(enrollment => enrollment.user_id);
+      
+      // 4. Get profile information for not submitted students
+      if (notSubmittedUserIds.length === 0) {
+        return [];
+      }
+      
+      const { data: studentProfiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, full_name, email')
+        .in('id', notSubmittedUserIds);
+        
+      if (profilesError) {
+        console.error('Error fetching student profiles:', profilesError);
+        return [];
+      }
+      
+      // 5. Return formatted student data
+      return (studentProfiles || []).map(profile => {
+        return {
+          id: profile.id,
+          full_name: profile.full_name || '未知学生',
+          email: profile.email || ''
+        };
+      });
     },
     enabled: !!courseId && !!lectureId,
     staleTime: 5 * 60 * 1000

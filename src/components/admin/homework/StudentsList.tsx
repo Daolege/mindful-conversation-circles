@@ -39,24 +39,35 @@ export const StudentsList: React.FC<StudentsListProps> = ({
           answer,
           created_at,
           submitted_at,
-          status,
-          course_lectures (
-            title,
-            description
-          )
+          status
         `)
         .eq('user_id', studentId)
         .eq('lecture_id', lectureId)
         .single();
         
-      if (submissionError) {
+      if (submissionError && submissionError.code !== 'PGRST116') {
+        // PGRST116 means no rows returned, which is ok
         console.error('Error fetching homework submission:', submissionError);
-        return { student: studentData, submission: null };
+      }
+      
+      // Get lecture details if needed
+      let lectureData = null;
+      if (submissionData) {
+        const { data: lecture, error: lectureError } = await supabase
+          .from('course_lectures')
+          .select('title, description')
+          .eq('id', lectureId)
+          .single();
+          
+        if (!lectureError) {
+          lectureData = lecture;
+        }
       }
       
       return {
         student: studentData,
-        submission: submissionData
+        submission: submissionData || null,
+        lecture: lectureData
       };
     },
     enabled: !!studentId && !!lectureId,
