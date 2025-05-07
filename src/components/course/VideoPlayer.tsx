@@ -1,13 +1,10 @@
+
 import { useState, useEffect, useRef } from "react";
 import {
   Play,
   Pause,
-  Volume2,
-  VolumeX,
   Maximize,
   Minimize,
-  SkipBack,
-  SkipForward,
   Settings,
   Loader2
 } from "lucide-react";
@@ -26,8 +23,6 @@ interface VideoPlayerProps {
 export const VideoPlayer = ({ videoUrl, title, courseId, lessonId }: VideoPlayerProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [volume, setVolume] = useState(0.5);
-  const [isMuted, setIsMuted] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -37,6 +32,7 @@ export const VideoPlayer = ({ videoUrl, title, courseId, lessonId }: VideoPlayer
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const controlsTimeout = useRef<NodeJS.Timeout | null>(null);
 
   const updateLastWatchedTime = async () => {
     try {
@@ -98,22 +94,6 @@ export const VideoPlayer = ({ videoUrl, title, courseId, lessonId }: VideoPlayer
     }
   };
 
-  const toggleMute = () => {
-    if (videoRef.current) {
-      videoRef.current.muted = !isMuted;
-      setIsMuted(!isMuted);
-    }
-  };
-
-  const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newVolume = parseFloat(e.target.value);
-    setVolume(newVolume);
-    if (videoRef.current) {
-      videoRef.current.volume = newVolume;
-      setIsMuted(newVolume === 0);
-    }
-  };
-
   const toggleFullScreen = () => {
     if (videoRef.current) {
       if (!isFullScreen) {
@@ -157,127 +137,146 @@ export const VideoPlayer = ({ videoUrl, title, courseId, lessonId }: VideoPlayer
     setIsSettingsOpen(false);
   };
 
-  const skipBack = () => {
-    if (videoRef.current) {
-      videoRef.current.currentTime -= 10;
-      setCurrentTime(videoRef.current.currentTime);
-    }
-  };
-
-  const skipForward = () => {
-    if (videoRef.current) {
-      videoRef.current.currentTime += 10;
-      setCurrentTime(videoRef.current.currentTime);
-    }
-  };
-
   const formatTime = (time: number) => {
     const minutes = Math.floor(time / 60);
     const seconds = Math.floor(time % 60);
     return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
   };
 
+  // Auto hide controls
+  useEffect(() => {
+    if (showControls) {
+      if (controlsTimeout.current) {
+        clearTimeout(controlsTimeout.current);
+      }
+      
+      controlsTimeout.current = setTimeout(() => {
+        if (!isSettingsOpen) {
+          setShowControls(false);
+        }
+      }, 3000);
+    }
+    
+    return () => {
+      if (controlsTimeout.current) {
+        clearTimeout(controlsTimeout.current);
+      }
+    };
+  }, [showControls, isSettingsOpen]);
+
   return (
     <div
-      className="relative w-full aspect-video bg-black group"
+      className="relative w-full aspect-video bg-black group rounded-lg overflow-hidden"
       onMouseEnter={() => setShowControls(true)}
-      onMouseLeave={() => setShowControls(false)}
+      onMouseMove={() => setShowControls(true)}
+      onMouseLeave={() => !isSettingsOpen && setShowControls(false)}
     >
       <video
         ref={videoRef}
         src={videoUrl}
         className="w-full h-full object-contain"
         onClick={togglePlay}
-        muted={false}
         playsInline
       />
+      
+      {!isPlaying && !showControls && (
+        <div className="absolute inset-0 flex items-center justify-center cursor-pointer" onClick={togglePlay}>
+          <div className="rounded-full bg-white/20 p-4 backdrop-blur-sm">
+            <Play className="h-12 w-12 text-white" />
+          </div>
+        </div>
+      )}
+      
       {(showControls || loading) && (
-        <div className="absolute bottom-0 left-0 w-full bg-black/50 text-white p-4 flex flex-col transition-opacity duration-300">
+        <div className="absolute bottom-0 left-0 w-full bg-white/10 backdrop-blur-sm text-gray-800 p-4 flex flex-col transition-opacity duration-300 border-t border-white/20">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
-              <button onClick={togglePlay} className="hover:opacity-70">
+              <button onClick={togglePlay} className="hover:bg-white/30 p-1 rounded-full">
                 {loading ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
+                  <Loader2 className="h-5 w-5 animate-spin text-gray-800" />
                 ) : (
-                  isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />
+                  isPlaying ? <Pause className="h-5 w-5 text-gray-800" /> : <Play className="h-5 w-5 text-gray-800" />
                 )}
               </button>
-              <button onClick={skipBack} className="hover:opacity-70">
-                <SkipBack className="h-5 w-5" />
-              </button>
-              <button onClick={skipForward} className="hover:opacity-70">
-                <SkipForward className="h-5 w-5" />
-              </button>
-              <div className="text-sm">
+              <div className="text-sm text-gray-800">
                 <span>{formatTime(currentTime)}</span> / <span>{formatTime(duration)}</span>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <button onClick={toggleMute} className="hover:opacity-70">
-                {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
-              </button>
-              <input
-                type="range"
-                min="0"
-                max="1"
-                step="0.01"
-                value={volume}
-                onChange={handleVolumeChange}
-                className="w-20"
-              />
-              <button onClick={toggleFullScreen} className="hover:opacity-70">
-                {isFullScreen ? <Minimize className="h-5 w-5" /> : <Maximize className="h-5 w-5" />}
-              </button>
               <div className="relative">
                 <button
                   onClick={() => setIsSettingsOpen(!isSettingsOpen)}
-                  className="hover:opacity-70"
+                  className="hover:bg-white/30 p-1 rounded-full"
                 >
-                  <Settings className="h-5 w-5" />
+                  <Settings className="h-5 w-5 text-gray-800" />
                 </button>
                 {isSettingsOpen && (
-                  <div className="absolute right-0 mt-2 w-32 bg-black border rounded-md shadow-md z-10">
+                  <div className="absolute right-0 bottom-10 w-32 bg-white border border-gray-100 rounded-md shadow-lg z-10">
+                    <div className="p-2 text-sm font-medium border-b border-gray-100">播放速度</div>
                     <button
-                      onClick={() => handlePlaybackRateChange(0.5)}
-                      className={`block w-full text-left px-4 py-2 text-sm hover:bg-gray-700 ${playbackRate === 0.5 ? 'bg-gray-700' : ''
-                        }`}
+                      onClick={() => handlePlaybackRateChange(1.0)}
+                      className={`block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${playbackRate === 1.0 ? 'bg-gray-100' : ''}`}
                     >
-                      0.5x
+                      1.0x
                     </button>
                     <button
-                      onClick={() => handlePlaybackRateChange(1)}
-                      className={`block w-full text-left px-4 py-2 text-sm hover:bg-gray-700 ${playbackRate === 1 ? 'bg-gray-700' : ''
-                        }`}
+                      onClick={() => handlePlaybackRateChange(1.25)}
+                      className={`block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${playbackRate === 1.25 ? 'bg-gray-100' : ''}`}
                     >
-                      1x
+                      1.25x
                     </button>
                     <button
                       onClick={() => handlePlaybackRateChange(1.5)}
-                      className={`block w-full text-left px-4 py-2 text-sm hover:bg-gray-700 ${playbackRate === 1.5 ? 'bg-gray-700' : ''
-                        }`}
+                      className={`block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${playbackRate === 1.5 ? 'bg-gray-100' : ''}`}
                     >
                       1.5x
                     </button>
                     <button
-                      onClick={() => handlePlaybackRateChange(2)}
-                      className={`block w-full text-left px-4 py-2 text-sm hover:bg-gray-700 ${playbackRate === 2 ? 'bg-gray-700' : ''
-                        }`}
+                      onClick={() => handlePlaybackRateChange(1.75)}
+                      className={`block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${playbackRate === 1.75 ? 'bg-gray-100' : ''}`}
                     >
-                      2x
+                      1.75x
+                    </button>
+                    <button
+                      onClick={() => handlePlaybackRateChange(2.0)}
+                      className={`block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${playbackRate === 2.0 ? 'bg-gray-100' : ''}`}
+                    >
+                      2.0x
+                    </button>
+                    <button
+                      onClick={() => handlePlaybackRateChange(2.25)}
+                      className={`block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${playbackRate === 2.25 ? 'bg-gray-100' : ''}`}
+                    >
+                      2.25x
+                    </button>
+                    <button
+                      onClick={() => handlePlaybackRateChange(2.5)}
+                      className={`block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${playbackRate === 2.5 ? 'bg-gray-100' : ''}`}
+                    >
+                      2.5x
+                    </button>
+                    <button
+                      onClick={() => handlePlaybackRateChange(3.0)}
+                      className={`block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${playbackRate === 3.0 ? 'bg-gray-100' : ''}`}
+                    >
+                      3.0x
                     </button>
                   </div>
                 )}
               </div>
+              <button onClick={toggleFullScreen} className="hover:bg-white/30 p-1 rounded-full">
+                {isFullScreen ? <Minimize className="h-5 w-5 text-gray-800" /> : <Maximize className="h-5 w-5 text-gray-800" />}
+              </button>
             </div>
           </div>
           <input
             type="range"
             min="0"
-            max={duration}
+            max={duration || 0}
             step="0.1"
             value={currentTime}
             onChange={handleTimeSliderChange}
-            className="w-full"
+            className="w-full h-1.5 bg-gray-200 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-blue-500"
           />
         </div>
       )}
