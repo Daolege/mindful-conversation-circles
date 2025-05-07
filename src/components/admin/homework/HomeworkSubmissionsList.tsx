@@ -30,7 +30,7 @@ export const HomeworkSubmissionsList: React.FC<HomeworkSubmissionsListProps> = (
           id,
           answer,
           created_at,
-          updated_at,
+          submitted_at,
           status,
           user_id,
           profiles:user_id (

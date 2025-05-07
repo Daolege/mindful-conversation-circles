@@ -18,15 +18,17 @@ export const NotSubmittedStudentsList: React.FC<NotSubmittedStudentsListProps> =
   const { data: notSubmittedStudents, isLoading } = useQuery({
     queryKey: ['not-submitted-students', courseId, lectureId],
     queryFn: async () => {
-      // 1. Get all enrolled students
+      // 1. Get all enrolled students using course_enrollments
       const { data: enrolledStudents, error: enrolledError } = await supabase
         .from('course_enrollments')
         .select(`
           user_id,
-          profiles:user_id (
+          user:user_id (
             id,
-            full_name,
-            email
+            profiles:id (
+              full_name,
+              email
+            )
           )
         `)
         .eq('course_id', courseId);
@@ -48,11 +50,24 @@ export const NotSubmittedStudentsList: React.FC<NotSubmittedStudentsListProps> =
       }
       
       // 3. Filter out students who have submitted
-      const submittedIds = new Set(submittedStudents.map(s => s.user_id));
+      const submittedIds = new Set(submittedStudents?.map(s => s.user_id) || []);
       
-      return enrolledStudents
+      return (enrolledStudents || [])
         .filter(enrollment => !submittedIds.has(enrollment.user_id))
-        .map(enrollment => enrollment.profiles);
+        .map(enrollment => {
+          if (enrollment.user?.profiles) {
+            return {
+              id: enrollment.user_id,
+              full_name: enrollment.user.profiles.full_name,
+              email: enrollment.user.profiles.email
+            };
+          }
+          return {
+            id: enrollment.user_id,
+            full_name: '未知学生',
+            email: ''
+          };
+        });
     },
     enabled: !!courseId && !!lectureId,
     staleTime: 5 * 60 * 1000

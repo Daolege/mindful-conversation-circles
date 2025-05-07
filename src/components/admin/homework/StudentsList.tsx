@@ -38,7 +38,7 @@ export const StudentsList: React.FC<StudentsListProps> = ({
           id,
           answer,
           created_at,
-          updated_at,
+          submitted_at,
           status,
           course_lectures (
             title,
