@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -63,19 +64,21 @@ const App = () => {
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/cookie-policy" element={<CookiePolicy />} />
             <Route path="/admin" element={<Admin />} />
-            <Route path="/course-editor/:courseId" element={<CourseEditor />} />
-            <Route path="/course-new-editor/:courseId" element={<CourseNewEditor />} />
-            
-            {/* Add new routes to match URLs used in components */}
             <Route path="/admin/courses-new/:courseId" element={<CourseNewEditor />} />
             <Route path="/admin/courses-new/:courseId/homework" element={<HomeworkReviewPage />} />
+            <Route path="/course-editor/:courseId" element={<CourseEditor />} />
+            <Route path="/course-new-editor/:courseId" element={<CourseNewEditor />} />
             
             <Route path="/student-homework/:courseId/:lectureId" element={<StudentHomeworkPage />} />
             <Route path="/homework-submissions/:submissionId" element={<HomeworkSubmissionDetailPage />} />
             <Route path="/homework-submissions" element={<HomeworkSubmissionsPage />} />
-            
-            {/* Add homework review route */}
             <Route path="/homework-review/:courseId" element={<HomeworkReviewPage />} />
+            
+            {/* Add route for viewing homework submission details */}
+            <Route path="/admin/courses-new/:courseId/homework/submission/:submissionId" element={<HomeworkSubmissionDetailPage />} />
+            
+            {/* Add route for student homework in admin context */}
+            <Route path="/admin/courses-new/:courseId/homework/student/:studentId" element={<StudentHomeworkPage />} />
             
             <Route path="*" element={<NotFound />} />
           </Routes>
