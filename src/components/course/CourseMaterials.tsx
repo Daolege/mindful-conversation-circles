@@ -158,7 +158,7 @@ export function CourseMaterials({ materials, isLoading = false, isVisible = true
                   <Button
                     size="sm"
                     variant="outline"
-                    className="text-gray-700 hover:bg-gray-100 text-xs py-2 px-3 h-8 flex items-center gap-1"
+                    className="text-gray-700 hover:bg-gray-700 hover:text-white text-xs py-2 px-3 h-8 flex items-center gap-1"
                     onClick={() => alert('这是示例数据，无法下载')}
                   >
                     <DownloadCloud size={14} />
@@ -199,7 +199,7 @@ export function CourseMaterials({ materials, isLoading = false, isVisible = true
                 <Button
                   size="sm"
                   variant="outline"
-                  className="text-gray-700 hover:bg-gray-100 text-xs py-2 px-3 h-8 flex items-center gap-1"
+                  className="text-gray-700 hover:bg-gray-700 hover:text-white text-xs py-2 px-3 h-8 flex items-center gap-1"
                   asChild
                 >
                   <a href={material.url} target="_blank" rel="noopener noreferrer">
