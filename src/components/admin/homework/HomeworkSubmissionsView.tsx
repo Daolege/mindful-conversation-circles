@@ -9,6 +9,7 @@ import { StudentHomeworkList } from './StudentHomeworkList';
 import { NotSubmittedStudentsList } from './NotSubmittedStudentsList';
 import { HomeworkStatsDashboard } from './HomeworkStatsDashboard';
 import { PdfExportService } from './PdfExportService';
+import { EnrollmentSubmissionStats } from './EnrollmentSubmissionStats';
 import { AdminBreadcrumb } from './AdminBreadcrumb';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -304,6 +305,7 @@ export const HomeworkSubmissionsView = () => {
               <TabsTrigger value="all">全部作业</TabsTrigger>
               <TabsTrigger value="not-submitted">未提交</TabsTrigger>
               <TabsTrigger value="stats">统计报表</TabsTrigger>
+              <TabsTrigger value="enrollment-stats">学生统计</TabsTrigger>
               {selectedStudentId && (
                 <TabsTrigger value="student">学生视图</TabsTrigger>
               )}
@@ -349,6 +351,13 @@ export const HomeworkSubmissionsView = () => {
               />
             </TabsContent>
             
+            <TabsContent value="enrollment-stats">
+              <EnrollmentSubmissionStats 
+                courseId={courseIdNumber}
+                lectureId={selectedLectureId}
+              />
+            </TabsContent>
+            
             {selectedStudentId && (
               <TabsContent value="student">
                 <StudentHomeworkList 
@@ -385,7 +394,7 @@ export const HomeworkSubmissionsView = () => {
           <DialogHeader>
             <DialogTitle>导出作业PDF</DialogTitle>
             <DialogDescription>
-              自定义导出PDF文档���内容和格式
+              自定义导出PDF文档的内容和格式
             </DialogDescription>
           </DialogHeader>
           <PdfExportService
