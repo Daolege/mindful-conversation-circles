@@ -21,6 +21,8 @@ import CourseNewEditor from './pages/CourseNewEditor';
 import CourseLearn from './pages/CourseLearn';
 import OrderDetail from './pages/OrderDetail';
 import HomeworkSubmissionsPage from './pages/HomeworkSubmissionsPage';
+import HomeworkSubmissionDetailPage from './pages/HomeworkSubmissionDetailPage';
+import StudentHomeworkPage from './pages/StudentHomeworkPage';
 import { LanguageProvider } from './contexts/LanguageContext';
 import './i18n';
 import PrivacyPolicy from './pages/PrivacyPolicy';
@@ -97,6 +99,8 @@ function App() {
                 <Route path="/admin/courses-new/new" element={<CourseNewEditor />} />
                 <Route path="/admin/courses-new/:courseId" element={<CourseNewEditor />} />
                 <Route path="/admin/courses-new/:courseId/homework" element={<HomeworkSubmissionsPage />} />
+                <Route path="/admin/courses-new/:courseId/homework/submission/:submissionId" element={<HomeworkSubmissionDetailPage />} />
+                <Route path="/admin/courses-new/:courseId/homework/student/:studentId" element={<StudentHomeworkPage />} />
                 <Route path="/orders/:id" element={<OrderDetail />} />
                 <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                 <Route path="/terms-of-use" element={<TermsOfUse />} />

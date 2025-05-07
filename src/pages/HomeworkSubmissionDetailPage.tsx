@@ -8,14 +8,13 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import HomeworkSubmissionsView from "@/components/admin/homework/HomeworkSubmissionsView";
-import { useTranslations } from "@/hooks/useTranslations";
+import { HomeworkSubmissionDetail } from "@/components/admin/homework/HomeworkSubmissionDetail";
+import { AdminBreadcrumb } from "@/components/admin/homework/AdminBreadcrumb";
 
-const HomeworkSubmissionsPage = () => {
+const HomeworkSubmissionDetailPage = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
-  const { courseId } = useParams<{ courseId: string }>();
-  const { t } = useTranslations();
+  const { courseId, submissionId } = useParams<{ courseId: string; submissionId: string }>();
 
   const { data: isAdmin, isLoading } = useQuery({
     queryKey: ['admin-role', user?.id],
@@ -25,12 +24,12 @@ const HomeworkSubmissionsPage = () => {
       try {
         const { data, error } = await supabase.rpc('has_role', { role: 'admin' });
         if (error) {
-          console.error(t('errors:checkingAdminRoleError'), error);
+          console.error('Error checking admin role:', error);
           return false;
         }
         return !!data;
       } catch (err) {
-        console.error(t('errors:adminRoleCheckError'), err);
+        console.error('Error checking admin role:', err);
         return false;
       }
     },
@@ -44,10 +43,10 @@ const HomeworkSubmissionsPage = () => {
   // 如果不是管理员，重定向到首页
   React.useEffect(() => {
     if (!loading && !isLoading && !isAdmin) {
-      toast.error(t('errors:insufficientPermissions'), { description: t('errors:adminAccessRequired') });
+      toast.error('权限不足', { description: '需要管理员权限访问此页面' });
       navigate('/');
     }
-  }, [isAdmin, isLoading, loading, navigate, t]);
+  }, [isAdmin, isLoading, loading, navigate]);
 
   if (loading || isLoading) {
     return (
@@ -66,7 +65,19 @@ const HomeworkSubmissionsPage = () => {
       <div className="min-h-screen flex flex-col">
         <Navbar />
         <div className="flex-grow flex items-center justify-center">
-          <div className="text-xl text-gray-600">{t('errors:adminOnlyPage')}</div>
+          <div className="text-xl text-gray-600">此页面仅管理员可访问</div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (!submissionId) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <div className="flex-grow container mx-auto px-4 py-8">
+          <div className="text-xl text-gray-600">未找到指定的作业提交</div>
         </div>
         <Footer />
       </div>
@@ -77,11 +88,25 @@ const HomeworkSubmissionsPage = () => {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       <main className="flex-grow container mx-auto px-4 py-8">
-        <HomeworkSubmissionsView />
+        <AdminBreadcrumb 
+          items={[
+            { label: '后台管理', href: '/admin' },
+            { label: '课程管理', href: '/admin/courses-new' },
+            { label: `课程 ${courseId}`, href: `/admin/courses-new/${courseId}` },
+            { label: '作业管理', href: `/admin/courses-new/${courseId}/homework` },
+            { label: '作业详情' }
+          ]} 
+        />
+        <div className="mt-6">
+          <HomeworkSubmissionDetail 
+            submissionId={submissionId} 
+            onViewStudent={(userId) => navigate(`/admin/courses-new/${courseId}/homework/student/${userId}`)}
+          />
+        </div>
       </main>
       <Footer />
     </div>
   );
 };
 
-export default HomeworkSubmissionsPage;
+export default HomeworkSubmissionDetailPage;
