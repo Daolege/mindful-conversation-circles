@@ -40,6 +40,7 @@ export interface CourseLecture {
   id: string;
   title: string;
   position: number;
+  requires_homework_completion?: boolean; // Added to match the expected type
 }
 
 export interface HomeworkStats {
@@ -61,10 +62,10 @@ export interface HomeworkStats {
     pendingSubmissions: number;
     rejectedSubmissions: number;
     completionRate: string;
-    total_enrolled?: number;
-    unique_submitters?: number;
-    completion_rate?: string;
-    reviewed_submissions?: number;
+    total_enrolled: number;
+    unique_submitters: number;
+    completion_rate: string;
+    reviewed_submissions: number;
   };
 }
 
@@ -104,7 +105,7 @@ export const getHomeworkSubmissionsByCourseId = async (courseId: number): Promis
     if (error) throw error;
 
     // Transform data to include user information
-    return data.map(item => ({
+    return (data || []).map(item => ({
       ...item,
       user_name: item.profiles?.full_name || '未知用户',
       user_email: item.profiles?.email || ''
@@ -150,7 +151,7 @@ export const getHomeworkSubmissionsByLectureId = async (lectureId: string): Prom
 
     if (error) throw error;
 
-    return data.map(item => ({
+    return (data || []).map(item => ({
       ...item,
       user_name: item.profiles?.full_name || '未知用户',
       user_email: item.profiles?.email || ''
@@ -203,7 +204,7 @@ export const getHomeworkSubmissionsByStudentId = async (studentId: string, cours
 
     if (error) throw error;
 
-    return data.map(item => ({
+    return (data || []).map(item => ({
       ...item,
       user_name: item.profiles?.full_name || '未知用户',
       user_email: item.profiles?.email || ''
@@ -248,6 +249,10 @@ export const getHomeworkSubmissionById = async (submissionId: string): Promise<H
       .single();
 
     if (error) throw error;
+    
+    if (!data) {
+      throw new Error('Submission not found');
+    }
 
     const result = {
       ...data,
@@ -282,9 +287,9 @@ export const getCourseStructureForHomework = async (courseId: number): Promise<C
     if (error) throw error;
     
     // Sort lectures within each section by position
-    return data.map(section => ({
+    return (data || []).map(section => ({
       ...section,
-      lectures: section.lectures.sort((a: CourseLecture, b: CourseLecture) => a.position - b.position)
+      lectures: (section.lectures || []).sort((a: CourseLecture, b: CourseLecture) => a.position - b.position)
     })).sort((a, b) => a.position - b.position);
   } catch (error) {
     console.error('Error fetching course structure:', error);
@@ -414,6 +419,10 @@ export const getHomeworkCompletionStats = async (courseId: number): Promise<Home
     const reviewedSubmissions = (submissions || []).filter((s: any) => s.status === 'reviewed').length;
     const pendingSubmissions = (submissions || []).filter((s: any) => s.status === 'pending').length;
     const rejectedSubmissions = (submissions || []).filter((s: any) => s.status === 'rejected').length;
+    const completionRateValue = totalSubmissions > 0 
+      ? (reviewedSubmissions / totalSubmissions * 100).toFixed(1) 
+      : '0';
+    const uniqueSubmitters = new Set((submissions || []).map((s: any) => s.user_id)).size;
     
     return {
       lectureStats,
@@ -423,14 +432,10 @@ export const getHomeworkCompletionStats = async (courseId: number): Promise<Home
         reviewedSubmissions,
         pendingSubmissions,
         rejectedSubmissions,
-        completionRate: totalSubmissions > 0 
-          ? (reviewedSubmissions / totalSubmissions * 100).toFixed(1) 
-          : '0',
+        completionRate: completionRateValue,
         total_enrolled: studentCount,
-        unique_submitters: new Set((submissions || []).map((s: any) => s.user_id)).size,
-        completion_rate: totalSubmissions > 0 
-          ? (reviewedSubmissions / totalSubmissions * 100).toFixed(1) 
-          : '0',
+        unique_submitters: uniqueSubmitters,
+        completion_rate: completionRateValue,
         reviewed_submissions: reviewedSubmissions
       }
     };
