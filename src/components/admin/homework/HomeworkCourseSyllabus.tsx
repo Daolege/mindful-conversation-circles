@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { ChevronDown, ChevronUp, Video, BookOpen, Check, Circle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { AnimatedCollapsible } from '@/components/ui/animated-collapsible';
@@ -20,7 +20,7 @@ export function HomeworkCourseSyllabus({
   const [expandedSections, setExpandedSections] = useState<Record<number, boolean>>({0: true});
 
   // If there's no expanded sections yet, open the first one
-  useEffect(() => {
+  React.useEffect(() => {
     if (syllabusData && syllabusData.length > 0 && Object.keys(expandedSections).length === 0) {
       setExpandedSections({0: true});
     }

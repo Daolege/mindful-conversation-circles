@@ -6,7 +6,8 @@ import {
   Breadcrumb, 
   BreadcrumbItem, 
   BreadcrumbLink, 
-  BreadcrumbSeparator 
+  BreadcrumbSeparator,
+  BreadcrumbList
 } from '@/components/ui/breadcrumb';
 
 interface HomeworkBreadcrumbProps {

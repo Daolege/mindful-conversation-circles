@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { HomeworkSubmission } from '@/lib/types/homework';
 
@@ -111,8 +110,14 @@ export const getHomeworkSubmissionsByCourseId = async (courseId: number): Promis
 
   if (error) throw error;
 
-  return data.map(item => ({
-    ...item,
+  // Transform the data to match our expected format
+  return (data || []).map(item => ({
+    id: item.id,
+    homework_id: item.homework_id,
+    user_id: item.user_id,
+    lecture_id: item.lecture_id,
+    course_id: item.course_id,
+    created_at: item.created_at,
     user_name: item.profiles?.full_name || "用户名不详",
     user_email: item.profiles?.email || "",
     status: (item.status as "pending" | "reviewed" | "rejected") || "pending"
@@ -140,8 +145,14 @@ export const getHomeworkSubmissionsByLectureId = async (lectureId: string): Prom
 
   if (error) throw error;
 
-  return data.map(item => ({
-    ...item,
+  // Transform the data to match our expected format
+  return (data || []).map(item => ({
+    id: item.id,
+    homework_id: item.homework_id,
+    user_id: item.user_id,
+    lecture_id: item.lecture_id,
+    course_id: item.course_id,
+    created_at: item.created_at,
     user_name: item.profiles?.full_name || "用户名不详",
     user_email: item.profiles?.email || "",
     status: (item.status as "pending" | "reviewed" | "rejected") || "pending"
@@ -187,10 +198,14 @@ export const getHomeworkSubmissionsByStudentId = async (
     .eq('id', studentId)
     .single();
 
-  return data.map(item => ({
+  const userName = userData?.full_name || "用户名不详";
+  const userEmail = userData?.email || "";
+
+  // Transform the data to match our expected format
+  return (data || []).map(item => ({
     ...item,
-    user_name: userData?.full_name || "用户名不详",
-    user_email: userData?.email || "",
+    user_name: userName,
+    user_email: userEmail,
     status: (item.status as "pending" | "reviewed" | "rejected") || "pending"
   }));
 };
