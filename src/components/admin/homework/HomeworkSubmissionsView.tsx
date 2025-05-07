@@ -29,7 +29,8 @@ import {
   getHomeworkCompletionStats,
   batchUpdateHomeworkFeedback,
   HomeworkSubmission,
-  HomeworkStats
+  HomeworkStats,
+  CourseSection
 } from '@/lib/services/homeworkSubmissionService';
 
 // Define a local type for the CourseSection that matches exactly what's used in this component
@@ -97,9 +98,9 @@ export const HomeworkSubmissionsView = () => {
         id: lecture.id,
         title: lecture.title,
         position: lecture.position,
-        requires_homework_completion: !!lecture.requires_homework_completion
-      }))
-    }));
+        requires_homework_completion: lecture.requires_homework_completion
+      })).sort((a, b) => a.position - b.position)
+    })).sort((a, b) => a.position - b.position);
   }, [courseSectionsData]);
 
   // Fetch all submissions for the course

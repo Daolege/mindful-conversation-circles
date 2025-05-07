@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Homework } from '@/lib/types/homework';
 
@@ -108,7 +107,7 @@ export const getHomeworkSubmissionsByCourseId = async (courseId: number): Promis
     const submissions = data.map(item => {
       if (!item) return null;
       
-      // Use type assertion to treat item as an object with the required properties
+      // Use type assertion to handle the query result correctly
       const itemObj = item as any;
       
       const submission: HomeworkSubmission = {
@@ -181,7 +180,7 @@ export const getHomeworkSubmissionsByLectureId = async (lectureId: string): Prom
     const submissions = data.map(item => {
       if (!item) return null;
       
-      // Use type assertion to treat item as an object with the required properties
+      // Use type assertion to handle the query result correctly
       const itemObj = item as any;
       
       const submission: HomeworkSubmission = {
@@ -261,7 +260,7 @@ export const getHomeworkSubmissionsByStudentId = async (studentId: string, cours
     const submissions = data.map(item => {
       if (!item) return null;
       
-      // Use type assertion to treat item as an object with the required properties
+      // Use type assertion to handle the query result correctly
       const itemObj = item as any;
       
       const submission: HomeworkSubmission = {
@@ -333,6 +332,7 @@ export const getHomeworkSubmissionById = async (submissionId: string): Promise<H
       throw new Error('Submission not found');
     }
 
+    // Use type assertion to treat data as an object with required properties
     const result: HomeworkSubmission = {
       id: data.id,
       homework_id: data.homework_id,
@@ -389,8 +389,8 @@ export const getCourseStructureForHomework = async (courseId: number): Promise<C
         id: lecture.id,
         title: lecture.title,
         position: lecture.position,
-        // Set requires_homework_completion to undefined or false as a default value
-        requires_homework_completion: lecture.requires_homework_completion || false
+        // Ensure requires_homework_completion is boolean
+        requires_homework_completion: lecture.requires_homework_completion === true
       })).sort((a, b) => a.position - b.position)
     })).sort((a, b) => a.position - b.position);
     
