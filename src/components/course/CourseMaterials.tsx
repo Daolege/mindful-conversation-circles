@@ -95,20 +95,79 @@ export function CourseMaterials({ materials, isLoading = false, isVisible = true
     processedMaterials = [];
   }
 
-  // 如果没有材料，显示相应提示
+  // 如果没有材料，改为显示示例材料数据
   if (processedMaterials.length === 0) {
+    // 创建示例材料数据用于展示
+    const exampleMaterials = [
+      {
+        id: 'example-1',
+        name: '课程讲义.pdf',
+        url: '#example-pdf',
+        position: 1
+      },
+      {
+        id: 'example-2',
+        name: '练习题.docx',
+        url: '#example-docx',
+        position: 2
+      },
+      {
+        id: 'example-3',
+        name: '课程幻灯片.pptx',
+        url: '#example-ppt',
+        position: 3
+      },
+      {
+        id: 'example-4',
+        name: '补充资料.xlsx',
+        url: '#example-xlsx',
+        position: 4
+      },
+      {
+        id: 'example-5',
+        name: '示例代码.zip',
+        url: '#example-zip',
+        position: 5
+      }
+    ];
+    
     return (
-      <Card id="course-materials-section" className="shadow-sm animate-in fade-in duration-500">
+      <Card id="course-materials-section" className="hover:shadow-lg transition-shadow duration-500 shadow-sm animate-in fade-in duration-500">
         <CardHeader className="pb-0">
           <CardTitle className="text-xl flex items-center gap-2">
             <File className="h-5 w-5" />
-            {t('courses:courseMaterials') || '课程附件'}
+            {t('courses:courseMaterials') || '课程附件'} 
+            <span className="text-xs text-gray-500 font-normal">(示例数据)</span>
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-4">
-          <div className="text-center p-8 text-gray-500">
-            {t('courses:noMaterials') || '暂无课程资料'}
-          </div>
+          <ScrollArea className="h-[450px]">
+            <ul className="space-y-3">
+              {exampleMaterials.map((material, idx) => (
+                <li 
+                  key={material.id} 
+                  className="flex justify-between items-center p-4 border rounded-lg hover:bg-gray-50 
+                    transition-all duration-300 ease-in-out 
+                    shadow-sm hover:shadow-md animate-in fade-in duration-300"
+                  style={{ animationDelay: `${idx * 100}ms` }}
+                >
+                  <div className="flex items-center gap-2">
+                    {getFileIcon(material.name)}
+                    <span className="font-medium">{material.name}</span>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="text-gray-700 hover:bg-gray-100 text-xs py-2 px-3 h-8 flex items-center gap-1"
+                    onClick={() => alert('这是示例数据，无法下载')}
+                  >
+                    <DownloadCloud size={14} />
+                    {t('courses:download') || '下载'}
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          </ScrollArea>
         </CardContent>
       </Card>
     );

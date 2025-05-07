@@ -398,8 +398,9 @@ const CourseLearn = () => {
     courseMaterials || [] : 
     standardCourse?.materials as CourseMaterial[] | null;
     
-  // Check if materials exist
-  const hasMaterials = materials && Array.isArray(materials) && materials.length > 0;
+  // Always show the materials tab for testing interactions
+  // We'll display example data if there are no real materials
+  const hasMaterials = true; // 始终显示材料选项卡，即使没有真实数据
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -435,13 +436,13 @@ const CourseLearn = () => {
           <div className="lg:col-span-1">
             <div className="bg-white rounded-lg shadow-sm">
               <Tabs defaultValue="syllabus" className="w-full">
-                <TabsList className={`w-full ${hasMaterials ? 'grid grid-cols-2' : ''}`}>
-                  <TabsTrigger value="syllabus" className={hasMaterials ? '' : 'w-full'}>
+                <TabsList className="w-full grid grid-cols-2">
+                  <TabsTrigger value="syllabus" className="w-full">
                     {t('courses:syllabus')}
                   </TabsTrigger>
-                  {hasMaterials && (
-                    <TabsTrigger value="materials">{t('courses:courseMaterials')}</TabsTrigger>
-                  )}
+                  <TabsTrigger value="materials" className="w-full">
+                    {t('courses:courseMaterials')}
+                  </TabsTrigger>
                 </TabsList>
                 
                 <TabsContent value="syllabus" className="p-4">
@@ -453,11 +454,9 @@ const CourseLearn = () => {
                   />
                 </TabsContent>
                 
-                {hasMaterials && (
-                  <TabsContent value="materials" className="p-4">
-                    <CourseMaterials materials={materials} />
-                  </TabsContent>
-                )}
+                <TabsContent value="materials" className="p-4">
+                  <CourseMaterials materials={materials} />
+                </TabsContent>
               </Tabs>
             </div>
           </div>
