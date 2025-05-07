@@ -12,6 +12,14 @@ import { useAuth } from "@/contexts/authHooks";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { Progress } from "@/components/ui/progress";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 
 interface VideoPlayerProps {
   videoUrl?: string;
@@ -30,6 +38,8 @@ export const VideoPlayer = ({ videoUrl, title, courseId, lessonId }: VideoPlayer
   const [showControls, setShowControls] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [hoverProgress, setHoverProgress] = useState<number | null>(null);
+  const progressBarRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const controlsTimeout = useRef<NodeJS.Timeout | null>(null);
@@ -121,12 +131,25 @@ export const VideoPlayer = ({ videoUrl, title, courseId, lessonId }: VideoPlayer
     }
   };
 
-  const handleTimeSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newTime = parseFloat(e.target.value);
-    setCurrentTime(newTime);
-    if (videoRef.current) {
+  const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!progressBarRef.current || !videoRef.current) return;
+    
+    const rect = progressBarRef.current.getBoundingClientRect();
+    const clickPosition = (e.clientX - rect.left) / rect.width;
+    const newTime = duration * clickPosition;
+    
+    if (newTime >= 0 && newTime <= duration) {
+      setCurrentTime(newTime);
       videoRef.current.currentTime = newTime;
     }
+  };
+  
+  const handleProgressHover = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!progressBarRef.current) return;
+    
+    const rect = progressBarRef.current.getBoundingClientRect();
+    const hoverPosition = (e.clientX - rect.left) / rect.width;
+    setHoverProgress(hoverPosition * 100);
   };
 
   const handlePlaybackRateChange = (rate: number) => {
@@ -181,103 +204,107 @@ export const VideoPlayer = ({ videoUrl, title, courseId, lessonId }: VideoPlayer
       
       {!isPlaying && !showControls && (
         <div className="absolute inset-0 flex items-center justify-center cursor-pointer" onClick={togglePlay}>
-          <div className="rounded-full bg-white/20 p-4 backdrop-blur-sm">
-            <Play className="h-12 w-12 text-white" />
+          <div className="rounded-full bg-white/30 p-5 backdrop-blur-sm transition-all duration-200 hover:bg-white/40 hover:scale-105">
+            <Play className="h-14 w-14 text-white drop-shadow-md" />
           </div>
         </div>
       )}
       
       {(showControls || loading) && (
-        <div className="absolute bottom-0 left-0 w-full bg-white/10 backdrop-blur-sm text-gray-800 p-4 flex flex-col transition-opacity duration-300 border-t border-white/20">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <button onClick={togglePlay} className="hover:bg-white/30 p-1 rounded-full">
+        <div className="absolute bottom-0 left-0 w-full bg-white/30 backdrop-blur-md text-gray-800 animate-fade-in transition-all duration-300">
+          <div 
+            ref={progressBarRef}
+            className="relative h-2 bg-gray-300 cursor-pointer"
+            onClick={handleProgressClick}
+            onMouseMove={handleProgressHover}
+            onMouseLeave={() => setHoverProgress(null)}
+          >
+            {/* Progress bar */}
+            <div 
+              className="absolute top-0 left-0 h-full bg-blue-500 transition-all duration-100"
+              style={{ width: `${(currentTime / duration) * 100}%` }}
+            />
+            
+            {/* Hover preview */}
+            {hoverProgress !== null && (
+              <div 
+                className="absolute top-0 h-full bg-blue-300 opacity-50"
+                style={{ width: `${hoverProgress}%` }}
+              />
+            )}
+            
+            {/* Progress indicator */}
+            <div 
+              className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-blue-600 rounded-full border-2 border-white shadow-md transition-all duration-100"
+              style={{ left: `${(currentTime / duration) * 100}%`, transform: 'translate(-50%, -50%)' }}
+            />
+          </div>
+          
+          <div className="flex items-center justify-between p-3">
+            <div className="flex items-center gap-3">
+              <Button 
+                onClick={togglePlay} 
+                variant="ghost" 
+                className="p-1 h-auto rounded-full hover:bg-black/10 transition-all duration-200"
+              >
                 {loading ? (
-                  <Loader2 className="h-5 w-5 animate-spin text-gray-800" />
+                  <Loader2 className="h-6 w-6 animate-spin text-gray-800" />
                 ) : (
-                  isPlaying ? <Pause className="h-5 w-5 text-gray-800" /> : <Play className="h-5 w-5 text-gray-800" />
+                  isPlaying ? 
+                    <Pause className="h-6 w-6 text-gray-800" /> : 
+                    <Play className="h-6 w-6 text-gray-800" />
                 )}
-              </button>
-              <div className="text-sm text-gray-800">
-                <span>{formatTime(currentTime)}</span> / <span>{formatTime(duration)}</span>
+              </Button>
+              <div className="text-sm font-medium text-gray-800">
+                {formatTime(currentTime)} / {formatTime(duration)}
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            
+            <div className="flex items-center gap-3">
               <div className="relative">
-                <button
-                  onClick={() => setIsSettingsOpen(!isSettingsOpen)}
-                  className="hover:bg-white/30 p-1 rounded-full"
-                >
-                  <Settings className="h-5 w-5 text-gray-800" />
-                </button>
-                {isSettingsOpen && (
-                  <div className="absolute right-0 bottom-10 w-32 bg-white border border-gray-100 rounded-md shadow-lg z-10">
-                    <div className="p-2 text-sm font-medium border-b border-gray-100">播放速度</div>
-                    <button
-                      onClick={() => handlePlaybackRateChange(1.0)}
-                      className={`block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${playbackRate === 1.0 ? 'bg-gray-100' : ''}`}
+                <DropdownMenu open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
+                  <DropdownMenuTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      className="p-1 h-auto rounded-full hover:bg-black/10"
                     >
-                      1.0x
-                    </button>
-                    <button
-                      onClick={() => handlePlaybackRateChange(1.25)}
-                      className={`block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${playbackRate === 1.25 ? 'bg-gray-100' : ''}`}
-                    >
-                      1.25x
-                    </button>
-                    <button
-                      onClick={() => handlePlaybackRateChange(1.5)}
-                      className={`block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${playbackRate === 1.5 ? 'bg-gray-100' : ''}`}
-                    >
-                      1.5x
-                    </button>
-                    <button
-                      onClick={() => handlePlaybackRateChange(1.75)}
-                      className={`block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${playbackRate === 1.75 ? 'bg-gray-100' : ''}`}
-                    >
-                      1.75x
-                    </button>
-                    <button
-                      onClick={() => handlePlaybackRateChange(2.0)}
-                      className={`block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${playbackRate === 2.0 ? 'bg-gray-100' : ''}`}
-                    >
-                      2.0x
-                    </button>
-                    <button
-                      onClick={() => handlePlaybackRateChange(2.25)}
-                      className={`block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${playbackRate === 2.25 ? 'bg-gray-100' : ''}`}
-                    >
-                      2.25x
-                    </button>
-                    <button
-                      onClick={() => handlePlaybackRateChange(2.5)}
-                      className={`block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${playbackRate === 2.5 ? 'bg-gray-100' : ''}`}
-                    >
-                      2.5x
-                    </button>
-                    <button
-                      onClick={() => handlePlaybackRateChange(3.0)}
-                      className={`block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${playbackRate === 3.0 ? 'bg-gray-100' : ''}`}
-                    >
-                      3.0x
-                    </button>
-                  </div>
-                )}
+                      <Settings className="h-6 w-6 text-gray-800" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="bg-white/95 backdrop-blur-md border border-gray-200 shadow-lg rounded-md min-w-[140px]">
+                    <div className="py-2 px-3 text-sm font-medium border-b border-gray-200">播放速度</div>
+                    {[1.0, 1.25, 1.5, 1.75, 2.0, 2.25, 2.5, 3.0].map((rate) => (
+                      <DropdownMenuItem
+                        key={rate}
+                        className={`px-3 py-2 text-sm cursor-pointer ${playbackRate === rate ? 'bg-blue-50 text-blue-600 font-medium' : ''}`}
+                        onClick={() => handlePlaybackRateChange(rate)}
+                      >
+                        {rate}x
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
-              <button onClick={toggleFullScreen} className="hover:bg-white/30 p-1 rounded-full">
-                {isFullScreen ? <Minimize className="h-5 w-5 text-gray-800" /> : <Maximize className="h-5 w-5 text-gray-800" />}
-              </button>
+              
+              <Button 
+                onClick={toggleFullScreen} 
+                variant="ghost" 
+                className="p-1 h-auto rounded-full hover:bg-black/10"
+              >
+                {isFullScreen ? 
+                  <Minimize className="h-6 w-6 text-gray-800" /> : 
+                  <Maximize className="h-6 w-6 text-gray-800" />
+                }
+              </Button>
             </div>
           </div>
-          <input
-            type="range"
-            min="0"
-            max={duration || 0}
-            step="0.1"
-            value={currentTime}
-            onChange={handleTimeSliderChange}
-            className="w-full h-1.5 bg-gray-200 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-blue-500"
-          />
+        </div>
+      )}
+      
+      {/* Current playback rate indicator */}
+      {showControls && playbackRate !== 1.0 && (
+        <div className="absolute top-3 right-3 px-2 py-1 bg-white/80 backdrop-blur-sm rounded text-sm font-medium text-gray-800">
+          {playbackRate}x
         </div>
       )}
     </div>
