@@ -56,10 +56,23 @@ export const getHomeworkSubmissionById = async (id: string): Promise<HomeworkSub
   
   // Format the data to match our interface
   const submission: HomeworkSubmission = {
-    ...data,
+    id: data.id,
+    homework_id: data.homework_id,
+    user_id: data.user_id,
+    lecture_id: data.lecture_id,
+    course_id: data.course_id,
+    answer: data.answer,
+    content: data.content,
+    file_url: data.file_url,
+    status: (data.status as "pending" | "reviewed" | "rejected") || "pending",
+    score: data.score,
+    feedback: data.feedback,
+    submitted_at: data.submitted_at,
+    created_at: data.created_at,
+    reviewed_at: data.reviewed_at,
+    homework: data.homework,
     user_name: data.profiles?.full_name,
-    user_email: data.profiles?.email,
-    status: (data.status as "pending" | "reviewed" | "rejected") || "pending"
+    user_email: data.profiles?.email
   };
 
   return submission;
@@ -203,10 +216,22 @@ export const getHomeworkSubmissionsByStudentId = async (
 
   // Transform the data to match our expected format
   return (data || []).map(item => ({
-    ...item,
+    id: item.id,
+    homework_id: item.homework_id,
+    user_id: item.user_id,
+    lecture_id: item.lecture_id, 
+    course_id: item.course_id,
+    answer: item.answer,
+    content: item.content,
+    file_url: item.file_url,
+    status: (item.status as "pending" | "reviewed" | "rejected") || "pending",
+    score: item.score,
+    feedback: item.feedback,
+    submitted_at: item.submitted_at,
+    created_at: item.created_at,
+    homework: item.homework,
     user_name: userName,
-    user_email: userEmail,
-    status: (item.status as "pending" | "reviewed" | "rejected") || "pending"
+    user_email: userEmail
   }));
 };
 
