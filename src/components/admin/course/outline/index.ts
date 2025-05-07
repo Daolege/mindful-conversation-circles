@@ -15,6 +15,8 @@ export { LectureItem } from './lectures/LectureItem';
 export { AddLectureForm } from './lectures/AddLectureForm';
 export { SectionLectureList } from './lectures/SectionLectureList';
 export { LectureHomeworkSettings } from './lectures/LectureHomeworkSettings';
+import VideoPanel from './lectures/VideoPanel';
+export { VideoPanel };
 
 // 导出共享组件
 export { ConfirmDialog } from '../../shared/ConfirmDialog';

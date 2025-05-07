@@ -31,11 +31,21 @@ export const VideoUploader: React.FC<VideoUploaderProps> = ({
     // Set the selected filename
     setSelectedFileName(file.name);
 
-    // Validate file type
-    const validTypes = ['video/mp4', 'video/webm', 'video/avi'];
+    // Validate file type - provide more helpful error message
+    const validTypes = ['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime'];
     if (!validTypes.includes(file.type)) {
-      toast.error('不支持的文件格式', {
-        description: '请上传 MP4、WebM 或 AVI 格式的视频'
+      toast.error('不支持的视频格式', {
+        description: '请上传 MP4、WebM、OGG 或 QuickTime 格式的视频文件'
+      });
+      setSelectedFileName(null);
+      return;
+    }
+
+    // Validate file size (10GB limit)
+    const maxSize = 10 * 1024 * 1024 * 1024; // 10GB in bytes
+    if (file.size > maxSize) {
+      toast.error('文件过大', {
+        description: '视频文件大小不能超过10G'
       });
       setSelectedFileName(null);
       return;
@@ -82,7 +92,7 @@ export const VideoUploader: React.FC<VideoUploaderProps> = ({
       <input
         ref={fileInputRef}
         type="file"
-        accept="video/mp4,video/webm,video/avi"
+        accept="video/mp4,video/webm,video/ogg,video/quicktime"
         onChange={handleFileChange}
         className="hidden"
       />
@@ -93,6 +103,7 @@ export const VideoUploader: React.FC<VideoUploaderProps> = ({
           variant={uploading ? "outline" : "default"}
           onClick={() => fileInputRef.current?.click()}
           disabled={uploading}
+          className="h-8 text-white"
         >
           {uploading ? (
             <div className="flex items-center gap-2">
@@ -126,4 +137,3 @@ export const VideoUploader: React.FC<VideoUploaderProps> = ({
     </div>
   );
 };
-

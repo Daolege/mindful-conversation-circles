@@ -213,12 +213,11 @@ const CourseNewEditorRefactored = ({
         </div>
         <div className="grid grid-cols-1 gap-4">
           <Tabs value={activeTab} onValueChange={handleTabChange}>
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="basic">基本信息</TabsTrigger>
               <TabsTrigger value="curriculum" disabled={!courseId}>课程大纲</TabsTrigger>
               <TabsTrigger value="materials" disabled={!courseId}>课程附件</TabsTrigger>
               <TabsTrigger value="settings" disabled={!courseId}>其他设置</TabsTrigger>
-              <TabsTrigger value="preview" disabled={!courseId}>预览</TabsTrigger>
             </TabsList>
             
             <TabsContent value="basic">
@@ -269,12 +268,6 @@ const CourseNewEditorRefactored = ({
                   <p className="text-yellow-600">请先保存课程基本信息</p>
                 </div>
               )}
-            </TabsContent>
-            
-            <TabsContent value="preview">
-              <div className="text-center py-8 text-gray-500">
-                课程预览功能开发中...
-              </div>
             </TabsContent>
           </Tabs>
         </div>

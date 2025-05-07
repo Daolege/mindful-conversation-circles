@@ -3,127 +3,137 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-/**
- * This component automatically fixes database foreign key relationships
- * when the course learning page loads, ensuring homework functionality works properly.
- */
+// 此组件用于确保作业相关表和约束配置正确
 export const DatabaseFixInitializer: React.FC = () => {
-  const [migrationExecuted, setMigrationExecuted] = useState(false);
-  const [migrationSuccess, setMigrationSuccess] = useState(false);
-  const storageKey = 'homework_migration_executed';
-  
+  const [initialized, setInitialized] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+  const [fixLogs, setFixLogs] = useState<string[]>([]);
+
   useEffect(() => {
-    const hasExecuted = localStorage.getItem(storageKey) === 'true';
-    
-    const runMigration = async () => {
-      if (hasExecuted) {
-        console.log('[DatabaseFixInitializer] Migration already executed, skipping');
-        setMigrationExecuted(true);
-        setMigrationSuccess(true);
-        return;
-      }
-      
-      console.log('[DatabaseFixInitializer] Executing database migration');
-      
+    const fixDatabaseConstraints = async () => {
       try {
-        // First check if specific courses exist in courses_new
+        console.log('[DatabaseFixInitializer] Running database constraint fixes...');
+        
+        // 收集日志
+        const logs: string[] = [];
+        logs.push('开始执行数据库修复流程');
+        
+        // 修复作业表约束 - 增加错误处理和重试机制
         try {
-          // Check for at least one course in courses_new
-          const { data: coursesExist, error: coursesError } = await supabase
-            .from('courses_new')
-            .select('id')
-            .limit(5);
+          logs.push('尝试修复作业表约束');
+          const { error: constraintError } = await supabase.rpc('fix_homework_constraints');
           
-          if (coursesError || !coursesExist || coursesExist.length === 0) {
-            console.error('[DatabaseFixInitializer] No courses found in courses_new table:', coursesError);
-            toast.error('未找到课程数据，请联系管理员');
-            return;
+          if (constraintError) {
+            console.warn('[DatabaseFixInitializer] Error fixing homework constraints:', constraintError);
+            logs.push(`约束修复错误: ${constraintError.message}`);
+            // 记录错误但继续执行
+          } else {
+            logs.push('作业表约束修复成功');
           }
-          
-          console.log('[DatabaseFixInitializer] Found courses in courses_new:', 
-            coursesExist.map(c => c.id));
-        } catch (err) {
-          console.error('[DatabaseFixInitializer] Error checking courses_new table:', err);
+        } catch (constraintError) {
+          console.warn('[DatabaseFixInitializer] Exception fixing constraints:', constraintError);
+          logs.push(`约束修复异常: ${(constraintError as Error).message}`);
+          // 继续执行
         }
         
-        // Execute database migration to fix homework foreign keys
+        // 修复作业表中可能存在的position字段问题 - 增加错误处理和重试机制
         try {
-          // Check if migration has already been completed in site_settings
-          const { data: settingsData } = await supabase
-            .from('site_settings')
-            .select('*')
-            .eq('site_name', 'homework_migration_completed')
-            .maybeSingle();
+          logs.push('尝试修复作业排序');
+          // 直接尝试调用fix_homework_order函数
+          const { error: orderError } = await supabase.rpc('fix_homework_order');
           
-          // Use safe optional chaining and type checking
-          if (settingsData && typeof settingsData === 'object' && settingsData.site_name) {
-            console.log('[DatabaseFixInitializer] Migration already recorded in site_settings');
-            localStorage.setItem(storageKey, 'true');
-            setMigrationExecuted(true);
-            setMigrationSuccess(true);
-            return;
-          }
-          
-          // Instead of using execute_sql RPC method, directly perform operations
-          // Use try/catch for database operations
-          try {
-            // Log the migration action since we can't execute SQL directly
-            console.log('[DatabaseFixInitializer] Simulating foreign key migration');
+          if (orderError) {
+            console.warn('[DatabaseFixInitializer] Error fixing homework order:', orderError);
+            logs.push(`排序修复错误: ${orderError.message}`);
             
-            // Record successful execution in site_settings
-            const migrationSetting = {
-              site_name: 'homework_migration_completed',
-              site_description: 'true',
-              maintenance_mode: false,
-              updated_at: new Date().toISOString()
-            };
-            
-            await supabase
-              .from('site_settings')
-              .insert(migrationSetting);
+            // 尝试客户端修复机制 - 记录尝试但不影响流程
+            logs.push('尝试使用客户端修复机制');
+            try {
+              // 获取所有没有正确position的作业
+              const { data: homeworks, error: fetchError } = await supabase
+                .from('homework')
+                .select('id, lecture_id, created_at')
+                .or('position.is.null,position.eq.0');
               
-            localStorage.setItem(storageKey, 'true');
-            setMigrationExecuted(true);
-            setMigrationSuccess(true);
-            
-            // Show success toast
-            toast.success('数据库关系已自动修复，作业功能现可正常使用');
-          } catch (sqlError) {
-            console.error('[DatabaseFixInitializer] Error performing migration:', sqlError);
-            setMigrationSuccess(false);
-            toast.error('数据库关系修复失败，部分功能可能无法正常工作');
+              if (!fetchError && homeworks && homeworks.length > 0) {
+                logs.push(`发现 ${homeworks.length} 个需要修复的作业项`);
+                
+                // 按讲座ID分组
+                const lectureGroups = homeworks.reduce((groups: Record<string, any[]>, hw) => {
+                  if (!groups[hw.lecture_id]) {
+                    groups[hw.lecture_id] = [];
+                  }
+                  groups[hw.lecture_id].push(hw);
+                  return groups;
+                }, {});
+                
+                // 更新每个分组的position
+                for (const lectureId in lectureGroups) {
+                  const items = lectureGroups[lectureId].sort((a, b) => {
+                    return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+                  });
+                  
+                  for (let i = 0; i < items.length; i++) {
+                    // 更新position
+                    await supabase
+                      .from('homework')
+                      .update({ position: i + 1 })
+                      .eq('id', items[i].id);
+                  }
+                }
+                
+                logs.push('客户端position修复完成');
+              } else if (fetchError) {
+                logs.push(`获取需修复作业失败: ${fetchError.message}`);
+              } else {
+                logs.push('未发现需要修复的作业');
+              }
+            } catch (clientFixError) {
+              logs.push(`客户端修复异常: ${(clientFixError as Error).message}`);
+            }
+          } else {
+            logs.push('作业排序修复成功');
           }
-        } catch (migrationError) {
-          console.error('[DatabaseFixInitializer] Migration error:', migrationError);
-          setMigrationSuccess(false);
-          toast.error('数据库关系修复过程中出错，请刷新页面重试');
+        } catch (orderError) {
+          console.warn('[DatabaseFixInitializer] Error calling fix_homework_order:', orderError);
+          logs.push(`排序修复异常: ${(orderError as Error).message}`);
+          // 继续执行，不要中断流程
         }
-      } catch (error: any) {
-        console.error('[DatabaseFixInitializer] Migration error:', error);
-        setMigrationExecuted(true);
-        setMigrationSuccess(false);
         
-        if (!hasExecuted) {
-          toast.error('数据库关系修复过程中出错，请刷新页面重试');
+        // 保存日志记录
+        setFixLogs(logs);
+        console.log('[DatabaseFixInitializer] Database fixes completed with logs:', logs);
+        setInitialized(true);
+      } catch (error) {
+        console.warn('[DatabaseFixInitializer] Error fixing database constraints:', error);
+        
+        // 如果是第一次尝试失败，再尝试一次
+        if (attempt === 0) {
+          console.log('[DatabaseFixInitializer] Retrying database fixes...');
+          setAttempt(1);
+          return;
         }
+        
+        // 第二次尝试也失败，标记为已初始化，避免无限重试
+        setInitialized(true);
       }
     };
-    
-    // Run migration with a slight delay to ensure page loads first
-    const timer = setTimeout(() => {
-      runMigration();
-    }, 1000);
-    
-    return () => clearTimeout(timer);
-  }, []);
-  
-  // Log migration status for debugging
-  useEffect(() => {
-    if (migrationExecuted) {
-      console.log('[DatabaseFixInitializer] Migration status:', migrationSuccess ? 'SUCCESS' : 'FAILED');
+
+    if (!initialized) {
+      fixDatabaseConstraints();
     }
-  }, [migrationExecuted, migrationSuccess]);
-  
-  // This component doesn't render anything
+
+    return () => {
+      console.log('[DatabaseFixInitializer] Cleanup on unmount');
+      // 清理任何可能存在的toast通知
+      try {
+        toast.dismiss();
+      } catch (e) {
+        // 忽略可能的错误
+      }
+    };
+  }, [initialized, attempt]);
+
+  // 无需渲染任何UI
   return null;
 };

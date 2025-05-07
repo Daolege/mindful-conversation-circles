@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 import { fontFamily } from "tailwindcss/defaultTheme";
 import tailwindAnimate from "tailwindcss-animate";
@@ -99,6 +98,10 @@ const config = {
         pulse: {
           '0%, 100%': { opacity: '0.6' },
           '50%': { opacity: '0.9' }
+        },
+        glow: {
+          '0%, 100%': { opacity: '0.8', filter: 'brightness(1)' },
+          '50%': { opacity: '1', filter: 'brightness(1.2)' }
         }
       },
       animation: {
@@ -108,11 +111,47 @@ const config = {
         'fade-out': 'fadeOut 0.3s ease-in-out',
         'float': 'float 6s ease-in-out infinite',
         'pulse': 'pulse 3s ease-in-out infinite',
+        'glow': 'glow 3s ease-in-out infinite',
+      },
+      backgroundImage: {
+        'radial-gradient': 'radial-gradient(var(--tw-gradient-stops))',
+      },
+      typography: {
+        DEFAULT: {
+          css: {
+            maxWidth: 'none',
+            color: 'inherit',
+            a: {
+              color: 'inherit',
+              textDecoration: 'underline',
+              fontWeight: '500',
+            },
+            ul: {
+              listStyleType: 'disc',
+              paddingLeft: '1.5em',
+            },
+            ol: {
+              listStyleType: 'decimal',
+              paddingLeft: '1.5em',
+            },
+            strong: {
+              fontWeight: '600',
+            },
+            code: {
+              fontWeight: '400',
+            },
+            img: {
+              marginTop: '0',
+              marginBottom: '0',
+            },
+          },
+        },
       },
     },
   },
   plugins: [
     tailwindAnimate,
+    require('@tailwindcss/typography'),
     function({ addComponents, addUtilities }: any) {
       addComponents({
         '.skeleton-wave-shimmer': {
@@ -130,6 +169,18 @@ const config = {
         },
         '.preserve-3d': {
           transformStyle: 'preserve-3d',
+        },
+        '.editor-list-ul': {
+          listStyleType: 'disc !important',
+          paddingLeft: '1.5em !important',
+          marginTop: '0.5em !important',
+          marginBottom: '0.5em !important',
+        },
+        '.editor-list-ol': {
+          listStyleType: 'decimal !important',
+          paddingLeft: '1.5em !important',
+          marginTop: '0.5em !important',
+          marginBottom: '0.5em !important',
         },
       });
     },

@@ -1,0 +1,58 @@
+
+/* Rich Text Editor Styles */
+
+/* Force list styles to be visible in editor */
+.editor-content ul {
+  list-style-type: disc !important;
+  padding-left: 1.5em !important;
+  margin-top: 0.5em !important;
+  margin-bottom: 0.5em !important;
+}
+
+.editor-content ol {
+  list-style-type: decimal !important;
+  padding-left: 1.5em !important;
+  margin-top: 0.5em !important;
+  margin-bottom: 0.5em !important;
+}
+
+/* Make sure elements are clearly styled while editing */
+.editor-content ul li {
+  display: list-item !important;
+}
+
+.editor-content ol li {
+  display: list-item !important;
+}
+
+/* Ensure list styling persists when toggling list types */
+.editor-content ul.editor-list-ul {
+  list-style-type: disc !important;
+}
+
+.editor-content ol.editor-list-ol {
+  list-style-type: decimal !important;
+}
+
+/* Add some additional spacing for better readability */
+.editor-content li {
+  margin-bottom: 0.25em;
+}
+
+/* Handle nested lists */
+.editor-content ul ul,
+.editor-content ol ol,
+.editor-content ul ol,
+.editor-content ol ul {
+  margin-top: 0.25em !important;
+  margin-bottom: 0.25em !important;
+}
+
+/* Make prose lists more visible in editor */
+.prose-lists-in-editor ul {
+  list-style-type: disc !important;
+}
+
+.prose-lists-in-editor ol {
+  list-style-type: decimal !important;
+}

@@ -9,6 +9,30 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      _migrations: {
+        Row: {
+          executed_at: string | null
+          id: number
+          name: string | null
+          sql: string | null
+          success: boolean | null
+        }
+        Insert: {
+          executed_at?: string | null
+          id?: number
+          name?: string | null
+          sql?: string | null
+          success?: boolean | null
+        }
+        Update: {
+          executed_at?: string | null
+          id?: number
+          name?: string | null
+          sql?: string | null
+          success?: boolean | null
+        }
+        Relationships: []
+      }
       about_page_settings: {
         Row: {
           id: string
@@ -854,6 +878,7 @@ export type Database = {
           is_required: boolean | null
           lecture_id: string
           options: Json | null
+          position: number | null
           title: string
           type: string
           updated_at: string | null
@@ -867,6 +892,7 @@ export type Database = {
           is_required?: boolean | null
           lecture_id: string
           options?: Json | null
+          position?: number | null
           title: string
           type: string
           updated_at?: string | null
@@ -880,23 +906,17 @@ export type Database = {
           is_required?: boolean | null
           lecture_id?: string
           options?: Json | null
+          position?: number | null
           title?: string
           type?: string
           updated_at?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "fk_course"
-            columns: ["course_id"]
-            isOneToOne: false
-            referencedRelation: "courses"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "homework_course_id_fkey"
             columns: ["course_id"]
             isOneToOne: false
-            referencedRelation: "courses"
+            referencedRelation: "courses_new"
             referencedColumns: ["id"]
           },
         ]
@@ -934,13 +954,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "fk_course"
-            columns: ["course_id"]
-            isOneToOne: false
-            referencedRelation: "courses"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "fk_homework"
             columns: ["homework_id"]
             isOneToOne: false
@@ -951,7 +964,7 @@ export type Database = {
             foreignKeyName: "homework_submissions_course_id_fkey"
             columns: ["course_id"]
             isOneToOne: false
-            referencedRelation: "courses"
+            referencedRelation: "courses_new"
             referencedColumns: ["id"]
           },
           {
@@ -1581,6 +1594,14 @@ export type Database = {
       }
       enroll_user_in_course: {
         Args: { p_user_id: string; p_course_id: number; p_purchased_at: string }
+        Returns: undefined
+      }
+      fix_homework_constraints: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      fix_homework_order: {
+        Args: Record<PropertyKey, never>
         Returns: undefined
       }
       get_course_section_config: {

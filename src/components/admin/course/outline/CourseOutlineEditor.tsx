@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import {
   Card,
@@ -6,7 +7,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
-import { Loader2, Save, Plus, RefreshCw, AlertCircle, CheckCircle } from "lucide-react";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Loader2, Save, Plus, RefreshCw, AlertCircle, CheckCircle, Check, Square } from "lucide-react";
 import { toast } from "sonner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useCourseOutlineManager } from './hooks/useCourseOutlineManager';
@@ -40,6 +42,8 @@ export const CourseOutlineEditor = ({
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
+  const [requiresSequentialLearning, setRequiresSequentialLearning] = useState(false);
+  const [requiresHomeworkCompletion, setRequiresHomeworkCompletion] = useState(false);
   
   useEffect(() => {
     setShowAddSectionForm(autoShowAddForm);
@@ -151,6 +155,15 @@ export const CourseOutlineEditor = ({
     reorderSections(reorderedSections);
   };
 
+  // Toggle functions for the button-style toggles
+  const handleSequentialLearningToggle = (value: boolean) => {
+    setRequiresSequentialLearning(value);
+  };
+
+  const handleHomeworkCompletionToggle = (value: boolean) => {
+    setRequiresHomeworkCompletion(value);
+  };
+
   const renderStatusMessage = () => {
     if (loading) {
       return (
@@ -220,7 +233,37 @@ export const CourseOutlineEditor = ({
           <div className="flex justify-between items-center">
             <CardTitle>课程大纲</CardTitle>
             {!hideToolbarButtons && (
-              <div className="flex gap-2">
+              <div className="flex gap-2 items-center">
+                <div className="flex items-center gap-2 mr-4">
+                  <Button
+                    variant={requiresSequentialLearning ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => handleSequentialLearningToggle(!requiresSequentialLearning)}
+                    className="text-sm h-9"
+                  >
+                    {requiresSequentialLearning ? (
+                      <Check className="h-4 w-4 mr-1 border rounded text-white" style={{ borderColor: 'white' }} />
+                    ) : (
+                      <Square className="h-4 w-4 mr-1" />
+                    )}
+                    按顺序学习
+                  </Button>
+                  
+                  <Button
+                    variant={requiresHomeworkCompletion ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => handleHomeworkCompletionToggle(!requiresHomeworkCompletion)}
+                    className="text-sm h-9"
+                  >
+                    {requiresHomeworkCompletion ? (
+                      <Check className="h-4 w-4 mr-1 border rounded text-white" style={{ borderColor: 'white' }} />
+                    ) : (
+                      <Square className="h-4 w-4 mr-1" />
+                    )}
+                    须提交作业
+                  </Button>
+                </div>
+                
                 <Button
                   variant="outline"
                   onClick={handleRetryLoading}

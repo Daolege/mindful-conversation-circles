@@ -75,8 +75,6 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({
     materials: false
   },
 }) => {
-  const [isFeatured, setIsFeatured] = useState<boolean>(false);
-  const [isPaidContent, setIsPaidContent] = useState<boolean>(true);
   const [courseVisibility, setCourseVisibility] = useState<string>("draft");
   
   // 新增单次购买和订阅计划选项状态
@@ -157,15 +155,13 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({
       try {
         const { data, error } = await supabase
           .from('courses_new')
-          .select('is_featured, price, status, allows_one_time_purchase, allows_subscription')
+          .select('status, allows_one_time_purchase, allows_subscription')
           .eq('id', courseId)
           .single();
 
         if (error) throw error;
 
         if (data) {
-          setIsFeatured(data.is_featured || false);
-          setIsPaidContent((data.price || 0) > 0);
           setCourseVisibility(data.status || "draft");
           
           // 设置购买选项
@@ -639,6 +635,9 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({
     }
   };
 
+  const [isFeatured, setIsFeatured] = useState(false);
+  const [isPaidContent, setIsPaidContent] = useState(false);
+
   // Handle featured change
   const handleFeaturedChange = async (checked: boolean) => {
     setIsFeatured(checked);
@@ -734,30 +733,6 @@ export const CourseOtherSettings: React.FC<CourseOtherSettingsProps> = ({
           />
         )}
       </div>
-
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle>课程特性</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="featured-course">精选课程</Label>
-            <Switch
-              id="featured-course"
-              checked={isFeatured}
-              onCheckedChange={handleFeaturedChange}
-            />
-          </div>
-          <div className="flex items-center justify-between">
-            <Label htmlFor="paid-content">付费内容</Label>
-            <Switch
-              id="paid-content"
-              checked={isPaidContent}
-              onCheckedChange={handlePaidContentChange}
-            />
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Horizontal layout for the three modules */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

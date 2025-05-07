@@ -30,7 +30,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
           info: "group toast bg-blue-50 text-blue-800 border-blue-200",
           loading: "group toast bg-gray-50 text-gray-800 border-gray-200"
         },
-        duration: 5000,
+        duration: 3000,
       }}
       {...props}
     />

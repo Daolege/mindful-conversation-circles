@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,10 +8,10 @@ import {
   Save, 
   X, 
   GripVertical, 
-  Play, 
-  Clock, 
+  Video,
   BookOpen,
-  Settings
+  Check,
+  Square
 } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -20,7 +19,10 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { cn } from '@/lib/utils';
 import { HomeworkPanel } from './HomeworkPanel';
+import VideoPanel from './VideoPanel';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { useQuery } from "@tanstack/react-query";
+import { getHomeworksByLectureId } from '@/lib/services/homeworkService';
 
 interface LectureItemProps {
   id: string;
@@ -31,11 +33,14 @@ interface LectureItemProps {
   duration?: string | null;
   showHomeworkSettings?: boolean;
   requiresHomeworkCompletion?: boolean;
+  requiresSequentialLearning?: boolean;
+  videoData?: any | null;
   onUpdate: (updates: any) => void;
   onDelete: () => void;
   dragHandleProps: any;
   courseId?: number;
   onHomeworkRequirementChange?: (requiresHomework: boolean) => void;
+  onSequentialLearningChange?: (requiresSequential: boolean) => void;
 }
 
 export const LectureItem = ({
@@ -47,22 +52,63 @@ export const LectureItem = ({
   duration,
   showHomeworkSettings = false,
   requiresHomeworkCompletion = false,
+  requiresSequentialLearning = false,
+  videoData = null,
   onUpdate,
   onDelete,
   dragHandleProps,
   courseId,
-  onHomeworkRequirementChange
+  onHomeworkRequirementChange,
+  onSequentialLearningChange
 }: LectureItemProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedTitle, setEditedTitle] = useState(title);
   const [isVideoUploaderOpen, setIsVideoUploaderOpen] = useState(false);
   const [showHomeworkPanel, setShowHomeworkPanel] = useState(false);
   const [localIsFree, setLocalIsFree] = useState(isFree);
+  const [localVideoData, setLocalVideoData] = useState(videoData);
+  const [hasHomework, setHasHomework] = useState(false);
   
   // 使用useEffect确保localIsFree与props同步
   useEffect(() => {
     setLocalIsFree(isFree);
   }, [isFree]);
+
+  useEffect(() => {
+    setLocalVideoData(videoData);
+  }, [videoData]);
+  
+  // 使用useQuery从数据库中获取课时作业数据，而不是模拟
+  const { data: homeworkData, isLoading: isLoadingHomework } = useQuery({
+    queryKey: ['lecture-homework', id],
+    queryFn: async () => {
+      try {
+        console.log('Fetching homework data for lecture:', id);
+        const result = await getHomeworksByLectureId(id, courseId);
+        
+        // Handle both old and new return formats
+        if (Array.isArray(result)) {
+          return { success: true, data: result, error: null };
+        } else {
+          // Already has the right format
+          return result;
+        }
+      } catch (err) {
+        console.error('Error fetching homework data:', err);
+        return { success: false, data: [], error: err };
+      }
+    },
+    enabled: !!id // 只有当id存在时才执行查询
+  });
+  
+  // 当homework数据加载完成后，更新hasHomework状态
+  useEffect(() => {
+    if (homeworkData) {
+      const hasHomeworkItems = homeworkData.data && Array.isArray(homeworkData.data) && homeworkData.data.length > 0;
+      console.log(`Lecture ${id} has ${homeworkData.data ? homeworkData.data.length : 0} homework items`);
+      setHasHomework(hasHomeworkItems);
+    }
+  }, [homeworkData, id]);
   
   const { 
     attributes, 
@@ -108,13 +154,20 @@ export const LectureItem = ({
 
   const toggleHomeworkPanel = () => {
     setShowHomeworkPanel(!showHomeworkPanel);
+    setIsVideoUploaderOpen(false); // 关闭视频上传器
   };
 
-  const handleHomeworkRequirementChange = (checked: boolean) => {
-    if (onHomeworkRequirementChange) {
-      onHomeworkRequirementChange(checked);
-    }
+  const toggleVideoUploader = () => {
+    setIsVideoUploaderOpen(!isVideoUploaderOpen);
+    setShowHomeworkPanel(false); // 关闭作业面板
   };
+
+  const handleVideoUpdate = (newVideoData) => {
+    setLocalVideoData(newVideoData);
+    onUpdate({ video_data: newVideoData });
+  };
+
+  const hasVideo = !!localVideoData;
 
   return (
     <Card 
@@ -143,7 +196,6 @@ export const LectureItem = ({
                   value={editedTitle}
                   onChange={(e) => setEditedTitle(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  onBlur={handleSaveTitle}
                   className="h-8"
                   autoFocus
                 />
@@ -162,25 +214,51 @@ export const LectureItem = ({
           <div className="flex items-center gap-1">
             {!isEditing ? (
               <>
-                <Button variant="outline" size="sm" onClick={toggleHomeworkPanel} className="h-8 px-2">
-                  <BookOpen className="h-4 w-4 mr-1" />
+                <Button 
+                  variant={hasVideo ? "default" : "outline"} 
+                  size="sm" 
+                  onClick={toggleVideoUploader} 
+                  className="h-8 px-2"
+                >
+                  <Video 
+                    className={cn(
+                      "h-4 w-4 mr-1",
+                      hasVideo ? "text-white" : ""
+                    )} 
+                  />
+                  {hasVideo ? "视频已传" : "上传视频"}
+                </Button>
+
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={toggleHomeworkPanel} 
+                  className="h-8 px-2"
+                >
+                  <BookOpen 
+                    className={cn(
+                      "h-4 w-4 mr-1",
+                      hasHomework ? "fill-[#262626] text-[#262626]" : ""
+                    )} 
+                  />
                   作业
                 </Button>
                 
-                <div className="flex items-center ml-2">
-                  <Checkbox
-                    id={`lecture-free-${id}`}
-                    checked={localIsFree}
-                    onCheckedChange={handleIsFreeChange}
-                    className="mr-1"
-                  />
-                  <label 
-                    htmlFor={`lecture-free-${id}`}
-                    className="text-xs cursor-pointer"
-                  >
-                    免费
-                  </label>
-                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => handleIsFreeChange(!localIsFree)} 
+                  className="h-8 px-2 ml-2"
+                >
+                  {localIsFree ? (
+                    <div className="h-4 w-4 mr-1 flex items-center justify-center bg-[#333333] border border-[#595959] rounded">
+                      <Check className="h-3 w-3 text-white" />
+                    </div>
+                  ) : (
+                    <Square className="h-4 w-4 mr-1" />
+                  )}
+                  免费
+                </Button>
                 
                 <Button
                   size="icon"
@@ -195,7 +273,7 @@ export const LectureItem = ({
                   size="icon"
                   variant="ghost"
                   onClick={onDelete}
-                  className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
+                  className="h-8 w-8 text-[#555555] hover:text-[#333333] hover:bg-gray-50"
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
@@ -228,29 +306,24 @@ export const LectureItem = ({
         </div>
       </div>
       
-      {/* 作业面板（可折叠） */}
+      {/* 视频上传面板（可折叠） */}
+      <Collapsible open={isVideoUploaderOpen} onOpenChange={setIsVideoUploaderOpen}>
+        <CollapsibleContent>
+          <CardContent className="pt-0 pb-3">
+            <VideoPanel 
+              lectureId={id}
+              courseId={courseId}
+              initialVideoData={localVideoData}
+              onVideoUpdate={handleVideoUpdate}
+            />
+          </CardContent>
+        </CollapsibleContent>
+      </Collapsible>
+      
+      {/* 作业面板（可折叠） - 移除了"学习此课时需要完成作业"复选框 */}
       <Collapsible open={showHomeworkPanel} onOpenChange={setShowHomeworkPanel}>
         <CollapsibleContent>
           <CardContent className="pt-0 pb-3">
-            {showHomeworkSettings && (
-              <div className="mb-4 p-3 bg-gray-50 border border-gray-100 rounded-md">
-                <div className="flex items-center">
-                  <Checkbox
-                    id={`homework-required-${id}`}
-                    checked={requiresHomeworkCompletion}
-                    onCheckedChange={handleHomeworkRequirementChange}
-                    className="mr-2"
-                  />
-                  <label 
-                    htmlFor={`homework-required-${id}`}
-                    className="text-sm cursor-pointer"
-                  >
-                    学习此课时需要完成作业
-                  </label>
-                </div>
-              </div>
-            )}
-            
             <HomeworkPanel 
               lectureId={id}
               courseId={courseId}

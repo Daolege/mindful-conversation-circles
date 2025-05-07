@@ -729,6 +729,66 @@ export interface Database {
           updated_at?: string
         }
         Relationships: []
+      },
+      homework: {
+        Row: {
+          id: string
+          lecture_id: string
+          course_id: number
+          title: string
+          description?: string
+          type: string
+          options?: Json
+          is_required?: boolean
+          created_at?: string
+          updated_at?: string
+          image_url?: string
+          position: number // Add position field
+        }
+        Insert: {
+          id?: string
+          lecture_id: string
+          course_id: number
+          title: string
+          description?: string
+          type: string
+          options?: Json
+          is_required?: boolean
+          created_at?: string
+          updated_at?: string
+          image_url?: string
+          position?: number // Add optional position field for insert
+        }
+        Update: {
+          id?: string
+          lecture_id?: string
+          course_id?: number
+          title?: string
+          description?: string
+          type?: string
+          options?: Json
+          is_required?: boolean
+          created_at?: string
+          updated_at?: string
+          image_url?: string
+          position?: number // Add optional position field for update
+        }
+        Relationships: [
+          {
+            foreignKeyName: "homework_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses_new"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "homework_lecture_id_fkey"
+            columns: ["lecture_id"]
+            isOneToOne: false
+            referencedRelation: "course_lectures"
+            referencedColumns: ["id"]
+          }
+        ]
       }
     }
     Views: {

@@ -1,6 +1,6 @@
 
 import React, { Suspense, useEffect } from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
 import Home from './pages/Home';
 import Courses from './pages/Courses';
 import CourseDetail from './pages/CourseDetail';
@@ -28,6 +28,7 @@ import TermsOfUse from './pages/TermsOfUse';
 import CookiePolicy from './pages/CookiePolicy';
 import FAQ from './pages/FAQ';
 import { runAllLanguageMigrations } from './lib/services/language/migrationService';
+import { dismissAllToasts } from './hooks/use-toast';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -56,6 +57,19 @@ const queryClient = new QueryClient({
   }
 })();
 
+// Route change observer component to dismiss toasts on navigation
+const RouteChangeObserver = () => {
+  const location = useLocation();
+  
+  useEffect(() => {
+    // Dismiss all toasts when the route changes
+    console.log('Route changed, dismissing all toasts');
+    dismissAllToasts();
+  }, [location.pathname]);
+  
+  return null;
+};
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
@@ -63,6 +77,7 @@ function App() {
         <LanguageProvider>
           <Router>
             <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
+              <RouteChangeObserver />
               <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/courses" element={<Courses />} />
@@ -89,7 +104,7 @@ function App() {
                 <Route path="/faq" element={<FAQ />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
-              <Toaster richColors position="top-right" />
+              <Toaster richColors position="top-right" toastOptions={{ duration: 4000 }} />
             </Suspense>
           </Router>
         </LanguageProvider>

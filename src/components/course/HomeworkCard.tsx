@@ -1,72 +1,136 @@
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, memo } from 'react';
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { HomeworkSubmissionForm } from "./HomeworkSubmissionForm";
 import { ChevronDown, ChevronUp } from "lucide-react";
+import { Homework } from '@/lib/types/homework';
 
 interface HomeworkCardProps {
   homework: {
     id: string;
     title: string;
-    description: string | null;
-    type: 'single_choice' | 'multiple_choice' | 'fill_blank';
-    options: any;
-    image_url: string | null;
+    description?: string | null;
+    type: string;
+    options?: any;
+    image_url?: string | null;
     lecture_id: string;
+    course_id: number;
+    position?: number;
   };
+  courseId: string | number; 
+  lectureId: string;
   isSubmitted: boolean;
-  onSubmissionSuccess?: () => void;
+  onSubmitted?: () => void;
+  position?: number;
 }
 
-// 使用 memo 优化组件，避免不必要的重新渲染
-export const HomeworkCard = React.memo(({ homework, isSubmitted, onSubmissionSuccess }: HomeworkCardProps) => {
+export const HomeworkCard = memo(({ 
+  homework, 
+  courseId, 
+  lectureId, 
+  isSubmitted, 
+  onSubmitted,
+  position 
+}: HomeworkCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
+  // 确保courseId始终为数字类型
+  const numericCourseId = typeof courseId === 'string' ? parseInt(courseId, 10) : courseId;
+
+  // 使用useCallback缓存事件处理函数
   const handleHeaderClick = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
+    // 仅在未提交时展开，并防止事件冒泡
     if (!isSubmitted) {
+      e.preventDefault();
+      e.stopPropagation();
       setIsExpanded(prev => !prev);
     }
   }, [isSubmitted]);
 
   const handleSubmissionSuccess = useCallback(() => {
+    // 关闭表单并通知父组件
     setIsExpanded(false);
-    onSubmissionSuccess?.();
-  }, [onSubmissionSuccess]);
+    if (onSubmitted) {
+      // 使用超时避免渲染期间的状态更新
+      setTimeout(() => {
+        onSubmitted();
+      }, 10);
+    }
+  }, [onSubmitted]);
 
   const handleCancel = useCallback(() => {
     setIsExpanded(false);
   }, []);
 
+  // 控制悬停状态
+  const handleMouseEnter = useCallback(() => {
+    setIsHovered(true);
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    setIsHovered(false);
+  }, []);
+
+  // 防止内容区域的事件冒泡
+  const handleContentClick = useCallback((e: React.MouseEvent) => {
+    // 阻止向父元素传播
+    e.stopPropagation();
+  }, []);
+
   return (
-    <Card className="w-full border border-gray-200 shadow-sm">
+    <Card 
+      className={`w-full border border-gray-200 shadow-sm transition-all duration-300 ${
+        isHovered ? 'shadow-md translate-y-[-2px]' : ''
+      } rounded-lg overflow-hidden`}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      data-homework-id={homework.id}
+      data-position={position}
+      data-testid={`homework-card-${homework.id}`}
+    >
       <CardHeader 
-        className={`flex flex-row items-center justify-between ${!isSubmitted ? 'cursor-pointer hover:bg-gray-50' : ''}`}
+        className={`flex flex-row items-center justify-between ${
+          !isSubmitted ? 'cursor-pointer hover:bg-gray-50' : ''
+        } p-4 border-b border-gray-100`}
         onClick={handleHeaderClick}
       >
-        <div className="font-medium">{homework.title}</div>
-        <div className="flex items-center gap-3">
-          <Badge variant={isSubmitted ? "success" : "outline"} className="text-xs">
+        <div className="flex items-center gap-3 flex-1 mr-4 max-w-[70%]">
+          <div className="font-medium truncate break-words line-clamp-2">{homework.title}</div>
+        </div>
+        <div className="flex items-center gap-3 flex-shrink-0">
+          <Badge 
+            variant="outline" 
+            className="text-xs min-w-[80px] text-center bg-gray-50 text-gray-600 border-gray-200"
+          >
             {isSubmitted ? "已提交" : "未提交"}
           </Badge>
           {!isSubmitted && (
-            <div className="transition-transform duration-200">
-              {isExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+            <div className="transition-transform duration-300">
+              {isExpanded ? 
+                <ChevronUp className="h-5 w-5 text-gray-500" /> : 
+                <ChevronDown className="h-5 w-5 text-gray-500" />
+              }
             </div>
           )}
         </div>
       </CardHeader>
       
-      <CardContent className={`data-[state=${isExpanded ? 'open' : 'closed'}]:animate-${isExpanded ? 'accordion-down' : 'accordion-up'} overflow-hidden`}
-        style={{ display: isExpanded && !isSubmitted ? 'block' : 'none' }}
+      <CardContent 
+        className={`transition-all duration-300 ease-in-out overflow-hidden ${
+          isExpanded && !isSubmitted ? 
+            'max-h-[2000px] opacity-100 pb-4' : 
+            'max-h-0 opacity-0 p-0'
+        }`}
+        onClick={handleContentClick}
       >
         {isExpanded && !isSubmitted && (
-          <div className="space-y-4 bg-white rounded-md border border-gray-100 shadow-sm">
+          <div className="bg-white rounded-md">
             <HomeworkSubmissionForm 
               homework={homework}
+              courseId={numericCourseId}
+              lectureId={lectureId}
               onSubmitSuccess={handleSubmissionSuccess}
               onCancel={handleCancel}
             />

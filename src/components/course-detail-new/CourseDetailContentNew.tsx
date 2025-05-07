@@ -33,6 +33,9 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
   
   const [isOutlineLoading, setIsOutlineLoading] = useState(true);
   
+  // Add state for tracking hovered card and adjacent cards
+  const [hoveredCard, setHoveredCard] = useState<string | null>(null);
+  
   React.useEffect(() => {
     // Simulate outline loading with a short delay to show loading animation
     const timer = setTimeout(() => {
@@ -89,7 +92,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
     "对技术有兴趣的爱好者"
   ];
 
-  // Default course highlights
+  // Default course highlights - 保留这个数据，但不在此组件中渲染
   const courseHighlights = [
     { icon: 'video', text: '高清视频课程' },
     { icon: 'clock', text: '随时随地学习' },
@@ -117,32 +120,6 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
             ) : (
               <div className="text-gray-500">{t('courses:noDescription')}</div>
             )}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* 课程亮点 (NEW) */}
-      <Card className="hover:shadow-lg transition-shadow duration-500 shadow-sm animate-in fade-in duration-500">
-        <CardHeader className="pb-0">
-          <CardTitle className="text-xl flex items-center gap-2">
-            <Award className="h-5 w-5" />
-            课程亮点
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-4">
-            {courseHighlights.map((highlight, index) => (
-              <div 
-                key={index} 
-                className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors animate-in fade-in duration-300"
-                style={{ animationDelay: `${index * 100}ms` }}
-              >
-                <div className="flex-shrink-0 w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center text-primary">
-                  <IconDisplay iconName={highlight.icon} size={20} />
-                </div>
-                <div className="font-medium text-gray-800">{highlight.text}</div>
-              </div>
-            ))}
           </div>
         </CardContent>
       </Card>
@@ -233,7 +210,7 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
       </Card>
 
       {/* 课程附件 */}
-      <Card className="hover:shadow-lg transition-shadow duration-500 shadow-sm animate-in fade-in duration-500">
+      <Card className="hover:shadow-lg transition-shadow duration-500 shadow-sm animate-in fade-in duration-500 mb-12">
         <CardHeader className="pb-0">
           <CardTitle className="text-xl flex items-center gap-2">
             <File className="h-5 w-5" />
@@ -271,100 +248,292 @@ export const CourseDetailContentNew: React.FC<CourseDetailContentNewProps> = ({ 
         </CardContent>
       </Card>
 
-      {/* 学习信息栏 - 三栏布局 - Enhanced with better 3D effects */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* 学习信息栏 - 三栏布局 - 增强3D悬浮卡片设计 - 位置调整到更远的距离 - 顶部增加边距 */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 perspective-1000 mt-36">
         {/* 学习目标 */}
-        <Card 
-          className="hover:shadow-xl transition-all duration-500 ease-in-out shadow-lg shadow-gray-200/60 border-2 
-            transform hover:-translate-y-1 hover:scale-[1.01] focus:scale-[1.01]
-            animate-in fade-in duration-500"
+        <div 
+          className={`transform transition-all duration-500 ease-out ${
+            hoveredCard === 'objectives' 
+            ? 'scale-[1.003] z-20' 
+            : hoveredCard === 'requirements' || hoveredCard === 'audience' 
+              ? 'scale-[0.999] opacity-99'
+              : ''
+          }`}
+          onMouseEnter={() => setHoveredCard('objectives')}
+          onMouseLeave={() => setHoveredCard(null)}
         >
-          <CardHeader className="pb-0">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Target className="h-5 w-5" />
-              {t('courses:learningObjectives')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-4">
-            {learningObjectives && learningObjectives.length > 0 ? (
-              <ul className="space-y-2">
-                {learningObjectives.map((objective, index) => (
-                  <li 
-                    key={index} 
-                    className="flex items-start gap-2 animate-in fade-in duration-300"
-                  >
-                    <Target className="h-4 w-4 text-gray-800 mt-0.5 flex-shrink-0" />
-                    <span className="text-sm font-medium text-gray-700">{objective}</span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <div className="text-gray-500">{t('courses:noObjectives')}</div>
-            )}
-          </CardContent>
-        </Card>
+          <div className="relative overflow-visible rounded-lg border border-gray-200 bg-white 
+                        group hover:shadow-[0_8px_30px_-12px_rgba(0,0,0,0.18)] shadow-[0_4px_12px_-3px_rgba(0,0,0,0.1),0_3px_4px_-2px_rgba(0,0,0,0.05)]
+                        transition-all duration-500 animate-in fade-in preserve-3d">
+            {/* 顶部边框装饰 - 使用知识主题颜色 */}
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-knowledge-primary/70 via-knowledge-primary to-knowledge-primary/70 transition-all duration-500 group-hover:opacity-100"></div>
+            
+            {/* 图标 - 调整大小和位置 */}
+            <div className="absolute left-0 right-0 mx-auto -top-6 flex justify-center transform transition-all duration-700 
+                         group-hover:scale-[1.02] group-hover:-translate-y-0.5 z-10">
+              <div className="w-12 h-12 bg-gradient-to-b from-gray-50 to-gray-100 rounded-full border-4 border-white 
+                          shadow-[0_2px_10px_rgba(0,0,0,0.12)] group-hover:shadow-[0_4px_12px_rgba(0,0,0,0.16)]
+                          flex items-center justify-center overflow-visible transition-all duration-500">
+                <Target className="h-6 w-6 text-gray-700 group-hover:text-knowledge-primary transition-colors duration-500" />
+              </div>
+            </div>
+            
+            <div className="pb-6 pt-8">
+              {/* 创新标题设计 - 增强光晕效果和线条扩展动画 - 移除四角边框 */}
+              <div className="relative py-4 px-4 mb-4 overflow-hidden group-hover:bg-gradient-to-r group-hover:from-gray-50/80 group-hover:via-gray-100/90 group-hover:to-gray-50/80 transition-all duration-700">
+                {/* 背景增强光晕 - 2倍强度 */}
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700">
+                  {/* 光晕效果增强 */}
+                  <div className="absolute inset-0 bg-radial-gradient from-gray-200/60 via-gray-100/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000 blur-sm"></div>
+                  <div className="absolute inset-0 bg-gradient-to-r from-gray-50/20 via-gray-200/40 to-gray-50/20 opacity-0 group-hover:opacity-100 transition-opacity duration-1000 mix-blend-overlay"></div>
+                  
+                  {/* 扩展光效 */}
+                  <div className="absolute inset-0 bg-gradient-to-b from-gray-50/30 via-transparent to-gray-50/30 opacity-0 group-hover:opacity-100 transition-opacity duration-700 blur-md"></div>
+                </div>
+                
+                {/* 顶部装饰线条 - 动画扩展效果 */}
+                <div className="absolute top-0 left-[30%] right-[30%] h-[1px] bg-gradient-to-r from-transparent via-gray-400 to-transparent 
+                             transition-all duration-700 group-hover:left-[10%] group-hover:right-[10%] group-hover:via-knowledge-primary/80"></div>
+                
+                {/* 底部装饰线条 - 动画扩展效果 */}
+                <div className="absolute bottom-0 left-[30%] right-[30%] h-[1px] bg-gradient-to-r from-transparent via-gray-400 to-transparent
+                             transition-all duration-700 group-hover:left-[10%] group-hover:right-[10%] group-hover:via-knowledge-primary/60"></div>
+                
+                <h3 className="text-xl font-bold text-center text-gray-800 transition-all duration-500
+                            group-hover:text-knowledge-primary relative z-10
+                            drop-shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
+                  {t('courses:learningObjectives')}
+                </h3>
+              </div>
+              
+              <div className="px-6 transition-all duration-500 ease-in-out group-hover:translate-y-[-1px] overflow-hidden">
+                {learningObjectives && learningObjectives.length > 0 ? (
+                  <ul className="space-y-3.5 relative transition-all duration-300">
+                    {learningObjectives.map((objective, index) => (
+                      <li 
+                        key={index} 
+                        className="flex items-start gap-3 transition-all duration-300 
+                                overflow-visible group-hover:translate-x-0.5 whitespace-normal break-words w-full"
+                        style={{ 
+                          transitionDelay: `${index * 20}ms`,
+                        }}
+                      >
+                        <div className="mt-0.5 shrink-0 w-6 h-6 bg-gradient-to-r from-gray-100 to-gray-50 rounded-full p-1 flex-shrink-0 text-gray-700 shadow-sm 
+                                      group-hover:bg-gray-100 transition-all duration-500 ease-out
+                                      group-hover:shadow-md flex items-center justify-center">
+                          <CheckCircle className="h-4 w-4 transition-all duration-300 ease-in-out group-hover:text-knowledge-primary" />
+                        </div>
+                        <span className="text-gray-700 transition-all duration-300 break-words whitespace-normal">
+                          {objective}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className="text-gray-500 italic text-center">{t('courses:noObjectives')}</div>
+                )}
+                
+                {/* 添加底部阴影消除 - 确保没有多余的阴影 */}
+                <div className="h-6 w-full relative">
+                  <div className="absolute inset-0 bg-gradient-to-t from-white via-white to-transparent"></div>
+                </div>
+              </div>
+            </div>
+            
+            {/* 底部装饰 */}
+            <div className="h-1 w-full bg-gradient-to-r from-transparent via-gray-200 to-transparent absolute bottom-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+          </div>
+        </div>
 
         {/* 课程要求 */}
-        <Card 
-          className="hover:shadow-xl transition-all duration-500 ease-in-out shadow-lg shadow-gray-200/60 border-2 
-            transform hover:-translate-y-1 hover:scale-[1.01] focus:scale-[1.01]
-            animate-in fade-in duration-500"
+        <div 
+          className={`transform transition-all duration-500 ease-out ${
+            hoveredCard === 'requirements' 
+            ? 'scale-[1.003] z-20' 
+            : hoveredCard === 'objectives' || hoveredCard === 'audience' 
+              ? 'scale-[0.999] opacity-99'
+              : ''
+          }`}
+          onMouseEnter={() => setHoveredCard('requirements')}
+          onMouseLeave={() => setHoveredCard(null)}
         >
-          <CardHeader className="pb-0">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Book className="h-5 w-5" />
-              {t('courses:requirements')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-4">
-            {requirements && requirements.length > 0 ? (
-              <ul className="space-y-2">
-                {requirements.map((requirement, index) => (
-                  <li 
-                    key={index} 
-                    className="flex items-start gap-2 animate-in fade-in duration-300"
-                  >
-                    <Book className="h-4 w-4 text-gray-800 mt-0.5 flex-shrink-0" />
-                    <span className="text-sm font-medium text-gray-700">{requirement}</span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <div className="text-gray-500">{t('courses:noRequirements')}</div>
-            )}
-          </CardContent>
-        </Card>
+          <div className="relative overflow-visible rounded-lg border border-gray-200 bg-white 
+                        group hover:shadow-[0_8px_30px_-12px_rgba(0,0,0,0.18)] shadow-[0_4px_12px_-3px_rgba(0,0,0,0.1),0_3px_4px_-2px_rgba(0,0,0,0.05)]
+                        transition-all duration-500 animate-in fade-in preserve-3d">
+            {/* 顶部边框装饰 - 使用知识主题颜色 */}
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-knowledge-primary/70 via-knowledge-primary to-knowledge-primary/70 transition-all duration-500 group-hover:opacity-100"></div>
+            
+            {/* 图标 - 调整大小和位置 */}
+            <div className="absolute left-0 right-0 mx-auto -top-6 flex justify-center transform transition-all duration-700 
+                         group-hover:scale-[1.02] group-hover:-translate-y-0.5 z-10">
+              <div className="w-12 h-12 bg-gradient-to-b from-gray-50 to-gray-100 rounded-full border-4 border-white 
+                          shadow-[0_2px_10px_rgba(0,0,0,0.12)] group-hover:shadow-[0_4px_12px_rgba(0,0,0,0.16)]
+                          flex items-center justify-center overflow-visible transition-all duration-500">
+                <Book className="h-6 w-6 text-gray-700 group-hover:text-knowledge-primary transition-colors duration-500" />
+              </div>
+            </div>
+            
+            <div className="pb-6 pt-8">
+              {/* 创新标题设计 - 增强光晕效果和线条扩展动画 - 移除四角边框 */}
+              <div className="relative py-4 px-4 mb-4 overflow-hidden group-hover:bg-gradient-to-r group-hover:from-gray-50/80 group-hover:via-gray-100/90 group-hover:to-gray-50/80 transition-all duration-700">
+                {/* 背景增强光晕 - 2倍强度 */}
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700">
+                  {/* 光晕效果增强 */}
+                  <div className="absolute inset-0 bg-radial-gradient from-gray-200/60 via-gray-100/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000 blur-sm"></div>
+                  <div className="absolute inset-0 bg-gradient-to-r from-gray-50/20 via-gray-200/40 to-gray-50/20 opacity-0 group-hover:opacity-100 transition-opacity duration-1000 mix-blend-overlay"></div>
+                  
+                  {/* 扩展光效 */}
+                  <div className="absolute inset-0 bg-gradient-to-b from-gray-50/30 via-transparent to-gray-50/30 opacity-0 group-hover:opacity-100 transition-opacity duration-700 blur-md"></div>
+                </div>
+                
+                {/* 顶部装饰线条 - 动画扩展效果 */}
+                <div className="absolute top-0 left-[30%] right-[30%] h-[1px] bg-gradient-to-r from-transparent via-gray-400 to-transparent 
+                             transition-all duration-700 group-hover:left-[10%] group-hover:right-[10%] group-hover:via-knowledge-primary/80"></div>
+                
+                {/* 底部装饰线条 - 动画扩展效果 */}
+                <div className="absolute bottom-0 left-[30%] right-[30%] h-[1px] bg-gradient-to-r from-transparent via-gray-400 to-transparent
+                             transition-all duration-700 group-hover:left-[10%] group-hover:right-[10%] group-hover:via-knowledge-primary/60"></div>
+                
+                <h3 className="text-xl font-bold text-center text-gray-800 transition-all duration-500
+                            group-hover:text-knowledge-primary relative z-10
+                            drop-shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
+                  {t('courses:requirements')}
+                </h3>
+              </div>
+              
+              <div className="px-6 transition-all duration-500 ease-in-out group-hover:translate-y-[-1px] overflow-hidden">
+                {requirements && requirements.length > 0 ? (
+                  <ul className="space-y-3.5 relative transition-all duration-300">
+                    {requirements.map((requirement, index) => (
+                      <li 
+                        key={index} 
+                        className="flex items-start gap-3 transition-all duration-300 
+                                overflow-visible group-hover:translate-x-0.5 whitespace-normal break-words w-full"
+                        style={{ 
+                          transitionDelay: `${index * 20}ms`,
+                        }}
+                      >
+                        <div className="mt-0.5 shrink-0 w-6 h-6 bg-gradient-to-r from-gray-100 to-gray-50 rounded-full p-1 flex-shrink-0 text-gray-700 shadow-sm 
+                                      group-hover:bg-gray-100 transition-all duration-500 ease-out
+                                      group-hover:shadow-md flex items-center justify-center">
+                          <BookOpen className="h-4 w-4 transition-all duration-300 ease-in-out group-hover:text-knowledge-primary" />
+                        </div>
+                        <span className="text-gray-700 transition-all duration-300 break-words whitespace-normal">
+                          {requirement}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className="text-gray-500 italic text-center">{t('courses:noRequirements')}</div>
+                )}
+                
+                {/* 添加底部阴影消除 - 确保没有多余的阴影 */}
+                <div className="h-6 w-full relative">
+                  <div className="absolute inset-0 bg-gradient-to-t from-white via-white to-transparent"></div>
+                </div>
+              </div>
+            </div>
+            
+            {/* 底部装饰 */}
+            <div className="h-1 w-full bg-gradient-to-r from-transparent via-gray-200 to-transparent absolute bottom-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+          </div>
+        </div>
 
         {/* 适合人群 */}
-        <Card 
-          className="hover:shadow-xl transition-all duration-500 ease-in-out shadow-lg shadow-gray-200/60 border-2 
-            transform hover:-translate-y-1 hover:scale-[1.01] focus:scale-[1.01]
-            animate-in fade-in duration-500"
+        <div 
+          className={`transform transition-all duration-500 ease-out ${
+            hoveredCard === 'audience' 
+            ? 'scale-[1.003] z-20' 
+            : hoveredCard === 'objectives' || hoveredCard === 'requirements' 
+              ? 'scale-[0.999] opacity-99'
+              : ''
+          }`}
+          onMouseEnter={() => setHoveredCard('audience')}
+          onMouseLeave={() => setHoveredCard(null)}
         >
-          <CardHeader className="pb-0">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              {t('courses:targetAudience')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-4">
-            {targetAudience && targetAudience.length > 0 ? (
-              <ul className="space-y-2">
-                {targetAudience.map((audience, index) => (
-                  <li 
-                    key={index} 
-                    className="flex items-start gap-2 animate-in fade-in duration-300"
-                  >
-                    <Users className="h-4 w-4 text-gray-800 mt-0.5 flex-shrink-0" />
-                    <span className="text-sm font-medium text-gray-700">{audience}</span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <div className="text-gray-500">{t('courses:suitableForEveryone')}</div>
-            )}
-          </CardContent>
-        </Card>
+          <div className="relative overflow-visible rounded-lg border border-gray-200 bg-white 
+                        group hover:shadow-[0_8px_30px_-12px_rgba(0,0,0,0.18)] shadow-[0_4px_12px_-3px_rgba(0,0,0,0.1),0_3px_4px_-2px_rgba(0,0,0,0.05)]
+                        transition-all duration-500 animate-in fade-in preserve-3d">
+            {/* 顶部边框装饰 - 使用知识主题颜色 */}
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-knowledge-primary/70 via-knowledge-primary to-knowledge-primary/70 transition-all duration-500 group-hover:opacity-100"></div>
+            
+            {/* 图标 - 调整大小和位置 */}
+            <div className="absolute left-0 right-0 mx-auto -top-6 flex justify-center transform transition-all duration-700 
+                         group-hover:scale-[1.02] group-hover:-translate-y-0.5 z-10">
+              <div className="w-12 h-12 bg-gradient-to-b from-gray-50 to-gray-100 rounded-full border-4 border-white 
+                          shadow-[0_2px_10px_rgba(0,0,0,0.12)] group-hover:shadow-[0_4px_12px_rgba(0,0,0,0.16)]
+                          flex items-center justify-center overflow-visible transition-all duration-500">
+                <Users className="h-6 w-6 text-gray-700 group-hover:text-knowledge-primary transition-colors duration-500" />
+              </div>
+            </div>
+            
+            <div className="pb-6 pt-8">
+              {/* 创新标题设计 - 增强光晕效果和线条扩展动画 - 移除四角边框 */}
+              <div className="relative py-4 px-4 mb-4 overflow-hidden group-hover:bg-gradient-to-r group-hover:from-gray-50/80 group-hover:via-gray-100/90 group-hover:to-gray-50/80 transition-all duration-700">
+                {/* 背景增强光晕 - 2倍强度 */}
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700">
+                  {/* 光晕效果增强 */}
+                  <div className="absolute inset-0 bg-radial-gradient from-gray-200/60 via-gray-100/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000 blur-sm"></div>
+                  <div className="absolute inset-0 bg-gradient-to-r from-gray-50/20 via-gray-200/40 to-gray-50/20 opacity-0 group-hover:opacity-100 transition-opacity duration-1000 mix-blend-overlay"></div>
+                  
+                  {/* 扩展光效 */}
+                  <div className="absolute inset-0 bg-gradient-to-b from-gray-50/30 via-transparent to-gray-50/30 opacity-0 group-hover:opacity-100 transition-opacity duration-700 blur-md"></div>
+                </div>
+                
+                {/* 顶部装饰线条 - 动画扩展效果 */}
+                <div className="absolute top-0 left-[30%] right-[30%] h-[1px] bg-gradient-to-r from-transparent via-gray-400 to-transparent 
+                             transition-all duration-700 group-hover:left-[10%] group-hover:right-[10%] group-hover:via-knowledge-primary/80"></div>
+                
+                {/* 底部装饰线条 - 动画扩展效果 */}
+                <div className="absolute bottom-0 left-[30%] right-[30%] h-[1px] bg-gradient-to-r from-transparent via-gray-400 to-transparent
+                             transition-all duration-700 group-hover:left-[10%] group-hover:right-[10%] group-hover:via-knowledge-primary/60"></div>
+                
+                <h3 className="text-xl font-bold text-center text-gray-800 transition-all duration-500
+                            group-hover:text-knowledge-primary relative z-10
+                            drop-shadow-[0_1px_1px_rgba(0,0,0,0.05)]">
+                  {t('courses:targetAudience')}
+                </h3>
+              </div>
+              
+              <div className="px-6 transition-all duration-500 ease-in-out group-hover:translate-y-[-1px] overflow-hidden">
+                {targetAudience && targetAudience.length > 0 ? (
+                  <ul className="space-y-3.5 relative transition-all duration-300">
+                    {targetAudience.map((audience, index) => (
+                      <li 
+                        key={index} 
+                        className="flex items-start gap-3 transition-all duration-300 
+                                overflow-visible group-hover:translate-x-0.5 whitespace-normal break-words w-full"
+                        style={{ 
+                          transitionDelay: `${index * 20}ms`,
+                        }}
+                      >
+                        <div className="mt-0.5 shrink-0 w-6 h-6 bg-gradient-to-r from-gray-100 to-gray-50 rounded-full p-1 flex-shrink-0 text-gray-700 shadow-sm 
+                                      group-hover:bg-gray-100 transition-all duration-500 ease-out
+                                      group-hover:shadow-md flex items-center justify-center">
+                          <Users className="h-4 w-4 transition-all duration-300 ease-in-out group-hover:text-knowledge-primary" />
+                        </div>
+                        <span className="text-gray-700 transition-all duration-300 break-words whitespace-normal">
+                          {audience}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className="text-gray-500 italic text-center">{t('courses:suitableForEveryone')}</div>
+                )}
+                
+                {/* 添加底部阴影消除 - 确保没有多余的阴影 */}
+                <div className="h-6 w-full relative">
+                  <div className="absolute inset-0 bg-gradient-to-t from-white via-white to-transparent"></div>
+                </div>
+              </div>
+            </div>
+            
+            {/* 底部装饰 */}
+            <div className="h-1 w-full bg-gradient-to-r from-transparent via-gray-200 to-transparent absolute bottom-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+          </div>
+        </div>
       </div>
     </div>
   );
