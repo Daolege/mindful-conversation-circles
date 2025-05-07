@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -28,10 +29,10 @@ import {
   getStudentsWithoutSubmission,
   getHomeworkCompletionStats,
   batchUpdateHomeworkFeedback,
-  HomeworkSubmission,
   HomeworkStats,
   CourseSection as HomeworkCourseSection
 } from '@/lib/services/homeworkSubmissionService';
+import { HomeworkSubmission } from '@/lib/types/homework';
 
 // Define a local type that uses the existing type but renames it to avoid conflict
 type LocalCourseSection = HomeworkCourseSection;

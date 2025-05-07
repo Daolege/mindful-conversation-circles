@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -10,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { Loader2, Download } from 'lucide-react';
-import { HomeworkSubmission } from '@/lib/services/homeworkSubmissionService';
+import { HomeworkSubmission } from '@/lib/types/homework';
 
 interface PdfExportConfig {
   includeHomeworkQuestion: boolean;

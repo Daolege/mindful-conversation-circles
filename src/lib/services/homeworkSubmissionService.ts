@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Homework, HomeworkSubmission } from '@/lib/types/homework';
 
@@ -300,6 +301,10 @@ export const getHomeworkSubmissionById = async (submissionId: string): Promise<H
       throw new Error('Submission not found');
     }
 
+    // Handle the case where profiles or homework might be null
+    const profileData = data.profiles as any || {};
+    const homeworkData = data.homework as any || {};
+
     // Use type assertion to treat data as an object with required properties
     const result: HomeworkSubmission = {
       id: data.id,
@@ -315,9 +320,14 @@ export const getHomeworkSubmissionById = async (submissionId: string): Promise<H
       submitted_at: data.submitted_at,
       created_at: data.created_at,
       reviewed_at: data.reviewed_at,
-      user_name: data.profiles?.full_name || '未知用户',
-      user_email: data.profiles?.email || '',
-      homework: data.homework
+      user_name: profileData.full_name || '未知用户',
+      user_email: profileData.email || '',
+      homework: homeworkData.id ? {
+        id: homeworkData.id,
+        title: homeworkData.title || '',
+        type: homeworkData.type || '',
+        description: homeworkData.description
+      } : undefined
     };
     
     return result;
