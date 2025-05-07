@@ -49,6 +49,7 @@ const App = () => {
             <Route path="/auth" element={<Auth />} />
             <Route path="/course/:courseId" element={<CourseDetail />} />
             <Route path="/course-new/:courseId" element={<CourseDetailNew />} />
+            <Route path="/courses-new/:courseId" element={<CourseDetailNew />} />
             <Route path="/course-learn/:courseId/:lectureId?" element={<CourseLearn />} />
             <Route path="/instructors" element={<Instructors />} />
             <Route path="/instructor/:instructorId" element={<InstructorDetail />} />
@@ -64,11 +65,16 @@ const App = () => {
             <Route path="/admin" element={<Admin />} />
             <Route path="/course-editor/:courseId" element={<CourseEditor />} />
             <Route path="/course-new-editor/:courseId" element={<CourseNewEditor />} />
+            
+            {/* Add new routes to match URLs used in components */}
+            <Route path="/admin/courses-new/:courseId" element={<CourseNewEditor />} />
+            <Route path="/admin/courses-new/:courseId/homework" element={<HomeworkReviewPage />} />
+            
             <Route path="/student-homework/:courseId/:lectureId" element={<StudentHomeworkPage />} />
             <Route path="/homework-submissions/:submissionId" element={<HomeworkSubmissionDetailPage />} />
             <Route path="/homework-submissions" element={<HomeworkSubmissionsPage />} />
             
-            {/* Add new route for homework review */}
+            {/* Add homework review route */}
             <Route path="/homework-review/:courseId" element={<HomeworkReviewPage />} />
             
             <Route path="*" element={<NotFound />} />
