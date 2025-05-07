@@ -96,17 +96,13 @@ export const HomeworkCard = memo(({
         } p-4 border-b border-gray-100`}
         onClick={handleHeaderClick}
       >
-        <div className="flex items-center gap-3 flex-1 mr-4">
-          <div className="font-medium truncate">{homework.title}</div>
+        <div className="flex items-center gap-3 flex-1 mr-4 max-w-[70%]">
+          <div className="font-medium truncate break-words line-clamp-2">{homework.title}</div>
         </div>
         <div className="flex items-center gap-3 flex-shrink-0">
           <Badge 
-            variant={isSubmitted ? "outline" : "outline"} 
-            className={`text-xs min-w-[80px] text-center ${
-              isSubmitted ? 
-                "bg-green-50 text-green-700 border-green-200" : 
-                "bg-gray-50 text-gray-600 border-gray-200"
-            }`}
+            variant="outline" 
+            className="text-xs min-w-[80px] text-center bg-gray-50 text-gray-600 border-gray-200"
           >
             {isSubmitted ? "已提交" : "未提交"}
           </Badge>
