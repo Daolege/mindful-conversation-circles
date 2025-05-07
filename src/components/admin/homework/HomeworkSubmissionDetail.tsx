@@ -27,6 +27,7 @@ import {
   SelectValue 
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
+import { RichTextDisplay } from './RichTextDisplay';
 
 interface HomeworkSubmissionDetailProps {
   submissionId: string;
@@ -153,6 +154,14 @@ export const HomeworkSubmissionDetail: React.FC<HomeworkSubmissionDetailProps> =
     ? formatDistanceToNow(new Date(submission.created_at), { addSuffix: true })
     : '未知时间';
 
+  // Determine if the answer is likely rich text content by checking for HTML tags
+  const isRichText = submission.answer && 
+                     (submission.answer.includes('<') || 
+                     submission.answer.includes('&lt;') ||
+                     submission.answer.includes('<img') ||
+                     submission.answer.includes('<p>') ||
+                     submission.answer.includes('<div>'));
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -242,8 +251,17 @@ export const HomeworkSubmissionDetail: React.FC<HomeworkSubmissionDetailProps> =
           
           <div>
             <h3 className="text-lg font-medium mb-2">作业内容</h3>
-            <div className="bg-gray-50 p-4 rounded-lg whitespace-pre-wrap">
-              {submission.content || submission.answer || '无作业内容'}
+            <div className="bg-gray-50 p-4 rounded-lg">
+              {isRichText ? (
+                <RichTextDisplay 
+                  content={submission.content || submission.answer}
+                  className="prose max-w-none"
+                />
+              ) : (
+                <div className="whitespace-pre-wrap">
+                  {submission.content || submission.answer || '无作业内容'}
+                </div>
+              )}
             </div>
           </div>
 
