@@ -32,20 +32,17 @@ import {
   HomeworkStats
 } from '@/lib/services/homeworkSubmissionService';
 
-// Define a more compatible type for CourseLecture
-interface CourseLecture {
-  id: string;
-  title: string;
-  position: number;
-  requires_homework_completion: boolean;
-}
-
 // Define a local type for the CourseSection that matches exactly what's used in this component
 interface CourseSection {
   id: string;
   title: string;
   position: number;
-  lectures: CourseLecture[];
+  lectures: {
+    id: string;
+    title: string;
+    position: number;
+    requires_homework_completion: boolean;
+  }[];
 }
 
 export const HomeworkSubmissionsView = () => {
@@ -100,7 +97,7 @@ export const HomeworkSubmissionsView = () => {
         id: lecture.id,
         title: lecture.title,
         position: lecture.position,
-        requires_homework_completion: lecture.requires_homework_completion || false
+        requires_homework_completion: !!lecture.requires_homework_completion
       }))
     }));
   }, [courseSectionsData]);

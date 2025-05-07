@@ -108,25 +108,27 @@ export const getHomeworkSubmissionsByCourseId = async (courseId: number): Promis
     const submissions = data.map(item => {
       if (!item) return null;
       
-      // Handle potential type errors by using type assertions and providing default values
+      // Use type assertion to treat item as an object with the required properties
+      const itemObj = item as any;
+      
       const submission: HomeworkSubmission = {
-        id: item.id || '',
-        homework_id: item.homework_id || '',
-        user_id: item.user_id || '',
-        lecture_id: item.lecture_id || '',
-        course_id: item.course_id || 0,
-        content: item.content,
-        answer: item.answer,
-        file_url: item.file_url,
-        status: (item.status as 'pending' | 'reviewed' | 'rejected') || 'pending',
-        score: item.score,
-        feedback: item.feedback,
-        submitted_at: item.submitted_at || new Date().toISOString(),
-        created_at: item.created_at,
-        reviewed_at: item.reviewed_at,
-        user_name: item.profiles?.full_name || '未知用户',
-        user_email: item.profiles?.email || '',
-        homework: item.homework
+        id: itemObj.id || '',
+        homework_id: itemObj.homework_id || '',
+        user_id: itemObj.user_id || '',
+        lecture_id: itemObj.lecture_id || '',
+        course_id: itemObj.course_id || 0,
+        content: itemObj.content,
+        answer: itemObj.answer,
+        file_url: itemObj.file_url,
+        status: (itemObj.status as 'pending' | 'reviewed' | 'rejected') || 'pending',
+        score: itemObj.score,
+        feedback: itemObj.feedback,
+        submitted_at: itemObj.submitted_at || new Date().toISOString(),
+        created_at: itemObj.created_at,
+        reviewed_at: itemObj.reviewed_at,
+        user_name: itemObj.profiles?.full_name || '未知用户',
+        user_email: itemObj.profiles?.email || '',
+        homework: itemObj.homework
       };
       
       return submission;
@@ -179,24 +181,27 @@ export const getHomeworkSubmissionsByLectureId = async (lectureId: string): Prom
     const submissions = data.map(item => {
       if (!item) return null;
       
+      // Use type assertion to treat item as an object with the required properties
+      const itemObj = item as any;
+      
       const submission: HomeworkSubmission = {
-        id: item.id || '',
-        homework_id: item.homework_id || '',
-        user_id: item.user_id || '',
-        lecture_id: item.lecture_id || '',
-        course_id: item.course_id || 0,
-        content: item.content,
-        answer: item.answer,
-        file_url: item.file_url,
-        status: (item.status as 'pending' | 'reviewed' | 'rejected') || 'pending',
-        score: item.score,
-        feedback: item.feedback,
-        submitted_at: item.submitted_at || new Date().toISOString(),
-        created_at: item.created_at,
-        reviewed_at: item.reviewed_at,
-        user_name: item.profiles?.full_name || '未知用户',
-        user_email: item.profiles?.email || '',
-        homework: item.homework
+        id: itemObj.id || '',
+        homework_id: itemObj.homework_id || '',
+        user_id: itemObj.user_id || '',
+        lecture_id: itemObj.lecture_id || '',
+        course_id: itemObj.course_id || 0,
+        content: itemObj.content,
+        answer: itemObj.answer,
+        file_url: itemObj.file_url,
+        status: (itemObj.status as 'pending' | 'reviewed' | 'rejected') || 'pending',
+        score: itemObj.score,
+        feedback: itemObj.feedback,
+        submitted_at: itemObj.submitted_at || new Date().toISOString(),
+        created_at: itemObj.created_at,
+        reviewed_at: itemObj.reviewed_at,
+        user_name: itemObj.profiles?.full_name || '未知用户',
+        user_email: itemObj.profiles?.email || '',
+        homework: itemObj.homework
       };
       
       return submission;
@@ -256,24 +261,27 @@ export const getHomeworkSubmissionsByStudentId = async (studentId: string, cours
     const submissions = data.map(item => {
       if (!item) return null;
       
+      // Use type assertion to treat item as an object with the required properties
+      const itemObj = item as any;
+      
       const submission: HomeworkSubmission = {
-        id: item.id || '',
-        homework_id: item.homework_id || '',
-        user_id: item.user_id || '',
-        lecture_id: item.lecture_id || '',
-        course_id: item.course_id || 0,
-        content: item.content,
-        answer: item.answer,
-        file_url: item.file_url,
-        status: (item.status as 'pending' | 'reviewed' | 'rejected') || 'pending',
-        score: item.score,
-        feedback: item.feedback,
-        submitted_at: item.submitted_at || new Date().toISOString(),
-        created_at: item.created_at,
-        reviewed_at: item.reviewed_at,
-        user_name: item.profiles?.full_name || '未知用户',
-        user_email: item.profiles?.email || '',
-        homework: item.homework
+        id: itemObj.id || '',
+        homework_id: itemObj.homework_id || '',
+        user_id: itemObj.user_id || '',
+        lecture_id: itemObj.lecture_id || '',
+        course_id: itemObj.course_id || 0,
+        content: itemObj.content,
+        answer: itemObj.answer,
+        file_url: itemObj.file_url,
+        status: (itemObj.status as 'pending' | 'reviewed' | 'rejected') || 'pending',
+        score: itemObj.score,
+        feedback: itemObj.feedback,
+        submitted_at: itemObj.submitted_at || new Date().toISOString(),
+        created_at: itemObj.created_at,
+        reviewed_at: itemObj.reviewed_at,
+        user_name: itemObj.profiles?.full_name || '未知用户',
+        user_email: itemObj.profiles?.email || '',
+        homework: itemObj.homework
       };
       
       return submission;
