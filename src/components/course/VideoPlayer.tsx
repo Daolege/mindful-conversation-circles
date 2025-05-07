@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import {
   Play,
@@ -12,7 +11,6 @@ import { useAuth } from "@/contexts/authHooks";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
-import { Progress } from "@/components/ui/progress";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -40,6 +38,7 @@ export const VideoPlayer = ({ videoUrl, title, courseId, lessonId }: VideoPlayer
   const [loading, setLoading] = useState(false);
   const [hoverProgress, setHoverProgress] = useState<number | null>(null);
   const progressBarRef = useRef<HTMLDivElement>(null);
+  const progressTooltipRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const controlsTimeout = useRef<NodeJS.Timeout | null>(null);
@@ -150,6 +149,18 @@ export const VideoPlayer = ({ videoUrl, title, courseId, lessonId }: VideoPlayer
     const rect = progressBarRef.current.getBoundingClientRect();
     const hoverPosition = (e.clientX - rect.left) / rect.width;
     setHoverProgress(hoverPosition * 100);
+    
+    // Update tooltip position if available
+    if (progressTooltipRef.current) {
+      const tooltipWidth = progressTooltipRef.current.offsetWidth;
+      let tooltipPosition = e.clientX - rect.left - (tooltipWidth / 2);
+      
+      // Keep tooltip within progress bar bounds
+      if (tooltipPosition < 0) tooltipPosition = 0;
+      if (tooltipPosition + tooltipWidth > rect.width) tooltipPosition = rect.width - tooltipWidth;
+      
+      progressTooltipRef.current.style.left = `${tooltipPosition}px`;
+    }
   };
 
   const handlePlaybackRateChange = (rate: number) => {
@@ -174,7 +185,7 @@ export const VideoPlayer = ({ videoUrl, title, courseId, lessonId }: VideoPlayer
       }
       
       controlsTimeout.current = setTimeout(() => {
-        if (!isSettingsOpen) {
+        if (!isSettingsOpen && isPlaying) {
           setShowControls(false);
         }
       }, 3000);
@@ -185,33 +196,42 @@ export const VideoPlayer = ({ videoUrl, title, courseId, lessonId }: VideoPlayer
         clearTimeout(controlsTimeout.current);
       }
     };
-  }, [showControls, isSettingsOpen]);
+  }, [showControls, isSettingsOpen, isPlaying]);
+
+  const getHoveredTime = () => {
+    if (hoverProgress === null || !duration) return "0:00";
+    return formatTime((hoverProgress / 100) * duration);
+  };
 
   return (
     <div
-      className="relative w-full aspect-video bg-black group rounded-lg overflow-hidden"
+      className="relative w-full aspect-video bg-white shadow-lg rounded-lg overflow-hidden group"
       onMouseEnter={() => setShowControls(true)}
       onMouseMove={() => setShowControls(true)}
-      onMouseLeave={() => !isSettingsOpen && setShowControls(false)}
+      onMouseLeave={() => !isSettingsOpen && isPlaying && setShowControls(false)}
+      onClick={(e) => {
+        // Prevent clicks on controls from toggling play
+        if ((e.target as HTMLElement).closest('.video-controls')) return;
+        togglePlay();
+      }}
     >
       <video
         ref={videoRef}
         src={videoUrl}
         className="w-full h-full object-contain"
-        onClick={togglePlay}
         playsInline
       />
       
       {!isPlaying && !showControls && (
-        <div className="absolute inset-0 flex items-center justify-center cursor-pointer" onClick={togglePlay}>
+        <div className="absolute inset-0 flex items-center justify-center cursor-pointer">
           <div className="rounded-full bg-white/30 p-5 backdrop-blur-sm transition-all duration-200 hover:bg-white/40 hover:scale-105">
-            <Play className="h-14 w-14 text-white drop-shadow-md" />
+            <Play className="h-14 w-14 text-gray-800 drop-shadow-md" />
           </div>
         </div>
       )}
       
       {(showControls || loading) && (
-        <div className="absolute bottom-0 left-0 w-full bg-white/30 backdrop-blur-md text-gray-800 animate-fade-in transition-all duration-300">
+        <div className="absolute bottom-0 left-0 w-full bg-white/30 backdrop-blur-md text-gray-800 animate-fade-in transition-all duration-300 video-controls">
           <div 
             ref={progressBarRef}
             className="relative h-2 bg-gray-300 cursor-pointer"
@@ -227,10 +247,18 @@ export const VideoPlayer = ({ videoUrl, title, courseId, lessonId }: VideoPlayer
             
             {/* Hover preview */}
             {hoverProgress !== null && (
-              <div 
-                className="absolute top-0 h-full bg-blue-300 opacity-50"
-                style={{ width: `${hoverProgress}%` }}
-              />
+              <>
+                <div 
+                  className="absolute top-0 h-full bg-blue-300 opacity-50"
+                  style={{ width: `${hoverProgress}%` }}
+                />
+                <div 
+                  ref={progressTooltipRef}
+                  className="absolute -top-8 transform -translate-x-1/2 bg-white shadow-md rounded px-2 py-1 text-xs font-medium"
+                >
+                  {getHoveredTime()}
+                </div>
+              </>
             )}
             
             {/* Progress indicator */}
@@ -243,7 +271,10 @@ export const VideoPlayer = ({ videoUrl, title, courseId, lessonId }: VideoPlayer
           <div className="flex items-center justify-between p-3">
             <div className="flex items-center gap-3">
               <Button 
-                onClick={togglePlay} 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  togglePlay();
+                }} 
                 variant="ghost" 
                 className="p-1 h-auto rounded-full hover:bg-black/10 transition-all duration-200"
               >
@@ -263,7 +294,7 @@ export const VideoPlayer = ({ videoUrl, title, courseId, lessonId }: VideoPlayer
             <div className="flex items-center gap-3">
               <div className="relative">
                 <DropdownMenu open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
-                  <DropdownMenuTrigger asChild>
+                  <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                     <Button 
                       variant="ghost" 
                       className="p-1 h-auto rounded-full hover:bg-black/10"
@@ -277,7 +308,10 @@ export const VideoPlayer = ({ videoUrl, title, courseId, lessonId }: VideoPlayer
                       <DropdownMenuItem
                         key={rate}
                         className={`px-3 py-2 text-sm cursor-pointer ${playbackRate === rate ? 'bg-blue-50 text-blue-600 font-medium' : ''}`}
-                        onClick={() => handlePlaybackRateChange(rate)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handlePlaybackRateChange(rate);
+                        }}
                       >
                         {rate}x
                       </DropdownMenuItem>
@@ -287,7 +321,10 @@ export const VideoPlayer = ({ videoUrl, title, courseId, lessonId }: VideoPlayer
               </div>
               
               <Button 
-                onClick={toggleFullScreen} 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleFullScreen();
+                }} 
                 variant="ghost" 
                 className="p-1 h-auto rounded-full hover:bg-black/10"
               >
