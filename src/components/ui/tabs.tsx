@@ -34,7 +34,7 @@ const TabsTrigger = React.forwardRef<
       "data-[state=active]:text-gray-900",
       "data-[state=active]:shadow-[0_3px_15px_rgba(0,0,0,0.15)]",
       "hover:bg-gray-100/50 relative overflow-hidden",
-      "group",
+      "group flex-1",
       className
     )}
     {...props}
@@ -74,4 +74,3 @@ const TabsContent = React.forwardRef<
 TabsContent.displayName = TabsPrimitive.Content.displayName
 
 export { Tabs, TabsList, TabsTrigger, TabsContent }
-

@@ -299,7 +299,7 @@ export const HomeworkSubmissionsView = () => {
         {/* Main Content Area */}
         <div className="col-span-12 lg:col-span-9">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="w-full">
+            <TabsList className="w-full justify-start">
               <TabsTrigger value="all">全部作业</TabsTrigger>
               <TabsTrigger value="not-submitted">未提交</TabsTrigger>
               <TabsTrigger value="stats">统计报表</TabsTrigger>
