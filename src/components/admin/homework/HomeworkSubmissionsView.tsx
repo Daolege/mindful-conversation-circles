@@ -88,7 +88,7 @@ export const HomeworkSubmissionsView = () => {
     enabled: !!courseIdNumber && courseIdNumber > 0,
   });
   
-  // Transform the fetched data to match our local type definition
+  // Transform the fetched data to ensure it matches the expected local type
   const sections: CourseSection[] = React.useMemo(() => {
     if (!courseSectionsData) return [];
     

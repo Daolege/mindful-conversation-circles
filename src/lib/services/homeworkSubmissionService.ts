@@ -102,13 +102,13 @@ export const getHomeworkSubmissionsByCourseId = async (courseId: number): Promis
 
     if (error) throw error;
     
-    if (!data) return [];
+    if (!data || !Array.isArray(data)) return [];
 
     // Transform data to include user information with proper type checking
     const submissions = data.map(item => {
       if (!item) return null;
       
-      // Make sure item has the expected properties before mapping
+      // Handle potential type errors by using type assertions and providing default values
       const submission: HomeworkSubmission = {
         id: item.id || '',
         homework_id: item.homework_id || '',
@@ -174,7 +174,7 @@ export const getHomeworkSubmissionsByLectureId = async (lectureId: string): Prom
 
     if (error) throw error;
     
-    if (!data) return [];
+    if (!data || !Array.isArray(data)) return [];
 
     const submissions = data.map(item => {
       if (!item) return null;
@@ -251,7 +251,7 @@ export const getHomeworkSubmissionsByStudentId = async (studentId: string, cours
 
     if (error) throw error;
     
-    if (!data) return [];
+    if (!data || !Array.isArray(data)) return [];
 
     const submissions = data.map(item => {
       if (!item) return null;
