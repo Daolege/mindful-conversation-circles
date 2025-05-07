@@ -17,14 +17,12 @@ export function CourseSyllabus({
   const [hoveredLectureId, setHoveredLectureId] = useState(null);
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [isAtBottom, setIsAtBottom] = useState(false);
-  const [containerHeight, setContainerHeight] = useState('500px'); // Start with a reasonable height
-  const [heightChecksAttempted, setHeightChecksAttempted] = useState(0);
+  const [containerHeight, setContainerHeight] = useState('550px'); // Increased default minimum height
   const scrollAreaRef = useRef(null);
   const viewportRef = useRef(null);
   const resizeObserverRef = useRef(null);
   const mutationObserverRef = useRef(null);
-  const heightCheckTimersRef = useRef([]);
-  const homeworkReadyRef = useRef(false);
+  const [hasHomework, setHasHomework] = useState(true);
   const { t } = useTranslations();
 
   // If there's no expanded sections yet, open the first one
@@ -42,254 +40,196 @@ export function CourseSyllabus({
     const { scrollHeight, clientHeight, scrollTop } = viewport;
     const hasScroll = scrollHeight > clientHeight;
     
-    console.log('[CourseSyllabus] Scroll check:', { 
-      scrollHeight, 
-      clientHeight, 
-      scrollTop,
-      hasScroll,
-      sectionsExpanded: Object.keys(expandedSections).length
-    });
-    
     setShowScrollButton(hasScroll);
     
     // Check if we're at the bottom (with a 20px threshold)
     const isBottom = scrollTop + clientHeight >= scrollHeight - 20;
     setIsAtBottom(isBottom);
-  }, [expandedSections]);
+  }, []);
 
-  // Enhanced function to update height based on homework module with better error handling
+  // Detect if homework exists and update container height accordingly
   const updateSyllabusHeight = useCallback(() => {
     try {
-      // Try multiple selectors to find the homework section
-      const selectors = [
-        '.homework-module',
-        '.HomeworkModule',
-        '[class*="homework"]',
-        '.lg\\:col-span-2 > div:nth-child(2)'
+      // Try to find both homework content and "no homework" message elements
+      const homeworkSelectors = [
+        '.homework-module .HomeworkCard',
+        '.homework-module form',
+        '.homework-module [class*="form"]',
+        '.homework-module [class*="editor"]'
       ];
       
-      let homeworkSection = null;
-      for (const selector of selectors) {
-        const element = document.querySelector(selector);
-        if (element && element.getBoundingClientRect().height > 50) {
-          homeworkSection = element;
-          break;
+      const noHomeworkSelectors = [
+        '.homework-module p:contains("该课时暂无作业")',
+        '.homework-module div:contains("该课时暂无作业")',
+        '.homework-module .text-center', // Common pattern for no homework message
+        '.homework-module div.flex.justify-center',
+        '.homework-module div.py-8',
+        '.homework-module div.p-6',
+        '.HomeworkModule .text-center',
+        '.HomeworkModule .py-8'
+      ];
+      
+      // Check for homework content
+      let hasHomeworkContent = false;
+      for (const selector of homeworkSelectors) {
+        try {
+          const elements = document.querySelectorAll(selector);
+          if (elements && elements.length > 0) {
+            hasHomeworkContent = true;
+            break;
+          }
+        } catch (e) {
+          // Skip selector if it causes an error
         }
       }
       
-      if (!homeworkSection) {
-        console.log('[CourseSyllabus] Homework section not found yet, attempt:', heightChecksAttempted);
-        return false; // Not found yet
+      // Check for no homework message
+      let hasNoHomeworkMessage = false;
+      for (const selector of noHomeworkSelectors) {
+        try {
+          const elements = document.querySelectorAll(selector);
+          if (elements && elements.length > 0) {
+            const centerElements = Array.from(elements).filter(el => {
+              const computedStyle = window.getComputedStyle(el);
+              const textAlign = computedStyle.textAlign;
+              const content = el.textContent || '';
+              return (textAlign === 'center' || content.includes('暂无') || content.includes('没有'));
+            });
+            
+            if (centerElements.length > 0) {
+              hasNoHomeworkMessage = true;
+              break;
+            }
+          }
+        } catch (e) {
+          // Skip selector if it causes an error
+        }
       }
-      
-      const homeworkHeight = homeworkSection.getBoundingClientRect().height;
-      console.log('[CourseSyllabus] Found homework section with height:', homeworkHeight);
-      
-      if (homeworkHeight < 100) {
-        console.log('[CourseSyllabus] Homework height too small, likely still loading');
-        return false; // Height too small, probably still loading
-      }
-      
-      // Set the container height to match homework module with a minimum
-      const targetHeight = Math.max(500, homeworkHeight);
-      setContainerHeight(`${targetHeight}px`);
-      homeworkReadyRef.current = true;
-      console.log('[CourseSyllabus] Setting syllabus height to:', targetHeight);
 
+      // Direct text content check as fallback
+      if (!hasNoHomeworkMessage) {
+        const allHomeworkElements = document.querySelectorAll('.homework-module *');
+        for (const el of allHomeworkElements) {
+          const content = el.textContent || '';
+          if (content.includes('该课时暂无作业') || 
+              content.includes('暂无作业') || 
+              content.includes('没有作业')) {
+            hasNoHomeworkMessage = true;
+            break;
+          }
+        }
+      }
+      
+      // Update state based on findings
+      const newHasHomework = hasHomeworkContent && !hasNoHomeworkMessage;
+      setHasHomework(newHasHomework);
+      
+      // Set appropriate height
+      if (hasNoHomeworkMessage) {
+        // Get the homework module height or default to taller value for no homework
+        const homeworkModule = document.querySelector('.homework-module');
+        if (homeworkModule) {
+          const homeworkHeight = homeworkModule.getBoundingClientRect().height;
+          // Ensure minimum height for "no homework" state is sufficient 
+          // (minimum 550px, or match homework module height + padding)
+          const targetHeight = Math.max(550, homeworkHeight + 50);
+          setContainerHeight(`${targetHeight}px`);
+        } else {
+          // Fallback if couldn't find homework module
+          setContainerHeight('550px');
+        }
+      } else if (hasHomeworkContent) {
+        // For actual homework content, match height with padding
+        const homeworkModule = document.querySelector('.homework-module');
+        if (homeworkModule) {
+          const homeworkHeight = homeworkModule.getBoundingClientRect().height;
+          const targetHeight = Math.max(550, homeworkHeight);
+          setContainerHeight(`${targetHeight}px`);
+        }
+      } else {
+        // Default height
+        setContainerHeight('550px');
+      }
+      
       // After height is updated, check if scroll is needed
       setTimeout(checkScroll, 100);
-      return true; // Successfully updated
+      return true;
     } catch (error) {
       console.error('[CourseSyllabus] Error updating height:', error);
       return false;
     }
-  }, [checkScroll, heightChecksAttempted]);
+  }, [checkScroll]);
   
-  // More aggressive progressive height checking with longer delays
-  const scheduleProgressiveHeightChecks = useCallback(() => {
-    // Clear any existing timers
-    heightCheckTimersRef.current.forEach(timer => clearTimeout(timer));
-    heightCheckTimersRef.current = [];
-    
-    // Schedule multiple checks with increasing delays - much longer intervals
-    const checkDelays = [800, 1500, 3000, 5000, 8000, 12000, 15000];
-    
-    checkDelays.forEach((delay, index) => {
-      const timer = setTimeout(() => {
-        console.log(`[CourseSyllabus] Performing height check #${index + 1} after ${delay}ms`);
-        const success = updateSyllabusHeight();
-        
-        if (success) {
-          console.log(`[CourseSyllabus] Height check #${index + 1} successful`);
-          // Cancel remaining checks if we had success
-          heightCheckTimersRef.current.slice(index + 1).forEach(t => clearTimeout(t));
-          heightCheckTimersRef.current = heightCheckTimersRef.current.slice(0, index + 1);
-        } else {
-          setHeightChecksAttempted(prev => prev + 1);
-        }
-      }, delay);
-      
-      heightCheckTimersRef.current.push(timer);
-    });
-  }, [updateSyllabusHeight]);
-
-  // Enhanced observer setup with more comprehensive DOM monitoring
+  // Set up observers and update height when component mounts
   useEffect(() => {
-    console.log('[CourseSyllabus] Setting up enhanced observers for homework module');
-    
-    // Initial delay to ensure basic DOM is loaded
-    const initialSetupTimer = setTimeout(() => {
-      // Initialize height
+    // Initial height check with delay to allow rendering
+    const initialCheckTimer = setTimeout(() => {
       updateSyllabusHeight();
-      
-      // Set up ResizeObserver for homework section size changes
-      if (!resizeObserverRef.current) {
-        resizeObserverRef.current = new ResizeObserver(entries => {
-          console.log('[CourseSyllabus] Resize detected in homework module');
-          updateSyllabusHeight();
-        });
-        
-        // Find and observe the homework section and parent containers
-        const potentialTargets = [
-          '.homework-module',
-          '.HomeworkModule',
-          '.lg\\:col-span-2',
-          '.lg\\:col-span-2 > div:nth-child(2)'
-        ];
-        
-        let observedSomething = false;
-        
-        potentialTargets.forEach(selector => {
-          const element = document.querySelector(selector);
-          if (element) {
-            console.log(`[CourseSyllabus] Found target ${selector}, setting up ResizeObserver`);
-            resizeObserverRef.current.observe(element);
-            observedSomething = true;
-          }
-        });
-        
-        if (!observedSomething) {
-          console.log('[CourseSyllabus] No resize targets found initially, will check again later');
-        }
-      }
-      
-      // Enhanced MutationObserver to detect content changes in homework section and course content
-      if (!mutationObserverRef.current) {
-        mutationObserverRef.current = new MutationObserver((mutations) => {
-          const relevantMutation = mutations.some(mutation => {
-            // Check if this mutation involves elements we care about
-            const targetHasRelevantClass = mutation.target.nodeType === Node.ELEMENT_NODE && 
-              mutation.target instanceof HTMLElement &&
-              mutation.target.className && 
-              typeof mutation.target.className === 'string' && 
-              (mutation.target.className.includes('homework') || 
-               mutation.target.className.includes('editor') ||
-               mutation.target.className.includes('content'));
-            
-            // Check added nodes for relevant elements
-            const addedNodesHaveRelevantElements = Array.from(mutation.addedNodes).some(node => {
-              if (node.nodeType === Node.ELEMENT_NODE) {
-                const element = node as Element;
-                return element.className && 
-                  typeof element.className === 'string' && 
-                  (element.className.includes('homework') || 
-                   element.className.includes('editor') ||
-                   element.className.includes('form'));
-              }
-              return false;
-            });
-            
-            return targetHasRelevantClass || addedNodesHaveRelevantElements;
-          });
-          
-          if (relevantMutation) {
-            console.log('[CourseSyllabus] DOM mutation detected in homework area, mutations:', mutations.length);
-            // Schedule height update on mutation with a slight delay
-            setTimeout(() => {
-              updateSyllabusHeight();
-            }, 300);
-          }
-        });
-        
-        // Observe multiple possible containers
-        const contentAreas = [
-          document.querySelector('.lg\\:col-span-2'),
-          document.querySelector('main'),
-          document.body
-        ].filter(Boolean);
-        
-        if (contentAreas.length > 0) {
-          console.log('[CourseSyllabus] Found content areas, setting up MutationObserver on', contentAreas.length, 'elements');
-          contentAreas.forEach(area => {
-            mutationObserverRef.current.observe(area, { 
-              childList: true, 
-              subtree: true, 
-              attributes: true,
-              characterData: true
-            });
-          });
-        } else {
-          console.log('[CourseSyllabus] No content areas found for MutationObserver');
-        }
-      }
-      
-      // Additional hook for window resize
-      const handleResize = () => {
-        console.log('[CourseSyllabus] Window resize detected');
-        updateSyllabusHeight();
-      };
-      
-      window.addEventListener('resize', handleResize);
-      
-      // Wait for everything to be fully loaded
-      if (document.readyState === 'complete') {
-        console.log('[CourseSyllabus] Document already complete, checking height');
-        updateSyllabusHeight();
-        // Schedule another check in case the content loads after "complete"
-        setTimeout(() => {
-          updateSyllabusHeight();
-        }, 2000);
-      } else {
-        window.addEventListener('load', () => {
-          console.log('[CourseSyllabus] Window load event, checking height');
-          updateSyllabusHeight();
-          // Run progressive checks even after load event
-          scheduleProgressiveHeightChecks();
-        });
-      }
-      
-      // Special event listener for potential rich text editor loading
-      document.addEventListener('DOMContentLoaded', () => {
-        console.log('[CourseSyllabus] DOMContentLoaded event, scheduling delayed height check');
-        setTimeout(() => {
-          updateSyllabusHeight();
-          scheduleProgressiveHeightChecks();
-        }, 1000);
-      });
-
-      // Always run progressive checks on initial setup
-      scheduleProgressiveHeightChecks();
-      
-      return () => {
-        // Clean up
-        if (resizeObserverRef.current) {
-          resizeObserverRef.current.disconnect();
-        }
-        if (mutationObserverRef.current) {
-          mutationObserverRef.current.disconnect();
-        }
-        window.removeEventListener('resize', handleResize);
-        heightCheckTimersRef.current.forEach(timer => clearTimeout(timer));
-      };
-    }, 1500); // Longer initial delay to ensure DOM is ready
+    }, 1000);
     
-    return () => clearTimeout(initialSetupTimer);
-  }, [updateSyllabusHeight, scheduleProgressiveHeightChecks]);
+    // Set up ResizeObserver for size changes
+    if (!resizeObserverRef.current) {
+      resizeObserverRef.current = new ResizeObserver(() => {
+        updateSyllabusHeight();
+      });
+      
+      // Observe homework module and parent containers
+      const homeworkModule = document.querySelector('.homework-module');
+      const mainContent = document.querySelector('.lg\\:col-span-2');
+      
+      if (homeworkModule) {
+        resizeObserverRef.current.observe(homeworkModule);
+      }
+      
+      if (mainContent) {
+        resizeObserverRef.current.observe(mainContent);
+      }
+    }
+    
+    // Set up MutationObserver for DOM changes
+    if (!mutationObserverRef.current) {
+      mutationObserverRef.current = new MutationObserver(() => {
+        updateSyllabusHeight();
+      });
+      
+      // Observe the main content area
+      const mainContent = document.querySelector('main');
+      if (mainContent) {
+        mutationObserverRef.current.observe(mainContent, {
+          childList: true,
+          subtree: true,
+          attributes: true
+        });
+      }
+    }
+    
+    // Add window load/resize listeners
+    window.addEventListener('load', updateSyllabusHeight);
+    window.addEventListener('resize', updateSyllabusHeight);
+    
+    // Setup regular height checks for stability
+    const regularCheckTimer = setInterval(updateSyllabusHeight, 2000);
+    
+    return () => {
+      clearTimeout(initialCheckTimer);
+      clearInterval(regularCheckTimer);
+      
+      if (resizeObserverRef.current) {
+        resizeObserverRef.current.disconnect();
+      }
+      
+      if (mutationObserverRef.current) {
+        mutationObserverRef.current.disconnect();
+      }
+      
+      window.removeEventListener('load', updateSyllabusHeight);
+      window.removeEventListener('resize', updateSyllabusHeight);
+    };
+  }, [updateSyllabusHeight]);
 
   // When section toggle state changes, update height
   useEffect(() => {
     const timer = setTimeout(() => {
-      console.log('[CourseSyllabus] Sections changed, checking height');
       updateSyllabusHeight();
       checkScroll();
     }, 500);
@@ -342,7 +282,7 @@ export function CourseSyllabus({
     <div className="relative flex flex-col h-full">
       <ScrollArea 
         ref={scrollAreaRef} 
-        className="flex-grow"
+        className="flex-grow bg-white rounded-lg"
         scrollHideDelay={0}
       >
         <div 
@@ -355,19 +295,14 @@ export function CourseSyllabus({
           className="h-full w-full rounded-[inherit] pr-3"
           style={{
             maxHeight: containerHeight,
-            minHeight: '500px',
-            transition: 'max-height 0.3s ease-in-out',
+            minHeight: '550px', // Increased minimum height
             overflow: 'auto',
-            // Add scrollbar-gutter to reserve space for the scrollbar and prevent width changes
             scrollbarGutter: 'stable',
-            // Add width transition to smooth out any remaining width changes
-            width: 'calc(100% - 1px)', // Slight adjustment to ensure consistent width
-            transitionProperty: 'max-height, width',
-            transitionDuration: '0.3s',
-            transitionTimingFunction: 'ease-in-out',
+            width: '100%', // Use full width
+            transition: 'max-height 0.3s ease-in-out',
           }}
         >
-          <div className="space-y-3">
+          <div className={`space-y-3 pb-6 ${!hasHomework ? 'min-h-[500px]' : ''}`}>
             {syllabusData.map((section, sectionIndex) => (
               <AnimatedCollapsible
                 key={sectionIndex}
