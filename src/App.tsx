@@ -80,6 +80,13 @@ const App = () => {
             {/* Add route for student homework in admin context */}
             <Route path="/admin/courses-new/:courseId/homework/student/:studentId" element={<StudentHomeworkPage />} />
             
+            {/* Add new routes to fix 404 errors */}
+            {/* Add route for the learn page */}
+            <Route path="/learn/:courseId" element={<CourseLearn />} />
+            
+            {/* Add route for checkout with query parameters */}
+            <Route path="/checkout" element={<Checkout />} />
+            
             <Route path="*" element={<NotFound />} />
           </Routes>
           <Toaster />
