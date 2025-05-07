@@ -1,105 +1,112 @@
 
 import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User } from 'lucide-react';
-import { Skeleton } from '@/components/ui/skeleton';
-
-interface Student {
-  user_id: string;
-  user_name: string;
-  user_email: string;
-  user_avatar?: string;
-}
+import { useQuery } from '@tanstack/react-query';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Loader2, AlertCircle, User } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface NotSubmittedStudentsListProps {
-  students: Student[];
-  isLoading: boolean;
-  onViewStudent: (studentId: string) => void;
-  lectureTitle?: string;
-  homeworkTitle?: string;
+  courseId: number;
+  lectureId: string;
 }
 
 export const NotSubmittedStudentsList: React.FC<NotSubmittedStudentsListProps> = ({
-  students = [],
-  isLoading,
-  onViewStudent,
-  lectureTitle,
-  homeworkTitle
+  courseId,
+  lectureId
 }) => {
+  // Fetch students who haven't submitted homework
+  const { data: notSubmittedStudents, isLoading } = useQuery({
+    queryKey: ['not-submitted-students', courseId, lectureId],
+    queryFn: async () => {
+      // 1. Get all enrolled students
+      const { data: enrolledStudents, error: enrolledError } = await supabase
+        .from('course_enrollments')
+        .select(`
+          profile_id,
+          profiles (
+            id,
+            full_name,
+            email
+          )
+        `)
+        .eq('course_id', courseId);
+        
+      if (enrolledError) {
+        console.error('Error fetching enrolled students:', enrolledError);
+        return [];
+      }
+      
+      // 2. Get students who submitted homework
+      const { data: submittedStudents, error: submittedError } = await supabase
+        .from('homework_submissions')
+        .select('profile_id')
+        .eq('lecture_id', lectureId);
+        
+      if (submittedError) {
+        console.error('Error fetching submitted students:', submittedError);
+        return [];
+      }
+      
+      // 3. Filter out students who have submitted
+      const submittedIds = new Set(submittedStudents.map(s => s.profile_id));
+      
+      return enrolledStudents
+        .filter(enrollment => !submittedIds.has(enrollment.profile_id))
+        .map(enrollment => enrollment.profiles);
+    },
+    enabled: !!courseId && !!lectureId,
+    staleTime: 5 * 60 * 1000
+  });
+  
   if (isLoading) {
     return (
       <Card>
         <CardHeader>
-          <Skeleton className="h-6 w-3/4 mb-2" />
-          <Skeleton className="h-4 w-1/2" />
+          <CardTitle>未提交作业学生</CardTitle>
         </CardHeader>
         <CardContent>
-          <Skeleton className="h-[300px] w-full" />
+          <div className="flex justify-center p-8">
+            <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+          </div>
         </CardContent>
       </Card>
     );
   }
-
-  const title = homeworkTitle 
-    ? `未提交"${homeworkTitle}"的学生` 
-    : lectureTitle 
-      ? `未提交"${lectureTitle}"作业的学生` 
-      : '未提交作业的学生';
-
+  
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        <CardDescription>
-          共有 {students.length} 名学生未提交作业
-        </CardDescription>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-lg flex items-center gap-2 text-amber-600">
+          <AlertCircle className="h-5 w-5" />
+          未提交作业学生
+        </CardTitle>
       </CardHeader>
       <CardContent>
-        {students.length > 0 ? (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>学生信息</TableHead>
-                <TableHead className="text-right">操作</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {students.map((student) => (
-                <TableRow key={student.user_id}>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src={student.user_avatar} alt={student.user_name} />
-                        <AvatarFallback>
-                          {student.user_name?.charAt(0) || 'U'}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <div className="font-medium">{student.user_name}</div>
-                        <div className="text-sm text-muted-foreground">{student.user_email}</div>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => onViewStudent(student.user_id)}
-                    >
-                      <User className="h-4 w-4 mr-1" />
-                      查看学生
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+        {notSubmittedStudents && notSubmittedStudents.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {notSubmittedStudents.map((student, index) => (
+              <div 
+                key={student.id || index} 
+                className="flex items-center p-3 bg-amber-50 border border-amber-100 rounded-md"
+              >
+                <User className="h-4 w-4 mr-3 text-amber-600" />
+                <div>
+                  <div className="font-medium text-gray-900">{student.full_name || '未知学生'}</div>
+                  <div className="text-xs text-gray-500">{student.email || ''}</div>
+                </div>
+              </div>
+            ))}
+          </div>
         ) : (
-          <div className="text-center p-8">
-            <p>所有学生都已提交作业</p>
+          <div className="text-center py-6 text-gray-500">
+            所有学生均已提交作业
+          </div>
+        )}
+        
+        {/* Student count */}
+        {notSubmittedStudents && notSubmittedStudents.length > 0 && (
+          <div className="mt-4 text-sm text-gray-500">
+            共 {notSubmittedStudents.length} 名学生未提交作业
           </div>
         )}
       </CardContent>

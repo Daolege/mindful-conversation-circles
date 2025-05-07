@@ -1,222 +1,160 @@
 
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Loader2, Eye, Search, FileText } from 'lucide-react';
+import { Loader2, Search, Calendar, FileUp, FileDown, User } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
-import { getHomeworkSubmissionsByLectureId } from '@/lib/services/homeworkSubmissionService';
-import { HomeworkSubmission } from '@/lib/types/homework';
-import { StudentHomeworkList } from './StudentHomeworkList';
 
 interface HomeworkSubmissionsListProps {
   lectureId: string;
-  courseId: number;
   onSelectStudent: (studentId: string) => void;
 }
 
-export const HomeworkSubmissionsList: React.FC<HomeworkSubmissionsListProps> = ({
+export const HomeworkSubmissionsList: React.FC<HomeworkSubmissionsListProps> = ({ 
   lectureId,
-  courseId,
   onSelectStudent
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
-
-  // Fetch homework submissions for this lecture
-  const { data: submissions, isLoading, error } = useQuery({
+  
+  // Fetch submissions for this lecture
+  const { data: submissions, isLoading } = useQuery({
     queryKey: ['homework-submissions', lectureId],
-    queryFn: () => getHomeworkSubmissionsByLectureId(lectureId),
+    queryFn: async () => {
+      // Join homework_submissions with profiles to get student information
+      const { data, error } = await supabase
+        .from('homework_submissions')
+        .select(`
+          id,
+          content,
+          created_at,
+          updated_at,
+          status,
+          profile_id,
+          profiles (
+            full_name,
+            email
+          )
+        `)
+        .eq('lecture_id', lectureId)
+        .order('created_at', { ascending: false });
+        
+      if (error) {
+        console.error('Error fetching homework submissions:', error);
+        return [];
+      }
+      
+      return data || [];
+    },
     enabled: !!lectureId,
+    staleTime: 5 * 60 * 1000
   });
-
-  // Handle search input change
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-  };
-
+  
   // Filter submissions based on search term
   const filteredSubmissions = submissions?.filter(submission => {
+    if (!searchTerm) return true;
+    
     const searchLower = searchTerm.toLowerCase();
-    return (
-      submission.user_name?.toLowerCase().includes(searchLower) ||
-      submission.user_email?.toLowerCase().includes(searchLower) ||
-      submission.homework?.title?.toLowerCase().includes(searchLower)
-    );
+    const fullName = submission.profiles?.full_name?.toLowerCase() || '';
+    const email = submission.profiles?.email?.toLowerCase() || '';
+    
+    return fullName.includes(searchLower) || email.includes(searchLower);
   });
-
-  // Get unique students from submissions
-  const uniqueStudents = React.useMemo(() => {
-    if (!submissions) return [];
-    
-    const uniqueStudentMap = new Map<string, HomeworkSubmission>();
-    
-    submissions.forEach(submission => {
-      if (submission.user_id && !uniqueStudentMap.has(submission.user_id)) {
-        uniqueStudentMap.set(submission.user_id, submission);
-      }
-    });
-    
-    return Array.from(uniqueStudentMap.values());
-  }, [submissions]);
-
-  // View all submissions from a specific student
-  const handleViewStudentSubmissions = (studentId: string, studentName: string) => {
-    setSelectedStudentId(studentId);
-    onSelectStudent(studentId);
-  };
-
-  // Get submissions for a specific student
-  const studentSubmissions = React.useMemo(() => {
-    if (!selectedStudentId || !submissions) return [];
-    return submissions.filter(sub => sub.user_id === selectedStudentId);
-  }, [selectedStudentId, submissions]);
-
-  // Handle back button from student view
-  const handleBack = () => {
-    setSelectedStudentId(null);
-  };
-
+  
   if (isLoading) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>加载中</CardTitle>
-        </CardHeader>
-        <CardContent className="flex justify-center py-8">
-          <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (error) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>错误</CardTitle>
-          <CardDescription>获取作业提交数据时发生错误</CardDescription>
+          <CardTitle>作业提交列表</CardTitle>
         </CardHeader>
         <CardContent>
-          请重试或联系系统管理员
+          <div className="flex justify-center p-8">
+            <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+          </div>
         </CardContent>
       </Card>
     );
   }
-
-  // Show student's homework submissions if a student is selected
-  if (selectedStudentId) {
-    const student = uniqueStudents.find(s => s.user_id === selectedStudentId);
-    
-    return (
-      <StudentHomeworkList
-        studentId={selectedStudentId}
-        studentName={student?.user_name}
-        studentEmail={student?.user_email}
-        submissions={studentSubmissions}
-        isLoading={false}
-        onViewSubmission={() => {}}
-      />
-    );
-  }
-
+  
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="text-xl">作业提交列表</CardTitle>
-        <CardDescription>
-          查看该课节所有学生的作业提交情况
-        </CardDescription>
-        <div className="mt-2">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-lg flex items-center gap-2">
+          <FileUp className="h-5 w-5" />
+          作业提交列表
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {/* Search input */}
+        <div className="mb-4">
           <div className="relative">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
             <Input
-              type="search"
-              placeholder="搜索学生姓名、邮箱或作业标题..."
+              placeholder="搜索学生姓名或邮箱..."
               className="pl-8"
               value={searchTerm}
-              onChange={handleSearchChange}
+              onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
         </div>
-      </CardHeader>
-      <CardContent>
-        {uniqueStudents.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            暂无作业提交记录
-          </div>
-        ) : (
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>学生姓名</TableHead>
-                  <TableHead>邮箱</TableHead>
-                  <TableHead>提交数量</TableHead>
-                  <TableHead>最近提交</TableHead>
-                  <TableHead className="text-right">操作</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {uniqueStudents.map((student) => {
-                  // Count submissions for this student
-                  const studentSubmissions = submissions?.filter(
-                    sub => sub.user_id === student.user_id
-                  ) || [];
-                  
-                  // Get latest submission date
-                  const latestSubmission = studentSubmissions.length > 0
-                    ? studentSubmissions.reduce((latest, sub) => {
-                        if (!latest.submitted_at) return sub;
-                        if (!sub.submitted_at) return latest;
-                        return new Date(sub.submitted_at) > new Date(latest.submitted_at)
-                          ? sub
-                          : latest;
-                      })
-                    : null;
-                    
-                  return (
-                    <TableRow key={student.user_id}>
-                      <TableCell>
-                        {student.user_name || '未知用户'}
-                      </TableCell>
-                      <TableCell>
-                        {student.user_email || ''}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline">
-                          {studentSubmissions.length} 份作业
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {latestSubmission?.submitted_at ? 
-                          format(new Date(latestSubmission.submitted_at), 'yyyy-MM-dd HH:mm') : 
-                          '-'
-                        }
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleViewStudentSubmissions(
-                            student.user_id || '', 
-                            student.user_name || '未知用户'
-                          )}
-                        >
-                          <Eye className="h-4 w-4 mr-1" />
-                          查看作业
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </div>
-        )}
+        
+        {/* Submissions table */}
+        <div className="relative overflow-x-auto">
+          <table className="w-full text-sm text-left text-gray-500">
+            <thead className="text-xs text-gray-700 uppercase bg-gray-50">
+              <tr>
+                <th scope="col" className="px-6 py-3">学生</th>
+                <th scope="col" className="px-6 py-3">提交时间</th>
+                <th scope="col" className="px-6 py-3">操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredSubmissions && filteredSubmissions.length > 0 ? (
+                filteredSubmissions.map(submission => (
+                  <tr key={submission.id} className="bg-white border-b hover:bg-gray-50">
+                    <td className="px-6 py-4 font-medium text-gray-900">
+                      <div className="flex items-center">
+                        <User className="h-4 w-4 mr-2 text-gray-400" />
+                        <div>
+                          <div>{submission.profiles?.full_name || '未知学生'}</div>
+                          <div className="text-xs text-gray-500">{submission.profiles?.email || ''}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center">
+                        <Calendar className="h-4 w-4 mr-2 text-gray-400" />
+                        {format(new Date(submission.created_at), 'yyyy-MM-dd HH:mm')}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => onSelectStudent(submission.profile_id)}
+                      >
+                        查看作业
+                      </Button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr className="bg-white border-b">
+                  <td colSpan={3} className="px-6 py-8 text-center text-gray-500">
+                    {searchTerm ? '没有找到匹配的提交' : '暂无作业提交'}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+        
+        {/* Submission count */}
+        <div className="mt-4 text-sm text-gray-500">
+          共 {filteredSubmissions?.length || 0} 份作业提交
+        </div>
       </CardContent>
     </Card>
   );

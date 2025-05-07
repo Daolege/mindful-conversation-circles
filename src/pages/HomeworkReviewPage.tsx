@@ -8,7 +8,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useAuth } from "@/contexts/authHooks";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { HomeworkReviewSystem } from "@/components/admin/homework/HomeworkReviewSystem";
 
 const HomeworkReviewPage = () => {
