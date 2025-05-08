@@ -305,7 +305,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // Create memoized context value
+  // Create memoized context value with useMemo to prevent unnecessary re-renders
   const contextValue = React.useMemo<AuthContextType>(() => ({
     user,
     session,
