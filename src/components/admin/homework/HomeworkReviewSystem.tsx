@@ -5,14 +5,10 @@ import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import HomeworkBreadcrumb from './HomeworkBreadcrumb';
 import CourseOutlineNavigation from './CourseOutlineNavigation';
-import { HomeworkSubmissionsList } from './HomeworkSubmissionsList';
-import StudentsList from './StudentsList';
-import { HomeworkStatsDashboard } from './HomeworkStatsDashboard';
-import { NotSubmittedStudentsList } from './NotSubmittedStudentsList';
-import { EnrollmentSubmissionStats } from './EnrollmentSubmissionStats';
 import { getCourseStructureForHomework } from '@/lib/services/homeworkSubmissionService';
 import HomeworkSummaryTable from './HomeworkSummaryTable';
 import UnifiedHomeworkTable from './UnifiedHomeworkTable';
+import StudentsList from './StudentsList';
 
 interface HomeworkReviewSystemProps {
   courseId: number;

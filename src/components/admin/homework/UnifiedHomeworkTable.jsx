@@ -233,31 +233,43 @@ const UnifiedHomeworkTable = ({ courseId, lectureId, onBack, sectionTitle, lectu
   };
   
   // 导出数据
-  const handleExport = async (type) => {
+  const handleExport = async (type = 'all') => {
     try {
-      // 获取要导出的数据
-      const dataToExport = type === 'submitted' ? filteredSubmitted : filteredNotSubmitted;
+      let exportData = [];
+      let fileName = `课程${courseId}_`;
       
-      // 格式化导出数据
-      const exportData = dataToExport.map(item => {
-        if (type === 'submitted') {
-          return {
-            '用户名': item.user_name,
-            '邮箱': item.user_email,
-            '提交时间': formatDate(item.submitted_at),
-            '报名时间': formatDate(item.enrolled_at)
-          };
-        } else {
-          return {
-            '用户名': item.user_name,
-            '邮箱': item.user_email,
-            '报名时间': formatDate(item.enrolled_at)
-          };
-        }
-      });
+      if (type === 'all' || type === 'submitted') {
+        const submittedExportData = filteredSubmitted.map(item => ({
+          '类型': '已提交',
+          '用户名': item.user_name,
+          '邮箱': item.user_email,
+          '提交时间': formatDate(item.submitted_at),
+          '报名时间': formatDate(item.enrolled_at)
+        }));
+        
+        exportData = [...exportData, ...submittedExportData];
+      }
       
-      // 导出文件名
-      const fileName = `课程${courseId}_${type === 'submitted' ? '已提交' : '未提交'}作业学生名单`;
+      if (type === 'all' || type === 'not-submitted') {
+        const notSubmittedExportData = filteredNotSubmitted.map(item => ({
+          '类型': '未提交',
+          '用户名': item.user_name,
+          '邮箱': item.user_email,
+          '提交时间': '-',
+          '报名时间': formatDate(item.enrolled_at)
+        }));
+        
+        exportData = [...exportData, ...notSubmittedExportData];
+      }
+      
+      // 设置文件名
+      if (type === 'all') {
+        fileName += '全部学生名单';
+      } else if (type === 'submitted') {
+        fileName += '已提交作业学生名单';
+      } else {
+        fileName += '未提交作业学生名单';
+      }
       
       // 调用导出服务
       await ExcelExportService.exportToExcel(exportData, fileName);
@@ -309,6 +321,15 @@ const UnifiedHomeworkTable = ({ courseId, lectureId, onBack, sectionTitle, lectu
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
+          <Button 
+            variant="outline" 
+            size="sm"
+            className="h-9"
+            onClick={() => handleExport('all')}
+          >
+            <Download className="h-3.5 w-3.5 mr-1" />
+            导出
+          </Button>
         </div>
       </div>
       
@@ -321,27 +342,9 @@ const UnifiedHomeworkTable = ({ courseId, lectureId, onBack, sectionTitle, lectu
                   <tr className="border-b">
                     <th colSpan="4" className="h-10 px-4 text-center font-medium bg-muted/30">
                       已提交 ({filteredSubmitted.length})
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        className="h-7 ml-2"
-                        onClick={() => handleExport('submitted')}
-                      >
-                        <Download className="h-3.5 w-3.5 mr-1" />
-                        导出
-                      </Button>
                     </th>
                     <th colSpan="2" className="h-10 px-4 text-center font-medium bg-muted/30 border-l">
                       未提交 ({filteredNotSubmitted.length})
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        className="h-7 ml-2"
-                        onClick={() => handleExport('not-submitted')}
-                      >
-                        <Download className="h-3.5 w-3.5 mr-1" />
-                        导出
-                      </Button>
                     </th>
                   </tr>
                   <tr className="border-b bg-muted/50">
