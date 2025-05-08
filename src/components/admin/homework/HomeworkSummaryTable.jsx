@@ -205,10 +205,35 @@ const HomeworkSummaryTable = ({ courseId, onSelectLecture }) => {
     }
   };
   
-  // 新增：处理作业详情查看
-  const handleViewSubmissionDetail = (submissionId) => {
-    // 跳转到公开作业详情页面，附带课程ID以便返回
-    navigate(`/homework-view/${courseId}/${submissionId}`);
+  // 修改: 处理作业详情查看 - 需要查询该讲座的最新提交，然后跳转到提交详情页面
+  const handleViewSubmissionDetail = async (lectureId) => {
+    try {
+      // 获取此讲座的最新提交记录
+      const { data: latestSubmissions, error } = await supabase
+        .from('homework_submissions')
+        .select('id')
+        .eq('lecture_id', lectureId)
+        .eq('course_id', courseId)
+        .order('created_at', { ascending: false })
+        .limit(1);
+      
+      if (error) {
+        console.error('Error fetching submission:', error);
+        return;
+      }
+      
+      // 如果有提交记录，跳转到公开作业详情页面
+      if (latestSubmissions && latestSubmissions.length > 0) {
+        const submissionId = latestSubmissions[0].id;
+        // 跳转到公开作业详情页面，附带课程ID以便返回
+        navigate(`/homework-view/${courseId}/${submissionId}`);
+      } else {
+        console.log('No submissions found for this lecture');
+        // 可以考虑显示提示或者其他处理
+      }
+    } catch (err) {
+      console.error('Error handling view submission:', err);
+    }
   };
   
   // 获取完成率颜色
