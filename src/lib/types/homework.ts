@@ -29,7 +29,7 @@ export interface HomeworkSubmission {
   answer?: string;
   content?: string; // Keep content field for backward compatibility 
   file_url?: string;
-  status?: 'pending' | 'reviewed' | 'rejected';
+  status?: string; // Simplified status, no longer using union type
   score?: number;
   feedback?: string;
   submitted_at?: string;
