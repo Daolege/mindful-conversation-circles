@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -7,7 +8,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useAuth } from "@/contexts/authHooks";
 import { supabase } from "@/integrations/supabase/client";
-import { HomeworkReviewSystem } from "@/components/admin/homework/HomeworkReviewSystem";
+import { HomeworkSubmissionsView } from "@/components/admin/homework/HomeworkSubmissionsView";
 import { useTranslations } from "@/hooks/useTranslations";
 
 const HomeworkReviewPage = () => {
@@ -76,7 +77,7 @@ const HomeworkReviewPage = () => {
       <Navbar />
       <main className="flex-grow container mx-auto px-4 py-8">        
         {courseId && (
-          <HomeworkReviewSystem courseId={parseInt(courseId, 10)} />
+          <HomeworkSubmissionsView />
         )}
       </main>
       <Footer />
