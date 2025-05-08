@@ -96,11 +96,11 @@ const CourseManagementNew = () => {
   };
 
   const handleCreateCourse = () => {
-    navigate('/admin/courses-new/new/edit');
+    navigate('/admin/courses-new/new');
   };
 
   const handleEditCourse = (courseId: number) => {
-    navigate(`/admin/courses-new/${courseId}/edit`);
+    navigate(`/admin/courses-new/${courseId}`);
   };
 
   const handleViewCourse = (courseId: number) => {
@@ -108,7 +108,7 @@ const CourseManagementNew = () => {
   };
 
   const handleViewHomework = (courseId: number) => {
-    navigate(`/admin/homework-submissions/${courseId}`);
+    navigate(`/admin/courses-new/${courseId}/homework`);
   };
 
   const confirmDeleteCourse = (courseId: number) => {
