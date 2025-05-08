@@ -30,6 +30,7 @@ import StudentHomeworkPage from "./pages/StudentHomeworkPage";
 import HomeworkSubmissionDetailPage from "./pages/HomeworkSubmissionDetailPage";
 import HomeworkSubmissionsPage from "./pages/HomeworkSubmissionsPage";
 import HomeworkReviewPage from "./pages/HomeworkReviewPage";
+import OrderDetail from "./pages/OrderDetail";
 
 // Import providers and components
 import { Toaster } from "@/components/ui/toaster";
@@ -86,6 +87,9 @@ const App = () => {
             
             {/* Add route for checkout with query parameters */}
             <Route path="/checkout" element={<Checkout />} />
+            
+            {/* Add route for order details */}
+            <Route path="/orders/:id" element={<OrderDetail />} />
             
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -25,3 +25,4 @@ export { default as StudentHomeworkPage } from './StudentHomeworkPage';
 export { default as HomeworkSubmissionDetailPage } from './HomeworkSubmissionDetailPage';
 export { default as HomeworkSubmissionsPage } from './HomeworkSubmissionsPage';
 export { default as HomeworkReviewPage } from './HomeworkReviewPage';
+export { default as OrderDetail } from './OrderDetail';
