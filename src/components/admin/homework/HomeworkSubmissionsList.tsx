@@ -1,29 +1,32 @@
 
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Loader2, Search, Calendar, FileText, User, Eye } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 
 interface HomeworkSubmissionsListProps {
-  lectureId: string;
+  homeworkId?: string;
+  lectureId?: string;
   onSelectStudent: (studentId: string) => void;
 }
 
 export const HomeworkSubmissionsList: React.FC<HomeworkSubmissionsListProps> = ({ 
+  homeworkId,
   lectureId,
   onSelectStudent
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   
-  // Fetch submissions for this lecture
+  // Fetch submissions for this homework
   const { data: submissions, isLoading } = useQuery({
-    queryKey: ['homework-submissions', lectureId],
+    queryKey: ['homework-submissions-by-homework', homeworkId],
     queryFn: async () => {
+      if (!homeworkId) return [];
+      
       // First fetch the homework submissions
       const { data: submissionsData, error: submissionsError } = await supabase
         .from('homework_submissions')
@@ -33,7 +36,7 @@ export const HomeworkSubmissionsList: React.FC<HomeworkSubmissionsListProps> = (
           created_at,
           submitted_at
         `)
-        .eq('lecture_id', lectureId)
+        .eq('homework_id', homeworkId)
         .order('created_at', { ascending: false });
         
       if (submissionsError) {
@@ -59,7 +62,7 @@ export const HomeworkSubmissionsList: React.FC<HomeworkSubmissionsListProps> = (
       
       return submissionsWithUserData || [];
     },
-    enabled: !!lectureId,
+    enabled: !!homeworkId,
     staleTime: 5 * 60 * 1000
   });
   
@@ -91,9 +94,32 @@ export const HomeworkSubmissionsList: React.FC<HomeworkSubmissionsListProps> = (
       </div>
     );
   }
+
+  if (!homeworkId) {
+    return (
+      <div className="flex flex-col items-center justify-center p-8 text-center text-gray-500">
+        <FileText className="h-12 w-12 mb-4" />
+        <h3 className="text-lg font-medium mb-2">请选择作业</h3>
+        <p>从左侧课程大纲中选择一个作业，查看学生提交列表</p>
+      </div>
+    );
+  }
   
   return (
     <div>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-medium">学生提交列表</h3>
+        <div className="relative w-64">
+          <Input
+            placeholder="搜索学生名或邮箱..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-8"
+          />
+          <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
+        </div>
+      </div>
+      
       {filteredSubmissions && filteredSubmissions.length > 0 ? (
         <Table>
           <TableHeader>
@@ -118,7 +144,7 @@ export const HomeworkSubmissionsList: React.FC<HomeworkSubmissionsListProps> = (
                     className="flex items-center gap-1"
                   >
                     <Eye className="h-4 w-4" />
-                    作业详情
+                    查看作业
                   </Button>
                 </TableCell>
               </TableRow>

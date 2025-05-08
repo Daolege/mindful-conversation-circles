@@ -65,7 +65,7 @@ const App = () => {
             <Route path="/cookie-policy" element={<CookiePolicy />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/admin/courses-new/:courseId" element={<CourseNewEditor />} />
-            <Route path="/admin/courses-new/:courseId/homework" element={<HomeworkReviewPage />} />
+            <Route path="/admin/courses-new/:courseId/homework" element={<HomeworkSubmissionsPage />} />
             <Route path="/course-editor/:courseId" element={<CourseEditor />} />
             <Route path="/course-new-editor/:courseId" element={<CourseNewEditor />} />
             
