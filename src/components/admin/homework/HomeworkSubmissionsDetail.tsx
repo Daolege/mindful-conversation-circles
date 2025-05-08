@@ -9,13 +9,13 @@ import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ExcelExportService } from './ExcelExportService';
+import { toast } from 'sonner';
 
 interface HomeworkSubmissionsDetailProps {
   courseId: number;
   lectureId: string;
   homeworkId?: string;
   lectureTitle: string;
-  homeworkTitle?: string;
   onViewSubmission: (submissionId: string) => void;
 }
 
@@ -35,6 +35,7 @@ export const HomeworkSubmissionsDetail: React.FC<HomeworkSubmissionsDetailProps>
     queryKey: ['homework-submissions', lectureId, homeworkId],
     queryFn: async () => {
       try {
+        // First, get the submissions
         let query = supabase
           .from('homework_submissions')
           .select(`
@@ -43,8 +44,7 @@ export const HomeworkSubmissionsDetail: React.FC<HomeworkSubmissionsDetailProps>
             lecture_id, 
             status,
             created_at,
-            user_id,
-            profiles:user_id (full_name, email)
+            user_id
           `)
           .eq('lecture_id', lectureId)
           .eq('course_id', courseId);
@@ -54,16 +54,46 @@ export const HomeworkSubmissionsDetail: React.FC<HomeworkSubmissionsDetailProps>
           query = query.eq('homework_id', homeworkId);
         }
 
-        const { data, error } = await query;
+        const { data: submissionsData, error } = await query;
         
         if (error) {
           console.error('Error fetching homework submissions:', error);
           return [];
         }
         
+        // If no submissions found, return empty array
+        if (!submissionsData || submissionsData.length === 0) {
+          return [];
+        }
+
+        // Get user profiles for each submission
+        const submissionsWithProfiles = await Promise.all(submissionsData.map(async (submission) => {
+          // Get user profile information
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('full_name, email')
+            .eq('id', submission.user_id)
+            .single();
+            
+          if (profileError) {
+            console.error('Error fetching user profile:', profileError);
+            return {
+              ...submission,
+              userName: 'Unknown User',
+              userEmail: ''
+            };
+          }
+          
+          return {
+            ...submission,
+            userName: profileData?.full_name || 'Unknown User',
+            userEmail: profileData?.email || ''
+          };
+        }));
+        
         // Get homework titles for each submission
-        if (data && data.length > 0) {
-          const homeworkIds = [...new Set(data.map(s => s.homework_id))];
+        if (submissionsWithProfiles && submissionsWithProfiles.length > 0) {
+          const homeworkIds = [...new Set(submissionsWithProfiles.map(s => s.homework_id))];
           const { data: homeworks, error: homeworkError } = await supabase
             .from('homework')
             .select('id, title')
@@ -78,15 +108,13 @@ export const HomeworkSubmissionsDetail: React.FC<HomeworkSubmissionsDetailProps>
             return acc;
           }, {} as Record<string, string>);
           
-          return data.map(submission => ({
+          return submissionsWithProfiles.map(submission => ({
             ...submission,
-            homeworkTitle: homeworkMap[submission.homework_id] || 'Unknown Homework',
-            userName: submission.profiles?.full_name || 'Unknown User',
-            userEmail: submission.profiles?.email || ''
+            homeworkTitle: homeworkMap[submission.homework_id] || 'Unknown Homework'
           }));
         }
         
-        return [];
+        return submissionsWithProfiles;
       } catch (error) {
         console.error('Error in submissions query:', error);
         return [];
@@ -143,6 +171,35 @@ export const HomeworkSubmissionsDetail: React.FC<HomeworkSubmissionsDetailProps>
     return date.toLocaleDateString('zh-CN') + ' ' + date.toLocaleTimeString('zh-CN');
   };
 
+  // Handle export functionality
+  const handleExport = async () => {
+    if (!sortedSubmissions || sortedSubmissions.length === 0) {
+      toast.error('没有数据可供导出');
+      return;
+    }
+
+    try {
+      // Format data for export
+      const exportData = sortedSubmissions.map(submission => ({
+        学生姓名: submission.userName || '',
+        学生邮箱: submission.userEmail || '',
+        作业标题: submission.homeworkTitle || '',
+        状态: 
+          submission.status === 'pending' ? '待审核' : 
+          submission.status === 'reviewed' ? '已通过' : 
+          submission.status === 'rejected' ? '未通过' : '未知',
+        提交时间: formatDate(submission.created_at)
+      }));
+
+      const fileName = `作业提交-${lectureTitle}-${new Date().toISOString().slice(0, 10)}`;
+      await ExcelExportService.exportToExcel(exportData, fileName, '作业提交');
+      toast.success('导出成功');
+    } catch (error) {
+      console.error('导出错误:', error);
+      toast.error('导出失败');
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -191,7 +248,7 @@ export const HomeworkSubmissionsDetail: React.FC<HomeworkSubmissionsDetailProps>
           </div>
           <Button 
             variant="outline" 
-            onClick={() => setShowExport(true)}
+            onClick={handleExport}
             className="flex items-center gap-2"
           >
             <Download className="h-4 w-4" />
@@ -254,15 +311,6 @@ export const HomeworkSubmissionsDetail: React.FC<HomeworkSubmissionsDetailProps>
           </div>
         </CardContent>
       </Card>
-
-      {/* Export dialog */}
-      {showExport && (
-        <ExcelExportService
-          submissions={sortedSubmissions}
-          lectureTitle={lectureTitle}
-          onExportComplete={() => setShowExport(false)}
-        />
-      )}
     </div>
   );
 };
