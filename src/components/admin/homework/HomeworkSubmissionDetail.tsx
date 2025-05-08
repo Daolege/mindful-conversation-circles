@@ -138,7 +138,7 @@ export const HomeworkSubmissionDetail: React.FC<HomeworkSubmissionDetailProps> =
               </CardTitle>
               <CardDescription className="mt-1">
                 <div className="flex items-center">
-                  {onViewStudent ? (
+                  {onViewStudent && submission.user_id ? (
                     <Button 
                       variant="ghost" 
                       size="sm" 
@@ -146,16 +146,16 @@ export const HomeworkSubmissionDetail: React.FC<HomeworkSubmissionDetailProps> =
                       onClick={() => onViewStudent(submission.user_id)}
                     >
                       <User className="h-4 w-4 mr-1" />
-                      {submission.user_name}
+                      {submission.user_name || '未知用户'}
                     </Button>
                   ) : (
                     <div className="flex items-center">
                       <User className="h-4 w-4 mr-1" />
-                      {submission.user_name}
+                      {submission.user_name || '未知用户'}
                     </div>
                   )}
                   <span className="mx-2">•</span>
-                  <span>{submission.user_email}</span>
+                  <span>{submission.user_email || '无邮箱信息'}</span>
                 </div>
                 <div className="mt-1">提交于 {submissionDate}</div>
               </CardDescription>
@@ -180,7 +180,7 @@ export const HomeworkSubmissionDetail: React.FC<HomeworkSubmissionDetailProps> =
               <h3 className="text-lg font-medium mb-2">作业题目</h3>
               <div className="bg-muted p-4 rounded-lg">
                 <p className="font-medium">{submission.homework.title}</p>
-                {isHomeworkDescriptionRichText ? (
+                {isHomeworkDescriptionRichText && submission.homework.description ? (
                   <RichTextDisplay 
                     content={submission.homework.description}
                     className="mt-2 text-sm text-muted-foreground prose max-w-none"
@@ -199,7 +199,7 @@ export const HomeworkSubmissionDetail: React.FC<HomeworkSubmissionDetailProps> =
             <div className="bg-gray-50 p-4 rounded-lg">
               {isAnswerRichText ? (
                 <RichTextDisplay 
-                  content={submission.content || submission.answer}
+                  content={submission.content || submission.answer || ''}
                   className="prose max-w-none"
                 />
               ) : (

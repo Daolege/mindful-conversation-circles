@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from "react-router-dom";
 import { CourseOutlineNavigation } from './CourseOutlineNavigation';
 import { HomeworkSubmissionsList } from './HomeworkSubmissionsList';
 import { HomeworkSubmissionDetail } from './HomeworkSubmissionDetail';
@@ -127,6 +127,7 @@ export const HomeworkSubmissionsView = () => {
   // Add submission statistics to homeworks
   const homeworkByLecture = React.useMemo(() => {
     if (!homeworkByLectureMap) return {};
+    if (!allSubmissions) return homeworkByLectureMap;
     
     const result: Record<string, any[]> = {};
     
@@ -134,7 +135,7 @@ export const HomeworkSubmissionsView = () => {
     Object.entries(homeworkByLectureMap).forEach(([lectureId, homeworks]) => {
       result[lectureId] = homeworks.map(homework => {
         // Count submissions for this homework
-        const submissions = allSubmissions?.filter(s => s.homework_id === homework.id) || [];
+        const submissions = allSubmissions.filter(s => s.homework_id === homework.id) || [];
         
         return {
           ...homework,

@@ -38,14 +38,7 @@ export const HomeworkSubmissionsList: React.FC<HomeworkSubmissionsListProps> = (
             lecture_id,
             course_id,
             created_at,
-            submitted_at,
-            homework:homework_id (
-              title
-            ),
-            profiles:user_id (
-              full_name,
-              email
-            )
+            submitted_at
           `)
           .order('created_at', { ascending: false });
         
@@ -61,18 +54,37 @@ export const HomeworkSubmissionsList: React.FC<HomeworkSubmissionsListProps> = (
         
         if (error) throw error;
         
-        return data.map(item => ({
-          id: item.id,
-          homework_id: item.homework_id,
-          lecture_id: item.lecture_id,
-          course_id: item.course_id,
-          user_id: item.user_id,
-          created_at: item.created_at,
-          submitted_at: item.submitted_at,
-          homework_title: item.homework?.title || '未命名作业',
-          user_name: item.profiles?.full_name || '未知用户',
-          user_email: item.profiles?.email || ''
+        // Get homework and user details separately to avoid relationship errors
+        const submissionsWithDetails = await Promise.all(data.map(async (submission) => {
+          // Get homework details
+          const { data: homeworkData } = await supabase
+            .from('homework')
+            .select('id, title')
+            .eq('id', submission.homework_id)
+            .single();
+          
+          // Get user details
+          const { data: userData } = await supabase
+            .from('profiles')
+            .select('full_name, email')
+            .eq('id', submission.user_id)
+            .single();
+          
+          return {
+            id: submission.id,
+            homework_id: submission.homework_id,
+            lecture_id: submission.lecture_id,
+            course_id: submission.course_id,
+            user_id: submission.user_id,
+            created_at: submission.created_at,
+            submitted_at: submission.submitted_at,
+            homework_title: homeworkData?.title || '未命名作业',
+            user_name: userData?.full_name || '未知用户',
+            user_email: userData?.email || ''
+          };
         }));
+        
+        return submissionsWithDetails;
       } catch (error) {
         console.error('Error fetching submissions:', error);
         return [];
@@ -141,13 +153,13 @@ export const HomeworkSubmissionsList: React.FC<HomeworkSubmissionsListProps> = (
           </div>
         </div>
 
-        <div className="mt-4">
+        <div className="mt-4 relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input
             placeholder="搜索学生姓名或邮箱..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full"
-            icon={<Search className="h-4 w-4" />}
+            className="w-full pl-10"
           />
         </div>
       </CardHeader>

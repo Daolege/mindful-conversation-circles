@@ -22,10 +22,10 @@ export interface HomeworkStats {
 }
 
 // Get a specific homework submission by ID
-export const getHomeworkSubmissionById = async (id: string): Promise<HomeworkSubmission> => {
+export const getHomeworkSubmissionById = async (id: string): Promise<HomeworkSubmission | null> => {
   try {
     // First get the submission data
-    const { data, error } = await supabase
+    const { data: submissionData, error: submissionError } = await supabase
       .from('homework_submissions')
       .select(`
         id,
@@ -42,34 +42,45 @@ export const getHomeworkSubmissionById = async (id: string): Promise<HomeworkSub
       .eq('id', id)
       .single();
 
-    if (error) throw error;
+    if (submissionError) {
+      console.error('Error fetching submission:', submissionError);
+      return null;
+    }
     
     // Then get the homework data
     const { data: homeworkData, error: homeworkError } = await supabase
       .from('homework')
       .select('id, title, description, type')
-      .eq('id', data.homework_id)
+      .eq('id', submissionData.homework_id)
       .single();
+      
+    if (homeworkError) {
+      console.error('Error fetching homework details:', homeworkError);
+    }
       
     // Get user profile data
     const { data: profileData, error: profileError } = await supabase
       .from('profiles')
       .select('full_name, email')
-      .eq('id', data.user_id)
+      .eq('id', submissionData.user_id)
       .single();
+
+    if (profileError) {
+      console.error('Error fetching profile data:', profileError);
+    }
 
     // Format the data to match our interface
     const submission: HomeworkSubmission = {
-      id: data.id,
-      homework_id: data.homework_id,
-      user_id: data.user_id,
-      lecture_id: data.lecture_id,
-      course_id: data.course_id,
-      answer: data.answer,
-      file_url: data.file_url,
-      status: 'reviewed', // Always treat submissions as reviewed
-      submitted_at: data.submitted_at,
-      created_at: data.created_at,
+      id: submissionData.id,
+      homework_id: submissionData.homework_id,
+      user_id: submissionData.user_id,
+      lecture_id: submissionData.lecture_id,
+      course_id: submissionData.course_id,
+      answer: submissionData.answer,
+      file_url: submissionData.file_url,
+      status: submissionData.status || 'pending',
+      submitted_at: submissionData.submitted_at,
+      created_at: submissionData.created_at,
       homework: homeworkError ? undefined : {
         id: homeworkData.id,
         title: homeworkData.title,
@@ -83,7 +94,7 @@ export const getHomeworkSubmissionById = async (id: string): Promise<HomeworkSub
     return submission;
   } catch (error) {
     console.error('Error fetching homework submission:', error);
-    throw error;
+    return null;
   }
 };
 
@@ -104,18 +115,35 @@ export const getHomeworkSubmissionsByCourseId = async (courseId: number): Promis
       .eq('course_id', courseId)
       .order('created_at', { ascending: false });
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error getting submissions:', error);
+      return [];
+    }
 
     // Get user profiles for each submission
     const submissions: HomeworkSubmission[] = await Promise.all((data || []).map(async (item) => {
       try {
         // Get profile data for each user
-        const { data: profileData } = await supabase
+        const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('full_name, email')
           .eq('id', item.user_id)
           .single();
           
+        if (profileError) {
+          console.error(`Error fetching profile for user ${item.user_id}:`, profileError);
+          return {
+            id: item.id,
+            homework_id: item.homework_id,
+            user_id: item.user_id,
+            lecture_id: item.lecture_id,
+            course_id: item.course_id,
+            created_at: item.created_at,
+            user_name: "用户名不详",
+            user_email: ""
+          };
+        }
+        
         return {
           id: item.id,
           homework_id: item.homework_id,
@@ -127,7 +155,7 @@ export const getHomeworkSubmissionsByCourseId = async (courseId: number): Promis
           user_email: profileData?.email || ""
         };
       } catch (error) {
-        console.error(`Error fetching profile for submission ${item.id}:`, error);
+        console.error(`Error processing submission ${item.id}:`, error);
         return {
           id: item.id,
           homework_id: item.homework_id,
@@ -165,18 +193,35 @@ export const getHomeworkSubmissionsByLectureId = async (lectureId: string): Prom
       .eq('lecture_id', lectureId)
       .order('created_at', { ascending: false });
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error getting lecture submissions:', error);
+      return [];
+    }
 
     // Get user profiles for each submission
     const submissions: HomeworkSubmission[] = await Promise.all((data || []).map(async (item) => {
       try {
         // Get profile data for each user
-        const { data: profileData } = await supabase
+        const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('full_name, email')
           .eq('id', item.user_id)
           .single();
           
+        if (profileError) {
+          console.error(`Error fetching profile for user ${item.user_id}:`, profileError);
+          return {
+            id: item.id,
+            homework_id: item.homework_id,
+            user_id: item.user_id,
+            lecture_id: item.lecture_id,
+            course_id: item.course_id,
+            created_at: item.created_at,
+            user_name: "用户名不详",
+            user_email: ""
+          };
+        }
+        
         return {
           id: item.id,
           homework_id: item.homework_id,
@@ -188,7 +233,7 @@ export const getHomeworkSubmissionsByLectureId = async (lectureId: string): Prom
           user_email: profileData?.email || ""
         };
       } catch (error) {
-        console.error(`Error fetching profile for submission ${item.id}:`, error);
+        console.error(`Error processing submission ${item.id}:`, error);
         return {
           id: item.id,
           homework_id: item.homework_id,
@@ -227,13 +272,7 @@ export const getHomeworkSubmissionsByStudentId = async (
         answer,
         file_url,
         submitted_at,
-        created_at,
-        homework:homework_id (
-          id,
-          title,
-          description,
-          position
-        )
+        created_at
       `)
       .eq('user_id', studentId)
       .eq('course_id', courseId)
@@ -244,18 +283,31 @@ export const getHomeworkSubmissionsByStudentId = async (
       return [];
     }
     
-    // Map to the HomeworkSubmission type
-    const submissions: HomeworkSubmission[] = data.map(item => ({
-      id: item.id,
-      homework_id: item.homework_id,
-      user_id: item.user_id,
-      lecture_id: item.lecture_id,
-      course_id: item.course_id,
-      answer: item.answer,
-      file_url: item.file_url,
-      submitted_at: item.submitted_at,
-      created_at: item.created_at,
-      homework: item.homework
+    // Get homework details for each submission
+    const submissions: HomeworkSubmission[] = await Promise.all(data.map(async (item) => {
+      const { data: homeworkData, error: homeworkError } = await supabase
+        .from('homework')
+        .select('id, title, description, type')
+        .eq('id', item.homework_id)
+        .single();
+        
+      return {
+        id: item.id,
+        homework_id: item.homework_id,
+        user_id: item.user_id,
+        lecture_id: item.lecture_id,
+        course_id: item.course_id,
+        answer: item.answer,
+        file_url: item.file_url,
+        submitted_at: item.submitted_at,
+        created_at: item.created_at,
+        homework: homeworkError ? undefined : {
+          id: homeworkData.id,
+          title: homeworkData.title,
+          description: homeworkData.description,
+          type: homeworkData.type
+        }
+      };
     }));
     
     return submissions;
@@ -272,20 +324,35 @@ export const getStudentsWithoutSubmission = async (
 ): Promise<any[]> => {
   try {
     // Get all enrolled students for the course
-    const { data: enrolledStudents, error: enrollmentError } = await supabase
+    const { data: enrollments, error: enrollmentError } = await supabase
       .from('user_courses')
-      .select(`
-        user_id,
-        profiles:user_id (
-          full_name,
-          email
-        )
-      `)
+      .select('user_id')
       .eq('course_id', courseId);
     
     if (enrollmentError) {
       console.error('Error getting enrolled students:', enrollmentError);
       return [];
+    }
+    
+    // Extract user IDs
+    const userIds = enrollments.map(enrollment => enrollment.user_id);
+    
+    // Get user profiles
+    const studentsWithProfiles = [];
+    for (const userId of userIds) {
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('full_name, email')
+        .eq('id', userId)
+        .single();
+      
+      if (profileData) {
+        studentsWithProfiles.push({
+          user_id: userId,
+          full_name: profileData.full_name || 'Unknown',
+          email: profileData.email || ''
+        });
+      }
     }
     
     // Get all homeworks for the lecture if lectureId is specified
@@ -306,11 +373,7 @@ export const getStudentsWithoutSubmission = async (
       
       // If no homeworks found for this lecture, return all students as "not submitted"
       if (homeworkIds.length === 0) {
-        return enrolledStudents.map(student => ({
-          user_id: student.user_id,
-          full_name: student.profiles?.full_name || 'Unknown',
-          email: student.profiles?.email || ''
-        }));
+        return studentsWithProfiles;
       }
     }
     
@@ -335,13 +398,8 @@ export const getStudentsWithoutSubmission = async (
     const submittedUserIds = new Set(submissions.map(s => s.user_id));
     
     // Filter enrolled students who have not submitted
-    const studentsWithoutSubmission = enrolledStudents
-      .filter(student => !submittedUserIds.has(student.user_id))
-      .map(student => ({
-        user_id: student.user_id,
-        full_name: student.profiles?.full_name || 'Unknown',
-        email: student.profiles?.email || ''
-      }));
+    const studentsWithoutSubmission = studentsWithProfiles
+      .filter(student => !submittedUserIds.has(student.user_id));
     
     return studentsWithoutSubmission;
   } catch (error) {
