@@ -213,6 +213,42 @@ const HomeworkSummaryTable = ({ courseId, onSelectLecture }) => {
     return "bg-red-100 text-red-800 hover:bg-red-200";
   };
   
+  // 对数据按章节分组并计算每个章节的rowspan
+  const processGroupedData = (data) => {
+    if (!data || data.length === 0) return { groupedData: [], firstRowIndices: {} };
+    
+    // 按章节ID分组
+    const groupedBySectionId = {};
+    const sectionRowspans = {};
+    const firstRowIndices = {};
+    
+    // 第一次遍历：按章节分组并计算rowspan
+    data.forEach((item, index) => {
+      const sectionId = item.sectionId;
+      
+      if (!groupedBySectionId[sectionId]) {
+        groupedBySectionId[sectionId] = [];
+        firstRowIndices[sectionId] = index; // 记录每个章节第一行的索引
+      }
+      
+      groupedBySectionId[sectionId].push(item);
+    });
+    
+    // 计算每个章节的rowspan（对应章节包含的行数）
+    Object.keys(groupedBySectionId).forEach(sectionId => {
+      sectionRowspans[sectionId] = groupedBySectionId[sectionId].length;
+    });
+    
+    return { 
+      data, // 保持原始顺序的数据
+      firstRowIndices, // 每个章节第一行的索引
+      sectionRowspans // 每个章节的rowspan值
+    };
+  };
+  
+  // 处理分组数据
+  const groupedDataInfo = processGroupedData(filteredData);
+  
   if (isLoadingStructure || isLoadingHomework || isLoadingSubmissions || isLoadingEnrollments) {
     return (
       <Card>
@@ -294,44 +330,57 @@ const HomeworkSummaryTable = ({ courseId, onSelectLecture }) => {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredData.map((item, index) => (
-                    <tr 
-                      key={`${item.sectionId}-${item.lectureId}-${index}`}
-                      className="border-t hover:bg-muted/50"
-                    >
-                      <td className="p-4">{item.sectionTitle}</td>
-                      <td className="p-4">
-                        <div>
-                          <div className="font-medium">{item.lectureTitle}</div>
-                          {item.homeworkCount > 0 && (
-                            <div className="text-sm text-muted-foreground mt-1">
-                              {item.homeworkCount > 1
-                                ? `${item.homeworkCount}个作业: ${item.homeworkTitles}`
-                                : item.homeworkTitles
-                              }
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                      <td className="p-4">{`${item.submittedCount}/${item.totalEnrolled}`}</td>
-                      <td className="p-4">
-                        <Badge className={getCompletionRateColor(item.completionRate)}>
-                          {item.completionRate}%
-                        </Badge>
-                      </td>
-                      <td className="p-4">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="flex items-center gap-1"
-                          onClick={() => handleLectureSelect(item.lectureId, item.sectionTitle, item.lectureTitle)}
-                        >
-                          查看详情
-                          <ArrowRight className="h-3.5 w-3.5" />
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
+                  {groupedDataInfo.data.map((item, index) => {
+                    const isSectionFirstRow = groupedDataInfo.firstRowIndices[item.sectionId] === index;
+                    const sectionRowspan = groupedDataInfo.sectionRowspans[item.sectionId];
+                    
+                    return (
+                      <tr 
+                        key={`${item.sectionId}-${item.lectureId}-${index}`}
+                        className="border-t hover:bg-muted/50"
+                      >
+                        {isSectionFirstRow && (
+                          <td 
+                            className="p-4" 
+                            rowSpan={sectionRowspan}
+                            style={{ verticalAlign: 'top' }}
+                          >
+                            {item.sectionTitle}
+                          </td>
+                        )}
+                        <td className="p-4">
+                          <div>
+                            <div className="font-medium">{item.lectureTitle}</div>
+                            {item.homeworkCount > 0 && (
+                              <div className="text-sm text-muted-foreground mt-1">
+                                {item.homeworkCount > 1
+                                  ? `${item.homeworkCount}个作业: ${item.homeworkTitles}`
+                                  : item.homeworkTitles
+                                }
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                        <td className="p-4">{`${item.submittedCount}/${item.totalEnrolled}`}</td>
+                        <td className="p-4">
+                          <Badge className={getCompletionRateColor(item.completionRate)}>
+                            {item.completionRate}%
+                          </Badge>
+                        </td>
+                        <td className="p-4">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="flex items-center gap-1"
+                            onClick={() => handleLectureSelect(item.lectureId, item.sectionTitle, item.lectureTitle)}
+                          >
+                            查看详情
+                            <ArrowRight className="h-3.5 w-3.5" />
+                          </Button>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
