@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -8,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Search, Download, ChevronUp, ChevronDown, ArrowLeft } from 'lucide-react';
 import { ExcelExportService } from './ExcelExportService';
+import HomeworkSubmissionPublicDetail from '@/components/admin/homework/HomeworkSubmissionPublicDetail';
 
 const HomeworkSubmissionTabs = ({ courseId, lectureId, onBack, sectionTitle, lectureTitle }) => {
   const navigate = useNavigate();
@@ -20,6 +22,8 @@ const HomeworkSubmissionTabs = ({ courseId, lectureId, onBack, sectionTitle, lec
     key: 'submitted_at',
     direction: 'desc'
   });
+  // 新增状态：当前查看的作业提交ID
+  const [selectedSubmissionId, setSelectedSubmissionId] = useState(null);
   
   // 获取课程作业的所有提交
   const { data: submissions, isLoading: loadingSubmissions } = useQuery({
@@ -149,10 +153,10 @@ const HomeworkSubmissionTabs = ({ courseId, lectureId, onBack, sectionTitle, lec
     }
   }, [submissions, enrollments, profiles]);
   
-  // 查看作业详情 - 这里是需要修复的核心功能
+  // 查看作业详情 - 修改后的实现
   const handleViewHomework = async (userId) => {
-    // 获取该用户和讲座的作业提交ID
     try {
+      // 获取该用户和讲座的作业提交ID
       const { data, error } = await supabase
         .from('homework_submissions')
         .select('id')
@@ -168,15 +172,20 @@ const HomeworkSubmissionTabs = ({ courseId, lectureId, onBack, sectionTitle, lec
       }
       
       if (data && data.length > 0) {
-        // 确保使用正确的URL格式导航到作业详情页面
-        console.log(`Navigating to /homework-submission/${data[0].id}/${courseId}`);
-        navigate(`/homework-submission/${data[0].id}/${courseId}`);
+        // 设置选中的提交ID，显示内联详情
+        console.log(`Setting selected submission ID to: ${data[0].id}`);
+        setSelectedSubmissionId(data[0].id);
       } else {
         console.error('No submission found for this user and lecture');
       }
     } catch (err) {
       console.error('Failed to get submission ID:', err);
     }
+  };
+  
+  // 返回作业列表
+  const handleBackToList = () => {
+    setSelectedSubmissionId(null);
   };
   
   // 处理排序
@@ -355,6 +364,18 @@ const HomeworkSubmissionTabs = ({ courseId, lectureId, onBack, sectionTitle, lec
       </div>
     );
   };
+
+  // 如果选择了提交ID，显示作业详情
+  if (selectedSubmissionId) {
+    return (
+      <div>
+        <HomeworkSubmissionPublicDetail
+          submissionId={selectedSubmissionId}
+          onBack={handleBackToList}
+        />
+      </div>
+    );
+  }
   
   return (
     <div>
