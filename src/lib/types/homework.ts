@@ -37,6 +37,7 @@ export interface HomeworkSubmission {
   reviewed_at?: string;
   user_name?: string;
   user_email?: string;
+  user_avatar?: string; // Add this field for backward compatibility
   homework?: {
     id: string;
     title: string;
@@ -46,6 +47,7 @@ export interface HomeworkSubmission {
   profiles?: {
     full_name?: string;
     email?: string;
+    avatar_url?: string; // Add avatar_url to profiles
   };
 }
 
