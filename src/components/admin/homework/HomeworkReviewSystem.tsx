@@ -5,13 +5,8 @@ import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import HomeworkBreadcrumb from './HomeworkBreadcrumb';
 import CourseOutlineNavigation from './CourseOutlineNavigation';
-import { HomeworkSubmissionsList } from './HomeworkSubmissionsList';
-import StudentsList from './StudentsList';
-import { HomeworkStatsDashboard } from './HomeworkStatsDashboard';
-import { NotSubmittedStudentsList } from './NotSubmittedStudentsList';
-import { EnrollmentSubmissionStats } from './EnrollmentSubmissionStats';
-import { getCourseStructureForHomework, HomeworkStats } from '@/lib/services/homeworkSubmissionService';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import HomeworkOverviewTable from './HomeworkOverviewTable';
+import { getCourseStructureForHomework } from '@/lib/services/homeworkSubmissionService';
 
 interface HomeworkReviewSystemProps {
   courseId: number;
@@ -19,10 +14,8 @@ interface HomeworkReviewSystemProps {
 
 export const HomeworkReviewSystem: React.FC<HomeworkReviewSystemProps> = ({ courseId }) => {
   const [selectedLectureId, setSelectedLectureId] = useState<string | null>(null);
-  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
   const [sectionTitle, setSectionTitle] = useState<string>('');
   const [lectureTitle, setLectureTitle] = useState<string>('');
-  const [activeTab, setActiveTab] = useState<string>('overview');
   
   // 1. Fetch course structure data (sections and lectures)
   const { data: courseStructure, isLoading: isLoadingStructure } = useQuery({
@@ -74,7 +67,6 @@ export const HomeworkReviewSystem: React.FC<HomeworkReviewSystemProps> = ({ cour
   // Handle lecture selection
   const handleSelectLecture = (lectureId: string) => {
     setSelectedLectureId(lectureId);
-    setSelectedStudentId(null);
     
     // Find lecture and section titles
     if (courseStructure) {
@@ -92,42 +84,15 @@ export const HomeworkReviewSystem: React.FC<HomeworkReviewSystemProps> = ({ cour
   // Clear lecture selection
   const handleClearLecture = () => {
     setSelectedLectureId(null);
-    setSelectedStudentId(null);
     setSectionTitle('');
     setLectureTitle('');
   };
   
-  // Handle student selection 
-  const handleSelectStudent = (studentId: string) => {
-    setSelectedStudentId(studentId);
+  // Handle viewing homework details - navigates to the homework view for the selected lecture
+  const handleViewHomeworkDetails = (lectureId: string) => {
+    handleSelectLecture(lectureId);
+    // Additional functionality if needed to show homework details
   };
-  
-  // Clear student selection
-  const handleClearStudent = () => {
-    setSelectedStudentId(null);
-  };
-  
-  // Get student name for breadcrumb
-  const { data: studentProfile } = useQuery({
-    queryKey: ['student-profile-for-breadcrumb', selectedStudentId],
-    queryFn: async () => {
-      if (!selectedStudentId) return null;
-      
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('full_name')
-        .eq('id', selectedStudentId)
-        .single();
-        
-      if (error) {
-        console.error('Error fetching student profile:', error);
-        return null;
-      }
-      
-      return data;
-    },
-    enabled: !!selectedStudentId,
-  });
   
   if (isLoadingStructure) {
     return (
@@ -144,10 +109,7 @@ export const HomeworkReviewSystem: React.FC<HomeworkReviewSystemProps> = ({ cour
         courseId={courseId} 
         sectionTitle={sectionTitle}
         lectureTitle={lectureTitle}
-        studentId={selectedStudentId}
-        studentName={studentProfile?.full_name || '用户名不详'}
         onClearLecture={handleClearLecture}
-        onClearStudent={handleClearStudent}
       />
       
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
@@ -164,65 +126,11 @@ export const HomeworkReviewSystem: React.FC<HomeworkReviewSystemProps> = ({ cour
         
         {/* Main content area */}
         <div className="lg:col-span-3">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="w-full">
-              <TabsTrigger value="overview">课程概览</TabsTrigger>
-              <TabsTrigger value="submissions" disabled={!selectedLectureId}>作业列表</TabsTrigger>
-              <TabsTrigger value="not-submitted" disabled={!selectedLectureId}>未提交</TabsTrigger>
-              <TabsTrigger value="student-stats">学生统计</TabsTrigger>
-              {selectedStudentId && (
-                <TabsTrigger value="student">学生详情</TabsTrigger>
-              )}
-            </TabsList>
-            
-            <TabsContent value="overview">
-              <div className="bg-white rounded-lg border p-6">
-                <h2 className="text-xl font-semibold mb-4">课程作业概览</h2>
-                {!selectedLectureId ? (
-                  <HomeworkStatsDashboard courseId={courseId} />
-                ) : (
-                  <div>
-                    <p className="text-gray-600">当前查看：{sectionTitle} - {lectureTitle}</p>
-                    <p className="text-gray-500 mt-2 mb-6">请选择上方选项卡查看此小节的作业提交情况。</p>
-                  </div>
-                )}
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="submissions">
-              {selectedLectureId && (
-                <HomeworkSubmissionsList 
-                  lectureId={selectedLectureId} 
-                  onSelectStudent={handleSelectStudent} 
-                />
-              )}
-            </TabsContent>
-            
-            <TabsContent value="not-submitted">
-              {selectedLectureId && (
-                <NotSubmittedStudentsList 
-                  courseId={courseId} 
-                  lectureId={selectedLectureId} 
-                />
-              )}
-            </TabsContent>
-            
-            <TabsContent value="student-stats">
-              <EnrollmentSubmissionStats 
-                courseId={courseId}
-                lectureId={selectedLectureId}
-              />
-            </TabsContent>
-            
-            <TabsContent value="student">
-              {selectedStudentId && (
-                <StudentsList
-                  studentId={selectedStudentId}
-                  lectureId={selectedLectureId!}
-                />
-              )}
-            </TabsContent>
-          </Tabs>
+          <HomeworkOverviewTable 
+            courseId={courseId}
+            sections={courseStructure || []}
+            onViewHomeworkDetails={handleViewHomeworkDetails}
+          />
         </div>
       </div>
     </div>
