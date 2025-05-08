@@ -180,7 +180,7 @@ export const HomeworkSubmissionsView = () => {
   const handleHomeworkSelect = (lectureId: string, homework: any) => {
     setSelectedHomeworkId(homework.id);
     setSelectedLectureId(lectureId);
-    setSelectedStudentId(null);
+    // Removed the problematic line: setSelectedStudentId(null);
     setSelectedSubmissionId(null);
     // Tab change handled by the useEffect above
   };
