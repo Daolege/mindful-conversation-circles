@@ -154,11 +154,11 @@ export const HomeworkReviewSystem: React.FC<HomeworkReviewSystemProps> = ({ cour
     }
   };
 
-  // Handle homework selection
-  const handleSelectHomework = (lectureId: string, homeworkId: string, title: string) => {
+  // Handle homework selection - Updated to match expected signature in HomeworkCourseSyllabus
+  const handleSelectHomework = (lectureId: string, homework: any) => {
     handleSelectLecture(lectureId);
-    setSelectedHomeworkId(homeworkId);
-    setHomeworkTitle(title);
+    setSelectedHomeworkId(homework.id);
+    setHomeworkTitle(homework.title);
     setCurrentView('detail');
   };
   

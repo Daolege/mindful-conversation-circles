@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { ChevronDown, ChevronUp, Video, BookOpen, Check, Circle, FileText, Clock, AlertCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";

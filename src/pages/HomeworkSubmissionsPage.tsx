@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useAuth } from "@/contexts/authHooks";
 import { useParams, useNavigate } from "react-router-dom";
@@ -8,7 +7,7 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { HomeworkViewingSystem } from "@/components/admin/homework/HomeworkViewingSystem";
+import { HomeworkReviewSystem } from "@/components/admin/homework/HomeworkReviewSystem";
 import { useTranslations } from "@/hooks/useTranslations";
 
 const HomeworkSubmissionsPage = () => {
@@ -76,7 +75,7 @@ const HomeworkSubmissionsPage = () => {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       <main className="flex-grow container mx-auto px-4 py-8">
-        <HomeworkViewingSystem courseId={parseInt(courseId || '0', 10)} />
+        <HomeworkReviewSystem courseId={parseInt(courseId || '0', 10)} />
       </main>
       <Footer />
     </div>

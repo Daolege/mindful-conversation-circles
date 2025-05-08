@@ -16,6 +16,7 @@ interface HomeworkSubmissionsDetailProps {
   lectureId: string;
   homeworkId?: string;
   lectureTitle: string;
+  homeworkTitle?: string;
   onViewSubmission: (submissionId: string) => void;
   onBack?: () => void;
 }
@@ -37,6 +38,7 @@ export const HomeworkSubmissionsDetail: React.FC<HomeworkSubmissionsDetailProps>
   lectureId,
   homeworkId,
   lectureTitle,
+  homeworkTitle,
   onViewSubmission,
   onBack
 }) => {
@@ -262,6 +264,7 @@ export const HomeworkSubmissionsDetail: React.FC<HomeworkSubmissionsDetailProps>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0">
         <h2 className="text-xl font-semibold">
           已提交作业
+          {homeworkTitle && <span className="text-md ml-2 font-normal text-gray-600">- {homeworkTitle}</span>}
           <span className="text-sm font-normal ml-2 text-gray-500">
             {filteredSubmissions.length} 份作业提交
           </span>
