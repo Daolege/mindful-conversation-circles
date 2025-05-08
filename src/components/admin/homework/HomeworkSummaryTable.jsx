@@ -206,7 +206,7 @@ const HomeworkSummaryTable = ({ courseId, onSelectLecture }) => {
     }
   };
   
-  // 修改回原来的逻辑: 点击"查看作业"按钮时，调用handleLectureSelect来显示该讲座的所有作业提交
+  // 修改回原来的逻辑: 点击"查看详情"按钮时，调用handleLectureSelect来显示该讲座的所有作业提交
   const handleViewSubmissionDetail = (lectureId, sectionTitle, lectureTitle) => {
     handleLectureSelect(lectureId, sectionTitle, lectureTitle);
   };
@@ -381,7 +381,7 @@ const HomeworkSummaryTable = ({ courseId, onSelectLecture }) => {
                             className="flex items-center gap-1"
                             onClick={() => handleViewSubmissionDetail(item.lectureId, item.sectionTitle, item.lectureTitle)}
                           >
-                            查看作业
+                            查看详情
                           </Button>
                         </td>
                       </tr>
