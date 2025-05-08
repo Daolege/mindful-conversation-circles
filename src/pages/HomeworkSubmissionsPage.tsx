@@ -8,7 +8,7 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import HomeworkSubmissionsView from "@/components/admin/homework/HomeworkSubmissionsView";
+import { HomeworkViewingSystem } from "@/components/admin/homework/HomeworkViewingSystem";
 import { useTranslations } from "@/hooks/useTranslations";
 
 const HomeworkSubmissionsPage = () => {
@@ -77,7 +77,7 @@ const HomeworkSubmissionsPage = () => {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       <main className="flex-grow container mx-auto px-4 py-8">
-        <HomeworkSubmissionsView />
+        <HomeworkViewingSystem courseId={parseInt(courseId || '0', 10)} />
       </main>
       <Footer />
     </div>

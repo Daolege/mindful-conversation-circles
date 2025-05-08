@@ -2,14 +2,13 @@
 import React from 'react';
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, ArrowLeft } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useAuth } from "@/contexts/authHooks";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { HomeworkSubmissionsView } from "@/components/admin/homework/HomeworkSubmissionsView";
+import { HomeworkViewingSystem } from "@/components/admin/homework/HomeworkViewingSystem";
 
 const HomeworkReviewPage = () => {
   const { user, loading } = useAuth();
@@ -76,7 +75,7 @@ const HomeworkReviewPage = () => {
       <Navbar />
       <main className="flex-grow container mx-auto px-4 py-8">        
         {courseId && (
-          <HomeworkSubmissionsView />
+          <HomeworkViewingSystem courseId={parseInt(courseId, 10)} />
         )}
       </main>
       <Footer />
