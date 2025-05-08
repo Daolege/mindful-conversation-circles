@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import HomeworkBreadcrumb from './HomeworkBreadcrumb';
 import CourseOutlineNavigation from './CourseOutlineNavigation';
 import HomeworkOverviewTable from './HomeworkOverviewTable';
+import HomeworkSubmissionsDetail from './HomeworkSubmissionsDetail';
 import { getCourseStructureForHomework } from '@/lib/services/homeworkSubmissionService';
 
 interface HomeworkReviewSystemProps {
@@ -16,6 +17,7 @@ export const HomeworkReviewSystem: React.FC<HomeworkReviewSystemProps> = ({ cour
   const [selectedLectureId, setSelectedLectureId] = useState<string | null>(null);
   const [sectionTitle, setSectionTitle] = useState<string>('');
   const [lectureTitle, setLectureTitle] = useState<string>('');
+  const [currentView, setCurrentView] = useState<'overview' | 'detail'>('overview');
   
   // 1. Fetch course structure data (sections and lectures)
   const { data: courseStructure, isLoading: isLoadingStructure } = useQuery({
@@ -86,12 +88,18 @@ export const HomeworkReviewSystem: React.FC<HomeworkReviewSystemProps> = ({ cour
     setSelectedLectureId(null);
     setSectionTitle('');
     setLectureTitle('');
+    setCurrentView('overview');
   };
   
   // Handle viewing homework details - navigates to the homework view for the selected lecture
   const handleViewHomeworkDetails = (lectureId: string) => {
     handleSelectLecture(lectureId);
-    // Additional functionality if needed to show homework details
+    setCurrentView('detail');
+  };
+
+  // Handle back navigation from detail view to overview
+  const handleBackToOverview = () => {
+    setCurrentView('overview');
   };
   
   if (isLoadingStructure) {
@@ -112,27 +120,37 @@ export const HomeworkReviewSystem: React.FC<HomeworkReviewSystemProps> = ({ cour
         onClearLecture={handleClearLecture}
       />
       
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Left sidebar: Course structure navigation */}
-        <div className="lg:col-span-1">
-          <CourseOutlineNavigation
-            sections={courseStructure || []}
-            selectedLectureId={selectedLectureId}
-            onSelectLecture={handleSelectLecture}
-            submissionStats={submissionStats}
-            isLoading={isLoadingStructure}
-          />
+      {currentView === 'overview' ? (
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Left sidebar: Course structure navigation */}
+          <div className="lg:col-span-1">
+            <CourseOutlineNavigation
+              sections={courseStructure || []}
+              selectedLectureId={selectedLectureId}
+              onSelectLecture={handleSelectLecture}
+              submissionStats={submissionStats}
+              isLoading={isLoadingStructure}
+            />
+          </div>
+          
+          {/* Main content area */}
+          <div className="lg:col-span-3">
+            <HomeworkOverviewTable 
+              courseId={courseId}
+              sections={courseStructure || []}
+              onViewHomeworkDetails={handleViewHomeworkDetails}
+            />
+          </div>
         </div>
-        
-        {/* Main content area */}
-        <div className="lg:col-span-3">
-          <HomeworkOverviewTable 
-            courseId={courseId}
-            sections={courseStructure || []}
-            onViewHomeworkDetails={handleViewHomeworkDetails}
-          />
-        </div>
-      </div>
+      ) : (
+        /* Detail view with submitted/not submitted tabs */
+        <HomeworkSubmissionsDetail 
+          courseId={courseId}
+          lectureId={selectedLectureId || ''}
+          lectureTitle={lectureTitle}
+          onBack={handleBackToOverview}
+        />
+      )}
     </div>
   );
 };

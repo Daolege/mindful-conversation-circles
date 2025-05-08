@@ -1,18 +1,20 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, AlertCircle, User } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 
 interface NotSubmittedStudentsListProps {
   courseId: number;
   lectureId: string;
+  searchTerm?: string;
 }
 
 export const NotSubmittedStudentsList: React.FC<NotSubmittedStudentsListProps> = ({
   courseId,
-  lectureId
+  lectureId,
+  searchTerm = ''
 }) => {
   // Fetch students who haven't submitted homework
   const { data: notSubmittedStudents, isLoading } = useQuery({
@@ -62,71 +64,68 @@ export const NotSubmittedStudentsList: React.FC<NotSubmittedStudentsListProps> =
       }
       
       // 5. Return formatted student data
-      return (studentProfiles || []).map(profile => {
-        return {
-          id: profile.id,
-          full_name: profile.full_name || '用户名不详',
-          email: profile.email || ''
-        };
-      });
+      return (studentProfiles || []).map(profile => ({
+        id: profile.id,
+        full_name: profile.full_name || '用户名不详',
+        email: profile.email || ''
+      }));
     },
     enabled: !!courseId && !!lectureId,
     staleTime: 5 * 60 * 1000
   });
   
+  // Filter students based on search term
+  const filteredStudents = React.useMemo(() => {
+    if (!notSubmittedStudents) return [];
+    if (!searchTerm) return notSubmittedStudents;
+    
+    const searchLower = searchTerm.toLowerCase();
+    return notSubmittedStudents.filter(student => 
+      student.full_name.toLowerCase().includes(searchLower) || 
+      student.email.toLowerCase().includes(searchLower)
+    );
+  }, [notSubmittedStudents, searchTerm]);
+  
   if (isLoading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>未提交作业学生</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex justify-center p-8">
-            <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-          </div>
-        </CardContent>
-      </Card>
+      <div className="flex justify-center p-8">
+        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+      </div>
     );
   }
   
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-lg flex items-center gap-2 text-amber-600">
-          <AlertCircle className="h-5 w-5" />
-          未提交作业学生
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        {notSubmittedStudents && notSubmittedStudents.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {notSubmittedStudents.map((student, index) => (
-              <div 
-                key={student.id || index} 
-                className="flex items-center p-3 bg-amber-50 border border-amber-100 rounded-md"
-              >
-                <User className="h-4 w-4 mr-3 text-amber-600" />
-                <div>
-                  <div className="font-medium text-gray-900">{student.full_name || '用户名不详'}</div>
-                  <div className="text-xs text-gray-500">{student.email || ''}</div>
-                </div>
-              </div>
+    <div>
+      {filteredStudents && filteredStudents.length > 0 ? (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>用户名</TableHead>
+              <TableHead>邮箱</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredStudents.map((student) => (
+              <TableRow key={student.id}>
+                <TableCell className="font-medium">{student.full_name}</TableCell>
+                <TableCell>{student.email}</TableCell>
+              </TableRow>
             ))}
-          </div>
-        ) : (
-          <div className="text-center py-6 text-gray-500">
-            所有学生均已提交作业
-          </div>
-        )}
-        
-        {/* Student count */}
-        {notSubmittedStudents && notSubmittedStudents.length > 0 && (
-          <div className="mt-4 text-sm text-gray-500">
-            共 {notSubmittedStudents.length} 名学生未提交作业
-          </div>
-        )}
-      </CardContent>
-    </Card>
+          </TableBody>
+        </Table>
+      ) : (
+        <div className="text-center py-6 text-gray-500">
+          {searchTerm ? '没有找到匹配的学生' : '所有学生均已提交作业'}
+        </div>
+      )}
+      
+      {/* Student count */}
+      {filteredStudents && filteredStudents.length > 0 && (
+        <div className="mt-4 text-sm text-gray-500">
+          共 {filteredStudents.length} 名学生未提交作业
+        </div>
+      )}
+    </div>
   );
 };
 
