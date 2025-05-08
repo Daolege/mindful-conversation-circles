@@ -3,27 +3,27 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { CourseOutlineNavigation } from './CourseOutlineNavigation';
+import HomeworkBreadcrumb from './HomeworkBreadcrumb';
+import CourseOutlineNavigation from './CourseOutlineNavigation';
+import HomeworkOverviewTable from './HomeworkOverviewTable';
 import HomeworkSubmissionsDetail from './HomeworkSubmissionsDetail';
-import { HomeworkSubmissionDetail } from './HomeworkSubmissionDetail';
 import { getCourseStructureForHomework } from '@/lib/services/homeworkSubmissionService';
-import { Card, CardContent } from '@/components/ui/card';
 import { 
   ResizablePanelGroup,
   ResizablePanel,
   ResizableHandle 
 } from '@/components/ui/resizable';
 
-interface HomeworkViewingSystemProps {
+interface HomeworkReviewSystemProps {
   courseId: number;
 }
 
-export const HomeworkViewingSystem: React.FC<HomeworkViewingSystemProps> = ({ courseId }) => {
+export const HomeworkReviewSystem: React.FC<HomeworkReviewSystemProps> = ({ courseId }) => {
   const [selectedLectureId, setSelectedLectureId] = useState<string | null>(null);
   const [selectedHomeworkId, setSelectedHomeworkId] = useState<string | null>(null);
-  const [selectedSubmissionId, setSelectedSubmissionId] = useState<string | null>(null);
+  const [sectionTitle, setSectionTitle] = useState<string>('');
   const [lectureTitle, setLectureTitle] = useState<string>('');
-  const [homeworkTitle, setHomeworkTitle] = useState<string>('');
+  const [currentView, setCurrentView] = useState<'overview' | 'detail'>('overview');
   
   // 1. Fetch course structure data (sections and lectures)
   const { data: courseStructure, isLoading: isLoadingStructure } = useQuery({
@@ -133,36 +133,57 @@ export const HomeworkViewingSystem: React.FC<HomeworkViewingSystemProps> = ({ co
   // Handle lecture selection
   const handleSelectLecture = (lectureId: string) => {
     setSelectedLectureId(lectureId);
-    setSelectedSubmissionId(null);
-    setSelectedHomeworkId(null);
+    setSelectedHomeworkId(null); // Clear homework selection when lecture changes
     
-    // Find lecture title
+    // Find lecture and section titles
     if (courseStructure) {
       for (const section of courseStructure) {
         const lecture = section.lectures.find(lec => lec.id === lectureId);
         if (lecture) {
+          setSectionTitle(section.title);
           setLectureTitle(lecture.title);
           break;
         }
       }
     }
+    
+    // If in detail view, go back to overview
+    if (currentView === 'detail') {
+      setCurrentView('overview');
+    }
   };
 
   // Handle homework selection
-  const handleSelectHomework = (lectureId: string, homeworkId: string, title: string) => {
+  const handleSelectHomework = (lectureId: string, homework: any) => {
     handleSelectLecture(lectureId);
-    setSelectedHomeworkId(homeworkId);
-    setHomeworkTitle(title);
-  };
-
-  // Handle viewing a specific submission
-  const handleViewSubmission = (submissionId: string) => {
-    setSelectedSubmissionId(submissionId);
+    setSelectedHomeworkId(homework.id);
+    setCurrentView('detail');
   };
   
-  // Clear submission selection
-  const handleBackFromSubmission = () => {
-    setSelectedSubmissionId(null);
+  // Clear lecture selection
+  const handleClearLecture = () => {
+    setSelectedLectureId(null);
+    setSelectedHomeworkId(null);
+    setSectionTitle('');
+    setLectureTitle('');
+    setCurrentView('overview');
+  };
+  
+  // Handle viewing homework details - navigates to the homework view for the selected lecture
+  const handleViewHomeworkDetails = (lectureId: string) => {
+    handleSelectLecture(lectureId);
+    setCurrentView('detail');
+  };
+
+  // Handle back navigation from detail view to overview
+  const handleBackToOverview = () => {
+    setCurrentView('overview');
+  };
+  
+  // Handle viewing a specific submission
+  const handleViewSubmission = (submissionId: string) => {
+    // Navigate to submission detail page
+    window.location.href = `/admin/courses-new/${courseId}/homework/submission/${submissionId}`;
   };
   
   if (isLoadingStructure) {
@@ -174,56 +195,81 @@ export const HomeworkViewingSystem: React.FC<HomeworkViewingSystemProps> = ({ co
   }
   
   return (
-    <ResizablePanelGroup direction="horizontal" className="min-h-[calc(100vh-200px)]">
-      {/* Left sidebar: Course structure navigation */}
-      <ResizablePanel defaultSize={25} minSize={20} maxSize={40}>
-        <CourseOutlineNavigation
-          sections={courseStructure || []}
-          selectedLectureId={selectedLectureId}
-          selectedHomeworkId={selectedHomeworkId}
-          onSelectLecture={handleSelectLecture}
-          onSelectHomework={handleSelectHomework}
-          submissionStats={submissionStats}
-          homeworkByLecture={homeworkByLecture}
-          isLoading={isLoadingStructure}
-        />
-      </ResizablePanel>
+    <div className="space-y-6">
+      {/* Breadcrumb navigation */}
+      <HomeworkBreadcrumb 
+        courseId={courseId} 
+        sectionTitle={sectionTitle}
+        lectureTitle={lectureTitle}
+        onClearLecture={handleClearLecture}
+      />
       
-      <ResizableHandle withHandle />
-      
-      {/* Main content area */}
-      <ResizablePanel defaultSize={75}>
-        <div className="h-full overflow-auto p-1">
-          {!selectedLectureId && (
-            <Card>
-              <CardContent className="p-8 text-center text-gray-500">
-                <p className="text-xl font-medium">请从左侧课程大纲中选择一个讲座</p>
-                <p className="mt-2">选择后可查看该讲座下的学生作业提交情况</p>
-              </CardContent>
-            </Card>
-          )}
-          
-          {selectedLectureId && !selectedSubmissionId && (
-            <HomeworkSubmissionsDetail 
-              courseId={courseId}
-              lectureId={selectedLectureId}
-              homeworkId={selectedHomeworkId || ''}
-              lectureTitle={lectureTitle}
-              onViewSubmission={handleViewSubmission}
+      {currentView === 'overview' ? (
+        <ResizablePanelGroup direction="horizontal" className="min-h-[calc(100vh-200px)]">
+          {/* Left sidebar: Course structure navigation */}
+          <ResizablePanel defaultSize={25} minSize={20} maxSize={40}>
+            <CourseOutlineNavigation
+              sections={courseStructure || []}
+              selectedLectureId={selectedLectureId}
+              selectedHomeworkId={selectedHomeworkId}
+              onSelectLecture={handleSelectLecture}
+              onSelectHomework={handleSelectHomework}
+              submissionStats={submissionStats}
+              homeworkByLecture={homeworkByLecture}
+              isLoading={isLoadingStructure}
             />
-          )}
+          </ResizablePanel>
           
-          {selectedSubmissionId && (
-            <HomeworkSubmissionDetail 
-              submissionId={selectedSubmissionId}
-              onBack={handleBackFromSubmission}
-              viewOnly={true}
+          <ResizableHandle withHandle />
+          
+          {/* Main content area */}
+          <ResizablePanel defaultSize={75}>
+            <div className="h-full overflow-auto p-1">
+              <HomeworkOverviewTable 
+                courseId={courseId}
+                sections={courseStructure || []}
+                onViewHomeworkDetails={handleViewHomeworkDetails}
+              />
+            </div>
+          </ResizablePanel>
+        </ResizablePanelGroup>
+      ) : (
+        /* Detail view with submitted/not submitted tabs */
+        <ResizablePanelGroup direction="horizontal" className="min-h-[calc(100vh-200px)]">
+          {/* Left sidebar: Course structure navigation */}
+          <ResizablePanel defaultSize={25} minSize={20} maxSize={40}>
+            <CourseOutlineNavigation
+              sections={courseStructure || []}
+              selectedLectureId={selectedLectureId}
+              selectedHomeworkId={selectedHomeworkId}
+              onSelectLecture={handleSelectLecture}
+              onSelectHomework={handleSelectHomework}
+              submissionStats={submissionStats}
+              homeworkByLecture={homeworkByLecture}
+              isLoading={isLoadingStructure}
+              onOverviewClick={() => setCurrentView('overview')}
             />
-          )}
-        </div>
-      </ResizablePanel>
-    </ResizablePanelGroup>
+          </ResizablePanel>
+          
+          <ResizableHandle withHandle />
+          
+          {/* Main content area - Homework submission details */}
+          <ResizablePanel defaultSize={75}>
+            <div className="h-full overflow-auto p-1">
+              <HomeworkSubmissionsDetail 
+                courseId={courseId}
+                lectureId={selectedLectureId || ''}
+                homeworkId={selectedHomeworkId || ''}
+                lectureTitle={lectureTitle}
+                onViewSubmission={handleViewSubmission}
+                onBack={handleBackToOverview}
+              />
+            </div>
+          </ResizablePanel>
+        </ResizablePanelGroup>
+      )}
+    </div>
   );
 };
 
-export default HomeworkViewingSystem;
+export default HomeworkReviewSystem;

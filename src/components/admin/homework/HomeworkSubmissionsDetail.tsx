@@ -17,6 +17,19 @@ interface HomeworkSubmissionsDetailProps {
   homeworkId?: string;
   lectureTitle: string;
   onViewSubmission: (submissionId: string) => void;
+  onBack?: () => void;
+}
+
+interface SubmissionWithUser {
+  id: string;
+  homework_id: string;
+  lecture_id: string;
+  status: string;
+  created_at: string;
+  user_id: string;
+  userName: string;
+  userEmail: string;
+  homeworkTitle?: string;
 }
 
 export const HomeworkSubmissionsDetail: React.FC<HomeworkSubmissionsDetailProps> = ({
@@ -24,11 +37,11 @@ export const HomeworkSubmissionsDetail: React.FC<HomeworkSubmissionsDetailProps>
   lectureId,
   homeworkId,
   lectureTitle,
-  onViewSubmission
+  onViewSubmission,
+  onBack
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'newest' | 'oldest'>('newest');
-  const [showExport, setShowExport] = useState(false);
 
   // Fetch submissions for the selected lecture and homework
   const { data: submissions, isLoading } = useQuery({
@@ -67,29 +80,31 @@ export const HomeworkSubmissionsDetail: React.FC<HomeworkSubmissionsDetailProps>
         }
 
         // Get user profiles for each submission
-        const submissionsWithProfiles = await Promise.all(submissionsData.map(async (submission) => {
-          // Get user profile information
-          const { data: profileData, error: profileError } = await supabase
-            .from('profiles')
-            .select('full_name, email')
-            .eq('id', submission.user_id)
-            .single();
+        const submissionsWithProfiles: SubmissionWithUser[] = await Promise.all(
+          submissionsData.map(async (submission) => {
+            // Get user profile information separately
+            const { data: profileData, error: profileError } = await supabase
+              .from('profiles')
+              .select('full_name, email')
+              .eq('id', submission.user_id)
+              .single();
+              
+            if (profileError) {
+              console.error('Error fetching user profile:', profileError);
+              return {
+                ...submission,
+                userName: 'Unknown User',
+                userEmail: ''
+              };
+            }
             
-          if (profileError) {
-            console.error('Error fetching user profile:', profileError);
             return {
               ...submission,
-              userName: 'Unknown User',
-              userEmail: ''
+              userName: profileData?.full_name || 'Unknown User',
+              userEmail: profileData?.email || ''
             };
-          }
-          
-          return {
-            ...submission,
-            userName: profileData?.full_name || 'Unknown User',
-            userEmail: profileData?.email || ''
-          };
-        }));
+          })
+        );
         
         // Get homework titles for each submission
         if (submissionsWithProfiles && submissionsWithProfiles.length > 0) {
@@ -101,6 +116,7 @@ export const HomeworkSubmissionsDetail: React.FC<HomeworkSubmissionsDetailProps>
             
           if (homeworkError) {
             console.error('Error fetching homework details:', homeworkError);
+            return submissionsWithProfiles;
           }
           
           const homeworkMap = (homeworks || []).reduce((acc, hw) => {
@@ -129,7 +145,7 @@ export const HomeworkSubmissionsDetail: React.FC<HomeworkSubmissionsDetailProps>
     
     return submissions.filter(submission => {
       const searchTerms = searchQuery.toLowerCase().trim().split(' ');
-      const searchString = `${submission.userName} ${submission.userEmail} ${submission.homeworkTitle}`.toLowerCase();
+      const searchString = `${submission.userName} ${submission.userEmail} ${submission.homeworkTitle || ''}`.toLowerCase();
       
       return searchTerms.every(term => searchString.includes(term));
     });
@@ -228,6 +244,20 @@ export const HomeworkSubmissionsDetail: React.FC<HomeworkSubmissionsDetailProps>
 
   return (
     <div className="space-y-4">
+      {/* Back button if onBack is provided */}
+      {onBack && (
+        <div className="mb-4">
+          <Button 
+            variant="outline" 
+            onClick={onBack}
+            className="flex items-center gap-1"
+          >
+            <ArrowUpDown className="h-4 w-4" />
+            返回概览
+          </Button>
+        </div>
+      )}
+
       {/* Submissions header with search and export */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0">
         <h2 className="text-xl font-semibold">
@@ -283,7 +313,7 @@ export const HomeworkSubmissionsDetail: React.FC<HomeworkSubmissionsDetailProps>
                       <div className="font-medium">{submission.userName}</div>
                       <div className="text-gray-500 text-xs">{submission.userEmail}</div>
                     </td>
-                    <td className="px-4 py-3 text-sm">{submission.homeworkTitle}</td>
+                    <td className="px-4 py-3 text-sm">{submission.homeworkTitle || '未知作业'}</td>
                     <td className="px-4 py-3 text-sm">{getStatusBadge(submission.status)}</td>
                     <td className="px-4 py-3 text-sm">{formatDate(submission.created_at)}</td>
                     <td className="px-4 py-3 text-sm text-right">
