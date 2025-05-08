@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
-import { HomeworkSubmission } from "@/lib/services/homeworkSubmissionService";
+import { HomeworkSubmission } from "@/lib/types/homework";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";

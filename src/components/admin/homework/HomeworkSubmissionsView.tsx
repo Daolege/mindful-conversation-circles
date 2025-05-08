@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -8,6 +9,7 @@ import { StudentHomeworkList } from './StudentHomeworkList';
 import { NotSubmittedStudentsList } from './NotSubmittedStudentsList';
 import { HomeworkStatsDashboard } from './HomeworkStatsDashboard';
 import { PdfExportService } from './PdfExportService';
+import { EnrollmentSubmissionStats } from './EnrollmentSubmissionStats';
 import { AdminBreadcrumb } from './AdminBreadcrumb';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -28,23 +30,13 @@ import {
   getStudentsWithoutSubmission,
   getHomeworkCompletionStats,
   batchUpdateHomeworkFeedback,
-  HomeworkSubmission,
   HomeworkStats,
-  CourseSection
+  CourseSection as HomeworkCourseSection
 } from '@/lib/services/homeworkSubmissionService';
+import { HomeworkSubmission } from '@/lib/types/homework';
 
-// Define a local type for the CourseSection that matches exactly what's used in this component
-interface CourseSection {
-  id: string;
-  title: string;
-  position: number;
-  lectures: {
-    id: string;
-    title: string;
-    position: number;
-    requires_homework_completion: boolean;
-  }[];
-}
+// Define a local type that uses the existing type but renames it to avoid conflict
+type LocalCourseSection = HomeworkCourseSection;
 
 export const HomeworkSubmissionsView = () => {
   const { courseId } = useParams<{ courseId: string }>();
@@ -87,7 +79,7 @@ export const HomeworkSubmissionsView = () => {
   });
   
   // Transform the fetched data to ensure it matches the expected local type
-  const sections: CourseSection[] = React.useMemo(() => {
+  const sections: LocalCourseSection[] = React.useMemo(() => {
     if (!courseSectionsData) return [];
     
     return courseSectionsData.map(section => ({
@@ -309,10 +301,11 @@ export const HomeworkSubmissionsView = () => {
         {/* Main Content Area */}
         <div className="col-span-12 lg:col-span-9">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList>
+            <TabsList className="w-full justify-between">
               <TabsTrigger value="all">全部作业</TabsTrigger>
               <TabsTrigger value="not-submitted">未提交</TabsTrigger>
               <TabsTrigger value="stats">统计报表</TabsTrigger>
+              <TabsTrigger value="enrollment-stats">学生统计</TabsTrigger>
               {selectedStudentId && (
                 <TabsTrigger value="student">学生视图</TabsTrigger>
               )}
@@ -347,19 +340,21 @@ export const HomeworkSubmissionsView = () => {
             
             <TabsContent value="not-submitted">
               <NotSubmittedStudentsList 
-                students={studentsWithoutSubmission || []}
-                isLoading={isLoadingNotSubmitted}
-                onViewStudent={handleViewStudent}
-                lectureTitle={selectedLectureId ? lectureMap[selectedLectureId] : undefined}
+                courseId={courseIdNumber}
+                lectureId={selectedLectureId || ''}
               />
             </TabsContent>
             
             <TabsContent value="stats">
               <HomeworkStatsDashboard 
-                stats={homeworkStats as HomeworkStats}
-                isLoading={isLoadingStats}
-                courseTitle={`课程 ${courseId}`}
-                lectureMap={lectureMap}
+                courseId={courseIdNumber}
+              />
+            </TabsContent>
+            
+            <TabsContent value="enrollment-stats">
+              <EnrollmentSubmissionStats 
+                courseId={courseIdNumber}
+                lectureId={selectedLectureId}
               />
             </TabsContent>
             

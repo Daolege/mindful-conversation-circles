@@ -22,6 +22,10 @@ import { CourseNew } from '@/lib/types/course-new';
 import { supabase } from '@/integrations/supabase/client';
 import { DraggableCourseRow } from './course/DraggableCourseRow';
 import { BatchCourseActionToolbar } from './course/BatchCourseActionToolbar';
+import { Edit, Trash, MoreVertical, Eye, Copy, 
+  FileText, ArrowUpDown, FileCheck 
+} from "lucide-react";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 
 const CourseManagementNew = () => {
   const navigate = useNavigate();

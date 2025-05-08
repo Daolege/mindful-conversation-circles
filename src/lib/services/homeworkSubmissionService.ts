@@ -1,631 +1,409 @@
-import { supabase } from "@/integrations/supabase/client";
-import { Homework } from '@/lib/types/homework';
 
-export interface HomeworkSubmission {
-  id: string;
-  homework_id: string;
-  user_id: string;
-  lecture_id: string;
-  course_id: number;
-  content?: string;
-  answer?: string;
-  file_url?: string;
-  status: 'pending' | 'reviewed' | 'rejected';
-  score?: number;
-  feedback?: string;
-  submitted_at: string;
-  created_at?: string;
-  reviewed_at?: string;
-  user_name?: string;
-  user_email?: string;
-  homework?: {
-    id: string;
-    title: string;
-    type: string;
-    description?: string;
-  };
-}
+import { supabase } from '@/integrations/supabase/client';
+import { HomeworkSubmission } from '@/lib/types/homework';
 
 export interface CourseSection {
   id: string;
   title: string;
   position: number;
-  lectures: CourseLecture[];
-}
-
-export interface CourseLecture {
-  id: string;
-  title: string;
-  position: number;
-  requires_homework_completion: boolean;
+  lectures: {
+    id: string;
+    title: string;
+    position: number;
+    requires_homework_completion: boolean;
+  }[];
 }
 
 export interface HomeworkStats {
-  lectureStats: Array<{
-    lecture_id: string;
-    lecture_title: string;
-    section_id: string; 
-    section_title: string;
-    total: number;
-    reviewed: number;
-    pending: number;
-    rejected: number;
-    completion_rate: string;
-  }>;
-  overallStats: {
-    totalStudents: number;
-    totalSubmissions: number;
-    reviewedSubmissions: number;
-    pendingSubmissions: number;
-    rejectedSubmissions: number;
-    completionRate: string;
-    total_enrolled: number;
-    unique_submitters: number;
-    completion_rate: string;
-    reviewed_submissions: number;
-  };
+  enrolledStudents: number;
+  totalSubmissions: number;
+  homeworkLectures: number;
+  recentSubmissions: number;
 }
 
-export const getHomeworkSubmissionsByCourseId = async (courseId: number): Promise<HomeworkSubmission[]> => {
-  try {
-    const { data, error } = await supabase
-      .from('homework_submissions')
-      .select(`
-        id,
-        homework_id,
-        user_id,
-        lecture_id,
-        course_id,
-        content,
-        answer,
-        file_url,
-        status,
-        score,
-        feedback,
-        submitted_at,
-        created_at,
-        reviewed_at,
-        profiles:user_id (
-          email,
-          full_name
-        ),
-        homework:homework_id (
-          id,
-          title,
-          type,
-          description
-        )
-      `)
-      .eq('course_id', courseId)
-      .order('submitted_at', { ascending: false });
+export const getHomeworkSubmissionById = async (id: string): Promise<HomeworkSubmission> => {
+  // First get the submission data
+  const { data, error } = await supabase
+    .from('homework_submissions')
+    .select(`
+      id,
+      homework_id,
+      user_id,
+      lecture_id,
+      course_id,
+      answer,
+      file_url,
+      status,
+      score,
+      feedback,
+      submitted_at,
+      created_at,
+      reviewed_at
+    `)
+    .eq('id', id)
+    .single();
 
-    if (error) throw error;
+  if (error) throw error;
+  
+  // Then get the homework data
+  const { data: homeworkData, error: homeworkError } = await supabase
+    .from('homework')
+    .select('id, title, description, type')
+    .eq('id', data.homework_id)
+    .single();
     
-    if (!data || !Array.isArray(data)) return [];
+  // Get user profile data
+  const { data: profileData, error: profileError } = await supabase
+    .from('profiles')
+    .select('full_name, email')
+    .eq('id', data.user_id)
+    .single();
 
-    // Transform data to include user information with proper type checking
-    const submissions = data.map(item => {
-      if (!item) return null;
-      
-      // Use type assertion to handle the query result correctly
-      const itemObj = item as any;
-      
-      const submission: HomeworkSubmission = {
-        id: itemObj.id || '',
-        homework_id: itemObj.homework_id || '',
-        user_id: itemObj.user_id || '',
-        lecture_id: itemObj.lecture_id || '',
-        course_id: itemObj.course_id || 0,
-        content: itemObj.content,
-        answer: itemObj.answer,
-        file_url: itemObj.file_url,
-        status: (itemObj.status as 'pending' | 'reviewed' | 'rejected') || 'pending',
-        score: itemObj.score,
-        feedback: itemObj.feedback,
-        submitted_at: itemObj.submitted_at || new Date().toISOString(),
-        created_at: itemObj.created_at,
-        reviewed_at: itemObj.reviewed_at,
-        user_name: itemObj.profiles?.full_name || '未知用户',
-        user_email: itemObj.profiles?.email || '',
-        homework: itemObj.homework
-      };
-      
-      return submission;
-    }).filter(Boolean) as HomeworkSubmission[];
-    
-    return submissions;
-  } catch (error) {
-    console.error('Error fetching homework submissions:', error);
-    return [];
-  }
-};
+  // Format the data to match our interface
+  const submission: HomeworkSubmission = {
+    id: data.id,
+    homework_id: data.homework_id,
+    user_id: data.user_id,
+    lecture_id: data.lecture_id,
+    course_id: data.course_id,
+    answer: data.answer,
+    file_url: data.file_url,
+    status: (data.status as "pending" | "reviewed" | "rejected") || "pending",
+    score: data.score,
+    feedback: data.feedback,
+    submitted_at: data.submitted_at,
+    created_at: data.created_at,
+    reviewed_at: data.reviewed_at,
+    homework: homeworkError ? undefined : {
+      id: homeworkData.id,
+      title: homeworkData.title,
+      type: homeworkData.type,
+      description: homeworkData.description
+    },
+    user_name: profileError ? "用户名不详" : (profileData?.full_name || "用户名不详"),
+    user_email: profileError ? "" : (profileData?.email || "")
+  };
 
-export const getHomeworkSubmissionsByLectureId = async (lectureId: string): Promise<HomeworkSubmission[]> => {
-  try {
-    const { data, error } = await supabase
-      .from('homework_submissions')
-      .select(`
-        id,
-        homework_id,
-        user_id,
-        lecture_id,
-        course_id,
-        content,
-        answer,
-        file_url,
-        status,
-        score,
-        feedback,
-        submitted_at,
-        created_at,
-        reviewed_at,
-        profiles:user_id (
-          email,
-          full_name
-        ),
-        homework:homework_id (
-          id,
-          title,
-          type,
-          description
-        )
-      `)
-      .eq('lecture_id', lectureId)
-      .order('submitted_at', { ascending: false });
-
-    if (error) throw error;
-    
-    if (!data || !Array.isArray(data)) return [];
-
-    const submissions = data.map(item => {
-      if (!item) return null;
-      
-      // Use type assertion to handle the query result correctly
-      const itemObj = item as any;
-      
-      const submission: HomeworkSubmission = {
-        id: itemObj.id || '',
-        homework_id: itemObj.homework_id || '',
-        user_id: itemObj.user_id || '',
-        lecture_id: itemObj.lecture_id || '',
-        course_id: itemObj.course_id || 0,
-        content: itemObj.content,
-        answer: itemObj.answer,
-        file_url: itemObj.file_url,
-        status: (itemObj.status as 'pending' | 'reviewed' | 'rejected') || 'pending',
-        score: itemObj.score,
-        feedback: itemObj.feedback,
-        submitted_at: itemObj.submitted_at || new Date().toISOString(),
-        created_at: itemObj.created_at,
-        reviewed_at: itemObj.reviewed_at,
-        user_name: itemObj.profiles?.full_name || '未知用户',
-        user_email: itemObj.profiles?.email || '',
-        homework: itemObj.homework
-      };
-      
-      return submission;
-    }).filter(Boolean) as HomeworkSubmission[];
-    
-    return submissions;
-  } catch (error) {
-    console.error('Error fetching homework submissions by lecture:', error);
-    return [];
-  }
-};
-
-export const getHomeworkSubmissionsByStudentId = async (studentId: string, courseId?: number): Promise<HomeworkSubmission[]> => {
-  try {
-    let query = supabase
-      .from('homework_submissions')
-      .select(`
-        id,
-        homework_id,
-        user_id,
-        lecture_id,
-        course_id,
-        content,
-        answer,
-        file_url,
-        status,
-        score,
-        feedback,
-        submitted_at,
-        created_at,
-        reviewed_at,
-        profiles:user_id (
-          email,
-          full_name
-        ),
-        homework:homework_id (
-          id,
-          title,
-          type,
-          description
-        )
-      `)
-      .eq('user_id', studentId)
-      .order('submitted_at', { ascending: false });
-    
-    // Add course filter if provided
-    if (courseId) {
-      query = query.eq('course_id', courseId);
-    }
-    
-    const { data, error } = await query;
-
-    if (error) throw error;
-    
-    if (!data || !Array.isArray(data)) return [];
-
-    const submissions = data.map(item => {
-      if (!item) return null;
-      
-      // Use type assertion to handle the query result correctly
-      const itemObj = item as any;
-      
-      const submission: HomeworkSubmission = {
-        id: itemObj.id || '',
-        homework_id: itemObj.homework_id || '',
-        user_id: itemObj.user_id || '',
-        lecture_id: itemObj.lecture_id || '',
-        course_id: itemObj.course_id || 0,
-        content: itemObj.content,
-        answer: itemObj.answer,
-        file_url: itemObj.file_url,
-        status: (itemObj.status as 'pending' | 'reviewed' | 'rejected') || 'pending',
-        score: itemObj.score,
-        feedback: itemObj.feedback,
-        submitted_at: itemObj.submitted_at || new Date().toISOString(),
-        created_at: itemObj.created_at,
-        reviewed_at: itemObj.reviewed_at,
-        user_name: itemObj.profiles?.full_name || '未知用户',
-        user_email: itemObj.profiles?.email || '',
-        homework: itemObj.homework
-      };
-      
-      return submission;
-    }).filter(Boolean) as HomeworkSubmission[];
-    
-    return submissions;
-  } catch (error) {
-    console.error('Error fetching student homework submissions:', error);
-    return [];
-  }
-};
-
-export const getHomeworkSubmissionById = async (submissionId: string): Promise<HomeworkSubmission> => {
-  try {
-    const { data, error } = await supabase
-      .from('homework_submissions')
-      .select(`
-        id,
-        homework_id,
-        user_id,
-        lecture_id,
-        course_id,
-        content,
-        answer,
-        file_url,
-        status,
-        score,
-        feedback,
-        submitted_at,
-        created_at,
-        reviewed_at,
-        profiles:user_id (
-          email,
-          full_name
-        ),
-        homework:homework_id (
-          id,
-          title,
-          type,
-          description
-        )
-      `)
-      .eq('id', submissionId)
-      .single();
-
-    if (error) throw error;
-    
-    if (!data) {
-      throw new Error('Submission not found');
-    }
-
-    // Use type assertion to treat data as an object with required properties
-    const result: HomeworkSubmission = {
-      id: data.id,
-      homework_id: data.homework_id,
-      user_id: data.user_id,
-      lecture_id: data.lecture_id,
-      course_id: data.course_id,
-      content: data.content,
-      answer: data.answer,
-      file_url: data.file_url,
-      status: data.status as 'pending' | 'reviewed' | 'rejected',
-      score: data.score,
-      feedback: data.feedback,
-      submitted_at: data.submitted_at,
-      created_at: data.created_at,
-      reviewed_at: data.reviewed_at,
-      user_name: data.profiles?.full_name || '未知用户',
-      user_email: data.profiles?.email || '',
-      homework: data.homework
-    };
-    
-    return result;
-  } catch (error) {
-    console.error('Error fetching submission details:', error);
-    throw error;
-  }
-};
-
-export const getCourseStructureForHomework = async (courseId: number): Promise<CourseSection[]> => {
-  try {
-    const { data, error } = await supabase
-      .from('course_sections')
-      .select(`
-        id, 
-        title, 
-        position,
-        lectures:course_lectures(
-          id,
-          title,
-          position,
-          requires_homework_completion
-        )
-      `)
-      .eq('course_id', courseId)
-      .order('position', { ascending: true });
-    
-    if (error) throw error;
-    
-    // Sort lectures within each section by position
-    const sections = (data || []).map(section => ({
-      id: section.id,
-      title: section.title,
-      position: section.position,
-      lectures: (section.lectures || []).map(lecture => ({
-        id: lecture.id,
-        title: lecture.title,
-        position: lecture.position,
-        // Ensure requires_homework_completion is boolean
-        requires_homework_completion: lecture.requires_homework_completion === true
-      })).sort((a, b) => a.position - b.position)
-    })).sort((a, b) => a.position - b.position);
-    
-    return sections;
-  } catch (error) {
-    console.error('Error fetching course structure:', error);
-    return [];
-  }
-};
-
-export const getStudentsWithoutSubmission = async (lectureId: string, courseId: number): Promise<any[]> => {
-  try {
-    // First get all course enrollees
-    const { data: enrollees, error: enrolleesError } = await supabase
-      .from('user_courses')
-      .select(`
-        user_id,
-        profiles:user_id (
-          email,
-          full_name
-        )
-      `)
-      .eq('course_id', courseId);
-    
-    if (enrolleesError) throw enrolleesError;
-    
-    // Get all homework for this lecture
-    const { data: homeworks, error: homeworkError } = await supabase
-      .from('homework')
-      .select('id')
-      .eq('lecture_id', lectureId);
-    
-    if (homeworkError) throw homeworkError;
-    
-    // If there are no homeworks for this lecture, all students technically haven't submitted
-    if (!homeworks || homeworks.length === 0) {
-      return (enrollees || []).map((enrollee: any) => ({
-        user_id: enrollee.user_id,
-        user_name: enrollee.profiles?.full_name || '未知用户',
-        user_email: enrollee.profiles?.email || ''
-      }));
-    }
-    
-    // Get all submissions for these homeworks
-    const homeworkIds = homeworks.map(hw => hw.id);
-    const { data: submissions, error: submissionsError } = await supabase
-      .from('homework_submissions')
-      .select('user_id')
-      .in('homework_id', homeworkIds);
-    
-    if (submissionsError) throw submissionsError;
-    
-    // Find users who haven't submitted
-    const submittedUserIds = (submissions || []).map((sub: any) => sub.user_id);
-    const nonSubmitters = (enrollees || []).filter((enrollee: any) => 
-      !submittedUserIds.includes(enrollee.user_id)
-    );
-    
-    return nonSubmitters.map((enrollee: any) => ({
-      user_id: enrollee.user_id,
-      user_name: enrollee.profiles?.full_name || '未知用户',
-      user_email: enrollee.profiles?.email || ''
-    }));
-  } catch (error) {
-    console.error('Error fetching students without submission:', error);
-    return [];
-  }
-};
-
-export const getHomeworkCompletionStats = async (courseId: number): Promise<HomeworkStats> => {
-  try {
-    // Get all lectures in the course
-    const { data: lectures, error: lectureError } = await supabase
-      .from('course_lectures')
-      .select(`
-        id,
-        title,
-        section_id,
-        course_sections!inner (
-          id,
-          title,
-          course_id
-        )
-      `)
-      .eq('course_sections.course_id', courseId);
-    
-    if (lectureError) throw lectureError;
-    
-    // Get all homework submissions grouped by lecture
-    const { data: submissions, error: submissionError } = await supabase
-      .from('homework_submissions')
-      .select('lecture_id, status')
-      .eq('course_id', courseId);
-    
-    if (submissionError) throw submissionError;
-    
-    // Process stats by lecture
-    const lectureStats = (lectures || []).map((lecture: any) => {
-      const lectureSubmissions = (submissions || []).filter((s: any) => s.lecture_id === lecture.id);
-      const totalSubmissions = lectureSubmissions.length;
-      const reviewedSubmissions = lectureSubmissions.filter((s: any) => s.status === 'reviewed').length;
-      const pendingSubmissions = lectureSubmissions.filter((s: any) => s.status === 'pending').length;
-      const rejectedSubmissions = lectureSubmissions.filter((s: any) => s.status === 'rejected').length;
-      
-      return {
-        lecture_id: lecture.id,
-        lecture_title: lecture.title,
-        section_id: lecture.section_id,
-        section_title: lecture.course_sections.title,
-        total: totalSubmissions,
-        reviewed: reviewedSubmissions,
-        pending: pendingSubmissions,
-        rejected: rejectedSubmissions,
-        completion_rate: totalSubmissions > 0 
-          ? (reviewedSubmissions / totalSubmissions * 100).toFixed(1) 
-          : '0'
-      };
-    });
-    
-    // Get student count for the course
-    const { count } = await supabase
-      .from('user_courses')
-      .select('user_id', { count: 'exact', head: true })
-      .eq('course_id', courseId);
-    
-    const studentCount = count || 0;
-    
-    // Calculate overall stats
-    const totalSubmissions = (submissions || []).length;
-    const reviewedSubmissions = (submissions || []).filter((s: any) => s.status === 'reviewed').length;
-    const pendingSubmissions = (submissions || []).filter((s: any) => s.status === 'pending').length;
-    const rejectedSubmissions = (submissions || []).filter((s: any) => s.status === 'rejected').length;
-    const completionRateValue = totalSubmissions > 0 
-      ? (reviewedSubmissions / totalSubmissions * 100).toFixed(1) 
-      : '0';
-    const uniqueSubmitters = new Set((submissions || []).map((s: any) => s.user_id)).size;
-    
-    return {
-      lectureStats,
-      overallStats: {
-        totalStudents: studentCount,
-        totalSubmissions,
-        reviewedSubmissions,
-        pendingSubmissions,
-        rejectedSubmissions,
-        completionRate: completionRateValue,
-        total_enrolled: studentCount,
-        unique_submitters: uniqueSubmitters,
-        completion_rate: completionRateValue,
-        reviewed_submissions: reviewedSubmissions
-      }
-    };
-  } catch (error) {
-    console.error('Error fetching homework completion stats:', error);
-    return {
-      lectureStats: [],
-      overallStats: {
-        totalStudents: 0,
-        totalSubmissions: 0,
-        reviewedSubmissions: 0,
-        pendingSubmissions: 0,
-        rejectedSubmissions: 0,
-        completionRate: '0',
-        total_enrolled: 0,
-        unique_submitters: 0,
-        completion_rate: '0',
-        reviewed_submissions: 0
-      }
-    };
-  }
+  return submission;
 };
 
 export const updateHomeworkFeedback = async (
-  submissionId: string, 
+  id: string, 
   feedback: string, 
   status: 'pending' | 'reviewed' | 'rejected',
-  score?: number
-) => {
-  try {
-    const updateData: any = { 
-      feedback, 
-      status,
-      reviewed_at: new Date().toISOString()
-    };
-    
-    // Only include score if it's defined
-    if (score !== undefined) {
-      updateData.score = score;
-    }
-    
-    const { error } = await supabase
-      .from('homework_submissions')
-      .update(updateData)
-      .eq('id', submissionId);
-    
-    if (error) throw error;
-    
-    return { success: true };
-  } catch (error) {
-    console.error('Error updating homework feedback:', error);
-    throw error;
+  score?: number 
+): Promise<void> => {
+  const updateData: any = {
+    feedback,
+    status,
+    reviewed_at: new Date().toISOString()
+  };
+
+  if (typeof score === 'number') {
+    updateData.score = score;
   }
+
+  const { error } = await supabase
+    .from('homework_submissions')
+    .update(updateData)
+    .eq('id', id);
+
+  if (error) throw error;
+};
+
+export const getHomeworkSubmissionsByCourseId = async (courseId: number): Promise<HomeworkSubmission[]> => {
+  // Get all submissions for the course
+  const { data, error } = await supabase
+    .from('homework_submissions')
+    .select(`
+      id,
+      homework_id,
+      user_id,
+      lecture_id,
+      course_id,
+      status,
+      created_at
+    `)
+    .eq('course_id', courseId)
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+
+  // Get user profiles for each submission
+  const submissions: HomeworkSubmission[] = await Promise.all((data || []).map(async (item) => {
+    // Get profile data for each user
+    const { data: profileData } = await supabase
+      .from('profiles')
+      .select('full_name, email')
+      .eq('id', item.user_id)
+      .single();
+      
+    return {
+      id: item.id,
+      homework_id: item.homework_id,
+      user_id: item.user_id,
+      lecture_id: item.lecture_id,
+      course_id: item.course_id,
+      created_at: item.created_at,
+      user_name: profileData?.full_name || "用户名不详",
+      user_email: profileData?.email || "",
+      status: (item.status as "pending" | "reviewed" | "rejected") || "pending"
+    };
+  }));
+
+  return submissions;
+};
+
+export const getHomeworkSubmissionsByLectureId = async (lectureId: string): Promise<HomeworkSubmission[]> => {
+  // Get all submissions for the lecture
+  const { data, error } = await supabase
+    .from('homework_submissions')
+    .select(`
+      id,
+      homework_id,
+      user_id,
+      lecture_id,
+      course_id,
+      status,
+      created_at
+    `)
+    .eq('lecture_id', lectureId)
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+
+  // Get user profiles for each submission
+  const submissions: HomeworkSubmission[] = await Promise.all((data || []).map(async (item) => {
+    // Get profile data for each user
+    const { data: profileData } = await supabase
+      .from('profiles')
+      .select('full_name, email')
+      .eq('id', item.user_id)
+      .single();
+      
+    return {
+      id: item.id,
+      homework_id: item.homework_id,
+      user_id: item.user_id,
+      lecture_id: item.lecture_id,
+      course_id: item.course_id,
+      created_at: item.created_at,
+      user_name: profileData?.full_name || "用户名不详",
+      user_email: profileData?.email || "",
+      status: (item.status as "pending" | "reviewed" | "rejected") || "pending"
+    };
+  }));
+
+  return submissions;
+};
+
+export const getHomeworkSubmissionsByStudentId = async (
+  studentId: string, 
+  courseId: number
+): Promise<HomeworkSubmission[]> => {
+  // Get all submissions for the student and course
+  const { data, error } = await supabase
+    .from('homework_submissions')
+    .select(`
+      id,
+      homework_id,
+      user_id,
+      lecture_id,
+      course_id,
+      answer,
+      file_url,
+      status,
+      score,
+      feedback,
+      submitted_at,
+      created_at
+    `)
+    .eq('user_id', studentId)
+    .eq('course_id', courseId)
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+
+  // Get user profile data
+  const { data: userData } = await supabase
+    .from('profiles')
+    .select('full_name, email')
+    .eq('id', studentId)
+    .single();
+
+  const userName = userData?.full_name || "用户名不详";
+  const userEmail = userData?.email || "";
+
+  // Get homework details for each submission
+  const submissions: HomeworkSubmission[] = await Promise.all((data || []).map(async (item) => {
+    // Get homework data
+    const { data: homeworkData } = await supabase
+      .from('homework')
+      .select('id, title, description, type')
+      .eq('id', item.homework_id)
+      .single();
+      
+    const homework = homeworkData ? {
+      id: homeworkData.id,
+      title: homeworkData.title,
+      description: homeworkData.description,
+      type: homeworkData.type
+    } : undefined;
+
+    return {
+      id: item.id,
+      homework_id: item.homework_id,
+      user_id: item.user_id,
+      lecture_id: item.lecture_id, 
+      course_id: item.course_id,
+      answer: item.answer,
+      file_url: item.file_url,
+      status: (item.status as "pending" | "reviewed" | "rejected") || "pending",
+      score: item.score,
+      feedback: item.feedback,
+      submitted_at: item.submitted_at,
+      created_at: item.created_at,
+      homework: homework,
+      user_name: userName,
+      user_email: userEmail
+    };
+  }));
+
+  return submissions;
+};
+
+export const getStudentsWithoutSubmission = async (
+  lectureId: string, 
+  courseId: number
+): Promise<{ id: string; full_name: string; email: string }[]> => {
+  // Get enrolled students
+  const { data: enrolled, error: enrolledError } = await supabase
+    .from('course_enrollments')
+    .select('user_id')
+    .eq('course_id', courseId);
+
+  if (enrolledError) throw enrolledError;
+
+  // Get students who submitted
+  const { data: submitted, error: submittedError } = await supabase
+    .from('homework_submissions')
+    .select('user_id')
+    .eq('lecture_id', lectureId)
+    .eq('course_id', courseId);
+
+  if (submittedError) throw submittedError;
+
+  // Find students who did not submit
+  const submittedIds = new Set((submitted || []).map(s => s.user_id));
+  const notSubmittedIds = (enrolled || [])
+    .filter(enrollment => !submittedIds.has(enrollment.user_id))
+    .map(enrollment => enrollment.user_id);
+
+  if (notSubmittedIds.length === 0) {
+    return [];
+  }
+
+  // Get user profiles for non-submitted students
+  const { data: profiles, error: profilesError } = await supabase
+    .from('profiles')
+    .select('id, full_name, email')
+    .in('id', notSubmittedIds);
+
+  if (profilesError) throw profilesError;
+
+  return (profiles || []).map(profile => ({
+    id: profile.id,
+    full_name: profile.full_name || '用户名不详',
+    email: profile.email || ''
+  }));
+};
+
+export const getHomeworkCompletionStats = async (courseId: number): Promise<HomeworkStats> => {
+  // Get total enrolled students
+  const { count: enrolledCount } = await supabase
+    .from('course_enrollments')
+    .select('*', { count: 'exact', head: true })
+    .eq('course_id', courseId);
+
+  // Get total submissions
+  const { count: submissionsCount } = await supabase
+    .from('homework_submissions')
+    .select('*', { count: 'exact', head: true })
+    .eq('course_id', courseId);
+
+  // Get lectures that require homework
+  const { data: lecturesData } = await supabase
+    .from('course_lectures')
+    .select('id')
+    .eq('requires_homework_completion', true)
+    .order('id');
+
+  const lecturesCount = lecturesData?.length || 0;
+
+  // Get recent submissions (last 7 days)
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  
+  const { count: recentCount } = await supabase
+    .from('homework_submissions')
+    .select('*', { count: 'exact', head: true })
+    .eq('course_id', courseId)
+    .gte('created_at', sevenDaysAgo.toISOString());
+
+  return {
+    enrolledStudents: enrolledCount || 0,
+    totalSubmissions: submissionsCount || 0,
+    homeworkLectures: lecturesCount,
+    recentSubmissions: recentCount || 0
+  };
 };
 
 export const batchUpdateHomeworkFeedback = async (
-  submissionIds: string[], 
-  updateData: { status: 'pending' | 'reviewed' | 'rejected', feedback: string, score?: number }
-) => {
-  try {
-    // Process in batches to avoid hitting limits
-    const batchSize = 20;
-    const batches = [];
-    
-    for (let i = 0; i < submissionIds.length; i += batchSize) {
-      const batch = submissionIds.slice(i, i + batchSize);
-      batches.push(batch);
-    }
-    
-    const reviewedAt = new Date().toISOString();
-    
-    for (const batch of batches) {
-      const { error } = await supabase
-        .from('homework_submissions')
-        .update({ 
-          ...updateData,
-          reviewed_at: reviewedAt
-        })
-        .in('id', batch);
-      
-      if (error) throw error;
-    }
-    
-    return { success: true };
-  } catch (error) {
-    console.error('Error batch updating homework feedback:', error);
-    throw error;
+  submissionIds: string[],
+  update: { status: 'reviewed' | 'rejected'; feedback: string; score?: number }
+): Promise<void> => {
+  const updateData: any = {
+    status: update.status,
+    feedback: update.feedback,
+    reviewed_at: new Date().toISOString()
+  };
+
+  if (typeof update.score === 'number') {
+    updateData.score = update.score;
   }
+
+  const { error } = await supabase
+    .from('homework_submissions')
+    .update(updateData)
+    .in('id', submissionIds);
+
+  if (error) throw error;
+};
+
+export const getCourseStructureForHomework = async (courseId: number): Promise<CourseSection[]> => {
+  const { data, error } = await supabase
+    .from('course_sections')
+    .select(`
+      id,
+      title,
+      position,
+      course_lectures (
+        id,
+        title,
+        position,
+        requires_homework_completion
+      )
+    `)
+    .eq('course_id', courseId)
+    .order('position', { ascending: true });
+
+  if (error) throw error;
+
+  return data.map(section => ({
+    ...section,
+    lectures: (section.course_lectures || []).map(lecture => ({
+      ...lecture,
+      requires_homework_completion: lecture.requires_homework_completion || false
+    }))
+  }));
 };

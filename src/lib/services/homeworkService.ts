@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Homework, HomeworkSubmission } from '@/lib/types/homework';
 
@@ -78,7 +79,15 @@ export async function getHomeworkSubmissionsByUserAndLecture(
       return [];
     }
 
-    return submissions || [];
+    // Convert raw data to HomeworkSubmission type with proper status typing
+    const typedSubmissions = (submissions || []).map((sub: any) => {
+      return {
+        ...sub,
+        status: sub.status as 'pending' | 'reviewed' | 'rejected'
+      } as HomeworkSubmission;
+    });
+
+    return typedSubmissions;
   } catch (error) {
     console.error('Unexpected error fetching homework submissions:', error);
     return [];
@@ -169,7 +178,13 @@ export async function createHomeworkSubmission(
       return { data: null, error };
     }
 
-    return { data, error: null };
+    // Ensure the returned data conforms to HomeworkSubmission type
+    const typedData: HomeworkSubmission = {
+      ...data,
+      status: (data.status as 'pending' | 'reviewed' | 'rejected') || 'pending'
+    };
+
+    return { data: typedData, error: null };
   } catch (error) {
     console.error('Unexpected error creating homework submission:', error);
     return { data: null, error: error as Error };
