@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
 import { CourseOutlineNavigation } from './CourseOutlineNavigation';
 import { HomeworkSubmissionsList } from './HomeworkSubmissionsList';
@@ -8,8 +8,6 @@ import { HomeworkSubmissionDetail } from './HomeworkSubmissionDetail';
 import { StudentHomeworkList } from './StudentHomeworkList';
 import { NotSubmittedStudentsList } from './NotSubmittedStudentsList';
 import { HomeworkStatsDashboard } from './HomeworkStatsDashboard';
-import { PdfExportService } from './PdfExportService';
-import { EnrollmentSubmissionStats } from './EnrollmentSubmissionStats';
 import { AdminBreadcrumb } from './AdminBreadcrumb';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -18,28 +16,23 @@ import {
   ResizableHandle,
 } from "@/components/ui/resizable";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription
-} from "@/components/ui/dialog";
-import {
   getCourseStructureForHomework,
   getHomeworkSubmissionsByCourseId,
-  getHomeworkSubmissionsByLectureId,
-  getHomeworkSubmissionsByStudentId,
-  getStudentsWithoutSubmission,
-  getHomeworkCompletionStats,
-  HomeworkStats,
-  CourseSection as HomeworkCourseSection
+  getHomeworkByLectureId
 } from '@/lib/services/homeworkSubmissionService';
-import { HomeworkSubmission } from '@/lib/types/homework';
-import { Homework } from '@/lib/types/homework';
-import { getHomeworkByLectureId } from '@/lib/services/homeworkService';
 
-// Define a local type that uses the existing type but renames it to avoid conflict
-type LocalCourseSection = HomeworkCourseSection;
+// Define a local type for course sections
+export type CourseSection = {
+  id: string;
+  title: string;
+  position: number;
+  lectures: {
+    id: string;
+    title: string;
+    position: number;
+    requires_homework_completion: boolean;
+  }[];
+};
 
 export const HomeworkSubmissionsView = () => {
   const { courseId } = useParams<{ courseId: string }>();
@@ -50,7 +43,6 @@ export const HomeworkSubmissionsView = () => {
   const [selectedHomeworkId, setSelectedHomeworkId] = useState<string | null>(null);
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
   const [selectedSubmissionId, setSelectedSubmissionId] = useState<string | null>(null);
-  const [openExportDialog, setOpenExportDialog] = useState<boolean>(false);
   
   // Convert courseId to number
   const courseIdNumber = courseId ? parseInt(courseId, 10) : 0;
@@ -76,8 +68,8 @@ export const HomeworkSubmissionsView = () => {
     enabled: !!courseIdNumber && courseIdNumber > 0,
   });
   
-  // Transform the fetched data to ensure it matches the expected local type
-  const sections: LocalCourseSection[] = React.useMemo(() => {
+  // Transform the fetched data to ensure it matches the expected type
+  const sections: CourseSection[] = React.useMemo(() => {
     if (!courseSectionsData) return [];
     
     return courseSectionsData.map(section => ({
@@ -110,7 +102,7 @@ export const HomeworkSubmissionsView = () => {
   } = useQuery({
     queryKey: ['homeworks-by-lecture', courseIdNumber],
     queryFn: async () => {
-      const result: Record<string, Homework[]> = {};
+      const result: Record<string, any[]> = {};
       
       if (!courseSectionsData) return result;
       
@@ -143,17 +135,11 @@ export const HomeworkSubmissionsView = () => {
       result[lectureId] = homeworks.map(homework => {
         // Count submissions for this homework
         const submissions = allSubmissions?.filter(s => s.homework_id === homework.id) || [];
-        const pending = submissions.filter(s => s.status === 'pending').length;
-        const reviewed = submissions.filter(s => s.status === 'reviewed').length;
-        const rejected = submissions.filter(s => s.status === 'rejected').length;
         
         return {
           ...homework,
           submissionStats: {
-            total: submissions.length,
-            pending,
-            reviewed,
-            rejected
+            total: submissions.length
           }
         };
       });
@@ -197,19 +183,15 @@ export const HomeworkSubmissionsView = () => {
 
   // Calculate submission statistics for navigation
   const submissionStats = React.useMemo(() => {
-    const stats: Record<string, { total: number; pending: number; reviewed: number; rejected: number }> = {};
+    const stats: Record<string, { total: number }> = {};
     
     const submissions = allSubmissions || [];
     submissions.forEach(submission => {
       if (!stats[submission.lecture_id]) {
-        stats[submission.lecture_id] = { total: 0, pending: 0, reviewed: 0, rejected: 0 };
+        stats[submission.lecture_id] = { total: 0 };
       }
       
       stats[submission.lecture_id].total++;
-      
-      if (submission.status === 'pending') stats[submission.lecture_id].pending++;
-      else if (submission.status === 'reviewed') stats[submission.lecture_id].reviewed++;
-      else if (submission.status === 'rejected') stats[submission.lecture_id].rejected++;
     });
     
     return stats;
@@ -256,7 +238,7 @@ export const HomeworkSubmissionsView = () => {
         {/* Main Content Area */}
         <ResizablePanel defaultSize={75} className="bg-white p-4">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="w-full justify-between mb-4">
+            <TabsList className="w-full justify-start mb-4 space-x-2">
               <TabsTrigger value="submissions">作业提交</TabsTrigger>
               <TabsTrigger value="not-submitted">未提交学生</TabsTrigger>
               <TabsTrigger value="stats">统计报表</TabsTrigger>
@@ -273,6 +255,7 @@ export const HomeworkSubmissionsView = () => {
                 homeworkId={selectedHomeworkId}
                 lectureId={selectedLectureId}
                 onSelectStudent={handleViewStudent}
+                onViewSubmission={setSelectedSubmissionId}
               />
             </TabsContent>
             
@@ -304,30 +287,20 @@ export const HomeworkSubmissionsView = () => {
                 <HomeworkSubmissionDetail 
                   submissionId={selectedSubmissionId}
                   onViewStudent={handleViewStudent}
+                  onBack={() => {
+                    setSelectedSubmissionId(null);
+                    if (selectedStudentId) {
+                      setActiveTab('student');
+                    } else {
+                      setActiveTab('submissions');
+                    }
+                  }}
                 />
               )}
             </TabsContent>
           </Tabs>
         </ResizablePanel>
       </ResizablePanelGroup>
-
-      {/* Export Dialog - kept for compatibility */}
-      <Dialog open={openExportDialog} onOpenChange={setOpenExportDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>导出作业PDF</DialogTitle>
-            <DialogDescription>
-              自定义导出PDF文档的内容和格式
-            </DialogDescription>
-          </DialogHeader>
-          <PdfExportService
-            submissions={[]}
-            studentName="学生名"
-            courseTitle={`课程 ${courseId}`}
-            onExportComplete={() => setOpenExportDialog(false)}
-          />
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };

@@ -11,7 +11,6 @@ import {
   User,
   FileText
 } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
 import { formatDistanceToNow } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 import { RichTextDisplay } from './RichTextDisplay';
@@ -24,7 +23,6 @@ interface HomeworkSubmissionDetailProps {
   onBack?: () => void;
   hasNext?: boolean;
   hasPrev?: boolean;
-  viewOnly?: boolean;
 }
 
 export const HomeworkSubmissionDetail: React.FC<HomeworkSubmissionDetailProps> = ({ 
@@ -34,8 +32,7 @@ export const HomeworkSubmissionDetail: React.FC<HomeworkSubmissionDetailProps> =
   onViewStudent,
   onBack,
   hasNext = false,
-  hasPrev = false,
-  viewOnly = false
+  hasPrev = false
 }) => {
   const { data: submission, isLoading, error } = useQuery({
     queryKey: ['homework-submission', submissionId],
@@ -67,19 +64,6 @@ export const HomeworkSubmissionDetail: React.FC<HomeworkSubmissionDetailProps> =
   }
 
   if (error || !submission) return <div className="p-8">加载作业提交信息出错</div>;
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return <Badge>待审核</Badge>;
-      case 'reviewed':
-        return <Badge variant="success">已通过</Badge>;
-      case 'rejected':
-        return <Badge variant="destructive">未通过</Badge>;
-      default:
-        return <Badge>未知状态</Badge>;
-    }
-  };
 
   // Format the date using date-fns
   const submissionDate = submission.created_at 
@@ -151,7 +135,6 @@ export const HomeworkSubmissionDetail: React.FC<HomeworkSubmissionDetailProps> =
             <div>
               <CardTitle className="flex items-center gap-2">
                 作业提交详情
-                {!viewOnly && getStatusBadge(submission.status)}
               </CardTitle>
               <CardDescription className="mt-1">
                 <div className="flex items-center">
@@ -227,18 +210,7 @@ export const HomeworkSubmissionDetail: React.FC<HomeworkSubmissionDetailProps> =
             </div>
           </div>
           
-          {!viewOnly && submission.feedback && (
-            <div>
-              <h3 className="text-lg font-medium mb-2">教师反馈</h3>
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <div className="whitespace-pre-wrap">
-                  {submission.feedback}
-                </div>
-              </div>
-            </div>
-          )}
-          
-          {/* Export PDF button (if needed) */}
+          {/* Export PDF button */}
           <div className="flex justify-end">
             <Button
               variant="outline"

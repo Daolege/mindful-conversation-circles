@@ -1,169 +1,215 @@
 
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Loader2, Search, Calendar, FileText, User, Eye } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Loader2, Search, FileText, User } from 'lucide-react';
 import { format } from 'date-fns';
+import { HomeworkSubmission } from '@/lib/types/homework';
 
 interface HomeworkSubmissionsListProps {
-  homeworkId?: string;
-  lectureId?: string;
-  onSelectStudent: (studentId: string) => void;
+  lectureId?: string | null;
+  homeworkId?: string | null;
+  onSelectStudent?: (studentId: string) => void;
+  onViewSubmission?: (submissionId: string) => void;
 }
 
-export const HomeworkSubmissionsList: React.FC<HomeworkSubmissionsListProps> = ({ 
-  homeworkId,
+export const HomeworkSubmissionsList: React.FC<HomeworkSubmissionsListProps> = ({
   lectureId,
-  onSelectStudent
+  homeworkId,
+  onSelectStudent,
+  onViewSubmission
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   
-  // Fetch submissions for this homework
+  // Fetch submissions based on lecture ID and/or homework ID
   const { data: submissions, isLoading } = useQuery({
-    queryKey: ['homework-submissions-by-homework', homeworkId],
+    queryKey: ['homework-submissions', lectureId, homeworkId],
     queryFn: async () => {
-      if (!homeworkId) return [];
-      
-      // First fetch the homework submissions
-      const { data: submissionsData, error: submissionsError } = await supabase
-        .from('homework_submissions')
-        .select(`
-          id,
-          user_id,
-          created_at,
-          submitted_at
-        `)
-        .eq('homework_id', homeworkId)
-        .order('created_at', { ascending: false });
+      try {
+        let query = supabase
+          .from('homework_submissions')
+          .select(`
+            id,
+            homework_id,
+            user_id,
+            lecture_id,
+            course_id,
+            created_at,
+            submitted_at,
+            homework:homework_id (
+              title
+            ),
+            profiles:user_id (
+              full_name,
+              email
+            )
+          `)
+          .order('created_at', { ascending: false });
         
-      if (submissionsError) {
-        console.error('Error fetching homework submissions:', submissionsError);
+        if (lectureId) {
+          query = query.eq('lecture_id', lectureId);
+        }
+        
+        if (homeworkId) {
+          query = query.eq('homework_id', homeworkId);
+        }
+        
+        const { data, error } = await query;
+        
+        if (error) throw error;
+        
+        return data.map(item => ({
+          id: item.id,
+          homework_id: item.homework_id,
+          lecture_id: item.lecture_id,
+          course_id: item.course_id,
+          user_id: item.user_id,
+          created_at: item.created_at,
+          submitted_at: item.submitted_at,
+          homework_title: item.homework?.title || '未命名作业',
+          user_name: item.profiles?.full_name || '未知用户',
+          user_email: item.profiles?.email || ''
+        }));
+      } catch (error) {
+        console.error('Error fetching submissions:', error);
         return [];
       }
-      
-      // For each submission, fetch the user profile data separately
-      const submissionsWithUserData = await Promise.all((submissionsData || []).map(async (submission) => {
-        // Get user profile data
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('full_name, email')
-          .eq('id', submission.user_id)
-          .single();
-          
-        return {
-          ...submission,
-          user_name: profileData?.full_name || '用户名不详',
-          user_email: profileData?.email || ''
-        };
-      }));
-      
-      return submissionsWithUserData || [];
     },
-    enabled: !!homeworkId,
-    staleTime: 5 * 60 * 1000
+    enabled: !!lectureId || !!homeworkId
   });
-  
-  // Filter submissions based on search term
+
+  // Fetch homework details if homeworkId is provided
+  const { data: homeworkDetails } = useQuery({
+    queryKey: ['homework-details', homeworkId],
+    queryFn: async () => {
+      if (!homeworkId) return null;
+      
+      const { data, error } = await supabase
+        .from('homework')
+        .select('title, description')
+        .eq('id', homeworkId)
+        .single();
+      
+      if (error) {
+        console.error('Error fetching homework details:', error);
+        return null;
+      }
+      
+      return data;
+    },
+    enabled: !!homeworkId
+  });
+
+  // Filter submissions by search term
   const filteredSubmissions = submissions?.filter(submission => {
-    if (!searchTerm) return true;
-    
     const searchLower = searchTerm.toLowerCase();
-    const fullName = submission.user_name?.toLowerCase() || '';
-    const email = submission.user_email?.toLowerCase() || '';
-    
-    return fullName.includes(searchLower) || email.includes(searchLower);
+    return (
+      submission.user_name.toLowerCase().includes(searchLower) ||
+      submission.user_email.toLowerCase().includes(searchLower) ||
+      submission.homework_title.toLowerCase().includes(searchLower)
+    );
   });
 
-  // Format date
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return '未知时间';
-    try {
-      return format(new Date(dateString), 'yyyy-MM-dd HH:mm');
-    } catch (err) {
-      return '日期格式错误';
-    }
-  };
-  
-  if (isLoading) {
+  if (!lectureId && !homeworkId) {
     return (
-      <div className="flex justify-center p-8">
-        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-      </div>
+      <Card>
+        <CardContent className="pt-6">
+          <div className="text-center p-8 text-gray-500">
+            请从左侧大纲中选择一个课时或作业
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
-  if (!homeworkId) {
-    return (
-      <div className="flex flex-col items-center justify-center p-8 text-center text-gray-500">
-        <FileText className="h-12 w-12 mb-4" />
-        <h3 className="text-lg font-medium mb-2">请选择作业</h3>
-        <p>从左侧课程大纲中选择一个作业，查看学生提交列表</p>
-      </div>
-    );
-  }
-  
   return (
-    <div>
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-medium">学生提交列表</h3>
-        <div className="relative w-64">
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle>
+              {homeworkDetails ? `作业: ${homeworkDetails.title}` : '作业提交列表'}
+            </CardTitle>
+            {homeworkDetails?.description && (
+              <CardDescription className="mt-2 line-clamp-2">
+                {homeworkDetails.description}
+              </CardDescription>
+            )}
+          </div>
+        </div>
+
+        <div className="mt-4">
           <Input
-            placeholder="搜索学生名或邮箱..."
+            placeholder="搜索学生姓名或邮箱..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-8"
+            className="w-full"
+            icon={<Search className="h-4 w-4" />}
           />
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
         </div>
-      </div>
+      </CardHeader>
       
-      {filteredSubmissions && filteredSubmissions.length > 0 ? (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>用户名</TableHead>
-              <TableHead>邮箱</TableHead>
-              <TableHead>提交时间</TableHead>
-              <TableHead className="text-right">操作</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredSubmissions.map(submission => (
-              <TableRow key={submission.id}>
-                <TableCell className="font-medium">{submission.user_name}</TableCell>
-                <TableCell>{submission.user_email}</TableCell>
-                <TableCell>{formatDate(submission.submitted_at || submission.created_at)}</TableCell>
-                <TableCell className="text-right">
+      <CardContent>
+        {isLoading ? (
+          <div className="flex justify-center p-8">
+            <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+          </div>
+        ) : filteredSubmissions && filteredSubmissions.length > 0 ? (
+          <div className="space-y-4">
+            {filteredSubmissions.map((submission) => (
+              <div key={submission.id} className="border rounded-lg p-4 hover:border-gray-400 transition-colors">
+                <div className="flex items-center justify-between">
+                  <div className="flex-grow">
+                    <div className="flex items-center">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="p-0 h-auto font-medium hover:bg-transparent justify-start"
+                        onClick={() => onSelectStudent && onSelectStudent(submission.user_id)}
+                      >
+                        <User className="h-4 w-4 mr-2 text-gray-500" />
+                        {submission.user_name}
+                      </Button>
+                      <span className="mx-2 text-gray-400">•</span>
+                      <span className="text-sm text-gray-500">{submission.user_email}</span>
+                    </div>
+                    
+                    <div className="mt-1">
+                      <div className="text-sm">
+                        作业: <span className="font-medium">{submission.homework_title}</span>
+                      </div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        提交时间: {submission.submitted_at ? 
+                          format(new Date(submission.submitted_at), 'yyyy-MM-dd HH:mm:ss') : 
+                          format(new Date(submission.created_at), 'yyyy-MM-dd HH:mm:ss')
+                        }
+                      </div>
+                    </div>
+                  </div>
+                  
                   <Button
-                    variant="outline" 
+                    variant="outline"
                     size="sm"
-                    onClick={() => onSelectStudent(submission.user_id)}
-                    className="flex items-center gap-1"
+                    className="ml-4"
+                    onClick={() => onViewSubmission && onViewSubmission(submission.id)}
                   >
-                    <Eye className="h-4 w-4" />
+                    <FileText className="h-4 w-4 mr-2" />
                     查看作业
                   </Button>
-                </TableCell>
-              </TableRow>
+                </div>
+              </div>
             ))}
-          </TableBody>
-        </Table>
-      ) : (
-        <div className="text-center py-8 text-gray-500">
-          {searchTerm ? '没有找到匹配的提交' : '暂无作业提交'}
-        </div>
-      )}
-      
-      {/* Submission count */}
-      {filteredSubmissions && filteredSubmissions.length > 0 && (
-        <div className="mt-4 text-sm text-gray-500">
-          共 {filteredSubmissions.length} 份作业提交
-        </div>
-      )}
-    </div>
+          </div>
+        ) : (
+          <div className="text-center p-8 text-gray-500">
+            没有找到符合条件的作业提交
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 };
 

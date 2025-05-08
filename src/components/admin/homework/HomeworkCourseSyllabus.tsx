@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { ChevronDown, ChevronUp, Video, BookOpen, Check, Circle, FileText, Clock, AlertCircle } from "lucide-react";
+import { ChevronDown, ChevronUp, Video, BookOpen, FileText, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { AnimatedCollapsible } from '@/components/ui/animated-collapsible';
 
@@ -12,9 +12,6 @@ interface HomeworkItem {
   position: number;
   submissionStats?: {
     total: number;
-    pending: number;
-    reviewed: number;
-    rejected: number;
   };
 }
 
@@ -22,7 +19,7 @@ interface CourseSyllabusProps {
   syllabusData: any[];
   selectedLecture?: { id: string; title: string };
   selectedHomeworkId?: string | null;
-  submissionStats?: Record<string, { total: number; pending: number; reviewed: number; rejected: number }>;
+  submissionStats?: Record<string, { total: number }>;
   homeworkByLecture?: Record<string, HomeworkItem[]>;
   onLectureClick: (lectureId: string) => void;
   onHomeworkClick?: (lectureId: string, homework: HomeworkItem) => void;
@@ -98,7 +95,7 @@ export function HomeworkCourseSyllabus({
             {section.lectures && Array.isArray(section.lectures) && section.lectures.map((lecture, lectureIndex) => {
               const isSelected = selectedLecture && selectedLecture.id === lecture.id;
               const hasHomework = lecture.requires_homework_completion;
-              const stats = submissionStats[lecture.id] || { total: 0, pending: 0, reviewed: 0, rejected: 0 };
+              const stats = submissionStats[lecture.id] || { total: 0 };
               
               // Get homework items for this lecture
               const lectureHomework = homeworkByLecture[lecture.id] || [];
@@ -126,9 +123,9 @@ export function HomeworkCourseSyllabus({
                       {/* Status indicator */}
                       <div className="flex-shrink-0">
                         {stats.total > 0 ? (
-                          <Check className="h-5 w-5 text-gray-700" />
+                          <BookOpen className="h-5 w-5 text-gray-700" />
                         ) : (
-                          <Circle className="h-5 w-5 text-gray-400" />
+                          <BookOpen className="h-5 w-5 text-gray-400" />
                         )}
                       </div>
                       
@@ -146,7 +143,7 @@ export function HomeworkCourseSyllabus({
                         <div className="flex gap-2 mt-1">
                           {stats.total > 0 && (
                             <div className="flex items-center text-xs text-gray-500">
-                              <BookOpen className="h-3 w-3 mr-1" />
+                              <FileText className="h-3 w-3 mr-1" />
                               {stats.total} 份作业
                             </div>
                           )}
@@ -160,12 +157,12 @@ export function HomeworkCourseSyllabus({
                     </div>
                   </div>
                   
-                  {/* Homework cards for this lecture - Updated with consistent gray color scheme */}
+                  {/* Homework cards for this lecture */}
                   {hasLectureHomework && isSelected && (
                     <div className="pl-4 space-y-1.5">
                       {lectureHomework.map((homework) => {
                         const isHomeworkSelected = selectedHomeworkId === homework.id;
-                        const hwStats = homework.submissionStats || { total: 0, pending: 0, reviewed: 0, rejected: 0 };
+                        const hwStats = homework.submissionStats || { total: 0 };
                         
                         return (
                           <div 
@@ -193,12 +190,6 @@ export function HomeworkCourseSyllabus({
                               {hwStats.total > 0 && (
                                 <Badge variant="outline" className="text-xs py-0 h-5 min-w-[24px] bg-gray-50 text-gray-700 border-gray-300">
                                   {hwStats.total}
-                                </Badge>
-                              )}
-                              {hwStats.pending > 0 && (
-                                <Badge variant="outline" className="text-xs py-0 h-5 bg-gray-100 text-gray-700 border-gray-300 flex items-center">
-                                  <Clock className="h-3 w-3 mr-1" />
-                                  {hwStats.pending}
                                 </Badge>
                               )}
                             </div>
