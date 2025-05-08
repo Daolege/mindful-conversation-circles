@@ -9,11 +9,13 @@ import Footer from "@/components/Footer";
 import { useAuth } from "@/contexts/authHooks";
 import { supabase } from "@/integrations/supabase/client";
 import { HomeworkViewingSystem } from "@/components/admin/homework/HomeworkViewingSystem";
+import { useTranslations } from "@/hooks/useTranslations";
 
 const HomeworkReviewPage = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const { courseId } = useParams<{ courseId: string }>();
+  const { t } = useTranslations();
   
   // Check if the user is an admin
   const { data: isAdmin, isLoading: isCheckingAdmin } = useQuery({
@@ -24,12 +26,12 @@ const HomeworkReviewPage = () => {
       try {
         const { data, error } = await supabase.rpc('has_role', { role: 'admin' });
         if (error) {
-          console.error('Error checking admin role:', error);
+          console.error(t('errors:checkingAdminRoleError'), error);
           return false;
         }
         return !!data;
       } catch (err) {
-        console.error('Error in admin role check:', err);
+        console.error(t('errors:adminRoleCheckError'), err);
         return false;
       }
     },
@@ -41,10 +43,10 @@ const HomeworkReviewPage = () => {
   // Redirect non-admin users
   React.useEffect(() => {
     if (!loading && !isCheckingAdmin && !isAdmin) {
-      toast.error("权限不足", { description: "该页面仅限管理员访问" });
+      toast.error(t('errors:insufficientPermissions'), { description: t('errors:adminAccessRequired') });
       navigate('/');
     }
-  }, [isAdmin, isCheckingAdmin, loading, navigate]);
+  }, [isAdmin, isCheckingAdmin, loading, navigate, t]);
   
   if (loading || isCheckingAdmin) {
     return (
@@ -63,7 +65,7 @@ const HomeworkReviewPage = () => {
       <div className="min-h-screen flex flex-col">
         <Navbar />
         <div className="flex-grow flex items-center justify-center">
-          <div className="text-xl text-gray-600">管理员专用页面</div>
+          <div className="text-xl text-gray-600">{t('errors:adminOnlyPage')}</div>
         </div>
         <Footer />
       </div>

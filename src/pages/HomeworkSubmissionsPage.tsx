@@ -41,7 +41,6 @@ const HomeworkSubmissionsPage = () => {
     gcTime: 10 * 60 * 1000,
   });
 
-  // 如果不是管理员，重定向到首页
   React.useEffect(() => {
     if (!loading && !isLoading && !isAdmin) {
       toast.error(t('errors:insufficientPermissions'), { description: t('errors:adminAccessRequired') });

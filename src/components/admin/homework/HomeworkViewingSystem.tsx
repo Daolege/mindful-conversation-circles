@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { CourseOutlineNavigation } from './CourseOutlineNavigation';
-import { HomeworkSubmissionsDetail } from './HomeworkSubmissionsDetail';
+import HomeworkSubmissionsDetail from './HomeworkSubmissionsDetail';
 import { HomeworkSubmissionDetail } from './HomeworkSubmissionDetail';
 import { getCourseStructureForHomework } from '@/lib/services/homeworkSubmissionService';
 import { Card, CardContent } from '@/components/ui/card';
