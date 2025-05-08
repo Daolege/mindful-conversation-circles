@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { StudentHomeworkList } from '@/components/admin/homework/StudentHomeworkList';
@@ -55,7 +55,6 @@ export const StudentHomeworkPage = () => {
           file_url,
           created_at,
           submitted_at,
-          updated_at,
           homework:homework_id (
             id,
             title,
@@ -73,10 +72,23 @@ export const StudentHomeworkPage = () => {
       }
       
       // Map the data to include content field for backward compatibility
-      const transformedData = data.map((submission: any) => ({
-        ...submission,
-        content: submission.answer // Map answer to content for backward compatibility
-      }));
+      const transformedData = data.map((submission: any) => {
+        return {
+          id: submission.id,
+          homework_id: submission.homework_id,
+          lecture_id: submission.lecture_id,
+          user_id: submission.user_id,
+          answer: submission.answer,
+          content: submission.answer, // Map answer to content for backward compatibility
+          score: submission.score,
+          status: submission.status,
+          feedback: submission.feedback,
+          file_url: submission.file_url,
+          created_at: submission.created_at,
+          submitted_at: submission.submitted_at,
+          homework: submission.homework
+        };
+      });
       
       return transformedData as HomeworkSubmission[];
     },
