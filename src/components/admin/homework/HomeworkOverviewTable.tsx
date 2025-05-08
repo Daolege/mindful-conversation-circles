@@ -78,36 +78,88 @@ export const HomeworkOverviewTable: React.FC<HomeworkOverviewTableProps> = ({
     enabled: !!courseId,
   });
 
-  // Fetch enrollment counts for each lecture
+  // 获取每个讲座的报名人数 - 直接查询替代RPC函数
   const { data: enrollmentCounts = [], isLoading: isLoadingEnrollments } = useQuery({
     queryKey: ['lecture-enrollments', courseId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .rpc('get_lecture_enrollment_counts', { p_course_id: courseId });
-      
+      // 通过course_enrollments表计算每个课程的报名人数
+      const { data: enrollments, error } = await supabase
+        .from('course_enrollments')
+        .select('user_id')
+        .eq('course_id', courseId);
+        
       if (error) {
-        console.error('Error fetching enrollment counts:', error);
+        console.error('Error fetching enrollments:', error);
         return [];
       }
       
-      return (data || []) as EnrollmentCount[];
+      // 计算报名总人数
+      const totalEnrollments = (enrollments || []).length;
+      
+      // 为每个讲座分配相同的报名人数
+      const result: EnrollmentCount[] = [];
+      
+      if (sections && sections.length > 0) {
+        sections.forEach(section => {
+          section.lectures.forEach(lecture => {
+            result.push({
+              lecture_id: lecture.id,
+              enrolled_count: totalEnrollments
+            });
+          });
+        });
+      }
+      
+      return result;
     },
-    enabled: !!courseId,
+    enabled: !!courseId && !!sections,
   });
 
-  // Fetch submission counts for each homework
+  // 获取作业提交统计 - 直接查询替代RPC函数
   const { data: submissionCounts = [], isLoading: isLoadingSubmissions } = useQuery({
     queryKey: ['homework-submissions', courseId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .rpc('get_homework_submission_counts', { p_course_id: courseId });
-      
+      // 直接查询homework_submissions表获取提交数据
+      const { data: submissions, error } = await supabase
+        .from('homework_submissions')
+        .select('homework_id, lecture_id')
+        .eq('course_id', courseId);
+        
       if (error) {
-        console.error('Error fetching submission counts:', error);
+        console.error('Error fetching submissions:', error);
         return [];
       }
       
-      return (data || []) as SubmissionCount[];
+      // 计算每个作业的提交次数
+      const submissionMap: Record<string, Record<string, number>> = {};
+      
+      (submissions || []).forEach(submission => {
+        // 初始化讲座的记录
+        if (!submissionMap[submission.lecture_id]) {
+          submissionMap[submission.lecture_id] = {};
+        }
+        
+        // 更新作业的提交次数
+        if (!submissionMap[submission.lecture_id][submission.homework_id]) {
+          submissionMap[submission.lecture_id][submission.homework_id] = 0;
+        }
+        submissionMap[submission.lecture_id][submission.homework_id]++;
+      });
+      
+      // 转换为所需的格式
+      const result: SubmissionCount[] = [];
+      
+      Object.entries(submissionMap).forEach(([lectureId, homeworkCounts]) => {
+        Object.entries(homeworkCounts).forEach(([homeworkId, count]) => {
+          result.push({
+            lecture_id: lectureId,
+            homework_id: homeworkId,
+            submission_count: count
+          });
+        });
+      });
+      
+      return result;
     },
     enabled: !!courseId,
   });

@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { HomeworkSubmission } from '@/lib/types/homework';
 
@@ -406,30 +405,4 @@ export const getCourseStructureForHomework = async (courseId: number): Promise<C
       requires_homework_completion: lecture.requires_homework_completion || false
     }))
   }));
-};
-
-// New function to get lecture enrollments
-export const getLectureEnrollmentCounts = async (courseId: number) => {
-  const { data, error } = await supabase
-    .rpc('get_lecture_enrollment_counts', { p_course_id: courseId });
-    
-  if (error) {
-    console.error('Error fetching lecture enrollment counts:', error);
-    throw error;
-  }
-  
-  return data;
-};
-
-// New function to get homework submission counts
-export const getHomeworkSubmissionCounts = async (courseId: number) => {
-  const { data, error } = await supabase
-    .rpc('get_homework_submission_counts', { p_course_id: courseId });
-    
-  if (error) {
-    console.error('Error fetching homework submission counts:', error);
-    throw error;
-  }
-  
-  return data;
 };
