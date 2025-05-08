@@ -12,7 +12,7 @@ import { NotSubmittedStudentsList } from './NotSubmittedStudentsList';
 import { EnrollmentSubmissionStats } from './EnrollmentSubmissionStats';
 import { getCourseStructureForHomework } from '@/lib/services/homeworkSubmissionService';
 import HomeworkSummaryTable from './HomeworkSummaryTable';
-import HomeworkSubmissionTabs from './HomeworkSubmissionTabs';
+import UnifiedHomeworkTable from './UnifiedHomeworkTable';
 
 interface HomeworkReviewSystemProps {
   courseId: number;
@@ -156,7 +156,7 @@ export const HomeworkReviewSystem: React.FC<HomeworkReviewSystemProps> = ({ cour
       case 'details':
         if (selectedLectureId) {
           return (
-            <HomeworkSubmissionTabs
+            <UnifiedHomeworkTable
               courseId={courseId}
               lectureId={selectedLectureId}
               onBack={handleBackToSummary}
