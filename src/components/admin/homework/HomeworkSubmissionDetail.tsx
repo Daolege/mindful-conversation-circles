@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
@@ -29,7 +28,7 @@ import {
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { RichTextDisplay } from './RichTextDisplay';
-import PdfExportService from './PdfExportService';
+import PdfExportService from './PdfExportService.jsx';
 
 interface HomeworkSubmissionDetailProps {
   submissionId: string;
