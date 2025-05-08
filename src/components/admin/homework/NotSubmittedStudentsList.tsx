@@ -18,7 +18,7 @@ export const NotSubmittedStudentsList: React.FC<NotSubmittedStudentsListProps> =
 }) => {
   // Fetch students who haven't submitted homework
   const { data: notSubmittedStudents, isLoading } = useQuery({
-    queryKey: ['not-submitted-students', courseId, lectureId],
+    queryKey: ['not-submitted-students', courseId, lectureId, searchTerm],
     queryFn: async () => {
       // 1. Get all enrolled students
       const { data: enrolledStudents, error: enrolledError } = await supabase

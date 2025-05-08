@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Search, FileSpreadsheet } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
@@ -10,6 +10,7 @@ import { HomeworkSubmissionsList } from './HomeworkSubmissionsList';
 import { NotSubmittedStudentsList } from './NotSubmittedStudentsList';
 import { ExcelExportService } from './ExcelExportService';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 interface HomeworkSubmissionsDetailProps {
   courseId: number;
@@ -26,16 +27,41 @@ const HomeworkSubmissionsDetail: React.FC<HomeworkSubmissionsDetailProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<string>('submitted');
   const [searchTerm, setSearchTerm] = useState<string>('');
+  const queryClient = useQueryClient();
   
   // Fetch submissions data
   const { data: submissions, isLoading: isLoadingSubmissions } = useQuery({
     queryKey: ['homework-submissions-detail', lectureId],
     queryFn: async () => {
-      const { data, error } = await fetch(`/api/homework-submissions?lectureId=${lectureId}`)
-        .then(res => res.json());
+      const { data, error } = await supabase
+        .from('homework_submissions')
+        .select(`
+          id,
+          user_id,
+          created_at,
+          submitted_at,
+          status
+        `)
+        .eq('lecture_id', lectureId);
         
       if (error) throw error;
-      return data || [];
+
+      // For each submission, fetch user data
+      const submissionsWithUserData = await Promise.all((data || []).map(async (submission) => {
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('full_name, email')
+          .eq('id', submission.user_id)
+          .single();
+          
+        return {
+          ...submission,
+          user_name: profileData?.full_name || '未知用户',
+          user_email: profileData?.email || ''
+        };
+      }));
+      
+      return submissionsWithUserData || [];
     },
     enabled: !!lectureId && activeTab === 'submitted',
   });
@@ -57,43 +83,68 @@ const HomeworkSubmissionsDetail: React.FC<HomeworkSubmissionsDetailProps> = ({
         `课程${courseId}_${lectureTitle}_已提交作业`
       );
     } else {
-      // Get not submitted students data and format for export
-      const { data: notSubmittedData } = await useQuery.fetchQuery({
-        queryKey: ['not-submitted-students', courseId, lectureId],
-        queryFn: async () => {
-          // Use existing NotSubmittedStudentsList data fetching logic
-          const { data: enrolledStudents } = await fetch(
-            `/api/course-enrollments?courseId=${courseId}`
-          ).then(res => res.json());
+      // 直接使用 NotSubmittedStudentsList 组件的逻辑获取数据
+      try {
+        // 1. Get all enrolled students
+        const { data: enrolledStudents, error: enrolledError } = await supabase
+          .from('course_enrollments')
+          .select('user_id')
+          .eq('course_id', courseId);
           
-          const { data: submittedStudents } = await fetch(
-            `/api/homework-submissions?lectureId=${lectureId}`
-          ).then(res => res.json());
-          
-          // Filter out students who submitted
-          const submittedIds = new Set((submittedStudents || []).map(s => s.user_id));
-          const notSubmittedUserIds = (enrolledStudents || [])
-            .filter(enrollment => !submittedIds.has(enrollment.user_id))
-            .map(enrollment => enrollment.user_id);
-            
-          // Get profiles for not submitted students
-          const { data: profiles } = await fetch(
-            `/api/user-profiles?userIds=${notSubmittedUserIds.join(',')}`
-          ).then(res => res.json());
-          
-          return profiles || [];
+        if (enrolledError) {
+          console.error('Error fetching enrolled students:', enrolledError);
+          throw enrolledError;
         }
-      });
-      
-      const exportData = notSubmittedData?.map(student => ({
-        '用户名': student.full_name || '未知用户',
-        '邮箱': student.email || ''
-      })) || [];
-      
-      await ExcelExportService.exportToExcel(
-        exportData, 
-        `课程${courseId}_${lectureTitle}_未提交作业学生`
-      );
+        
+        // 2. Get students who submitted homework
+        const { data: submittedStudents, error: submittedError } = await supabase
+          .from('homework_submissions')
+          .select('user_id')
+          .eq('lecture_id', lectureId);
+          
+        if (submittedError) {
+          console.error('Error fetching submitted students:', submittedError);
+          throw submittedError;
+        }
+        
+        // 3. Filter out students who have submitted
+        const submittedIds = new Set(submittedStudents?.map(s => s.user_id) || []);
+        const notSubmittedUserIds = (enrolledStudents || [])
+          .filter(enrollment => !submittedIds.has(enrollment.user_id))
+          .map(enrollment => enrollment.user_id);
+        
+        // 4. Get profile information for not submitted students
+        let studentProfiles = [];
+        
+        if (notSubmittedUserIds.length > 0) {
+          const { data: profiles, error: profilesError } = await supabase
+            .from('profiles')
+            .select('id, full_name, email')
+            .in('id', notSubmittedUserIds);
+            
+          if (profilesError) {
+            console.error('Error fetching student profiles:', profilesError);
+            throw profilesError;
+          }
+          
+          studentProfiles = profiles || [];
+        }
+        
+        // 5. Format data for export
+        const exportData = studentProfiles.map(student => ({
+          '用户名': student.full_name || '未知用户',
+          '邮箱': student.email || ''
+        }));
+        
+        await ExcelExportService.exportToExcel(
+          exportData, 
+          `课程${courseId}_${lectureTitle}_未提交作业学生`
+        );
+      } catch (error) {
+        console.error('Error exporting not submitted students:', error);
+        toast.error('导出失败', { description: '获取数据时发生错误' });
+        return;
+      }
     }
     
     toast.success('导出成功', { description: 'Excel文件已成功下载' });
@@ -187,6 +238,7 @@ const HomeworkSubmissionsDetail: React.FC<HomeworkSubmissionsDetailProps> = ({
               <NotSubmittedStudentsList 
                 courseId={courseId}
                 lectureId={lectureId}
+                searchTerm={searchTerm}
               />
             </CardContent>
           </Card>
