@@ -1,349 +1,249 @@
 
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { ArrowUpDown, Download, FileText, Search } from 'lucide-react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { ArrowLeft, Search, FileSpreadsheet } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { supabase } from '@/integrations/supabase/client';
-import { Skeleton } from '@/components/ui/skeleton';
+import { HomeworkSubmissionsList } from './HomeworkSubmissionsList';
+import { NotSubmittedStudentsList } from './NotSubmittedStudentsList';
 import { ExcelExportService } from './ExcelExportService';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 interface HomeworkSubmissionsDetailProps {
   courseId: number;
   lectureId: string;
-  homeworkId?: string;
   lectureTitle: string;
-  homeworkTitle?: string;
-  onViewSubmission: (submissionId: string) => void;
-  onBack?: () => void;
+  onBack: () => void;
 }
 
-interface SubmissionWithUser {
-  id: string;
-  homework_id: string;
-  lecture_id: string;
-  status: string;
-  created_at: string;
-  user_id: string;
-  userName: string;
-  userEmail: string;
-  homeworkTitle?: string;
-}
-
-export const HomeworkSubmissionsDetail: React.FC<HomeworkSubmissionsDetailProps> = ({
+const HomeworkSubmissionsDetail: React.FC<HomeworkSubmissionsDetailProps> = ({ 
   courseId,
   lectureId,
-  homeworkId,
   lectureTitle,
-  homeworkTitle,
-  onViewSubmission,
   onBack
 }) => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [sortBy, setSortBy] = useState<'newest' | 'oldest'>('newest');
-
-  // Fetch submissions for the selected lecture and homework
-  const { data: submissions, isLoading } = useQuery({
-    queryKey: ['homework-submissions', lectureId, homeworkId],
+  const [activeTab, setActiveTab] = useState<string>('submitted');
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const queryClient = useQueryClient();
+  
+  // Fetch submissions data
+  const { data: submissions, isLoading: isLoadingSubmissions } = useQuery({
+    queryKey: ['homework-submissions-detail', lectureId],
     queryFn: async () => {
-      try {
-        // First, get the submissions
-        let query = supabase
-          .from('homework_submissions')
-          .select(`
-            id, 
-            homework_id, 
-            lecture_id, 
-            status,
-            created_at,
-            user_id
-          `)
-          .eq('lecture_id', lectureId)
-          .eq('course_id', courseId);
-
-        // Add homework filter if specified
-        if (homeworkId) {
-          query = query.eq('homework_id', homeworkId);
-        }
-
-        const { data: submissionsData, error } = await query;
+      const { data, error } = await supabase
+        .from('homework_submissions')
+        .select(`
+          id,
+          user_id,
+          created_at,
+          submitted_at,
+          status
+        `)
+        .eq('lecture_id', lectureId);
         
-        if (error) {
-          console.error('Error fetching homework submissions:', error);
-          return [];
-        }
-        
-        // If no submissions found, return empty array
-        if (!submissionsData || submissionsData.length === 0) {
-          return [];
-        }
+      if (error) throw error;
 
-        // Get user profiles for each submission
-        const submissionsWithProfiles: SubmissionWithUser[] = await Promise.all(
-          submissionsData.map(async (submission) => {
-            // Get user profile information separately
-            const { data: profileData, error: profileError } = await supabase
-              .from('profiles')
-              .select('full_name, email')
-              .eq('id', submission.user_id)
-              .single();
-              
-            if (profileError) {
-              console.error('Error fetching user profile:', profileError);
-              return {
-                ...submission,
-                userName: 'Unknown User',
-                userEmail: ''
-              };
-            }
-            
-            return {
-              ...submission,
-              userName: profileData?.full_name || 'Unknown User',
-              userEmail: profileData?.email || ''
-            };
-          })
-        );
-        
-        // Get homework titles for each submission
-        if (submissionsWithProfiles && submissionsWithProfiles.length > 0) {
-          const homeworkIds = [...new Set(submissionsWithProfiles.map(s => s.homework_id))];
-          const { data: homeworks, error: homeworkError } = await supabase
-            .from('homework')
-            .select('id, title')
-            .in('id', homeworkIds);
-            
-          if (homeworkError) {
-            console.error('Error fetching homework details:', homeworkError);
-            return submissionsWithProfiles;
-          }
+      // For each submission, fetch user data
+      const submissionsWithUserData = await Promise.all((data || []).map(async (submission) => {
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('full_name, email')
+          .eq('id', submission.user_id)
+          .single();
           
-          const homeworkMap = (homeworks || []).reduce((acc, hw) => {
-            acc[hw.id] = hw.title;
-            return acc;
-          }, {} as Record<string, string>);
-          
-          return submissionsWithProfiles.map(submission => ({
-            ...submission,
-            homeworkTitle: homeworkMap[submission.homework_id] || 'Unknown Homework'
-          }));
-        }
-        
-        return submissionsWithProfiles;
-      } catch (error) {
-        console.error('Error in submissions query:', error);
-        return [];
-      }
+        return {
+          ...submission,
+          user_name: profileData?.full_name || '未知用户',
+          user_email: profileData?.email || ''
+        };
+      }));
+      
+      return submissionsWithUserData || [];
     },
-    enabled: !!lectureId && !!courseId,
+    enabled: !!lectureId && activeTab === 'submitted',
   });
 
-  // Filter submissions based on search query
-  const filteredSubmissions = React.useMemo(() => {
-    if (!submissions) return [];
-    
-    return submissions.filter(submission => {
-      const searchTerms = searchQuery.toLowerCase().trim().split(' ');
-      const searchString = `${submission.userName} ${submission.userEmail} ${submission.homeworkTitle || ''}`.toLowerCase();
+  // Export data to Excel based on active tab
+  const handleExportExcel = async () => {
+    if (activeTab === 'submitted') {
+      // Format submitted data for export
+      const exportData = submissions?.map(submission => ({
+        '用户名': submission.user_name || '未知用户',
+        '邮箱': submission.user_email || '',
+        '提交时间': new Date(submission.created_at).toLocaleString(),
+        '状态': submission.status === 'pending' ? '待审核' : 
+               submission.status === 'reviewed' ? '已通过' : '未通过'
+      })) || [];
       
-      return searchTerms.every(term => searchString.includes(term));
-    });
-  }, [submissions, searchQuery]);
-
-  // Sort submissions
-  const sortedSubmissions = React.useMemo(() => {
-    if (!filteredSubmissions) return [];
-    
-    return [...filteredSubmissions].sort((a, b) => {
-      if (sortBy === 'newest') {
-        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-      } else {
-        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      await ExcelExportService.exportToExcel(
+        exportData, 
+        `课程${courseId}_${lectureTitle}_已提交作业`
+      );
+    } else {
+      // 直接使用 NotSubmittedStudentsList 组件的逻辑获取数据
+      try {
+        // 1. Get all enrolled students
+        const { data: enrolledStudents, error: enrolledError } = await supabase
+          .from('course_enrollments')
+          .select('user_id')
+          .eq('course_id', courseId);
+          
+        if (enrolledError) {
+          console.error('Error fetching enrolled students:', enrolledError);
+          throw enrolledError;
+        }
+        
+        // 2. Get students who submitted homework
+        const { data: submittedStudents, error: submittedError } = await supabase
+          .from('homework_submissions')
+          .select('user_id')
+          .eq('lecture_id', lectureId);
+          
+        if (submittedError) {
+          console.error('Error fetching submitted students:', submittedError);
+          throw submittedError;
+        }
+        
+        // 3. Filter out students who have submitted
+        const submittedIds = new Set(submittedStudents?.map(s => s.user_id) || []);
+        const notSubmittedUserIds = (enrolledStudents || [])
+          .filter(enrollment => !submittedIds.has(enrollment.user_id))
+          .map(enrollment => enrollment.user_id);
+        
+        // 4. Get profile information for not submitted students
+        let studentProfiles = [];
+        
+        if (notSubmittedUserIds.length > 0) {
+          const { data: profiles, error: profilesError } = await supabase
+            .from('profiles')
+            .select('id, full_name, email')
+            .in('id', notSubmittedUserIds);
+            
+          if (profilesError) {
+            console.error('Error fetching student profiles:', profilesError);
+            throw profilesError;
+          }
+          
+          studentProfiles = profiles || [];
+        }
+        
+        // 5. Format data for export
+        const exportData = studentProfiles.map(student => ({
+          '用户名': student.full_name || '未知用户',
+          '邮箱': student.email || ''
+        }));
+        
+        await ExcelExportService.exportToExcel(
+          exportData, 
+          `课程${courseId}_${lectureTitle}_未提交作业学生`
+        );
+      } catch (error) {
+        console.error('Error exporting not submitted students:', error);
+        toast.error('导出失败', { description: '获取数据时发生错误' });
+        return;
       }
-    });
-  }, [filteredSubmissions, sortBy]);
-
-  // Toggle sort order
-  const toggleSortOrder = () => {
-    setSortBy(prev => prev === 'newest' ? 'oldest' : 'newest');
-  };
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">待审核</Badge>;
-      case 'reviewed':
-        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">已通过</Badge>;
-      case 'rejected':
-        return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">未通过</Badge>;
-      default:
-        return <Badge variant="outline">未知状态</Badge>;
     }
+    
+    toast.success('导出成功', { description: 'Excel文件已成功下载' });
   };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('zh-CN') + ' ' + date.toLocaleTimeString('zh-CN');
-  };
-
-  // Handle export functionality
-  const handleExport = async () => {
-    if (!sortedSubmissions || sortedSubmissions.length === 0) {
-      toast.error('没有数据可供导出');
-      return;
-    }
-
-    try {
-      // Format data for export
-      const exportData = sortedSubmissions.map(submission => ({
-        学生姓名: submission.userName || '',
-        学生邮箱: submission.userEmail || '',
-        作业标题: submission.homeworkTitle || '',
-        状态: 
-          submission.status === 'pending' ? '待审核' : 
-          submission.status === 'reviewed' ? '已通过' : 
-          submission.status === 'rejected' ? '未通过' : '未知',
-        提交时间: formatDate(submission.created_at)
-      }));
-
-      const fileName = `作业提交-${lectureTitle}-${new Date().toISOString().slice(0, 10)}`;
-      await ExcelExportService.exportToExcel(exportData, fileName, '作业提交');
-      toast.success('导出成功');
-    } catch (error) {
-      console.error('导出错误:', error);
-      toast.error('导出失败');
-    }
-  };
-
-  if (isLoading) {
-    return (
-      <div className="space-y-4">
-        <div className="flex justify-between items-center">
-          <Skeleton className="h-8 w-64" />
-          <div className="flex space-x-2">
-            <Skeleton className="h-10 w-64" />
-            <Skeleton className="h-10 w-24" />
-          </div>
-        </div>
-        <Card>
-          <CardHeader>
-            <Skeleton className="h-6 w-48" />
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {[1, 2, 3, 4].map(i => (
-                <Skeleton key={i} className="h-16 w-full" />
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-4">
-      {/* Back button if onBack is provided */}
-      {onBack && (
-        <div className="mb-4">
-          <Button 
-            variant="outline" 
-            onClick={onBack}
-            className="flex items-center gap-1"
-          >
-            <ArrowUpDown className="h-4 w-4" />
-            返回概览
-          </Button>
-        </div>
-      )}
-
-      {/* Submissions header with search and export */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0">
-        <h2 className="text-xl font-semibold">
-          已提交作业
-          {homeworkTitle && <span className="text-md ml-2 font-normal text-gray-600">- {homeworkTitle}</span>}
-          <span className="text-sm font-normal ml-2 text-gray-500">
-            {filteredSubmissions.length} 份作业提交
-          </span>
-        </h2>
-        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-          <div className="relative w-full sm:w-64">
-            <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
-            <Input
-              placeholder="搜索学生或作业..."
-              className="pl-8"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-          <Button 
-            variant="outline" 
-            onClick={handleExport}
-            className="flex items-center gap-2"
-          >
-            <Download className="h-4 w-4" />
-            导出
-          </Button>
-        </div>
-      </div>
-
-      {/* Submissions list */}
-      <Card>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b">
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-900">学生</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-900">作业</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-900">状态</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-900 cursor-pointer" onClick={toggleSortOrder}>
-                    <div className="flex items-center">
-                      <span>提交时间</span>
-                      <ArrowUpDown className="ml-1 h-4 w-4" />
-                    </div>
-                  </th>
-                  <th className="px-4 py-3 text-right text-sm font-medium text-gray-900">操作</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sortedSubmissions.map((submission) => (
-                  <tr key={submission.id} className="border-b hover:bg-gray-50">
-                    <td className="px-4 py-3 text-sm">
-                      <div className="font-medium">{submission.userName}</div>
-                      <div className="text-gray-500 text-xs">{submission.userEmail}</div>
-                    </td>
-                    <td className="px-4 py-3 text-sm">{submission.homeworkTitle || '未知作业'}</td>
-                    <td className="px-4 py-3 text-sm">{getStatusBadge(submission.status)}</td>
-                    <td className="px-4 py-3 text-sm">{formatDate(submission.created_at)}</td>
-                    <td className="px-4 py-3 text-sm text-right">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => onViewSubmission(submission.id)}
-                        className="flex items-center gap-1"
-                      >
-                        <FileText className="h-3 w-3" />
-                        查看
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-                {sortedSubmissions.length === 0 && (
-                  <tr>
-                    <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
-                      暂无作业提交
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Back navigation */}
+      <Button 
+        variant="outline" 
+        className="flex items-center gap-2"
+        onClick={onBack}
+      >
+        <ArrowLeft className="h-4 w-4" />
+        返回课程作业完成情况
+      </Button>
+      
+      {/* Page header */}
+      <h2 className="text-2xl font-bold">{lectureTitle} 作业提交情况</h2>
+      
+      {/* Tabs navigation */}
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList>
+          <TabsTrigger value="submitted">已提交</TabsTrigger>
+          <TabsTrigger value="not-submitted">未提交</TabsTrigger>
+        </TabsList>
+        
+        {/* Submitted homework tab */}
+        <TabsContent value="submitted" className="mt-4">
+          <Card>
+            <CardHeader className="pb-3 flex flex-row items-center justify-between">
+              <CardTitle>已提交作业</CardTitle>
+              <div className="flex items-center gap-2">
+                <div className="relative">
+                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
+                  <Input
+                    placeholder="搜索用户名或邮箱..."
+                    className="pl-8 w-[250px]"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+                <Button 
+                  variant="outline" 
+                  onClick={handleExportExcel}
+                  className="flex items-center gap-2"
+                >
+                  <FileSpreadsheet className="h-4 w-4" />
+                  导出Excel
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <HomeworkSubmissionsList 
+                lectureId={lectureId}
+                onSelectStudent={(studentId) => {
+                  // Handle student selection if needed
+                  console.log("Selected student:", studentId);
+                }}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        {/* Not submitted tab */}
+        <TabsContent value="not-submitted" className="mt-4">
+          <Card>
+            <CardHeader className="pb-3 flex flex-row items-center justify-between">
+              <CardTitle>未提交作业学生</CardTitle>
+              <div className="flex items-center gap-2">
+                <div className="relative">
+                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
+                  <Input
+                    placeholder="搜索用户名或邮箱..."
+                    className="pl-8 w-[250px]"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+                <Button 
+                  variant="outline" 
+                  onClick={handleExportExcel}
+                  className="flex items-center gap-2"
+                >
+                  <FileSpreadsheet className="h-4 w-4" />
+                  导出Excel
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <NotSubmittedStudentsList 
+                courseId={courseId}
+                lectureId={lectureId}
+                searchTerm={searchTerm}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

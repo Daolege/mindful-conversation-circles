@@ -305,8 +305,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // Create memoized context value to prevent unnecessary re-renders
-  const contextValue = React.useMemo(() => ({
+  // Create memoized context value
+  const contextValue = React.useMemo<AuthContextType>(() => ({
     user,
     session,
     loading,
@@ -317,38 +317,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     recoverSession
   }), [user, session, loading, signIn, signUp, signOut, setAdmin, recoverSession]);
 
-  // One-time auth state initialization
+  // One-time auth state initialization, specially optimized for async mode to avoid blocking
   useEffect(() => {
     // Prevent duplicate initialization
     if (initializedRef.current) return;
     
     console.log("[Auth] Starting auth state initialization...");
     
+    // Async initialization process
     const initAuth = async () => {
       try {
         setLoading(true);
         
-        // Use setTimeout to make this non-blocking
+        // Use macrotask to delay execution and avoid blocking UI
         setTimeout(async () => {
           try {
-            // First get current session
+            // First get current session to reduce flashing
             const { data: sessionData } = await supabase.auth.getSession();
             console.log("[Auth] Initial session state:", sessionData.session ? "logged in" : "not logged in");
             
             // Update initial state
             updateSessionState(sessionData.session);
             
-            // Set auth state listener
+            // Then set auth state listener with more robust error handling
             try {
               const authListener = supabase.auth.onAuthStateChange((event, newSession) => {
                 console.log("[Auth] Auth state changed:", event);
-                // Use setTimeout to make this non-blocking
+                // Async update to avoid rendering issues
                 setTimeout(() => {
                   updateSessionState(newSession);
                 }, 0);
               });
               
-              // Store for cleanup
+              // Store subscription reference for cleanup
               authListenerRef.current = authListener;
             } catch (listenerError) {
               console.error("[Auth] Failed to set auth state listener:", listenerError);
@@ -362,7 +363,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setLoading(false);
           } catch (error) {
             console.error("[Auth] Auth initialization error:", error);
-            // End loading state even on error
+            // End loading state even on error to avoid infinite loading
             setLoading(false);
             initializedRef.current = true; // Mark as initialized to avoid retry
           }
@@ -374,10 +375,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     };
     
-    // Start initialization
+    // Start initialization process
     initAuth();
     
-    // Cleanup function
+    // Cleanup function when component unmounts
     return () => {
       console.log("[Auth] Cleaning up auth listener");
       if (authListenerRef.current) {
@@ -390,10 +391,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, [updateSessionState]);
 
-  // Memoize children to prevent re-renders
+  // Prevent frequent re-rendering of child components
   const memoizedChildren = React.useMemo(() => children, [children]);
 
-  // Return the AuthContext.Provider with the memoized value
+  // Ensure rendering has no side effects
   return (
     <AuthContext.Provider value={contextValue}>
       {memoizedChildren}

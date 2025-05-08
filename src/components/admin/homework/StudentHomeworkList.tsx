@@ -10,24 +10,22 @@ import { format } from 'date-fns';
 
 interface StudentHomeworkListProps {
   studentId: string;
-  courseId: number; // Added missing courseId prop
   studentName?: string;
   studentEmail?: string;
-  submissions?: HomeworkSubmission[];
-  isLoading?: boolean;
+  submissions: HomeworkSubmission[];
+  isLoading: boolean;
   onViewSubmission: (id: string) => void;
-  onExportPdf?: (id: string) => void;
+  onExportPdf: (id: string) => void;
 }
 
 export const StudentHomeworkList: React.FC<StudentHomeworkListProps> = ({
   studentId,
-  courseId,
   studentName,
   studentEmail,
-  submissions = [],
-  isLoading = false,
+  submissions,
+  isLoading,
   onViewSubmission,
-  onExportPdf = () => {}
+  onExportPdf
 }) => {
   const [filter, setFilter] = useState('all');
   

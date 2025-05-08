@@ -2,8 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
-import { CourseOutlineNavigation } from './CourseOutlineNavigation';
-import { HomeworkSubmissionsList } from './HomeworkSubmissionsList';
+import { HomeworkSubmissionList } from './HomeworkSubmissionList';
+import { CourseStructureNav } from './CourseStructureNav';
 import { HomeworkSubmissionDetail } from './HomeworkSubmissionDetail';
 import { StudentHomeworkList } from './StudentHomeworkList';
 import { NotSubmittedStudentsList } from './NotSubmittedStudentsList';
@@ -12,11 +12,9 @@ import { PdfExportService } from './PdfExportService';
 import { EnrollmentSubmissionStats } from './EnrollmentSubmissionStats';
 import { AdminBreadcrumb } from './AdminBreadcrumb';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  ResizablePanelGroup,
-  ResizablePanel,
-  ResizableHandle,
-} from "@/components/ui/resizable";
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { toast } from 'sonner';
 import {
   Dialog,
   DialogContent,
@@ -31,12 +29,11 @@ import {
   getHomeworkSubmissionsByStudentId,
   getStudentsWithoutSubmission,
   getHomeworkCompletionStats,
+  batchUpdateHomeworkFeedback,
   HomeworkStats,
   CourseSection as HomeworkCourseSection
 } from '@/lib/services/homeworkSubmissionService';
 import { HomeworkSubmission } from '@/lib/types/homework';
-import { Homework } from '@/lib/types/homework';
-import { getHomeworkByLectureId } from '@/lib/services/homeworkService';
 
 // Define a local type that uses the existing type but renames it to avoid conflict
 type LocalCourseSection = HomeworkCourseSection;
@@ -44,27 +41,32 @@ type LocalCourseSection = HomeworkCourseSection;
 export const HomeworkSubmissionsView = () => {
   const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   
-  const [activeTab, setActiveTab] = useState<string>('submissions');
+  const [activeTab, setActiveTab] = useState<string>('all');
   const [selectedLectureId, setSelectedLectureId] = useState<string | null>(null);
-  const [selectedHomeworkId, setSelectedHomeworkId] = useState<string | null>(null);
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
   const [selectedSubmissionId, setSelectedSubmissionId] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [selectedSubmissions, setSelectedSubmissions] = useState<string[]>([]);
   const [openExportDialog, setOpenExportDialog] = useState<boolean>(false);
+  const [openBulkActionDialog, setOpenBulkActionDialog] = useState<boolean>(false);
+  const [bulkActionType, setBulkActionType] = useState<string>('');
   
   // Convert courseId to number
   const courseIdNumber = courseId ? parseInt(courseId, 10) : 0;
 
-  // Reset tabs when changing selections
+  // Reset pagination when changing filters
   useEffect(() => {
-    if (selectedHomeworkId) {
-      setActiveTab('submissions');
-    } else if (selectedStudentId) {
-      setActiveTab('student');
-    } else if (selectedSubmissionId) {
-      setActiveTab('detail');
-    }
-  }, [selectedHomeworkId, selectedStudentId, selectedSubmissionId]);
+    setCurrentPage(1);
+  }, [selectedLectureId, filterStatus, searchQuery]);
+
+  // Reset selected submissions when changing lecture or filter
+  useEffect(() => {
+    setSelectedSubmissions([]);
+  }, [selectedLectureId, filterStatus]);
 
   // Fetch course structure for navigation
   const { 
@@ -103,96 +105,117 @@ export const HomeworkSubmissionsView = () => {
     enabled: !!courseIdNumber && courseIdNumber > 0,
   });
 
-  // Fetch homeworks by lecture to display in the course outline
+  // Fetch submissions for a specific lecture when selected
   const { 
-    data: homeworkByLectureMap,
-    isLoading: isLoadingHomeworks
+    data: lectureSubmissions,
+    isLoading: isLoadingLecture 
   } = useQuery({
-    queryKey: ['homeworks-by-lecture', courseIdNumber],
-    queryFn: async () => {
-      const result: Record<string, Homework[]> = {};
-      
-      if (!courseSectionsData) return result;
-      
-      // Gather all lecture IDs
-      const lectureIds = courseSectionsData.flatMap(section => 
-        section.lectures.map(lecture => lecture.id)
-      );
-      
-      // Fetch homeworks for each lecture
-      for (const lectureId of lectureIds) {
-        const homeworks = await getHomeworkByLectureId(lectureId, courseIdNumber);
-        if (homeworks.length > 0) {
-          result[lectureId] = homeworks;
-        }
-      }
-      
-      return result;
-    },
-    enabled: !!courseSectionsData && !!courseIdNumber && courseIdNumber > 0,
+    queryKey: ['homework-submissions-lecture', selectedLectureId],
+    queryFn: () => getHomeworkSubmissionsByLectureId(selectedLectureId || ''),
+    enabled: !!selectedLectureId,
   });
 
-  // Add submission statistics to homeworks
-  const homeworkByLecture = React.useMemo(() => {
-    if (!homeworkByLectureMap) return {};
-    
-    const result: Record<string, any[]> = {};
-    
-    // Process each lecture's homeworks
-    Object.entries(homeworkByLectureMap).forEach(([lectureId, homeworks]) => {
-      result[lectureId] = homeworks.map(homework => {
-        // Count submissions for this homework
-        const submissions = allSubmissions?.filter(s => s.homework_id === homework.id) || [];
-        const pending = submissions.filter(s => s.status === 'pending').length;
-        const reviewed = submissions.filter(s => s.status === 'reviewed').length;
-        const rejected = submissions.filter(s => s.status === 'rejected').length;
-        
-        return {
-          ...homework,
-          submissionStats: {
-            total: submissions.length,
-            pending,
-            reviewed,
-            rejected
-          }
-        };
-      });
-    });
-    
-    return result;
-  }, [homeworkByLectureMap, allSubmissions]);
+  // Fetch submissions for a specific student when selected
+  const {
+    data: studentSubmissions,
+    isLoading: isLoadingStudent
+  } = useQuery({
+    queryKey: ['homework-submissions-student', selectedStudentId, courseIdNumber],
+    queryFn: () => getHomeworkSubmissionsByStudentId(selectedStudentId || '', courseIdNumber),
+    enabled: !!selectedStudentId && !!courseIdNumber && courseIdNumber > 0,
+  });
+
+  // Fetch students without submissions when "not-submitted" tab is active
+  const {
+    data: studentsWithoutSubmission,
+    isLoading: isLoadingNotSubmitted
+  } = useQuery({
+    queryKey: ['students-without-submission', selectedLectureId, courseIdNumber],
+    queryFn: () => getStudentsWithoutSubmission(selectedLectureId || '', courseIdNumber),
+    enabled: activeTab === 'not-submitted' && !!courseIdNumber && courseIdNumber > 0,
+  });
+
+  // Fetch homework completion statistics
+  const {
+    data: homeworkStats,
+    isLoading: isLoadingStats
+  } = useQuery({
+    queryKey: ['homework-completion-stats', courseIdNumber],
+    queryFn: () => getHomeworkCompletionStats(courseIdNumber),
+    enabled: activeTab === 'stats' && !!courseIdNumber && courseIdNumber > 0,
+  });
 
   // Handle lecture selection
   const handleLectureSelect = (lectureId: string) => {
     setSelectedLectureId(lectureId);
-    setSelectedHomeworkId(null);
     setSelectedStudentId(null);
     setSelectedSubmissionId(null);
-  };
-
-  // Handle homework selection
-  const handleHomeworkSelect = (lectureId: string, homework: any) => {
-    setSelectedHomeworkId(homework.id);
-    setSelectedLectureId(lectureId);
-    setSelectedStudentId(null);
-    setSelectedSubmissionId(null);
-    setActiveTab('submissions');
+    setCurrentPage(1);
+    setActiveTab('all');
   };
 
   // Handle view all submissions
   const handleViewAll = () => {
     setSelectedLectureId(null);
-    setSelectedHomeworkId(null);
     setSelectedStudentId(null);
     setSelectedSubmissionId(null);
+    setCurrentPage(1);
     setActiveTab('all');
   };
 
+  // Handle view submission
+  const handleViewSubmission = (id: string) => {
+    setSelectedSubmissionId(id);
+    setActiveTab('detail');
+  };
+
   // Handle view student
-  const handleViewStudent = (studentId: string) => {
-    setSelectedStudentId(studentId);
+  const handleViewStudent = (id: string) => {
+    setSelectedStudentId(id);
     setSelectedSubmissionId(null);
     setActiveTab('student');
+  };
+
+  // Handle export PDF
+  const handleExportPdf = (studentId: string) => {
+    setSelectedStudentId(studentId);
+    setOpenExportDialog(true);
+  };
+
+  // Handle bulk action
+  const handleBulkAction = (action: string) => {
+    setBulkActionType(action);
+    setOpenBulkActionDialog(true);
+  };
+
+  // Process bulk action
+  const processBulkAction = async () => {
+    if (selectedSubmissions.length === 0) {
+      toast.error('没有选择任何作业');
+      return;
+    }
+
+    if (bulkActionType === 'approve' || bulkActionType === 'reject') {
+      try {
+        await batchUpdateHomeworkFeedback(selectedSubmissions, {
+          status: bulkActionType === 'approve' ? 'reviewed' : 'rejected',
+          feedback: bulkActionType === 'approve' ? '批量通过' : '批量不通过'
+        });
+
+        toast.success(`已${bulkActionType === 'approve' ? '批准' : '拒绝'} ${selectedSubmissions.length} 份作业`);
+        queryClient.invalidateQueries({ queryKey: ['homework-submissions-course'] });
+        queryClient.invalidateQueries({ queryKey: ['homework-submissions-lecture'] });
+        setSelectedSubmissions([]);
+      } catch (error) {
+        toast.error('批量操作失败');
+        console.error('Bulk action error:', error);
+      }
+    } else if (bulkActionType === 'export') {
+      // For export, we'll just close the dialog and open the export dialog
+      setOpenExportDialog(true);
+    }
+
+    setOpenBulkActionDialog(false);
   };
 
   // Calculate submission statistics for navigation
@@ -215,6 +238,43 @@ export const HomeworkSubmissionsView = () => {
     return stats;
   }, [allSubmissions]);
 
+  // Create a map of lecture IDs to titles for the stats component
+  const lectureMap = React.useMemo(() => {
+    const map: Record<string, string> = {};
+    sections?.forEach(section => {
+      section.lectures?.forEach(lecture => {
+        map[lecture.id] = lecture.title;
+      });
+    });
+    return map;
+  }, [sections]);
+
+  // Calculate total submissions for pagination
+  const currentSubmissions = selectedLectureId ? lectureSubmissions : allSubmissions;
+  
+  // Get student info for the student view
+  const selectedStudent = studentSubmissions?.[0];
+  const studentName = selectedStudent?.user_name || 'Unknown Student';
+  const studentEmail = selectedStudent?.user_email || '';
+
+  // Get current and neighboring submission IDs for navigation
+  const submissionList = (selectedLectureId ? lectureSubmissions : allSubmissions) || [];
+  const currentSubmissionIndex = submissionList.findIndex(s => s.id === selectedSubmissionId);
+  const hasPrevSubmission = currentSubmissionIndex > 0;
+  const hasNextSubmission = currentSubmissionIndex < submissionList.length - 1 && currentSubmissionIndex !== -1;
+  
+  const handleNavigatePrevSubmission = () => {
+    if (hasPrevSubmission) {
+      setSelectedSubmissionId(submissionList[currentSubmissionIndex - 1].id);
+    }
+  };
+  
+  const handleNavigateNextSubmission = () => {
+    if (hasNextSubmission) {
+      setSelectedSubmissionId(submissionList[currentSubmissionIndex + 1].id);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <AdminBreadcrumb 
@@ -225,54 +285,56 @@ export const HomeworkSubmissionsView = () => {
         ]} 
       />
 
-      {/* ResizablePanelGroup for layout */}
-      <ResizablePanelGroup 
-        direction="horizontal"
-        className="min-h-[600px] rounded-lg border"
-      >
-        {/* Course Structure Navigation - resizable panel */}
-        <ResizablePanel 
-          defaultSize={25}
-          minSize={20}
-          maxSize={40}
-          className="bg-white"
-        >
-          <CourseOutlineNavigation 
+      <div className="grid grid-cols-12 gap-6">
+        {/* Course Structure Navigation */}
+        <div className="col-span-12 lg:col-span-3">
+          <CourseStructureNav 
             sections={sections}
-            isLoading={isLoadingStructure || isLoadingHomeworks}
+            isLoading={isLoadingStructure}
             selectedLectureId={selectedLectureId}
-            selectedHomeworkId={selectedHomeworkId}
-            onSelectLecture={handleLectureSelect}
-            onSelectHomework={handleHomeworkSelect}
+            onLectureSelect={handleLectureSelect}
+            onViewAll={handleViewAll}
             submissionStats={submissionStats}
-            homeworkByLecture={homeworkByLecture}
-            onOverviewClick={handleViewAll}
           />
-        </ResizablePanel>
-        
-        {/* Resizable handle with visual indicator */}
-        <ResizableHandle withHandle />
+        </div>
         
         {/* Main Content Area */}
-        <ResizablePanel defaultSize={75} className="bg-white p-4">
+        <div className="col-span-12 lg:col-span-9">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="w-full justify-between mb-4">
-              <TabsTrigger value="submissions">作业提交</TabsTrigger>
-              <TabsTrigger value="not-submitted">未提交学生</TabsTrigger>
+            <TabsList className="w-full justify-between">
+              <TabsTrigger value="all">全部作业</TabsTrigger>
+              <TabsTrigger value="not-submitted">未提交</TabsTrigger>
               <TabsTrigger value="stats">统计报表</TabsTrigger>
+              <TabsTrigger value="enrollment-stats">学生统计</TabsTrigger>
               {selectedStudentId && (
-                <TabsTrigger value="student">学生作业</TabsTrigger>
+                <TabsTrigger value="student">学生视图</TabsTrigger>
               )}
               {selectedSubmissionId && (
                 <TabsTrigger value="detail">作业详情</TabsTrigger>
               )}
             </TabsList>
             
-            <TabsContent value="submissions">
-              <HomeworkSubmissionsList 
-                homeworkId={selectedHomeworkId}
-                lectureId={selectedLectureId}
-                onSelectStudent={handleViewStudent}
+            <TabsContent value="all">
+              <HomeworkSubmissionList 
+                submissions={currentSubmissions || []}
+                isLoading={selectedLectureId ? isLoadingLecture : isLoadingAll}
+                filter={filterStatus}
+                onFilterChange={setFilterStatus}
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                currentPage={currentPage}
+                totalSubmissions={(currentSubmissions || []).length}
+                onPageChange={setCurrentPage}
+                onViewSubmission={handleViewSubmission}
+                onViewStudent={handleViewStudent}
+                onExportSubmission={(id) => {
+                  setSelectedSubmissionId(id);
+                  setOpenExportDialog(true);
+                }}
+                selectedSubmissions={selectedSubmissions}
+                onSelectionChange={setSelectedSubmissions}
+                showBulkActions={true}
+                onBulkAction={handleBulkAction}
               />
             </TabsContent>
             
@@ -289,29 +351,44 @@ export const HomeworkSubmissionsView = () => {
               />
             </TabsContent>
             
-            <TabsContent value="student">
-              {selectedStudentId && (
-                <StudentHomeworkList 
-                  studentId={selectedStudentId}
-                  courseId={courseIdNumber}
-                  onViewSubmission={setSelectedSubmissionId}
-                />
-              )}
+            <TabsContent value="enrollment-stats">
+              <EnrollmentSubmissionStats 
+                courseId={courseIdNumber}
+                lectureId={selectedLectureId}
+              />
             </TabsContent>
             
-            <TabsContent value="detail">
-              {selectedSubmissionId && (
+            {selectedStudentId && (
+              <TabsContent value="student">
+                <StudentHomeworkList 
+                  studentId={selectedStudentId}
+                  studentName={studentName}
+                  studentEmail={studentEmail}
+                  submissions={studentSubmissions || []}
+                  isLoading={isLoadingStudent}
+                  onViewSubmission={handleViewSubmission}
+                  onExportPdf={handleExportPdf}
+                />
+              </TabsContent>
+            )}
+            
+            {selectedSubmissionId && (
+              <TabsContent value="detail">
                 <HomeworkSubmissionDetail 
                   submissionId={selectedSubmissionId}
+                  onNavigatePrev={handleNavigatePrevSubmission}
+                  onNavigateNext={handleNavigateNextSubmission}
                   onViewStudent={handleViewStudent}
+                  hasPrev={hasPrevSubmission}
+                  hasNext={hasNextSubmission}
                 />
-              )}
-            </TabsContent>
+              </TabsContent>
+            )}
           </Tabs>
-        </ResizablePanel>
-      </ResizablePanelGroup>
+        </div>
+      </div>
 
-      {/* Export Dialog - kept for compatibility */}
+      {/* Export Dialog */}
       <Dialog open={openExportDialog} onOpenChange={setOpenExportDialog}>
         <DialogContent>
           <DialogHeader>
@@ -321,11 +398,67 @@ export const HomeworkSubmissionsView = () => {
             </DialogDescription>
           </DialogHeader>
           <PdfExportService
-            submissions={[]}
-            studentName="学生名"
+            submissions={
+              selectedSubmissionId
+                ? currentSubmissions?.filter(s => s.id === selectedSubmissionId) || []
+                : selectedStudentId
+                  ? studentSubmissions || []
+                  : selectedSubmissions.length > 0
+                    ? currentSubmissions?.filter(s => selectedSubmissions.includes(s.id)) || []
+                    : []
+            }
+            studentName={studentName}
             courseTitle={`课程 ${courseId}`}
             onExportComplete={() => setOpenExportDialog(false)}
           />
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk Action Confirmation Dialog */}
+      <Dialog open={openBulkActionDialog} onOpenChange={setOpenBulkActionDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {bulkActionType === 'approve' 
+                ? '批量通过作业' 
+                : bulkActionType === 'reject' 
+                  ? '批量不通过作业' 
+                  : '批量导出作业'}
+            </DialogTitle>
+            <DialogDescription>
+              {bulkActionType === 'approve' 
+                ? '确定要批量通过选中的作业吗？' 
+                : bulkActionType === 'reject' 
+                  ? '确定要批量不通过选中的作业吗？' 
+                  : '确定要批量导出选中的作业吗？'}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex items-center space-x-2 my-4">
+            <Checkbox id="confirm" />
+            <Label htmlFor="confirm">
+              我确认执行此操作 ({selectedSubmissions.length} 份作业)
+            </Label>
+          </div>
+          <div className="flex justify-end gap-4">
+            <button
+              className="px-4 py-2 border rounded-md"
+              onClick={() => setOpenBulkActionDialog(false)}
+            >
+              取消
+            </button>
+            <button
+              className={`px-4 py-2 rounded-md text-white ${
+                bulkActionType === 'approve'
+                  ? 'bg-green-600 hover:bg-green-700'
+                  : bulkActionType === 'reject'
+                    ? 'bg-red-600 hover:bg-red-700'
+                    : 'bg-blue-600 hover:bg-blue-700'
+              }`}
+              onClick={processBulkAction}
+            >
+              确认
+            </button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
