@@ -8,7 +8,7 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import HomeworkSubmissionsView from "@/components/admin/homework/HomeworkSubmissionsView";
+import { HomeworkSubmissionsView } from "@/components/admin/homework/HomeworkSubmissionsView";
 import { useTranslations } from "@/hooks/useTranslations";
 
 const HomeworkSubmissionsPage = () => {
@@ -41,7 +41,6 @@ const HomeworkSubmissionsPage = () => {
     gcTime: 10 * 60 * 1000,
   });
 
-  // 如果不是管理员，重定向到首页
   React.useEffect(() => {
     if (!loading && !isLoading && !isAdmin) {
       toast.error(t('errors:insufficientPermissions'), { description: t('errors:adminAccessRequired') });

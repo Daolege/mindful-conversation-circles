@@ -1,158 +1,99 @@
-import React from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import { AuthProvider } from './contexts/authHooks';
-import LandingPage from './pages/LandingPage';
-import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
-import CoursesPage from './pages/CoursesPage';
-import CourseDetailPage from './pages/CourseDetailPage';
-import ProfilePage from './pages/ProfilePage';
-import EditProfilePage from './pages/EditProfilePage';
-import AdminDashboardPage from './pages/AdminDashboardPage';
-import AdminCoursesPage from './pages/AdminCoursesPage';
-import AdminCreateCoursePage from './pages/AdminCreateCoursePage';
-import AdminEditCoursePage from './pages/AdminEditCoursePage';
-import AdminUsersPage from './pages/AdminUsersPage';
-import AdminHomeworkPage from './pages/AdminHomeworkPage';
-import AdminCreateHomeworkPage from './pages/AdminCreateHomeworkPage';
-import AdminEditHomeworkPage from './pages/AdminEditHomeworkPage';
-import HomeworkSubmissionsPage from './pages/HomeworkSubmissionsPage';
-import HomeworkSubmissionDetailPage from './pages/HomeworkSubmissionDetailPage';
-import HomeworkSubmissionPublicDetailPage from './pages/HomeworkSubmissionPublicDetailPage';
-import PricingPage from './pages/PricingPage';
-import SubscriptionSuccessPage from './pages/SubscriptionSuccessPage';
-import SubscriptionCancelPage from './pages/SubscriptionCancelPage';
-import AdminCourseAnalyticsPage from './pages/AdminCourseAnalyticsPage';
-import AdminUserAnalyticsPage from './pages/AdminUserAnalyticsPage';
-import AdminHomeworkAnalyticsPage from './pages/AdminHomeworkAnalyticsPage';
-import AdminCategoriesPage from './pages/AdminCategoriesPage';
-import AdminCreateCategoryPage from './pages/AdminCreateCategoryPage';
-import AdminEditCategoryPage from './pages/AdminEditCategoryPage';
-import AdminCourseSectionPage from './pages/AdminCourseSectionPage';
-import AdminCreateCourseSectionPage from './pages/AdminCreateCourseSectionPage';
-import AdminEditCourseSectionPage from './pages/AdminEditCourseSectionPage';
-import AdminCourseLecturePage from './pages/AdminCourseLecturePage';
-import AdminCreateCourseLecturePage from './pages/AdminCreateCourseLecturePage';
-import AdminEditCourseLecturePage from './pages/AdminEditCourseLecturePage';
-import AdminCourseReviewPage from './pages/AdminCourseReviewPage';
-import AdminCourseEnrollmentPage from './pages/AdminCourseEnrollmentPage';
-import AdminCourseBundlesPage from './pages/AdminCourseBundlesPage';
-import AdminCreateCourseBundlePage from './pages/AdminCreateCourseBundlePage';
-import AdminEditCourseBundlePage from './pages/AdminEditCourseBundlePage';
-import AdminCourseBundleDetailPage from './pages/AdminCourseBundleDetailPage';
-import AdminCourseBundlePurchasePage from './pages/AdminCourseBundlePurchasePage';
-import AdminCourseBundleAnalyticsPage from './pages/AdminCourseBundleAnalyticsPage';
-import AdminCourseBundleReviewPage from './pages/AdminCourseBundleReviewPage';
-import AdminCourseBundleEnrollmentPage from './pages/AdminCourseBundleEnrollmentPage';
-import AdminCourseBundleCategoryPage from './pages/AdminCourseBundleCategoryPage';
-import AdminCreateCourseBundleCategoryPage from './pages/AdminCreateCourseBundleCategoryPage';
-import AdminEditCourseBundleCategoryPage from './pages/AdminEditCourseBundleCategoryPage';
-import AdminCourseBundleSectionPage from './pages/AdminCourseBundleSectionPage';
-import AdminCreateCourseBundleSectionPage from './pages/AdminCreateCourseBundleSectionPage';
-import AdminEditCourseBundleSectionPage from './pages/AdminEditCourseBundleSectionPage';
-import AdminCourseBundleLecturePage from './pages/AdminCourseBundleLecturePage';
-import AdminCreateCourseBundleLecturePage from './pages/AdminCreateCourseBundleLecturePage';
-import AdminEditCourseBundleLecturePage from './pages/AdminEditCourseBundleLecturePage';
-import AdminCourseNewPage from './pages/AdminCoursesNewPage';
-import AdminCourseNewDetailPage from './pages/AdminCourseNewDetailPage';
-import AdminCourseNewSectionPage from './pages/AdminCourseNewSectionPage';
-import AdminCreateCourseNewSectionPage from './pages/AdminCreateCourseNewSectionPage';
-import AdminEditCourseNewSectionPage from './pages/AdminEditCourseNewSectionPage';
-import AdminCourseNewLecturePage from './pages/AdminCourseNewLecturePage';
-import AdminCreateCourseNewLecturePage from './pages/AdminCreateCourseNewLecturePage';
-import AdminEditCourseNewLecturePage from './pages/AdminEditCourseNewLecturePage';
-import AdminCourseNewReviewPage from './pages/AdminCourseNewReviewPage';
-import AdminCourseNewEnrollmentPage from './pages/AdminCourseNewEnrollmentPage';
-import AdminCourseNewAnalyticsPage from './pages/AdminCourseNewAnalyticsPage';
-import AdminCourseNewHomeworkPage from './pages/AdminCourseNewHomeworkPage';
-import AdminCreateCourseNewHomeworkPage from './pages/AdminCreateCourseNewHomeworkPage';
-import AdminEditCourseNewHomeworkPage from './pages/AdminEditCourseNewHomeworkPage';
 
-function App() {
+import React, { useState } from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+// Import pages
+import Home from "./pages/Home";
+import About from "./pages/About";
+import Courses from "./pages/Courses";
+import Auth from "./pages/Auth";
+import CourseDetail from "./pages/CourseDetail";
+import CourseDetailNew from "./pages/CourseDetailNew";
+import CourseLearn from "./pages/CourseLearn";
+import Instructors from "./pages/Instructors";
+import InstructorDetail from "./pages/InstructorDetail";
+import FAQ from "./pages/FAQ";
+import MyCourses from "./pages/MyCourses";
+import Dashboard from "./pages/Dashboard";
+import Checkout from "./pages/Checkout";
+import PaymentSuccess from "./pages/PaymentSuccess";
+import PaymentFailed from "./pages/PaymentFailed";
+import TermsOfUse from "./pages/TermsOfUse";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import CookiePolicy from "./pages/CookiePolicy";
+import NotFound from "./pages/NotFound";
+import Admin from "./pages/Admin";
+import CourseEditor from "./pages/CourseEditor";
+import CourseNewEditor from "./pages/CourseNewEditor";
+import StudentHomeworkPage from "./pages/StudentHomeworkPage";
+import HomeworkSubmissionDetailPage from "./pages/HomeworkSubmissionDetailPage";
+import HomeworkSubmissionsPage from "./pages/HomeworkSubmissionsPage";
+import HomeworkReviewPage from "./pages/HomeworkReviewPage";
+
+// Import providers and components
+import { Toaster } from "@/components/ui/toaster";
+import { AuthProvider } from "@/contexts/AuthProvider";
+
+const queryClient = new QueryClient();
+
+const App = () => {
+
   return (
-    <AuthProvider>
-      <Router>
-        <Routes>
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-          <Route path="/courses" element={<CoursesPage />} />
-          <Route path="/courses/:courseId" element={<CourseDetailPage />} />
-          <Route path="/pricing" element={<PricingPage />} />
-          <Route path="/subscription-success" element={<SubscriptionSuccessPage />} />
-          <Route path="/subscription-cancel" element={<SubscriptionCancelPage />} />
-          <Route path="/profile" element={<ProfilePage />} />
-          <Route path="/profile/edit" element={<EditProfilePage />} />
-
-          {/* Admin Routes */}
-          <Route path="/admin" element={<AdminDashboardPage />} />
-          <Route path="/admin/courses" element={<AdminCoursesPage />} />
-          <Route path="/admin/courses/create" element={<AdminCreateCoursePage />} />
-          <Route path="/admin/courses/:courseId/edit" element={<AdminEditCoursePage />} />
-          <Route path="/admin/courses/:courseId/sections" element={<AdminCourseSectionPage />} />
-          <Route path="/admin/courses/:courseId/sections/create" element={<AdminCreateCourseSectionPage />} />
-          <Route path="/admin/courses/:courseId/sections/:sectionId/edit" element={<AdminEditCourseSectionPage />} />
-          <Route path="/admin/courses/:courseId/sections/:sectionId/lectures" element={<AdminCourseLecturePage />} />
-          <Route path="/admin/courses/:courseId/sections/:sectionId/lectures/create" element={<AdminCreateCourseLecturePage />} />
-          <Route path="/admin/courses/:courseId/sections/:sectionId/lectures/:lectureId/edit" element={<AdminEditCourseLecturePage />} />
-          <Route path="/admin/courses/:courseId/reviews" element={<AdminCourseReviewPage />} />
-          <Route path="/admin/courses/:courseId/enrollments" element={<AdminCourseEnrollmentPage />} />
-          <Route path="/admin/courses/:courseId/analytics" element={<AdminCourseAnalyticsPage />} />
-          <Route path="/admin/users" element={<AdminUsersPage />} />
-          <Route path="/admin/users/analytics" element={<AdminUserAnalyticsPage />} />
-          <Route path="/admin/homework" element={<HomeworkSubmissionsPage />} />
-          <Route path="/admin/homework/analytics" element={<AdminHomeworkAnalyticsPage />} />
-          <Route path="/admin/homework/:courseId" element={<AdminHomeworkPage />} />
-          <Route path="/admin/homework/:courseId/create" element={<AdminCreateHomeworkPage />} />
-          <Route path="/admin/homework/:courseId/:homeworkId/edit" element={<AdminEditHomeworkPage />} />
-          <Route path="/admin/categories" element={<AdminCategoriesPage />} />
-          <Route path="/admin/categories/create" element={<AdminCreateCategoryPage />} />
-          <Route path="/admin/categories/:categoryId/edit" element={<AdminEditCategoryPage />} />
-
-          {/* Admin Course Bundles Routes */}
-          <Route path="/admin/course-bundles" element={<AdminCourseBundlesPage />} />
-          <Route path="/admin/course-bundles/create" element={<AdminCreateCourseBundlePage />} />
-          <Route path="/admin/course-bundles/:courseBundleId/edit" element={<AdminEditCourseBundlePage />} />
-          <Route path="/admin/course-bundles/:courseBundleId/detail" element={<AdminCourseBundleDetailPage />} />
-          <Route path="/admin/course-bundles/:courseBundleId/purchases" element={<AdminCourseBundlePurchasePage />} />
-          <Route path="/admin/course-bundles/:courseBundleId/analytics" element={<AdminCourseBundleAnalyticsPage />} />
-          <Route path="/admin/course-bundles/:courseBundleId/reviews" element={<AdminCourseBundleReviewPage />} />
-          <Route path="/admin/course-bundles/:courseBundleId/enrollments" element={<AdminCourseBundleEnrollmentPage />} />
-          <Route path="/admin/course-bundles/:courseBundleId/categories" element={<AdminCourseBundleCategoryPage />} />
-          <Route path="/admin/course-bundles/:courseBundleId/categories/create" element={<AdminCreateCourseBundleCategoryPage />} />
-          <Route path="/admin/course-bundles/:courseBundleId/categories/:categoryId/edit" element={<AdminEditCourseBundleCategoryPage />} />
-          <Route path="/admin/course-bundles/:courseBundleId/sections" element={<AdminCourseBundleSectionPage />} />
-          <Route path="/admin/course-bundles/:courseBundleId/sections/create" element={<AdminCreateCourseBundleSectionPage />} />
-          <Route path="/admin/course-bundles/:courseBundleId/sections/:sectionId/edit" element={<AdminEditCourseBundleSectionPage />} />
-          <Route path="/admin/course-bundles/:courseBundleId/sections/:sectionId/lectures" element={<AdminCourseBundleLecturePage />} />
-          <Route path="/admin/course-bundles/:courseBundleId/sections/:sectionId/lectures/create" element={<AdminCreateCourseBundleLecturePage />} />
-          <Route path="/admin/course-bundles/:courseBundleId/sections/:sectionId/lectures/:lectureId/edit" element={<AdminEditCourseBundleLecturePage />} />
-
-          {/* Admin New Courses Routes */}
-          <Route path="/admin/courses-new" element={<AdminCourseNewPage />} />
-          <Route path="/admin/courses-new/:courseId" element={<AdminCourseNewDetailPage />} />
-          <Route path="/admin/courses-new/:courseId/sections" element={<AdminCourseNewSectionPage />} />
-          <Route path="/admin/courses-new/:courseId/sections/create" element={<AdminCreateCourseNewSectionPage />} />
-          <Route path="/admin/courses-new/:courseId/sections/:sectionId/edit" element={<AdminEditCourseNewSectionPage />} />
-          <Route path="/admin/courses-new/:courseId/sections/:sectionId/lectures" element={<AdminCourseNewLecturePage />} />
-          <Route path="/admin/courses-new/:courseId/sections/:sectionId/lectures/create" element={<AdminCreateCourseNewLecturePage />} />
-          <Route path="/admin/courses-new/:courseId/sections/:sectionId/lectures/:lectureId/edit" element={<AdminEditCourseNewLecturePage />} />
-          <Route path="/admin/courses-new/:courseId/reviews" element={<AdminCourseNewReviewPage />} />
-          <Route path="/admin/courses-new/:courseId/enrollments" element={<AdminCourseNewEnrollmentPage />} />
-          <Route path="/admin/courses-new/:courseId/analytics" element={<AdminCourseNewAnalyticsPage />} />
-          <Route path="/admin/courses-new/:courseId/homework" element={<AdminCourseNewHomeworkPage />} />
-          <Route path="/admin/courses-new/:courseId/homework/create" element={<AdminCreateCourseNewHomeworkPage />} />
-          <Route path="/admin/courses-new/:courseId/homework/:homeworkId/edit" element={<AdminEditCourseNewHomeworkPage />} />
-
-          {/* Homework Submission Routes */}
-          <Route path="/homework-submission/:submissionId" element={<HomeworkSubmissionDetailPage />} />
-
-          {/* Public Homework Submission Detail Route */}
-          <Route path="/homework-submission/:submissionId/:courseId" element={<HomeworkSubmissionPublicDetailPage />} />
-        </Routes>
-      </Router>
-    </AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <Router>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/courses" element={<Courses />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/course/:courseId" element={<CourseDetail />} />
+            <Route path="/course-new/:courseId" element={<CourseDetailNew />} />
+            <Route path="/courses-new/:courseId" element={<CourseDetailNew />} />
+            <Route path="/course-learn/:courseId/:lectureId?" element={<CourseLearn />} />
+            <Route path="/instructors" element={<Instructors />} />
+            <Route path="/instructor/:instructorId" element={<InstructorDetail />} />
+            <Route path="/faq" element={<FAQ />} />
+            <Route path="/my-courses" element={<MyCourses />} />
+            <Route path="/dashboard/*" element={<Dashboard />} />
+            <Route path="/checkout/:courseId" element={<Checkout />} />
+            <Route path="/payment-success" element={<PaymentSuccess />} />
+            <Route path="/payment-failed" element={<PaymentFailed />} />
+            <Route path="/terms-of-use" element={<TermsOfUse />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/cookie-policy" element={<CookiePolicy />} />
+            <Route path="/admin" element={<Admin />} />
+            <Route path="/admin/courses-new/:courseId" element={<CourseNewEditor />} />
+            <Route path="/admin/courses-new/:courseId/homework" element={<HomeworkSubmissionsPage />} />
+            <Route path="/course-editor/:courseId" element={<CourseEditor />} />
+            <Route path="/course-new-editor/:courseId" element={<CourseNewEditor />} />
+            
+            <Route path="/student-homework/:courseId/:lectureId" element={<StudentHomeworkPage />} />
+            <Route path="/homework-submissions/:submissionId" element={<HomeworkSubmissionDetailPage />} />
+            <Route path="/homework-submissions" element={<HomeworkSubmissionsPage />} />
+            <Route path="/homework-review/:courseId" element={<HomeworkReviewPage />} />
+            
+            {/* Add route for viewing homework submission details */}
+            <Route path="/admin/courses-new/:courseId/homework/submission/:submissionId" element={<HomeworkSubmissionDetailPage />} />
+            
+            {/* Add route for student homework in admin context */}
+            <Route path="/admin/courses-new/:courseId/homework/student/:studentId" element={<StudentHomeworkPage />} />
+            
+            {/* Add new routes to fix 404 errors */}
+            {/* Add route for the learn page */}
+            <Route path="/learn/:courseId" element={<CourseLearn />} />
+            
+            {/* Add route for checkout with query parameters */}
+            <Route path="/checkout" element={<Checkout />} />
+            
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+          <Toaster />
+        </Router>
+      </AuthProvider>
+    </QueryClientProvider>
   );
-}
+};
 
 export default App;

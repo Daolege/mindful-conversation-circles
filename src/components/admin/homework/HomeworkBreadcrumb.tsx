@@ -1,20 +1,14 @@
 
 import React from 'react';
-import { ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { 
-  Breadcrumb, 
-  BreadcrumbItem, 
-  BreadcrumbLink, 
-  BreadcrumbSeparator,
-  BreadcrumbList
-} from '@/components/ui/breadcrumb';
+import { Home, ChevronRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 interface HomeworkBreadcrumbProps {
   courseId: number;
   sectionTitle?: string;
   lectureTitle?: string;
-  studentId?: string | null;
+  studentId?: string;
   studentName?: string;
   onClearLecture?: () => void;
   onClearStudent?: () => void;
@@ -30,77 +24,72 @@ const HomeworkBreadcrumb: React.FC<HomeworkBreadcrumbProps> = ({
   onClearStudent
 }) => {
   return (
-    <Breadcrumb>
-      <BreadcrumbList className="text-gray-600">
-        <BreadcrumbItem>
-          <BreadcrumbLink href="/admin?tab=courses-new">
-            课程管理
-          </BreadcrumbLink>
-        </BreadcrumbItem>
-        
-        <BreadcrumbSeparator>
-          <ChevronRight className="h-4 w-4" />
-        </BreadcrumbSeparator>
-        
-        <BreadcrumbItem>
-          <BreadcrumbLink href={`/admin/courses-new/${courseId}`}>
-            课程 {courseId}
-          </BreadcrumbLink>
-        </BreadcrumbItem>
-        
-        <BreadcrumbSeparator>
-          <ChevronRight className="h-4 w-4" />
-        </BreadcrumbSeparator>
-        
-        <BreadcrumbItem>
-          {!lectureTitle ? (
-            <span className="text-gray-600 font-medium">作业管理</span>
-          ) : (
-            <Button 
-              variant="link" 
-              className="p-0 h-auto text-gray-600"
-              onClick={onClearLecture}
+    <div className="flex items-center text-sm text-gray-500">
+      <Link to="/admin" className="flex items-center hover:text-primary">
+        <Home size={16} />
+        <span className="ml-1">后台管理</span>
+      </Link>
+      
+      <ChevronRight size={14} className="mx-1" />
+      
+      <Link to="/admin/courses-new" className="hover:text-primary">
+        课程管理
+      </Link>
+      
+      <ChevronRight size={14} className="mx-1" />
+      
+      <Link to={`/admin/courses-new/${courseId}`} className="hover:text-primary">
+        课程 {courseId}
+      </Link>
+      
+      <ChevronRight size={14} className="mx-1" />
+      
+      <Link to={`/admin/courses-new/${courseId}/homework`} className="hover:text-primary">
+        作业管理
+      </Link>
+      
+      {sectionTitle && lectureTitle && (
+        <>
+          <ChevronRight size={14} className="mx-1" />
+          
+          <span className="text-gray-700">
+            {sectionTitle} - {lectureTitle}
+          </span>
+          
+          {onClearLecture && (
+            <Button
+              variant="ghost" 
+              size="sm" 
+              onClick={onClearLecture} 
+              className="ml-2 text-xs h-6 px-2"
             >
-              作业管理
+              清除选择
             </Button>
           )}
-        </BreadcrumbItem>
-        
-        {lectureTitle && (
-          <>
-            <BreadcrumbSeparator>
-              <ChevronRight className="h-4 w-4" />
-            </BreadcrumbSeparator>
-            
-            <BreadcrumbItem>
-              {!studentId ? (
-                <span className="text-gray-600 font-medium">{sectionTitle} - {lectureTitle}</span>
-              ) : (
-                <Button 
-                  variant="link" 
-                  className="p-0 h-auto text-gray-600"
-                  onClick={onClearStudent}
-                >
-                  {sectionTitle} - {lectureTitle}
-                </Button>
-              )}
-            </BreadcrumbItem>
-          </>
-        )}
-        
-        {studentId && studentName && (
-          <>
-            <BreadcrumbSeparator>
-              <ChevronRight className="h-4 w-4" />
-            </BreadcrumbSeparator>
-            
-            <BreadcrumbItem>
-              <span className="text-gray-600 font-medium">学生提交: {studentName}</span>
-            </BreadcrumbItem>
-          </>
-        )}
-      </BreadcrumbList>
-    </Breadcrumb>
+        </>
+      )}
+      
+      {studentId && studentName && (
+        <>
+          <ChevronRight size={14} className="mx-1" />
+          
+          <span className="text-gray-700">
+            学生: {studentName}
+          </span>
+          
+          {onClearStudent && (
+            <Button
+              variant="ghost" 
+              size="sm" 
+              onClick={onClearStudent} 
+              className="ml-2 text-xs h-6 px-2"
+            >
+              清除选择
+            </Button>
+          )}
+        </>
+      )}
+    </div>
   );
 };
 

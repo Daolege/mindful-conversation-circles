@@ -1,84 +1,85 @@
 
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Loader2, BookOpen, GraduationCap } from 'lucide-react';
-import { HomeworkCourseSyllabus } from './HomeworkCourseSyllabus';
-
-interface CourseSection {
-  id: string;
-  title: string;
-  position: number;
-  lectures: {
-    id: string;
-    title: string;
-    position: number;
-    requires_homework_completion: boolean;
-  }[];
-}
+import { Button } from "@/components/ui/button";
+import { Loader2, ChevronLeft } from "lucide-react";
+import { HomeworkCourseSyllabus } from "./HomeworkCourseSyllabus";
 
 interface CourseOutlineNavigationProps {
-  sections: CourseSection[];
-  selectedLectureId: string | null;
+  sections: any[];
+  selectedLectureId?: string | null;
+  selectedHomeworkId?: string | null;
   onSelectLecture: (lectureId: string) => void;
+  onSelectHomework?: (lectureId: string, homework: any) => void;
   submissionStats?: Record<string, { total: number; pending: number; reviewed: number; rejected: number }>;
+  homeworkByLecture?: Record<string, any[]>;
   isLoading?: boolean;
+  onOverviewClick?: () => void;
 }
 
-export const CourseOutlineNavigation: React.FC<CourseOutlineNavigationProps> = ({
+export const CourseOutlineNavigation = ({
   sections,
   selectedLectureId,
+  selectedHomeworkId,
   onSelectLecture,
-  submissionStats = {},
-  isLoading = false
-}) => {
+  onSelectHomework,
+  submissionStats,
+  homeworkByLecture,
+  isLoading,
+  onOverviewClick
+}: CourseOutlineNavigationProps) => {
+
   if (isLoading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>课程大纲</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex justify-center p-8">
-            <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-          </div>
-        </CardContent>
-      </Card>
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-6 w-6 animate-spin text-gray-500" />
+      </div>
     );
   }
   
-  const selectedLecture = sections.flatMap(section => 
-    section.lectures.filter(lecture => lecture.id === selectedLectureId)
-  )[0];
-  
+  // Find selected lecture object for displaying title
+  const selectedLecture = React.useMemo(() => {
+    if (!selectedLectureId) return null;
+    
+    for (const section of sections) {
+      for (const lecture of section.lectures) {
+        if (lecture.id === selectedLectureId) {
+          return { id: lecture.id, title: lecture.title };
+        }
+      }
+    }
+    return null;
+  }, [sections, selectedLectureId]);
+
   return (
-    <Card className="h-full">
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <GraduationCap className="h-5 w-5" />
-            <span>课程大纲</span>
-          </div>
+    <div className="h-full flex flex-col">
+      <div className="p-4 border-b bg-gray-50">
+        <h3 className="font-medium text-gray-800">课程大纲</h3>
+        
+        {onOverviewClick && (
           <Button 
             variant="ghost" 
             size="sm" 
-            className="flex items-center gap-1 text-xs"
-            title="返回课程概览"
+            className="mt-2 w-full justify-start text-gray-600 hover:text-gray-900"
+            onClick={onOverviewClick}
           >
-            <BookOpen className="h-3.5 w-3.5" />
-            概览
+            <ChevronLeft className="h-4 w-4 mr-1" />
+            返回全部作业
           </Button>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="p-4">
-        <HomeworkCourseSyllabus
+        )}
+      </div>
+      
+      <div className="p-2 flex-grow overflow-auto">
+        <HomeworkCourseSyllabus 
           syllabusData={sections}
-          selectedLecture={selectedLecture ? { id: selectedLecture.id, title: selectedLecture.title } : undefined}
-          onLectureClick={(lecture) => onSelectLecture(lecture.id)}
+          selectedLecture={selectedLecture}
+          selectedHomeworkId={selectedHomeworkId}
           submissionStats={submissionStats}
+          homeworkByLecture={homeworkByLecture}
+          onLectureClick={onSelectLecture}
+          onHomeworkClick={onSelectHomework}
         />
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };
 
