@@ -104,8 +104,8 @@ export const HomeworkReviewSystem: React.FC<HomeworkReviewSystemProps> = ({ cour
   
   // Handle viewing a specific submission
   const handleViewSubmission = (submissionId: string) => {
-    // Implementation to view a specific submission
-    console.log('Viewing submission:', submissionId);
+    // Navigate to submission detail page
+    window.location.href = `/admin/courses-new/${courseId}/homework/submission/${submissionId}`;
   };
   
   if (isLoadingStructure) {
@@ -155,6 +155,7 @@ export const HomeworkReviewSystem: React.FC<HomeworkReviewSystemProps> = ({ cour
           lectureId={selectedLectureId || ''}
           lectureTitle={lectureTitle}
           onViewSubmission={handleViewSubmission}
+          onBack={handleBackToOverview}
         />
       )}
     </div>
