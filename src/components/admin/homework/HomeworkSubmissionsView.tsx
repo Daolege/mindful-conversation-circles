@@ -66,6 +66,12 @@ export const HomeworkSubmissionsView = () => {
     }
   }, [selectedHomeworkId, selectedStudentId, selectedSubmissionId]);
 
+  // New handler for going back from submission detail to list
+  const handleBackFromDetail = () => {
+    setSelectedSubmissionId(null);
+    setActiveTab('submissions');
+  };
+
   // Fetch course structure for navigation
   const { 
     data: courseSectionsData, 
@@ -304,6 +310,7 @@ export const HomeworkSubmissionsView = () => {
                 <HomeworkSubmissionDetail 
                   submissionId={selectedSubmissionId}
                   onViewStudent={handleViewStudent}
+                  onBack={handleBackFromDetail}
                 />
               )}
             </TabsContent>

@@ -71,11 +71,11 @@ export const HomeworkSubmissionDetail: React.FC<HomeworkSubmissionDetailProps> =
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'pending':
-        return <Badge>待审核</Badge>;
+        return <Badge>待提交</Badge>;
       case 'reviewed':
-        return <Badge variant="success">已通过</Badge>;
+        return <Badge variant="success">已提交</Badge>;
       case 'rejected':
-        return <Badge variant="destructive">未通过</Badge>;
+        return <Badge variant="destructive">已提交</Badge>;
       default:
         return <Badge>未知状态</Badge>;
     }
@@ -109,17 +109,16 @@ export const HomeworkSubmissionDetail: React.FC<HomeworkSubmissionDetailProps> =
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        {onBack && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onBack}
-            className="flex items-center gap-1"
-          >
-            <ChevronLeft className="h-4 w-4" />
-            返回作业列表
-          </Button>
-        )}
+        {/* Always display the back button */}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onBack}
+          className="flex items-center gap-1"
+        >
+          <ChevronLeft className="h-4 w-4" />
+          返回作业列表
+        </Button>
         
         <div className="flex items-center gap-2">
           <Button
@@ -229,7 +228,7 @@ export const HomeworkSubmissionDetail: React.FC<HomeworkSubmissionDetailProps> =
           
           {!viewOnly && submission.feedback && (
             <div>
-              <h3 className="text-lg font-medium mb-2">教师反馈</h3>
+              <h3 className="text-lg font-medium mb-2">反馈</h3>
               <div className="bg-gray-50 p-4 rounded-lg">
                 <div className="whitespace-pre-wrap">
                   {submission.feedback}

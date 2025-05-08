@@ -2,7 +2,7 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Users, FileCheck, FileQuestion, Clock } from 'lucide-react';
+import { Loader2, Users, FileCheck, FileQuestion, BarChart3 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface HomeworkStatsDashboardProps {
@@ -57,26 +57,21 @@ export const HomeworkStatsDashboard: React.FC<HomeworkStatsDashboardProps> = ({ 
       
       const homeworkLecturesCount = lecturesData?.length || 0;
       
-      // Recent submissions (last 7 days)
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-      
-      const { count: recentCount, error: recentError } = await supabase
-        .from('homework_submissions')
-        .select('homework_submissions.id', { count: 'exact', head: true })
-        .eq('course_id', courseId)
-        .gte('created_at', sevenDaysAgo.toISOString());
-        
-      if (recentError) {
-        console.error('Error fetching recent submissions:', recentError);
-        return null;
+      // Calculate completion rate
+      let completionRate = 0;
+      if (enrolledCount && homeworkLecturesCount) {
+        // Expected submissions = students * homework lectures
+        const expectedSubmissions = enrolledCount * homeworkLecturesCount;
+        if (expectedSubmissions > 0) {
+          completionRate = Math.round((submissionsCount / expectedSubmissions) * 100);
+        }
       }
 
       return {
         enrolledStudents: enrolledCount || 0,
         totalSubmissions: submissionsCount || 0,
         homeworkLectures: homeworkLecturesCount,
-        recentSubmissions: recentCount || 0
+        completionRate: completionRate
       };
     },
     enabled: !!courseId,
@@ -113,34 +108,37 @@ export const HomeworkStatsDashboard: React.FC<HomeworkStatsDashboardProps> = ({ 
       color: "text-purple-500"
     },
     {
-      title: "总作业提交数",
+      title: "作业总提交数",
       value: stats.totalSubmissions,
       icon: FileCheck,
       color: "text-green-500"
     },
     {
-      title: "近7日提交",
-      value: stats.recentSubmissions,
-      icon: Clock, 
+      title: "完成率",
+      value: `${stats.completionRate}%`,
+      icon: BarChart3, 
       color: "text-orange-500"
     }
   ];
   
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      {statCards.map((card, index) => (
-        <Card key={index}>
-          <CardHeader className="pb-2 pt-4">
-            <CardTitle className="text-sm font-medium text-gray-500">{card.title}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center">
-              <card.icon className={`h-8 w-8 ${card.color} mr-3`} />
-              <div className="text-2xl font-bold">{card.value}</div>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold">作业统计</h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {statCards.map((card, index) => (
+          <Card key={index}>
+            <CardHeader className="pb-2 pt-4">
+              <CardTitle className="text-sm font-medium text-gray-500">{card.title}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center">
+                <card.icon className={`h-8 w-8 ${card.color} mr-3`} />
+                <div className="text-2xl font-bold">{card.value}</div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 };
