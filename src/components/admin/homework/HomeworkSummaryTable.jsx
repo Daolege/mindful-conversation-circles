@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -205,35 +206,9 @@ const HomeworkSummaryTable = ({ courseId, onSelectLecture }) => {
     }
   };
   
-  // 修改: 处理作业详情查看 - 需要查询该讲座的最新提交，然后跳转到提交详情页面
-  const handleViewSubmissionDetail = async (lectureId) => {
-    try {
-      // 获取此讲座的最新提交记录
-      const { data: latestSubmissions, error } = await supabase
-        .from('homework_submissions')
-        .select('id')
-        .eq('lecture_id', lectureId)
-        .eq('course_id', courseId)
-        .order('created_at', { ascending: false })
-        .limit(1);
-      
-      if (error) {
-        console.error('Error fetching submission:', error);
-        return;
-      }
-      
-      // 如果有提交记录，跳转到公开作业详情页面
-      if (latestSubmissions && latestSubmissions.length > 0) {
-        const submissionId = latestSubmissions[0].id;
-        // 跳转到公开作业详情页面，附带课程ID以便返回
-        navigate(`/homework-view/${courseId}/${submissionId}`);
-      } else {
-        console.log('No submissions found for this lecture');
-        // 可以考虑显示提示或者其他处理
-      }
-    } catch (err) {
-      console.error('Error handling view submission:', err);
-    }
+  // 修改回原来的逻辑: 点击"查看作业"按钮时，调用handleLectureSelect来显示该讲座的所有作业提交
+  const handleViewSubmissionDetail = (lectureId, sectionTitle, lectureTitle) => {
+    handleLectureSelect(lectureId, sectionTitle, lectureTitle);
   };
   
   // 获取完成率颜色
@@ -404,7 +379,7 @@ const HomeworkSummaryTable = ({ courseId, onSelectLecture }) => {
                             size="sm"
                             variant="outline"
                             className="flex items-center gap-1"
-                            onClick={() => handleViewSubmissionDetail(item.lectureId)}
+                            onClick={() => handleViewSubmissionDetail(item.lectureId, item.sectionTitle, item.lectureTitle)}
                           >
                             查看作业
                           </Button>
