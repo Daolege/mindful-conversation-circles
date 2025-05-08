@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import { format } from 'date-fns';
@@ -11,6 +11,11 @@ import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { Loader2, Download } from 'lucide-react';
 import { HomeworkSubmission } from '@/lib/types/homework';
+import { useTranslation } from 'react-i18next';
+
+// 引入通用字体 - 这是Base64编码的思源黑体精简版
+// 注意：实际项目中可能需要根据具体情况调整字体大小和支持的字符集
+import { SourceHanSansFont } from './fonts/SourceHanSansFont';
 
 interface PdfExportConfig {
   includeHomeworkQuestion: boolean;
@@ -43,6 +48,12 @@ export const PdfExportService: React.FC<PdfExportServiceProps> = ({
     fileName: `${studentName}-作业汇总`
   });
   const [isExporting, setIsExporting] = useState(false);
+  const { i18n } = useTranslation();
+  
+  // 检测当前语言是否是RTL语言
+  const isRTL = React.useMemo(() => {
+    return ['ar'].includes(i18n.language);
+  }, [i18n.language]);
 
   const handleExport = async () => {
     if (submissions.length === 0) {
@@ -54,8 +65,28 @@ export const PdfExportService: React.FC<PdfExportServiceProps> = ({
       setIsExporting(true);
       onExportStart?.();
 
-      // 创建PDF文档
-      const doc = new jsPDF();
+      // 创建PDF文档 - 设置适用于多语言的配置
+      const doc = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+        putOnlyUsedFonts: true,
+        compress: true
+      });
+      
+      // 添加思源黑体字体支持 - 这是一个支持多语言的字体
+      doc.addFileToVFS('SourceHanSans-Regular.ttf', SourceHanSansFont);
+      doc.addFont('SourceHanSans-Regular.ttf', 'SourceHanSans', 'normal');
+      
+      // 设置默认字体
+      doc.setFont('SourceHanSans');
+      
+      // 如果是RTL语言，调整文本方向
+      if (isRTL) {
+        // jsPDF 不完全支持RTL，但我们可以通过这种方式部分支持
+        doc.setR2L(true);
+      }
+      
       let yOffset = 20;
       
       // 添加标题
@@ -103,17 +134,20 @@ export const PdfExportService: React.FC<PdfExportServiceProps> = ({
         doc.line(20, yOffset, 190, yOffset);
         yOffset += 10;
         
-        // 作业标题
+        // 作业标题 - 每次文本操作前重新设置字体以确保正确渲染
+        doc.setFont('SourceHanSans');
         doc.setFontSize(14);
         doc.text(`作业 ${i+1}: ${submission.homework?.title || '未知作业'}`, 20, yOffset);
         yOffset += 7;
         
         // 提交日期
+        doc.setFont('SourceHanSans');
         doc.setFontSize(10);
         doc.text(`提交日期: ${format(new Date(submission.submitted_at || submission.created_at), 'yyyy-MM-dd HH:mm')}`, 20, yOffset);
         yOffset += 7;
         
         // 状态
+        doc.setFont('SourceHanSans');
         const statusText = submission.status === 'reviewed' 
           ? '已通过' 
           : submission.status === 'rejected' 
@@ -124,10 +158,12 @@ export const PdfExportService: React.FC<PdfExportServiceProps> = ({
         
         // 添加作业问题（如果配置中启用）
         if (config.includeHomeworkQuestion && submission.homework) {
+          doc.setFont('SourceHanSans');
           doc.setFontSize(12);
           doc.text('题目:', 20, yOffset);
           yOffset += 7;
           
+          doc.setFont('SourceHanSans');
           doc.setFontSize(10);
           const homeworkDescription = submission.homework?.description || '';
           if (homeworkDescription) {
@@ -142,10 +178,12 @@ export const PdfExportService: React.FC<PdfExportServiceProps> = ({
         }
         
         // 添加作业内容
+        doc.setFont('SourceHanSans');
         doc.setFontSize(12);
         doc.text('学生答案:', 20, yOffset);
         yOffset += 7;
         
+        doc.setFont('SourceHanSans');
         doc.setFontSize(10);
         // 使用 answer 字段，不再使用已弃用的 content 字段
         const content = submission.answer || '无内容';
@@ -156,6 +194,7 @@ export const PdfExportService: React.FC<PdfExportServiceProps> = ({
         
         // 添加评分（如果配置中启用）
         if (config.includeScore && submission.score !== undefined) {
+          doc.setFont('SourceHanSans');
           doc.setFontSize(12);
           doc.text(`评分: ${submission.score} / 100`, 20, yOffset);
           yOffset += 10;
@@ -163,10 +202,12 @@ export const PdfExportService: React.FC<PdfExportServiceProps> = ({
         
         // 添加反馈（如果配置中启用）
         if (config.includeFeedback && submission.feedback) {
+          doc.setFont('SourceHanSans');
           doc.setFontSize(12);
           doc.text('教师反馈:', 20, yOffset);
           yOffset += 7;
           
+          doc.setFont('SourceHanSans');
           doc.setFontSize(10);
           const feedbackLines = doc.splitTextToSize(submission.feedback, 150);
           doc.text(feedbackLines, 25, yOffset);
