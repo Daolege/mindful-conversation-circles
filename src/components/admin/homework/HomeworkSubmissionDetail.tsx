@@ -28,7 +28,7 @@ import {
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { RichTextDisplay } from './RichTextDisplay';
-import PdfExportService from './PdfExportService.jsx';
+import PdfExportService from './PdfExportUtil.jsx';
 
 interface HomeworkSubmissionDetailProps {
   submissionId: string;
