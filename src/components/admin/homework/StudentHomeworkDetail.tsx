@@ -70,7 +70,7 @@ export const StudentHomeworkDetail: React.FC<StudentHomeworkDetailProps> = ({
 
         return {
           ...submissionData,
-          homework: homeworkData || { title: '未知作业', description: '' },
+          homework: homeworkData || { title: '未知作业', description: '', id: submissionData.homework_id, type: 'text' },
           user_name: profileData?.full_name || '未知用户',
           user_email: profileData?.email || ''
         };
@@ -150,10 +150,11 @@ export const StudentHomeworkDetail: React.FC<StudentHomeworkDetailProps> = ({
     lecture_id: submission.lecture_id,
     course_id: submission.course_id,
     answer: submission.answer,
+    // Ensure homework object has all required properties with proper type safety
     homework: {
-      id: submission.homework.id || submission.homework_id,
+      id: submission.homework.id, 
       title: submission.homework.title,
-      type: submission.homework.type || 'text',
+      type: submission.homework.type,
       description: submission.homework.description
     }
   }];

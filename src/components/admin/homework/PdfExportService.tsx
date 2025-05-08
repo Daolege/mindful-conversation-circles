@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -109,7 +110,7 @@ export const PdfExportService: React.FC<PdfExportServiceProps> = ({
         
         // 提交日期
         doc.setFontSize(10);
-        doc.text(`提交日期: ${format(new Date(submission.submitted_at), 'yyyy-MM-dd HH:mm')}`, 20, yOffset);
+        doc.text(`提交日期: ${format(new Date(submission.submitted_at || submission.created_at), 'yyyy-MM-dd HH:mm')}`, 20, yOffset);
         yOffset += 7;
         
         // 状态
@@ -146,7 +147,8 @@ export const PdfExportService: React.FC<PdfExportServiceProps> = ({
         yOffset += 7;
         
         doc.setFontSize(10);
-        const content = submission.content || submission.answer || '无内容';
+        // 使用 answer 字段，不再使用已弃用的 content 字段
+        const content = submission.answer || '无内容';
         // 如果内容太长，拆分成多行
         const contentLines = doc.splitTextToSize(content, 150);
         doc.text(contentLines, 25, yOffset);
