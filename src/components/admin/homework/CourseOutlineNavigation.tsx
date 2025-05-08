@@ -52,7 +52,7 @@ export const CourseOutlineNavigation: React.FC<CourseOutlineNavigationProps> = (
   )[0];
   
   return (
-    <Card className="h-full">
+    <Card className="h-full sticky top-4">
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center justify-between">
           <div className="flex items-center gap-2">

@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
 import { HomeworkSubmissionList } from './HomeworkSubmissionList';
-import { CourseStructureNav } from './CourseStructureNav';
+import { CourseOutlineNavigation } from './CourseOutlineNavigation';
 import { HomeworkSubmissionDetail } from './HomeworkSubmissionDetail';
 import { StudentHomeworkList } from './StudentHomeworkList';
 import { NotSubmittedStudentsList } from './NotSubmittedStudentsList';
@@ -286,14 +285,13 @@ export const HomeworkSubmissionsView = () => {
       />
 
       <div className="grid grid-cols-12 gap-6">
-        {/* Course Structure Navigation */}
+        {/* Course Structure Navigation - always visible */}
         <div className="col-span-12 lg:col-span-3">
-          <CourseStructureNav 
+          <CourseOutlineNavigation 
             sections={sections}
             isLoading={isLoadingStructure}
             selectedLectureId={selectedLectureId}
-            onLectureSelect={handleLectureSelect}
-            onViewAll={handleViewAll}
+            onSelectLecture={handleLectureSelect}
             submissionStats={submissionStats}
           />
         </div>

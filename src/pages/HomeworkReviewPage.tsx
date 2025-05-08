@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2, ArrowLeft } from "lucide-react";
@@ -9,7 +9,7 @@ import Footer from "@/components/Footer";
 import { useAuth } from "@/contexts/authHooks";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { HomeworkReviewSystem } from "@/components/admin/homework/HomeworkReviewSystem";
+import { HomeworkSubmissionsView } from "@/components/admin/homework/HomeworkSubmissionsView";
 
 const HomeworkReviewPage = () => {
   const { user, loading } = useAuth();
@@ -71,26 +71,12 @@ const HomeworkReviewPage = () => {
     );
   }
   
-  // Go back to the admin page
-  const handleBack = () => {
-    navigate('/admin?tab=courses-new');
-  };
-  
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      <main className="flex-grow container mx-auto px-4 py-8">
-        <div className="mb-6">
-          <Button variant="outline" onClick={handleBack} className="flex items-center">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            返回课程管理
-          </Button>
-        </div>
-        
-        <h1 className="text-2xl font-bold mb-6">课程作业查看系统</h1>
-        
+      <main className="flex-grow container mx-auto px-4 py-8">        
         {courseId && (
-          <HomeworkReviewSystem courseId={parseInt(courseId, 10)} />
+          <HomeworkSubmissionsView />
         )}
       </main>
       <Footer />

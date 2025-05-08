@@ -1,13 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useParams, useNavigate } from 'react-router-dom';
 import { getHomeworkSubmissionById, updateHomeworkFeedback } from '@/lib/services/homeworkSubmissionService';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { 
-  ArrowLeft, 
   CheckCircle, 
   XCircle, 
   Download, 
@@ -46,7 +44,6 @@ export const HomeworkSubmissionDetail: React.FC<HomeworkSubmissionDetailProps> =
   hasNext = false,
   hasPrev = false
 }) => {
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [feedback, setFeedback] = useState('');
   const [score, setScore] = useState<number | null>(null);
@@ -83,9 +80,6 @@ export const HomeworkSubmissionDetail: React.FC<HomeworkSubmissionDetailProps> =
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div className="flex items-center gap-4">
-          <Skeleton className="h-10 w-24" />
-        </div>
         <Card>
           <CardHeader>
             <Skeleton className="h-6 w-3/4 mb-2" />
@@ -179,23 +173,14 @@ export const HomeworkSubmissionDetail: React.FC<HomeworkSubmissionDetailProps> =
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => navigate(-1)}
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" /> 返回作业列表
-          </Button>
-        </div>
-        
+      <div className="flex items-center justify-end">
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
             size="sm"
             disabled={!hasPrev}
             onClick={onNavigatePrev}
+            className="flex items-center gap-1"
           >
             <ChevronLeft className="h-4 w-4" />
             上一份
@@ -205,6 +190,7 @@ export const HomeworkSubmissionDetail: React.FC<HomeworkSubmissionDetailProps> =
             size="sm"
             disabled={!hasNext}
             onClick={onNavigateNext}
+            className="flex items-center gap-1"
           >
             下一份
             <ChevronRight className="h-4 w-4" />

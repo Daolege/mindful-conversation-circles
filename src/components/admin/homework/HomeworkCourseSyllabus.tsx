@@ -36,7 +36,7 @@ export function HomeworkCourseSyllabus({
 
   return (
     <div className="flex flex-col h-full bg-white rounded-lg">
-      <ScrollArea className="h-[calc(100vh-200px)] pr-4">
+      <ScrollArea className="pr-4">
         <div className="space-y-3 pb-6">
           {syllabusData.map((section, sectionIndex) => (
             <AnimatedCollapsible
@@ -45,7 +45,7 @@ export function HomeworkCourseSyllabus({
               headerContent={
                 <div className="flex justify-between w-full items-center">
                   <span className="font-medium text-gray-900">{section.title}</span>
-                  <Badge variant="outline" className={`flex items-center justify-center min-w-[42px] py-1 ${
+                  <Badge variant="outline" className={`flex items-center justify-center min-w-[42px] py-1 px-2 ${
                     expandedSections[sectionIndex] 
                       ? "bg-gray-800 text-white" 
                       : "bg-white border-gray-200"
