@@ -10,21 +10,23 @@ import StudentsList from './StudentsList';
 import { HomeworkStatsDashboard } from './HomeworkStatsDashboard';
 import { NotSubmittedStudentsList } from './NotSubmittedStudentsList';
 import { EnrollmentSubmissionStats } from './EnrollmentSubmissionStats';
-import { getCourseStructureForHomework, HomeworkStats } from '@/lib/services/homeworkSubmissionService';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { getCourseStructureForHomework } from '@/lib/services/homeworkSubmissionService';
+import HomeworkSummaryTable from './HomeworkSummaryTable';
+import HomeworkSubmissionTabs from './HomeworkSubmissionTabs';
 
 interface HomeworkReviewSystemProps {
   courseId: number;
 }
 
 export const HomeworkReviewSystem: React.FC<HomeworkReviewSystemProps> = ({ courseId }) => {
+  // UI状态
   const [selectedLectureId, setSelectedLectureId] = useState<string | null>(null);
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
   const [sectionTitle, setSectionTitle] = useState<string>('');
   const [lectureTitle, setLectureTitle] = useState<string>('');
-  const [activeTab, setActiveTab] = useState<string>('overview');
+  const [viewMode, setViewMode] = useState<'summary' | 'details' | 'student'>('summary');
   
-  // 1. Fetch course structure data (sections and lectures)
+  // 1. 获取课程结构数据（章节和讲座）
   const { data: courseStructure, isLoading: isLoadingStructure } = useQuery({
     queryKey: ['homework-course-structure', courseId],
     queryFn: () => getCourseStructureForHomework(courseId),
@@ -32,7 +34,7 @@ export const HomeworkReviewSystem: React.FC<HomeworkReviewSystemProps> = ({ cour
     staleTime: 5 * 60 * 1000,
   });
 
-  // Get all homework submissions to generate stats for navigation
+  // 2. 获取所有作业提交以生成统计数据
   const { data: allSubmissions } = useQuery({
     queryKey: ['all-homework-submissions', courseId],
     queryFn: async () => {
@@ -51,7 +53,7 @@ export const HomeworkReviewSystem: React.FC<HomeworkReviewSystemProps> = ({ cour
     enabled: !!courseId,
   });
 
-  // Calculate submission statistics for navigation
+  // 3. 计算提交统计数据用于导航
   const submissionStats = React.useMemo(() => {
     const stats: Record<string, { total: number; pending: number; reviewed: number; rejected: number }> = {};
     
@@ -71,13 +73,19 @@ export const HomeworkReviewSystem: React.FC<HomeworkReviewSystemProps> = ({ cour
     return stats;
   }, [allSubmissions]);
 
-  // Handle lecture selection
-  const handleSelectLecture = (lectureId: string) => {
+  // 4. 处理讲座选择
+  const handleSelectLecture = (lectureId: string, sectionTitleValue?: string, lectureTitleValue?: string) => {
     setSelectedLectureId(lectureId);
     setSelectedStudentId(null);
+    setViewMode('details');
     
-    // Find lecture and section titles
-    if (courseStructure) {
+    // 设置标题（如果提供）
+    if (sectionTitleValue && lectureTitleValue) {
+      setSectionTitle(sectionTitleValue);
+      setLectureTitle(lectureTitleValue);
+    }
+    // 否则尝试从课程结构中查找标题
+    else if (courseStructure) {
       for (const section of courseStructure) {
         const lecture = section.lectures.find(lec => lec.id === lectureId);
         if (lecture) {
@@ -89,25 +97,20 @@ export const HomeworkReviewSystem: React.FC<HomeworkReviewSystemProps> = ({ cour
     }
   };
   
-  // Clear lecture selection
-  const handleClearLecture = () => {
+  // 5. 返回汇总页面
+  const handleBackToSummary = () => {
     setSelectedLectureId(null);
     setSelectedStudentId(null);
-    setSectionTitle('');
-    setLectureTitle('');
+    setViewMode('summary');
   };
   
-  // Handle student selection 
+  // 6. 选择学生
   const handleSelectStudent = (studentId: string) => {
     setSelectedStudentId(studentId);
+    setViewMode('student');
   };
   
-  // Clear student selection
-  const handleClearStudent = () => {
-    setSelectedStudentId(null);
-  };
-  
-  // Get student name for breadcrumb
+  // 7. 获取学生姓名（用于面包屑导航）
   const { data: studentProfile } = useQuery({
     queryKey: ['student-profile-for-breadcrumb', selectedStudentId],
     queryFn: async () => {
@@ -129,29 +132,73 @@ export const HomeworkReviewSystem: React.FC<HomeworkReviewSystemProps> = ({ cour
     enabled: !!selectedStudentId,
   });
   
-  if (isLoadingStructure) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
-      </div>
-    );
-  }
+  // 8. 渲染页面内容
+  const renderContent = () => {
+    // 加载状态
+    if (isLoadingStructure) {
+      return (
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
+        </div>
+      );
+    }
+    
+    // 根据当前视图模式渲染不同内容
+    switch (viewMode) {
+      case 'summary':
+        return (
+          <HomeworkSummaryTable 
+            courseId={courseId} 
+            onSelectLecture={handleSelectLecture} 
+          />
+        );
+      
+      case 'details':
+        if (selectedLectureId) {
+          return (
+            <HomeworkSubmissionTabs
+              courseId={courseId}
+              lectureId={selectedLectureId}
+              onBack={handleBackToSummary}
+              sectionTitle={sectionTitle}
+              lectureTitle={lectureTitle}
+            />
+          );
+        }
+        return <div>请选择一个讲座查看作业提交</div>;
+      
+      case 'student':
+        if (selectedLectureId && selectedStudentId) {
+          return (
+            <StudentsList
+              studentId={selectedStudentId}
+              lectureId={selectedLectureId}
+              onBack={() => setViewMode('details')}
+            />
+          );
+        }
+        return <div>请选择一个学生查看作业详情</div>;
+      
+      default:
+        return <div>未知视图</div>;
+    }
+  };
   
   return (
     <div className="space-y-6">
-      {/* Breadcrumb navigation */}
+      {/* 面包屑导航 */}
       <HomeworkBreadcrumb 
         courseId={courseId} 
-        sectionTitle={sectionTitle}
-        lectureTitle={lectureTitle}
-        studentId={selectedStudentId}
+        sectionTitle={viewMode !== 'summary' ? sectionTitle : undefined}
+        lectureTitle={viewMode !== 'summary' ? lectureTitle : undefined}
+        studentId={viewMode === 'student' ? selectedStudentId : null}
         studentName={studentProfile?.full_name || '用户名不详'}
-        onClearLecture={handleClearLecture}
-        onClearStudent={handleClearStudent}
+        onClearLecture={handleBackToSummary}
+        onClearStudent={() => setViewMode('details')}
       />
       
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Left sidebar: Course structure navigation */}
+        {/* 左侧栏：课程结构导航 */}
         <div className="lg:col-span-1">
           <CourseOutlineNavigation
             sections={courseStructure || []}
@@ -162,67 +209,9 @@ export const HomeworkReviewSystem: React.FC<HomeworkReviewSystemProps> = ({ cour
           />
         </div>
         
-        {/* Main content area */}
+        {/* 主内容区域 */}
         <div className="lg:col-span-3">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="w-full">
-              <TabsTrigger value="overview">课程概览</TabsTrigger>
-              <TabsTrigger value="submissions" disabled={!selectedLectureId}>作业列表</TabsTrigger>
-              <TabsTrigger value="not-submitted" disabled={!selectedLectureId}>未提交</TabsTrigger>
-              <TabsTrigger value="student-stats">学生统计</TabsTrigger>
-              {selectedStudentId && (
-                <TabsTrigger value="student">学生详情</TabsTrigger>
-              )}
-            </TabsList>
-            
-            <TabsContent value="overview">
-              <div className="bg-white rounded-lg border p-6">
-                <h2 className="text-xl font-semibold mb-4">课程作业概览</h2>
-                {!selectedLectureId ? (
-                  <HomeworkStatsDashboard courseId={courseId} />
-                ) : (
-                  <div>
-                    <p className="text-gray-600">当前查看：{sectionTitle} - {lectureTitle}</p>
-                    <p className="text-gray-500 mt-2 mb-6">请选择上方选项卡查看此小节的作业提交情况。</p>
-                  </div>
-                )}
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="submissions">
-              {selectedLectureId && (
-                <HomeworkSubmissionsList 
-                  lectureId={selectedLectureId} 
-                  onSelectStudent={handleSelectStudent} 
-                />
-              )}
-            </TabsContent>
-            
-            <TabsContent value="not-submitted">
-              {selectedLectureId && (
-                <NotSubmittedStudentsList 
-                  courseId={courseId} 
-                  lectureId={selectedLectureId} 
-                />
-              )}
-            </TabsContent>
-            
-            <TabsContent value="student-stats">
-              <EnrollmentSubmissionStats 
-                courseId={courseId}
-                lectureId={selectedLectureId}
-              />
-            </TabsContent>
-            
-            <TabsContent value="student">
-              {selectedStudentId && (
-                <StudentsList
-                  studentId={selectedStudentId}
-                  lectureId={selectedLectureId!}
-                />
-              )}
-            </TabsContent>
-          </Tabs>
+          {renderContent()}
         </div>
       </div>
     </div>

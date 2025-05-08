@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { getHomeworkSubmissionById, updateHomeworkFeedback } from '@/lib/services/homeworkSubmissionService';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,7 +13,8 @@ import {
   Download, 
   ChevronLeft,
   ChevronRight,
-  User
+  User,
+  FileText
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
@@ -27,6 +29,7 @@ import {
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { RichTextDisplay } from './RichTextDisplay';
+import PdfExportService from './PdfExportService';
 
 interface HomeworkSubmissionDetailProps {
   submissionId: string;
@@ -35,6 +38,7 @@ interface HomeworkSubmissionDetailProps {
   onViewStudent?: (userId: string) => void;
   hasNext?: boolean;
   hasPrev?: boolean;
+  onBack?: () => void;  // 添加返回列表按钮回调
 }
 
 export const HomeworkSubmissionDetail: React.FC<HomeworkSubmissionDetailProps> = ({ 
@@ -43,9 +47,11 @@ export const HomeworkSubmissionDetail: React.FC<HomeworkSubmissionDetailProps> =
   onNavigateNext,
   onViewStudent,
   hasNext = false,
-  hasPrev = false
+  hasPrev = false,
+  onBack
 }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
   const [feedback, setFeedback] = useState('');
   const [score, setScore] = useState<number | null>(null);
@@ -165,11 +171,45 @@ export const HomeworkSubmissionDetail: React.FC<HomeworkSubmissionDetailProps> =
     submission.content?.includes('<img')
   );
 
-  console.log('Submission content type:', isRichText ? 'Rich text' : 'Plain text');
-  if (isRichText) {
-    console.log('Rich text content sample:', 
-      (submission?.content || submission?.answer || '').substring(0, 100) + '...');
-  }
+  // 处理导出为PDF
+  const handleExportPdf = async () => {
+    try {
+      // 导出ID为homework-content的元素
+      await PdfExportService.exportElementToPdf(
+        'homework-content',
+        `作业-${submission.user_name}-${new Date().toISOString().slice(0, 10)}`
+      );
+      toast.success('PDF导出成功');
+    } catch (error) {
+      console.error('PDF export failed:', error);
+      toast.error('PDF导出失败');
+    }
+  };
+
+  // 处理返回列表
+  const handleBackToList = () => {
+    if (onBack) {
+      onBack();
+    } else {
+      // 获取当前URL中的courseId
+      const match = location.pathname.match(/\/courses-new\/(\d+)/);
+      const courseId = match ? match[1] : null;
+      
+      if (courseId) {
+        // 获取当前URL中可能的lectureId查询参数
+        const searchParams = new URLSearchParams(location.search);
+        const lectureId = searchParams.get('lecture');
+        
+        if (lectureId) {
+          navigate(`/admin/courses-new/${courseId}/homework?lecture=${lectureId}`);
+        } else {
+          navigate(`/admin/courses-new/${courseId}/homework`);
+        }
+      } else {
+        navigate(-1);
+      }
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -178,9 +218,10 @@ export const HomeworkSubmissionDetail: React.FC<HomeworkSubmissionDetailProps> =
           <Button
             variant="outline"
             size="sm"
-            onClick={() => navigate(-1)}
+            onClick={handleBackToList}
+            className="flex items-center gap-1"
           >
-            <ArrowLeft className="mr-2 h-4 w-4" /> 返回作业列表
+            <ArrowLeft className="mr-1 h-4 w-4" /> 返回列表
           </Button>
         </div>
         
@@ -202,6 +243,16 @@ export const HomeworkSubmissionDetail: React.FC<HomeworkSubmissionDetailProps> =
           >
             下一份
             <ChevronRight className="h-4 w-4" />
+          </Button>
+          
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExportPdf}
+            className="flex items-center gap-1"
+          >
+            <FileText className="h-4 w-4 mr-1" />
+            导出PDF
           </Button>
         </div>
       </div>
@@ -246,31 +297,33 @@ export const HomeworkSubmissionDetail: React.FC<HomeworkSubmissionDetailProps> =
         </CardHeader>
         
         <CardContent className="space-y-6">
-          {submission.homework && (
-            <div>
-              <h3 className="text-lg font-medium mb-2">作业题目</h3>
-              <div className="bg-muted p-4 rounded-lg whitespace-pre-wrap">
-                <p className="font-medium">{submission.homework.title}</p>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  {submission.homework?.description || '无详细描述'}
-                </p>
-              </div>
-            </div>
-          )}
-          
-          <div>
-            <h3 className="text-lg font-medium mb-2">作业内容</h3>
-            <div className="bg-gray-50 p-4 rounded-lg">
-              {isRichText ? (
-                <RichTextDisplay 
-                  content={submission.content || submission.answer}
-                  className="prose max-w-none"
-                />
-              ) : (
-                <div className="whitespace-pre-wrap">
-                  {submission.content || submission.answer || '无作业内容'}
+          <div id="homework-content" className="space-y-6 pb-4">
+            {submission.homework && (
+              <div>
+                <h3 className="text-lg font-medium mb-2">作业题目</h3>
+                <div className="bg-muted p-4 rounded-lg whitespace-pre-wrap">
+                  <p className="font-medium">{submission.homework.title}</p>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    {submission.homework?.description || '无详细描述'}
+                  </p>
                 </div>
-              )}
+              </div>
+            )}
+            
+            <div>
+              <h3 className="text-lg font-medium mb-2">作业内容</h3>
+              <div className="bg-gray-50 p-4 rounded-lg">
+                {isRichText ? (
+                  <RichTextDisplay 
+                    content={submission.content || submission.answer}
+                    className="prose max-w-none"
+                  />
+                ) : (
+                  <div className="whitespace-pre-wrap">
+                    {submission.content || submission.answer || '无作业内容'}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
