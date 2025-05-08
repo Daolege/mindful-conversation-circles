@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Calendar, FileText, User, FilePdf } from 'lucide-react';
+import { ArrowLeft, Calendar, FileText, User } from 'lucide-react';
 import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { RichTextDisplay } from './RichTextDisplay';
@@ -141,7 +141,7 @@ export const StudentHomeworkDetail: React.FC<StudentHomeworkDetailProps> = ({
     );
   }
 
-  // Prepare submission for PDF export
+  // Prepare submission for PDF export ensuring all required properties are present
   const submissionForPdf: HomeworkSubmission[] = [{
     ...submission,
     id: submission.id,
@@ -150,7 +150,12 @@ export const StudentHomeworkDetail: React.FC<StudentHomeworkDetailProps> = ({
     lecture_id: submission.lecture_id,
     course_id: submission.course_id,
     answer: submission.answer,
-    homework: submission.homework
+    homework: {
+      id: submission.homework.id || submission.homework_id,
+      title: submission.homework.title,
+      type: submission.homework.type || 'text',
+      description: submission.homework.description
+    }
   }];
 
   return (
@@ -165,7 +170,7 @@ export const StudentHomeworkDetail: React.FC<StudentHomeworkDetailProps> = ({
           onClick={() => setShowPdfExport(!showPdfExport)} 
           className="flex items-center gap-2"
         >
-          <FilePdf className="h-4 w-4" />
+          <FileText className="h-4 w-4" />
           导出PDF
         </Button>
       </div>
