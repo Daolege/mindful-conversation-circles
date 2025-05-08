@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -30,6 +29,7 @@ import StudentHomeworkPage from "./pages/StudentHomeworkPage";
 import HomeworkSubmissionDetailPage from "./pages/HomeworkSubmissionDetailPage";
 import HomeworkSubmissionsPage from "./pages/HomeworkSubmissionsPage";
 import HomeworkReviewPage from "./pages/HomeworkReviewPage";
+import HomeworkSubmissionPublicDetailPage from "./pages/HomeworkSubmissionPublicDetailPage";
 
 // Import providers and components
 import { Toaster } from "@/components/ui/toaster";
@@ -86,6 +86,10 @@ const App = () => {
             
             {/* Add route for checkout with query parameters */}
             <Route path="/checkout" element={<Checkout />} />
+            
+            {/* Add new route for viewing public homework submission details */}
+            <Route path="/homework-view/:submissionId" element={<HomeworkSubmissionPublicDetailPage />} />
+            <Route path="/homework-view/:courseId/:submissionId" element={<HomeworkSubmissionPublicDetailPage />} />
             
             <Route path="*" element={<NotFound />} />
           </Routes>

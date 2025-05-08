@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -116,7 +115,7 @@ const HomeworkSummaryTable = ({ courseId, onSelectLecture }) => {
       // 获取报名总人数
       const totalEnrolled = enrollments.length;
       
-      // 对数据进行处理
+      // ��数据进行处理
       const processedData = courseStructure.flatMap(section => {
         // 过滤掉没有作业的讲座
         const lecturesWithHomework = section.course_lectures.filter(lecture => {
@@ -204,6 +203,12 @@ const HomeworkSummaryTable = ({ courseId, onSelectLecture }) => {
     if (onSelectLecture) {
       onSelectLecture(lectureId, sectionTitle, lectureTitle);
     }
+  };
+  
+  // 新增：处理作业详情查看
+  const handleViewSubmissionDetail = (submissionId) => {
+    // 跳转到公开作业详情页面，附带课程ID以便返回
+    navigate(`/homework-view/${courseId}/${submissionId}`);
   };
   
   // 获取完成率颜色
@@ -374,10 +379,9 @@ const HomeworkSummaryTable = ({ courseId, onSelectLecture }) => {
                             size="sm"
                             variant="outline"
                             className="flex items-center gap-1"
-                            onClick={() => handleLectureSelect(item.lectureId, item.sectionTitle, item.lectureTitle)}
+                            onClick={() => handleViewSubmissionDetail(item.lectureId)}
                           >
-                            查看详情
-                            <ArrowRight className="h-3.5 w-3.5" />
+                            查看作业
                           </Button>
                         </td>
                       </tr>
