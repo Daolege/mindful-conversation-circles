@@ -1,14 +1,15 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Calendar, FileText, User } from 'lucide-react';
+import { ArrowLeft, Calendar, FileText, User, FilePdf } from 'lucide-react';
 import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { RichTextDisplay } from './RichTextDisplay';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Badge } from '@/components/ui/badge';
+import { PdfExportService } from './PdfExportService';
+import { HomeworkSubmission } from '@/lib/types/homework';
 
 interface StudentHomeworkDetailProps {
   submissionId: string;
@@ -19,6 +20,8 @@ export const StudentHomeworkDetail: React.FC<StudentHomeworkDetailProps> = ({
   submissionId, 
   onBack 
 }) => {
+  const [showPdfExport, setShowPdfExport] = useState(false);
+
   // Fetch the homework submission details
   const { data: submission, isLoading } = useQuery({
     queryKey: ['homework-submission-detail', submissionId],
@@ -35,7 +38,6 @@ export const StudentHomeworkDetail: React.FC<StudentHomeworkDetailProps> = ({
             course_id,
             answer,
             file_url,
-            status,
             submitted_at,
             created_at
           `)
@@ -139,32 +141,46 @@ export const StudentHomeworkDetail: React.FC<StudentHomeworkDetailProps> = ({
     );
   }
 
-  // Status badge
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return <Badge variant="outline">待审核</Badge>;
-      case 'reviewed':
-        return <Badge variant="outline" className="bg-green-50">已通过</Badge>;
-      case 'rejected':
-        return <Badge variant="outline" className="bg-red-50">未通过</Badge>;
-      default:
-        return <Badge>未知状态</Badge>;
-    }
-  };
+  // Prepare submission for PDF export
+  const submissionForPdf: HomeworkSubmission[] = [{
+    ...submission,
+    id: submission.id,
+    homework_id: submission.homework_id,
+    user_id: submission.user_id,
+    lecture_id: submission.lecture_id,
+    course_id: submission.course_id,
+    answer: submission.answer,
+    homework: submission.homework
+  }];
 
   return (
     <div className="space-y-6">
-      <Button variant="outline" onClick={onBack} className="flex items-center gap-2">
-        <ArrowLeft className="h-4 w-4" />
-        返回作业列表
-      </Button>
+      <div className="flex items-center justify-between">
+        <Button variant="outline" onClick={onBack} className="flex items-center gap-2">
+          <ArrowLeft className="h-4 w-4" />
+          返回作业列表
+        </Button>
+        <Button 
+          variant="outline" 
+          onClick={() => setShowPdfExport(!showPdfExport)} 
+          className="flex items-center gap-2"
+        >
+          <FilePdf className="h-4 w-4" />
+          导出PDF
+        </Button>
+      </div>
+
+      {showPdfExport && (
+        <PdfExportService 
+          submissions={submissionForPdf}
+          studentName={submission.user_name}
+          onExportComplete={() => setShowPdfExport(false)}
+        />
+      )}
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            作业提交详情 {getStatusBadge(submission.status)}
-          </CardTitle>
+          <CardTitle>作业提交详情</CardTitle>
           <CardDescription>
             <div className="flex flex-wrap gap-x-4 gap-y-2 mt-1">
               <div className="flex items-center gap-1">
@@ -175,6 +191,9 @@ export const StudentHomeworkDetail: React.FC<StudentHomeworkDetailProps> = ({
                 <Calendar className="h-4 w-4 text-gray-400" />
                 <span>提交于 {formatDateTime(submission.submitted_at || submission.created_at)}</span>
               </div>
+            </div>
+            <div className="mt-2">
+              <span className="text-muted-foreground">邮箱: {submission.user_email}</span>
             </div>
           </CardDescription>
         </CardHeader>
