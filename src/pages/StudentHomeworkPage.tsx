@@ -73,7 +73,7 @@ export const StudentHomeworkPage = () => {
       }
       
       // Map the data to include content field for backward compatibility
-      const transformedData = data.map(submission => ({
+      const transformedData = data.map((submission: any) => ({
         ...submission,
         content: submission.answer // Map answer to content for backward compatibility
       }));
