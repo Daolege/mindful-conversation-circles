@@ -215,34 +215,36 @@ const HomeworkSummaryTable = ({ courseId, onSelectLecture }) => {
   
   // 对数据按章节分组并计算每个章节的rowspan
   const processGroupedData = (data) => {
-    if (!data || data.length === 0) return { groupedData: [], firstRowIndices: {} };
+    if (!data || data.length === 0) return { data: [], sectionRowspans: {}, firstRowIndices: {} };
     
     // 按章节ID分组
-    const groupedBySectionId = {};
+    const sectionGroups = {};
     const sectionRowspans = {};
     const firstRowIndices = {};
+    let currentIndex = 0;
     
-    // 第一次遍历：按章节分组并计算rowspan
-    data.forEach((item, index) => {
+    // 第一次遍历：按章节分组
+    data.forEach(item => {
       const sectionId = item.sectionId;
       
-      if (!groupedBySectionId[sectionId]) {
-        groupedBySectionId[sectionId] = [];
-        firstRowIndices[sectionId] = index; // 记录每个章节第一行的索引
+      if (!sectionGroups[sectionId]) {
+        sectionGroups[sectionId] = [];
+        firstRowIndices[sectionId] = currentIndex; // 记录每个章节第一行的索引
       }
       
-      groupedBySectionId[sectionId].push(item);
+      sectionGroups[sectionId].push(item);
+      currentIndex++;
     });
     
     // 计算每个章节的rowspan（对应章节包含的行数）
-    Object.keys(groupedBySectionId).forEach(sectionId => {
-      sectionRowspans[sectionId] = groupedBySectionId[sectionId].length;
+    Object.keys(sectionGroups).forEach(sectionId => {
+      sectionRowspans[sectionId] = sectionGroups[sectionId].length;
     });
     
     return { 
       data, // 保持原始顺序的数据
-      firstRowIndices, // 每个章节第一行的索引
-      sectionRowspans // 每个章节的rowspan值
+      sectionRowspans, // 每个章节的rowspan值
+      firstRowIndices // 每个章节第一行的索引
     };
   };
   
@@ -339,13 +341,13 @@ const HomeworkSummaryTable = ({ courseId, onSelectLecture }) => {
                         key={`${item.sectionId}-${item.lectureId}-${index}`}
                         className="border-t hover:bg-muted/50"
                       >
+                        {/* 仅在章节的第一行显示章节名称，并设置rowspan */}
                         {isSectionFirstRow && (
                           <td 
-                            className="p-4" 
+                            className="p-4 align-top border-r bg-muted/20" 
                             rowSpan={sectionRowspan}
-                            style={{ verticalAlign: 'top' }}
                           >
-                            {item.sectionTitle}
+                            <div className="font-medium">{item.sectionTitle}</div>
                           </td>
                         )}
                         <td className="p-4">
