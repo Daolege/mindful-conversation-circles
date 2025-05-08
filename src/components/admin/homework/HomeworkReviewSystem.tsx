@@ -102,6 +102,12 @@ export const HomeworkReviewSystem: React.FC<HomeworkReviewSystemProps> = ({ cour
     setCurrentView('overview');
   };
   
+  // Handle viewing a specific submission
+  const handleViewSubmission = (submissionId: string) => {
+    // Implementation to view a specific submission
+    console.log('Viewing submission:', submissionId);
+  };
+  
   if (isLoadingStructure) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -148,7 +154,7 @@ export const HomeworkReviewSystem: React.FC<HomeworkReviewSystemProps> = ({ cour
           courseId={courseId}
           lectureId={selectedLectureId || ''}
           lectureTitle={lectureTitle}
-          onBack={handleBackToOverview}
+          onViewSubmission={handleViewSubmission}
         />
       )}
     </div>

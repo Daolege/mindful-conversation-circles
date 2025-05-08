@@ -19,13 +19,15 @@ interface HomeworkSubmissionsDetailProps {
   lectureId: string;
   lectureTitle: string;
   onViewSubmission: (submissionId: string) => void;
+  onBack?: () => void; // Make onBack optional to accommodate both use cases
 }
 
-const HomeworkSubmissionsDetail: React.FC<HomeworkSubmissionsDetailProps> = ({ 
+const HomeworkSubmissionsDetail: React.FC<HomeworkSubmissionsDetailProps> = ({
   courseId,
   lectureId,
   lectureTitle,
-  onViewSubmission
+  onViewSubmission,
+  onBack
 }) => {
   const [activeTab, setActiveTab] = useState<string>('submitted');
   const [searchTerm, setSearchTerm] = useState<string>('');
