@@ -150,9 +150,33 @@ const HomeworkSubmissionTabs = ({ courseId, lectureId, onBack, sectionTitle, lec
     }
   }, [submissions, enrollments, profiles]);
   
-  // 查看作业详情
-  const handleViewHomework = (userId) => {
-    navigate(`/admin/courses-new/${courseId}/homework/student/${userId}?lecture=${lectureId}`);
+  // 查看作业详情 - 修改此处直接导航到作业详情页面
+  const handleViewHomework = async (userId) => {
+    // 获取该用户和讲座的作业提交ID
+    try {
+      const { data, error } = await supabase
+        .from('homework_submissions')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('lecture_id', lectureId)
+        .eq('course_id', courseId)
+        .order('created_at', { ascending: false })
+        .limit(1);
+        
+      if (error) {
+        console.error('Error fetching submission ID:', error);
+        return;
+      }
+      
+      if (data && data.length > 0) {
+        // 直接导航到作业详情页面
+        navigate(`/homework-submission/${data[0].id}/${courseId}`);
+      } else {
+        console.error('No submission found for this user and lecture');
+      }
+    } catch (err) {
+      console.error('Failed to get submission ID:', err);
+    }
   };
   
   // 处理排序

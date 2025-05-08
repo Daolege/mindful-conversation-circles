@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, User, Calendar, File } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { zhCN } from 'date-fns/locale';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { RichTextDisplay } from './RichTextDisplay';
@@ -57,9 +58,9 @@ const HomeworkSubmissionPublicDetail: React.FC<HomeworkSubmissionPublicDetailPro
 
   if (error || !submission) return <div className="p-8">加载作业提交信息出错</div>;
 
-  // Format the submission date using date-fns
+  // Format the submission date using date-fns with Chinese locale
   const submissionDate = submission.created_at 
-    ? formatDistanceToNow(new Date(submission.created_at), { addSuffix: true })
+    ? formatDistanceToNow(new Date(submission.created_at), { addSuffix: true, locale: zhCN })
     : '未知时间';
 
   // Improved logic to detect rich text content
@@ -87,38 +88,30 @@ const HomeworkSubmissionPublicDetail: React.FC<HomeworkSubmissionPublicDetailPro
         </Button>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            作业详情
-          </CardTitle>
-          <div className="mt-4 flex items-center space-x-4">
-            <Avatar className="h-12 w-12">
+      <Card className="overflow-hidden">
+        {/* 上半部分：用户信息区域 */}
+        <div className="bg-muted/20 p-6 border-b">
+          <div className="flex items-center space-x-4">
+            <Avatar className="h-16 w-16">
               <AvatarImage src="" />
-              <AvatarFallback className="bg-primary/10 text-primary">
+              <AvatarFallback className="bg-primary/10 text-primary text-lg">
                 {submission.user_name?.[0]?.toUpperCase() || 'U'}
               </AvatarFallback>
             </Avatar>
             <div className="space-y-1">
-              <div className="flex items-center">
-                <User className="h-4 w-4 mr-2 text-muted-foreground" />
-                <span className="font-medium">{submission.user_name || '未知用户'}</span>
-              </div>
+              <h2 className="text-xl font-semibold">{submission.user_name || '未知用户'}</h2>
+              <div className="text-muted-foreground">{submission.user_email}</div>
               <div className="flex items-center text-sm text-muted-foreground">
                 <Calendar className="h-4 w-4 mr-1" />
                 <span>提交于 {submissionDate}</span>
               </div>
-              {submission.user_email && (
-                <div className="text-sm text-muted-foreground">
-                  {submission.user_email}
-                </div>
-              )}
             </div>
           </div>
-        </CardHeader>
+        </div>
         
-        <CardContent className="space-y-6">
-          <div id="homework-content" className="space-y-6 pb-4">
+        {/* 下半部分：作业详情区域 */}
+        <div className="p-6">
+          <div className="space-y-6">
             {submission.homework && (
               <div>
                 <h3 className="text-lg font-medium mb-2">作业题目</h3>
@@ -164,7 +157,7 @@ const HomeworkSubmissionPublicDetail: React.FC<HomeworkSubmissionPublicDetailPro
               </div>
             )}
           </div>
-        </CardContent>
+        </div>
       </Card>
     </div>
   );
