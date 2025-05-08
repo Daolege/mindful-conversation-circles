@@ -51,8 +51,8 @@ export const CourseOutlineNavigation = ({
   }, [sections, selectedLectureId]);
 
   return (
-    <div className="border rounded-lg bg-white h-full">
-      <div className="p-4 border-b">
+    <div className="h-full flex flex-col">
+      <div className="p-4 border-b bg-gray-50">
         <h3 className="font-medium text-gray-800">课程大纲</h3>
         
         {onOverviewClick && (
@@ -68,7 +68,7 @@ export const CourseOutlineNavigation = ({
         )}
       </div>
       
-      <div className="p-2">
+      <div className="p-2 flex-grow overflow-auto">
         <HomeworkCourseSyllabus 
           syllabusData={sections}
           selectedLecture={selectedLecture}

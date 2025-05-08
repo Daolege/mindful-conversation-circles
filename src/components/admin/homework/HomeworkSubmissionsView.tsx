@@ -15,6 +15,11 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import {
+  ResizablePanelGroup,
+  ResizablePanel,
+  ResizableHandle,
+} from "@/components/ui/resizable";
+import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -284,20 +289,34 @@ export const HomeworkSubmissionsView = () => {
         ]} 
       />
 
-      <div className="grid grid-cols-12 gap-6">
-        {/* Course Structure Navigation - always visible */}
-        <div className="col-span-12 lg:col-span-3">
+      {/* Replace the grid with ResizablePanelGroup */}
+      <ResizablePanelGroup 
+        direction="horizontal"
+        className="min-h-[600px] rounded-lg border"
+      >
+        {/* Course Structure Navigation - resizable panel */}
+        <ResizablePanel 
+          defaultSize={25}
+          minSize={20}
+          maxSize={40}
+          className="bg-white"
+        >
           <CourseOutlineNavigation 
             sections={sections}
             isLoading={isLoadingStructure}
             selectedLectureId={selectedLectureId}
             onSelectLecture={handleLectureSelect}
             submissionStats={submissionStats}
+            homeworkByLecture={{}} // This can be populated if needed
+            onOverviewClick={handleViewAll}
           />
-        </div>
+        </ResizablePanel>
+        
+        {/* Resizable handle with visual indicator */}
+        <ResizableHandle withHandle />
         
         {/* Main Content Area */}
-        <div className="col-span-12 lg:col-span-9">
+        <ResizablePanel defaultSize={75} className="bg-white p-4">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="w-full justify-between">
               <TabsTrigger value="all">全部作业</TabsTrigger>
@@ -383,8 +402,8 @@ export const HomeworkSubmissionsView = () => {
               </TabsContent>
             )}
           </Tabs>
-        </div>
-      </div>
+        </ResizablePanel>
+      </ResizablePanelGroup>
 
       {/* Export Dialog */}
       <Dialog open={openExportDialog} onOpenChange={setOpenExportDialog}>

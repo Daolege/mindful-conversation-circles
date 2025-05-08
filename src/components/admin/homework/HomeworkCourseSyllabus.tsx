@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { ChevronDown, ChevronUp, Video, BookOpen, Check, Circle, FileText, Clock, AlertCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -69,14 +70,14 @@ export function HomeworkCourseSyllabus({
   };
 
   return (
-    <div className="space-y-3 pb-6">
+    <div className="space-y-3 pb-6 overflow-hidden">
       {syllabusData.map((section, sectionIndex) => (
         <AnimatedCollapsible
           key={sectionIndex}
           isOpen={!!expandedSections[sectionIndex]}
           headerContent={
             <div className="flex justify-between w-full items-center">
-              <span className="font-medium text-gray-900 text-sm">{section.title}</span>
+              <span className="font-medium text-gray-900 text-sm truncate">{section.title}</span>
               <Badge variant="outline" className={`flex items-center justify-center min-w-[42px] py-1 px-2 ${
                 expandedSections[sectionIndex] 
                   ? "bg-gray-800 text-white" 
@@ -174,28 +175,28 @@ export function HomeworkCourseSyllabus({
                               flex items-center p-2 border rounded-md cursor-pointer
                               transition-all duration-200
                               ${isHomeworkSelected 
-                                ? 'bg-gray-100 border-gray-300' 
+                                ? 'bg-gray-100 border-gray-400' 
                                 : 'bg-white hover:bg-gray-50 border-gray-200'
                               }
                             `}
                             style={{
-                              boxShadow: isHomeworkSelected ? 'inset 3px 0 0 #595959' : 'none',
+                              boxShadow: isHomeworkSelected ? 'inset 3px 0 0 #525252' : 'none',
                             }}
                           >
                             <div className="flex items-center gap-2 overflow-hidden">
                               <FileText className={`h-4 w-4 ${isHomeworkSelected ? 'text-gray-700' : 'text-gray-500'}`} />
-                              <div className="truncate text-sm" title={homework.title}>
+                              <div className="truncate text-sm flex-1 mr-2" title={homework.title}>
                                 {homework.title}
                               </div>
                             </div>
                             <div className="flex gap-1 ml-auto">
                               {hwStats.total > 0 && (
-                                <Badge variant="outline" className="text-xs py-0 h-5 min-w-[24px]">
+                                <Badge variant="outline" className="text-xs py-0 h-5 min-w-[24px] bg-gray-50 text-gray-700 border-gray-300">
                                   {hwStats.total}
                                 </Badge>
                               )}
                               {hwStats.pending > 0 && (
-                                <Badge variant="outline" className="text-xs py-0 h-5 bg-amber-50 text-amber-700 border-amber-200">
+                                <Badge variant="outline" className="text-xs py-0 h-5 bg-gray-100 text-gray-700 border-gray-300 flex items-center">
                                   <Clock className="h-3 w-3 mr-1" />
                                   {hwStats.pending}
                                 </Badge>
