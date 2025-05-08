@@ -8,6 +8,11 @@ import CourseOutlineNavigation from './CourseOutlineNavigation';
 import HomeworkOverviewTable from './HomeworkOverviewTable';
 import HomeworkSubmissionsDetail from './HomeworkSubmissionsDetail';
 import { getCourseStructureForHomework } from '@/lib/services/homeworkSubmissionService';
+import { 
+  ResizablePanelGroup,
+  ResizablePanel,
+  ResizableHandle 
+} from '@/components/ui/resizable';
 
 interface HomeworkReviewSystemProps {
   courseId: number;
@@ -15,8 +20,10 @@ interface HomeworkReviewSystemProps {
 
 export const HomeworkReviewSystem: React.FC<HomeworkReviewSystemProps> = ({ courseId }) => {
   const [selectedLectureId, setSelectedLectureId] = useState<string | null>(null);
+  const [selectedHomeworkId, setSelectedHomeworkId] = useState<string | null>(null);
   const [sectionTitle, setSectionTitle] = useState<string>('');
   const [lectureTitle, setLectureTitle] = useState<string>('');
+  const [homeworkTitle, setHomeworkTitle] = useState<string>('');
   const [currentView, setCurrentView] = useState<'overview' | 'detail'>('overview');
   
   // 1. Fetch course structure data (sections and lectures)
@@ -33,11 +40,31 @@ export const HomeworkReviewSystem: React.FC<HomeworkReviewSystemProps> = ({ cour
     queryFn: async () => {
       const { data, error } = await supabase
         .from('homework_submissions')
-        .select('id, lecture_id, status')
+        .select('id, lecture_id, homework_id, status')
         .eq('course_id', courseId);
         
       if (error) {
         console.error('Error fetching all submissions:', error);
+        return [];
+      }
+      
+      return data || [];
+    },
+    enabled: !!courseId,
+  });
+
+  // Get all homework assignments to show under lectures
+  const { data: allHomework } = useQuery({
+    queryKey: ['all-homework-assignments', courseId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('homework')
+        .select('id, lecture_id, title, type, position')
+        .eq('course_id', courseId)
+        .order('position', { ascending: true });
+        
+      if (error) {
+        console.error('Error fetching homework assignments:', error);
         return [];
       }
       
@@ -66,9 +93,48 @@ export const HomeworkReviewSystem: React.FC<HomeworkReviewSystemProps> = ({ cour
     return stats;
   }, [allSubmissions]);
 
+  // Group homework by lecture
+  const homeworkByLecture = React.useMemo(() => {
+    const grouped: Record<string, any[]> = {};
+    
+    const homework = allHomework || [];
+    homework.forEach(hw => {
+      if (!grouped[hw.lecture_id]) {
+        grouped[hw.lecture_id] = [];
+      }
+      
+      // Calculate submission stats for this specific homework
+      const hwSubmissionStats = {
+        total: 0,
+        pending: 0,
+        reviewed: 0,
+        rejected: 0
+      };
+      
+      if (allSubmissions) {
+        allSubmissions.forEach(sub => {
+          if (sub.homework_id === hw.id) {
+            hwSubmissionStats.total++;
+            if (sub.status === 'pending') hwSubmissionStats.pending++;
+            else if (sub.status === 'reviewed') hwSubmissionStats.reviewed++;
+            else if (sub.status === 'rejected') hwSubmissionStats.rejected++;
+          }
+        });
+      }
+      
+      grouped[hw.lecture_id].push({
+        ...hw,
+        submissionStats: hwSubmissionStats
+      });
+    });
+    
+    return grouped;
+  }, [allHomework, allSubmissions]);
+
   // Handle lecture selection
   const handleSelectLecture = (lectureId: string) => {
     setSelectedLectureId(lectureId);
+    setSelectedHomeworkId(null); // Clear homework selection when lecture changes
     
     // Find lecture and section titles
     if (courseStructure) {
@@ -81,13 +147,28 @@ export const HomeworkReviewSystem: React.FC<HomeworkReviewSystemProps> = ({ cour
         }
       }
     }
+    
+    // If in detail view, go back to overview
+    if (currentView === 'detail') {
+      setCurrentView('overview');
+    }
+  };
+
+  // Handle homework selection
+  const handleSelectHomework = (lectureId: string, homeworkId: string, title: string) => {
+    handleSelectLecture(lectureId);
+    setSelectedHomeworkId(homeworkId);
+    setHomeworkTitle(title);
+    setCurrentView('detail');
   };
   
   // Clear lecture selection
   const handleClearLecture = () => {
     setSelectedLectureId(null);
+    setSelectedHomeworkId(null);
     setSectionTitle('');
     setLectureTitle('');
+    setHomeworkTitle('');
     setCurrentView('overview');
   };
   
@@ -127,36 +208,69 @@ export const HomeworkReviewSystem: React.FC<HomeworkReviewSystemProps> = ({ cour
       />
       
       {currentView === 'overview' ? (
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <ResizablePanelGroup direction="horizontal" className="min-h-[calc(100vh-200px)]">
           {/* Left sidebar: Course structure navigation */}
-          <div className="lg:col-span-1">
+          <ResizablePanel defaultSize={25} minSize={20} maxSize={40}>
             <CourseOutlineNavigation
               sections={courseStructure || []}
               selectedLectureId={selectedLectureId}
+              selectedHomeworkId={selectedHomeworkId}
               onSelectLecture={handleSelectLecture}
+              onSelectHomework={handleSelectHomework}
               submissionStats={submissionStats}
+              homeworkByLecture={homeworkByLecture}
               isLoading={isLoadingStructure}
             />
-          </div>
+          </ResizablePanel>
+          
+          <ResizableHandle withHandle />
           
           {/* Main content area */}
-          <div className="lg:col-span-3">
-            <HomeworkOverviewTable 
-              courseId={courseId}
-              sections={courseStructure || []}
-              onViewHomeworkDetails={handleViewHomeworkDetails}
-            />
-          </div>
-        </div>
+          <ResizablePanel defaultSize={75}>
+            <div className="h-full overflow-auto p-1">
+              <HomeworkOverviewTable 
+                courseId={courseId}
+                sections={courseStructure || []}
+                onViewHomeworkDetails={handleViewHomeworkDetails}
+              />
+            </div>
+          </ResizablePanel>
+        </ResizablePanelGroup>
       ) : (
         /* Detail view with submitted/not submitted tabs */
-        <HomeworkSubmissionsDetail 
-          courseId={courseId}
-          lectureId={selectedLectureId || ''}
-          lectureTitle={lectureTitle}
-          onViewSubmission={handleViewSubmission}
-          onBack={handleBackToOverview}
-        />
+        <ResizablePanelGroup direction="horizontal" className="min-h-[calc(100vh-200px)]">
+          {/* Left sidebar: Course structure navigation */}
+          <ResizablePanel defaultSize={25} minSize={20} maxSize={40}>
+            <CourseOutlineNavigation
+              sections={courseStructure || []}
+              selectedLectureId={selectedLectureId}
+              selectedHomeworkId={selectedHomeworkId}
+              onSelectLecture={handleSelectLecture}
+              onSelectHomework={handleSelectHomework}
+              submissionStats={submissionStats}
+              homeworkByLecture={homeworkByLecture}
+              isLoading={isLoadingStructure}
+              onOverviewClick={() => setCurrentView('overview')}
+            />
+          </ResizablePanel>
+          
+          <ResizableHandle withHandle />
+          
+          {/* Main content area - Homework submission details */}
+          <ResizablePanel defaultSize={75}>
+            <div className="h-full overflow-auto p-1">
+              <HomeworkSubmissionsDetail 
+                courseId={courseId}
+                lectureId={selectedLectureId || ''}
+                homeworkId={selectedHomeworkId || ''}
+                lectureTitle={lectureTitle}
+                homeworkTitle={homeworkTitle}
+                onViewSubmission={handleViewSubmission}
+                onBack={handleBackToOverview}
+              />
+            </div>
+          </ResizablePanel>
+        </ResizablePanelGroup>
       )}
     </div>
   );

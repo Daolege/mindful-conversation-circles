@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Search, FileSpreadsheet } from 'lucide-react';
@@ -18,7 +17,9 @@ import { Badge } from '@/components/ui/badge';
 interface HomeworkSubmissionsDetailProps {
   courseId: number;
   lectureId: string;
+  homeworkId?: string; // Make homeworkId optional for backward compatibility
   lectureTitle: string;
+  homeworkTitle?: string; // New prop for homework title
   onViewSubmission: (submissionId: string) => void;
   onBack?: () => void; // Make onBack optional to accommodate both use cases
 }
@@ -26,7 +27,9 @@ interface HomeworkSubmissionsDetailProps {
 const HomeworkSubmissionsDetail: React.FC<HomeworkSubmissionsDetailProps> = ({
   courseId,
   lectureId,
+  homeworkId,
   lectureTitle,
+  homeworkTitle = '',
   onViewSubmission,
   onBack
 }) => {
