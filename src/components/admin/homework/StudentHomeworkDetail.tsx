@@ -23,47 +23,59 @@ export const StudentHomeworkDetail: React.FC<StudentHomeworkDetailProps> = ({
   const { data: submission, isLoading } = useQuery({
     queryKey: ['homework-submission-detail', submissionId],
     queryFn: async () => {
-      // Get the submission data
-      const { data: submissionData, error: submissionError } = await supabase
-        .from('homework_submissions')
-        .select(`
-          id,
-          homework_id,
-          user_id,
-          lecture_id,
-          course_id,
-          answer,
-          file_url,
-          content,
-          status,
-          submitted_at,
-          created_at
-        `)
-        .eq('id', submissionId)
-        .single();
+      try {
+        // Get the submission data
+        const { data: submissionData, error: submissionError } = await supabase
+          .from('homework_submissions')
+          .select(`
+            id,
+            homework_id,
+            user_id,
+            lecture_id,
+            course_id,
+            answer,
+            file_url,
+            status,
+            submitted_at,
+            created_at
+          `)
+          .eq('id', submissionId)
+          .single();
+          
+        if (submissionError) throw submissionError;
         
-      if (submissionError) throw submissionError;
-      
-      // Get homework data
-      const { data: homeworkData } = await supabase
-        .from('homework')
-        .select('id, title, description, type')
-        .eq('id', submissionData.homework_id)
-        .single();
+        // Get homework data
+        const { data: homeworkData, error: homeworkError } = await supabase
+          .from('homework')
+          .select('id, title, description, type')
+          .eq('id', submissionData.homework_id)
+          .single();
 
-      // Get profile data
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('full_name, email')
-        .eq('id', submissionData.user_id)
-        .single();
+        if (homeworkError) {
+          console.error('Error fetching homework details:', homeworkError);
+        }
 
-      return {
-        ...submissionData,
-        homework: homeworkData || { title: '未知作业', description: '' },
-        user_name: profileData?.full_name || '未知用户',
-        user_email: profileData?.email || ''
-      };
+        // Get profile data
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('full_name, email')
+          .eq('id', submissionData.user_id)
+          .single();
+
+        if (profileError) {
+          console.error('Error fetching profile details:', profileError);
+        }
+
+        return {
+          ...submissionData,
+          homework: homeworkData || { title: '未知作业', description: '' },
+          user_name: profileData?.full_name || '未知用户',
+          user_email: profileData?.email || ''
+        };
+      } catch (error) {
+        console.error('Error in submission detail query:', error);
+        throw error;
+      }
     },
     enabled: !!submissionId,
   });
@@ -82,10 +94,7 @@ export const StudentHomeworkDetail: React.FC<StudentHomeworkDetailProps> = ({
   const isRichText = submission && (
     submission.answer?.includes('<') || 
     submission.answer?.includes('&lt;') ||
-    submission.content?.includes('<') ||
-    submission.content?.includes('&lt;') ||
-    submission.answer?.includes('src=') ||
-    submission.content?.includes('src=')
+    submission.answer?.includes('src=')
   );
 
   if (isLoading) {
@@ -188,12 +197,12 @@ export const StudentHomeworkDetail: React.FC<StudentHomeworkDetailProps> = ({
             <div className="bg-gray-50 p-4 rounded-lg">
               {isRichText ? (
                 <RichTextDisplay 
-                  content={submission.content || submission.answer}
+                  content={submission.answer}
                   className="prose max-w-none"
                 />
               ) : (
                 <div className="whitespace-pre-wrap">
-                  {submission.content || submission.answer || '无作业内容'}
+                  {submission.answer || '无作业内容'}
                 </div>
               )}
             </div>
