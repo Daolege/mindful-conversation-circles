@@ -71,13 +71,13 @@ export const HomeworkSubmissionDetail: React.FC<HomeworkSubmissionDetailProps> =
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'pending':
-        return <Badge>待提交</Badge>;
+        return <Badge variant="outline">待提交</Badge>;
       case 'reviewed':
         return <Badge variant="success">已提交</Badge>;
       case 'rejected':
         return <Badge variant="destructive">已提交</Badge>;
       default:
-        return <Badge>未知状态</Badge>;
+        return <Badge variant="outline">未知状态</Badge>;
     }
   };
 
@@ -109,16 +109,18 @@ export const HomeworkSubmissionDetail: React.FC<HomeworkSubmissionDetailProps> =
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        {/* Always display the back button */}
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onBack}
-          className="flex items-center gap-1"
-        >
-          <ChevronLeft className="h-4 w-4" />
-          返回作业列表
-        </Button>
+        {/* Back button to return to submissions list */}
+        {onBack && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onBack}
+            className="flex items-center gap-1"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            返回作业列表
+          </Button>
+        )}
         
         <div className="flex items-center gap-2">
           <Button

@@ -1,15 +1,13 @@
 
 import React, { useState, useEffect } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
 import { CourseOutlineNavigation } from './CourseOutlineNavigation';
 import { HomeworkSubmissionsList } from './HomeworkSubmissionsList';
 import { HomeworkSubmissionDetail } from './HomeworkSubmissionDetail';
-import { StudentHomeworkList } from './StudentHomeworkList';
 import { NotSubmittedStudentsList } from './NotSubmittedStudentsList';
 import { HomeworkStatsDashboard } from './HomeworkStatsDashboard';
 import { PdfExportService } from './PdfExportService';
-import { EnrollmentSubmissionStats } from './EnrollmentSubmissionStats';
 import { AdminBreadcrumb } from './AdminBreadcrumb';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -27,49 +25,52 @@ import {
 import {
   getCourseStructureForHomework,
   getHomeworkSubmissionsByCourseId,
-  getHomeworkSubmissionsByLectureId,
-  getHomeworkSubmissionsByStudentId,
-  getStudentsWithoutSubmission,
-  getHomeworkCompletionStats,
-  HomeworkStats,
-  CourseSection as HomeworkCourseSection
 } from '@/lib/services/homeworkSubmissionService';
 import { HomeworkSubmission } from '@/lib/types/homework';
 import { Homework } from '@/lib/types/homework';
 import { getHomeworkByLectureId } from '@/lib/services/homeworkService';
 
 // Define a local type that uses the existing type but renames it to avoid conflict
-type LocalCourseSection = HomeworkCourseSection;
+type LocalCourseSection = import('@/lib/services/homeworkSubmissionService').CourseSection;
 
 export const HomeworkSubmissionsView = () => {
   const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
   
-  const [activeTab, setActiveTab] = useState<string>('submissions');
+  // Modified: Set initial activeTab to 'stats' instead of 'submissions'
+  const [activeTab, setActiveTab] = useState<string>('stats');
   const [selectedLectureId, setSelectedLectureId] = useState<string | null>(null);
   const [selectedHomeworkId, setSelectedHomeworkId] = useState<string | null>(null);
-  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
   const [selectedSubmissionId, setSelectedSubmissionId] = useState<string | null>(null);
   const [openExportDialog, setOpenExportDialog] = useState<boolean>(false);
   
   // Convert courseId to number
   const courseIdNumber = courseId ? parseInt(courseId, 10) : 0;
 
-  // Reset tabs when changing selections
+  // Reset states and update tab when selections change
   useEffect(() => {
-    if (selectedHomeworkId) {
-      setActiveTab('submissions');
-    } else if (selectedStudentId) {
-      setActiveTab('student');
-    } else if (selectedSubmissionId) {
+    if (selectedSubmissionId) {
+      // When a submission is selected, switch to detail view
       setActiveTab('detail');
+    } else if (selectedHomeworkId) {
+      // When a homework is selected but no submission, show submissions list
+      setActiveTab('submissions');
+    } else {
+      // Default view shows statistics
+      setActiveTab('stats');
     }
-  }, [selectedHomeworkId, selectedStudentId, selectedSubmissionId]);
+  }, [selectedHomeworkId, selectedSubmissionId]);
 
-  // New handler for going back from submission detail to list
+  // Handler for going back from submission detail to list
   const handleBackFromDetail = () => {
     setSelectedSubmissionId(null);
     setActiveTab('submissions');
+  };
+
+  // View submission directly from the list
+  const handleViewSubmission = (submissionId: string) => {
+    setSelectedSubmissionId(submissionId);
+    // Tab change handled by the useEffect above
   };
 
   // Fetch course structure for navigation
@@ -172,7 +173,6 @@ export const HomeworkSubmissionsView = () => {
   const handleLectureSelect = (lectureId: string) => {
     setSelectedLectureId(lectureId);
     setSelectedHomeworkId(null);
-    setSelectedStudentId(null);
     setSelectedSubmissionId(null);
   };
 
@@ -182,23 +182,15 @@ export const HomeworkSubmissionsView = () => {
     setSelectedLectureId(lectureId);
     setSelectedStudentId(null);
     setSelectedSubmissionId(null);
-    setActiveTab('submissions');
+    // Tab change handled by the useEffect above
   };
 
   // Handle view all submissions
   const handleViewAll = () => {
     setSelectedLectureId(null);
     setSelectedHomeworkId(null);
-    setSelectedStudentId(null);
     setSelectedSubmissionId(null);
-    setActiveTab('all');
-  };
-
-  // Handle view student
-  const handleViewStudent = (studentId: string) => {
-    setSelectedStudentId(studentId);
-    setSelectedSubmissionId(null);
-    setActiveTab('student');
+    setActiveTab('stats'); // Changed to show stats on overview click
   };
 
   // Calculate submission statistics for navigation
@@ -220,6 +212,33 @@ export const HomeworkSubmissionsView = () => {
     
     return stats;
   }, [allSubmissions]);
+
+  // Dynamic tabs generation based on current context
+  const renderTabsList = () => {
+    const tabs = [];
+    
+    // Stats tab is always available
+    tabs.push(
+      <TabsTrigger key="stats" value="stats">统计报表</TabsTrigger>
+    );
+    
+    // Only show submissions and not-submitted tabs when a homework is selected
+    if (selectedHomeworkId) {
+      tabs.push(
+        <TabsTrigger key="submissions" value="submissions">作业提交</TabsTrigger>,
+        <TabsTrigger key="not-submitted" value="not-submitted">未提交学生</TabsTrigger>
+      );
+    }
+    
+    // Only show detail tab when a submission is selected
+    if (selectedSubmissionId) {
+      tabs.push(
+        <TabsTrigger key="detail" value="detail">作业详情</TabsTrigger>
+      );
+    }
+    
+    return tabs;
+  };
 
   return (
     <div className="space-y-6">
@@ -262,23 +281,21 @@ export const HomeworkSubmissionsView = () => {
         {/* Main Content Area */}
         <ResizablePanel defaultSize={75} className="bg-white p-4">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="w-full justify-between mb-4">
-              <TabsTrigger value="submissions">作业提交</TabsTrigger>
-              <TabsTrigger value="not-submitted">未提交学生</TabsTrigger>
-              <TabsTrigger value="stats">统计报表</TabsTrigger>
-              {selectedStudentId && (
-                <TabsTrigger value="student">学生作业</TabsTrigger>
-              )}
-              {selectedSubmissionId && (
-                <TabsTrigger value="detail">作业详情</TabsTrigger>
-              )}
+            <TabsList className="w-full justify-start mb-4">
+              {renderTabsList()}
             </TabsList>
+            
+            <TabsContent value="stats">
+              <HomeworkStatsDashboard 
+                courseId={courseIdNumber}
+              />
+            </TabsContent>
             
             <TabsContent value="submissions">
               <HomeworkSubmissionsList 
                 homeworkId={selectedHomeworkId}
                 lectureId={selectedLectureId}
-                onSelectStudent={handleViewStudent}
+                onViewSubmission={handleViewSubmission}
               />
             </TabsContent>
             
@@ -289,27 +306,10 @@ export const HomeworkSubmissionsView = () => {
               />
             </TabsContent>
             
-            <TabsContent value="stats">
-              <HomeworkStatsDashboard 
-                courseId={courseIdNumber}
-              />
-            </TabsContent>
-            
-            <TabsContent value="student">
-              {selectedStudentId && (
-                <StudentHomeworkList 
-                  studentId={selectedStudentId}
-                  courseId={courseIdNumber}
-                  onViewSubmission={setSelectedSubmissionId}
-                />
-              )}
-            </TabsContent>
-            
             <TabsContent value="detail">
               {selectedSubmissionId && (
                 <HomeworkSubmissionDetail 
                   submissionId={selectedSubmissionId}
-                  onViewStudent={handleViewStudent}
                   onBack={handleBackFromDetail}
                 />
               )}

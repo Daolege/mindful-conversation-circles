@@ -11,13 +11,13 @@ import { format } from 'date-fns';
 interface HomeworkSubmissionsListProps {
   homeworkId?: string;
   lectureId?: string;
-  onSelectStudent: (studentId: string) => void;
+  onViewSubmission: (submissionId: string) => void;
 }
 
 export const HomeworkSubmissionsList: React.FC<HomeworkSubmissionsListProps> = ({ 
   homeworkId,
   lectureId,
-  onSelectStudent
+  onViewSubmission
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   
@@ -95,6 +95,7 @@ export const HomeworkSubmissionsList: React.FC<HomeworkSubmissionsListProps> = (
     );
   }
 
+  // If no homework is selected, show instruction message
   if (!homeworkId) {
     return (
       <div className="flex flex-col items-center justify-center p-8 text-center text-gray-500">
@@ -140,7 +141,7 @@ export const HomeworkSubmissionsList: React.FC<HomeworkSubmissionsListProps> = (
                   <Button
                     variant="outline" 
                     size="sm"
-                    onClick={() => onSelectStudent(submission.user_id)}
+                    onClick={() => onViewSubmission(submission.id)}
                     className="flex items-center gap-1"
                   >
                     <Eye className="h-4 w-4" />
