@@ -49,8 +49,8 @@ const StudentHomeworkPage = () => {
       if (!lectureId) return null;
       
       const { data, error } = await supabase
-        .from('lectures')
-        .select('course_id, title, sections(title)')
+        .from('course_lectures')
+        .select('section_id, title')
         .eq('id', lectureId)
         .single();
         
@@ -59,7 +59,25 @@ const StudentHomeworkPage = () => {
         return null;
       }
       
-      return data;
+      if (!data || !data.section_id) return null;
+      
+      // Get the section data to find course_id
+      const { data: sectionData, error: sectionError } = await supabase
+        .from('course_sections')
+        .select('course_id, title')
+        .eq('id', data.section_id)
+        .single();
+        
+      if (sectionError) {
+        console.error('Error fetching section data:', sectionError);
+        return null;
+      }
+      
+      return {
+        title: data.title,
+        section_title: sectionData?.title || '未知章节',
+        course_id: sectionData?.course_id
+      };
     },
     enabled: !!lectureId && isAdmin === true
   });
@@ -123,7 +141,7 @@ const StudentHomeworkPage = () => {
 
   const courseId = lectureData?.course_id;
   const lectureTitle = lectureData?.title || '未知讲座';
-  const sectionTitle = lectureData?.sections?.title || '未知章节';
+  const sectionTitle = lectureData?.section_title || '未知章节';
 
   return (
     <div className="min-h-screen flex flex-col">
