@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -153,8 +154,8 @@ export const HomeworkSubmissionDetail: React.FC<HomeworkSubmissionDetailProps> =
     ? formatDistanceToNow(new Date(submission.created_at), { addSuffix: true })
     : '未知时间';
 
-  // Improved logic to detect rich text content
-  const isRichText = submission && (
+  // Improved logic to detect rich text content for student answers
+  const isAnswerRichText = submission && (
     submission.answer?.includes('<') || 
     submission.answer?.includes('&lt;') ||
     submission.content?.includes('<') ||
@@ -165,11 +166,16 @@ export const HomeworkSubmissionDetail: React.FC<HomeworkSubmissionDetailProps> =
     submission.content?.includes('<img')
   );
 
-  console.log('Submission content type:', isRichText ? 'Rich text' : 'Plain text');
-  if (isRichText) {
-    console.log('Rich text content sample:', 
-      (submission?.content || submission?.answer || '').substring(0, 100) + '...');
-  }
+  // New logic to detect rich text content for homework question/description
+  const isHomeworkDescriptionRichText = submission?.homework?.description && (
+    submission.homework.description.includes('<') ||
+    submission.homework.description.includes('&lt;') ||
+    submission.homework.description.includes('src=') ||
+    submission.homework.description.includes('<img')
+  );
+  
+  console.log('Submission content type:', isAnswerRichText ? 'Rich text' : 'Plain text');
+  console.log('Homework description type:', isHomeworkDescriptionRichText ? 'Rich text' : 'Plain text');
 
   return (
     <div className="space-y-6">
@@ -249,11 +255,18 @@ export const HomeworkSubmissionDetail: React.FC<HomeworkSubmissionDetailProps> =
           {submission.homework && (
             <div>
               <h3 className="text-lg font-medium mb-2">作业题目</h3>
-              <div className="bg-muted p-4 rounded-lg whitespace-pre-wrap">
+              <div className="bg-muted p-4 rounded-lg">
                 <p className="font-medium">{submission.homework.title}</p>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  {submission.homework?.description || '无详细描述'}
-                </p>
+                {isHomeworkDescriptionRichText ? (
+                  <RichTextDisplay 
+                    content={submission.homework.description}
+                    className="mt-2 text-sm text-muted-foreground prose max-w-none"
+                  />
+                ) : (
+                  <p className="mt-2 text-sm text-muted-foreground whitespace-pre-wrap">
+                    {submission.homework?.description || '无详细描述'}
+                  </p>
+                )}
               </div>
             </div>
           )}
@@ -261,7 +274,7 @@ export const HomeworkSubmissionDetail: React.FC<HomeworkSubmissionDetailProps> =
           <div>
             <h3 className="text-lg font-medium mb-2">作业内容</h3>
             <div className="bg-gray-50 p-4 rounded-lg">
-              {isRichText ? (
+              {isAnswerRichText ? (
                 <RichTextDisplay 
                   content={submission.content || submission.answer}
                   className="prose max-w-none"
