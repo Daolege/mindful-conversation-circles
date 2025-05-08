@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -150,7 +149,7 @@ const HomeworkSubmissionTabs = ({ courseId, lectureId, onBack, sectionTitle, lec
     }
   }, [submissions, enrollments, profiles]);
   
-  // 查看作业详情 - 修改此处直接导航到作业详情页面
+  // 查看作业详情 - 这里是需要修复的核心功能
   const handleViewHomework = async (userId) => {
     // 获取该用户和讲座的作业提交ID
     try {
@@ -169,7 +168,8 @@ const HomeworkSubmissionTabs = ({ courseId, lectureId, onBack, sectionTitle, lec
       }
       
       if (data && data.length > 0) {
-        // 直接导航到作业详情页面
+        // 确保使用正确的URL格式导航到作业详情页面
+        console.log(`Navigating to /homework-submission/${data[0].id}/${courseId}`);
         navigate(`/homework-submission/${data[0].id}/${courseId}`);
       } else {
         console.error('No submission found for this user and lecture');

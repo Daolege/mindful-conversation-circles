@@ -93,7 +93,7 @@ const HomeworkSubmissionPublicDetail: React.FC<HomeworkSubmissionPublicDetailPro
         <div className="bg-muted/20 p-6 border-b">
           <div className="flex items-center space-x-4">
             <Avatar className="h-16 w-16">
-              <AvatarImage src="" />
+              <AvatarImage src={submission.user_avatar || ""} />
               <AvatarFallback className="bg-primary/10 text-primary text-lg">
                 {submission.user_name?.[0]?.toUpperCase() || 'U'}
               </AvatarFallback>
