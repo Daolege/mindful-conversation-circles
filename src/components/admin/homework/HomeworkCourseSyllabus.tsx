@@ -24,7 +24,7 @@ interface CourseSyllabusProps {
   selectedHomeworkId?: string | null;
   submissionStats?: Record<string, { total: number; pending: number; reviewed: number; rejected: number }>;
   homeworkByLecture?: Record<string, HomeworkItem[]>;
-  onLectureClick: (lecture: any) => void;
+  onLectureClick: (lectureId: string) => void;
   onHomeworkClick?: (lectureId: string, homework: HomeworkItem) => void;
 }
 
@@ -107,7 +107,7 @@ export function HomeworkCourseSyllabus({
               return (
                 <li key={`${sectionIndex}-${lectureIndex}`} className="space-y-2">
                   <div
-                    onClick={() => onLectureClick(lecture)}
+                    onClick={() => onLectureClick(lecture.id)}
                     className={`
                       flex items-center justify-between p-3 cursor-pointer 
                       border rounded-lg bg-white
