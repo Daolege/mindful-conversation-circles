@@ -48,7 +48,7 @@ export const StudentHomeworkPage = () => {
           homework_id,
           lecture_id,
           user_id,
-          content,
+          answer, 
           score,
           status,
           feedback,
@@ -72,7 +72,13 @@ export const StudentHomeworkPage = () => {
         return [];
       }
       
-      return data as HomeworkSubmission[];
+      // Map the data to include content field for backward compatibility
+      const transformedData = data.map(submission => ({
+        ...submission,
+        content: submission.answer // Map answer to content for backward compatibility
+      }));
+      
+      return transformedData as HomeworkSubmission[];
     },
     enabled: !!studentId && !!courseId,
   });
