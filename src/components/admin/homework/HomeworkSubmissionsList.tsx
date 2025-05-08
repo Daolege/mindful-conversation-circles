@@ -1,10 +1,8 @@
-
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Loader2, Search, Calendar, FileText, User, Eye } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
@@ -118,7 +116,7 @@ export const HomeworkSubmissionsList: React.FC<HomeworkSubmissionsListProps> = (
                     className="flex items-center gap-1"
                   >
                     <Eye className="h-4 w-4" />
-                    作业详情
+                    查看作业
                   </Button>
                 </TableCell>
               </TableRow>

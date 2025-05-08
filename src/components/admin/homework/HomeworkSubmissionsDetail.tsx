@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { HomeworkSubmissionsList } from './HomeworkSubmissionsList';
 import { NotSubmittedStudentsList } from './NotSubmittedStudentsList';
 import { ExcelExportService } from './ExcelExportService';
+import { StudentHomeworkDetail } from './StudentHomeworkDetail';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -27,6 +28,7 @@ const HomeworkSubmissionsDetail: React.FC<HomeworkSubmissionsDetailProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<string>('submitted');
   const [searchTerm, setSearchTerm] = useState<string>('');
+  const [selectedSubmissionId, setSelectedSubmissionId] = useState<string | null>(null);
   const queryClient = useQueryClient();
   
   // Fetch submissions data
@@ -63,8 +65,36 @@ const HomeworkSubmissionsDetail: React.FC<HomeworkSubmissionsDetailProps> = ({
       
       return submissionsWithUserData || [];
     },
-    enabled: !!lectureId && activeTab === 'submitted',
+    enabled: !!lectureId && activeTab === 'submitted' && !selectedSubmissionId,
   });
+
+  // Handle select student for submitted homework
+  const handleSelectStudent = async (userId: string) => {
+    try {
+      // Find the submission for this user and lecture
+      const { data, error } = await supabase
+        .from('homework_submissions')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('lecture_id', lectureId)
+        .single();
+        
+      if (error) throw error;
+      
+      if (data?.id) {
+        setSelectedSubmissionId(data.id);
+      }
+    } catch (error) {
+      console.error('Error finding homework submission:', error);
+      toast.error('无法加载学生作业');
+    }
+  };
+
+  // Go back to submissions list
+  const handleBackToList = () => {
+    setSelectedSubmissionId(null);
+    queryClient.invalidateQueries({ queryKey: ['homework-submissions-detail', lectureId] });
+  };
 
   // Export data to Excel based on active tab
   const handleExportExcel = async () => {
@@ -150,6 +180,16 @@ const HomeworkSubmissionsDetail: React.FC<HomeworkSubmissionsDetailProps> = ({
     toast.success('导出成功', { description: 'Excel文件已成功下载' });
   };
 
+  // If a specific submission is selected, show the detailed view
+  if (selectedSubmissionId) {
+    return (
+      <StudentHomeworkDetail 
+        submissionId={selectedSubmissionId}
+        onBack={handleBackToList}
+      />
+    );
+  }
+
   return (
     <div className="space-y-4">
       {/* Back navigation */}
@@ -200,10 +240,7 @@ const HomeworkSubmissionsDetail: React.FC<HomeworkSubmissionsDetailProps> = ({
             <CardContent>
               <HomeworkSubmissionsList 
                 lectureId={lectureId}
-                onSelectStudent={(studentId) => {
-                  // Handle student selection if needed
-                  console.log("Selected student:", studentId);
-                }}
+                onSelectStudent={handleSelectStudent}
               />
             </CardContent>
           </Card>
