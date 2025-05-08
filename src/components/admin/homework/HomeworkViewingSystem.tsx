@@ -209,7 +209,6 @@ export const HomeworkViewingSystem: React.FC<HomeworkViewingSystemProps> = ({ co
               lectureId={selectedLectureId}
               homeworkId={selectedHomeworkId || ''}
               lectureTitle={lectureTitle}
-              homeworkTitle={homeworkTitle}
               onViewSubmission={handleViewSubmission}
             />
           )}

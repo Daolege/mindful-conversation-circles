@@ -160,7 +160,7 @@ export function HomeworkCourseSyllabus({
                     </div>
                   </div>
                   
-                  {/* Homework cards for this lecture */}
+                  {/* Homework cards for this lecture - Updated with consistent gray color scheme */}
                   {hasLectureHomework && isSelected && (
                     <div className="pl-4 space-y-1.5">
                       {lectureHomework.map((homework) => {
@@ -175,16 +175,16 @@ export function HomeworkCourseSyllabus({
                               flex items-center p-2 border rounded-md cursor-pointer
                               transition-all duration-200
                               ${isHomeworkSelected 
-                                ? 'bg-blue-50 border-blue-200' 
+                                ? 'bg-gray-100 border-gray-300' 
                                 : 'bg-white hover:bg-gray-50 border-gray-200'
                               }
                             `}
                             style={{
-                              boxShadow: isHomeworkSelected ? 'inset 3px 0 0 #4a90e2' : 'none',
+                              boxShadow: isHomeworkSelected ? 'inset 3px 0 0 #595959' : 'none',
                             }}
                           >
                             <div className="flex items-center gap-2 overflow-hidden">
-                              <FileText className={`h-4 w-4 ${isHomeworkSelected ? 'text-blue-600' : 'text-gray-500'}`} />
+                              <FileText className={`h-4 w-4 ${isHomeworkSelected ? 'text-gray-700' : 'text-gray-500'}`} />
                               <div className="truncate text-sm" title={homework.title}>
                                 {homework.title}
                               </div>
